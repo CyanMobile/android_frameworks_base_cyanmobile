@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2012 Crossbones Software
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<TableLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:drawable/alert_dark_frame" >
+        <TableRow>
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:src="@drawable/quicksettings_wifi"
+            />
+            <TextView
+                android:id="@+id/tv_wifi"
+                android:text="@string/switch_wifi_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:paddingLeft="3sp"
+                android:paddingRight="3sp"
+                android:gravity="center_vertical|center_horizontal"
+                android:textStyle="bold" />
+            <CheckBox
+                android:id="@+id/switch_wifi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:paddingLeft="3sp"
+                android:src="@drawable/quicksettings_bluetooth"
+            />
+            <TextView
+                android:id="@+id/tv_bluetooth"
+                android:text="@string/switch_bluetooth_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:paddingLeft="3sp"
+                android:paddingRight="3sp"
+                android:gravity="center_vertical|center_horizontal"
+                android:textStyle="bold" />
+            <CheckBox
+                android:id="@+id/switch_bluetooth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </TableRow>
+
+        <TableRow>
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:src="@drawable/quicksettings_gps"
+            />
+            <TextView
+                android:id="@+id/tv_gps"
+                android:text="@string/switch_gps_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:paddingLeft="3sp"
+                android:paddingRight="3sp"
+                android:gravity="center_vertical|center_horizontal"
+                android:textStyle="bold" />
+            <CheckBox
+                android:id="@+id/switch_gps"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:paddingLeft="3sp"
+                android:src="@drawable/quicksettings_account_sync"
+            />
+            <TextView
+                android:id="@+id/tv_sync"
+                android:text="@string/switch_sync_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:paddingLeft="3sp"
+                android:paddingRight="3sp"
+                android:gravity="center_vertical|center_horizontal"
+                android:textStyle="bold" />
+            <CheckBox
+                android:id="@+id/switch_sync"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </TableRow>
+
+        <TableRow>
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:src="@drawable/quicksettings_airpl"
+            />
+            <TextView
+                android:id="@+id/tv_airpl"
+                android:text="@string/switch_airpl_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:paddingLeft="3sp"
+                android:paddingRight="3sp"
+                android:gravity="center_vertical|center_horizontal"
+                android:textStyle="bold" />
+            <CheckBox
+                android:id="@+id/switch_airpl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:paddingLeft="3sp"
+                android:src="@drawable/quicksettings_mbldata"
+            />
+            <TextView
+                android:id="@+id/tv_mbldata"
+                android:text="@string/switch_mbldata_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:paddingLeft="3sp"
+                android:paddingRight="3sp"
+                android:gravity="center_vertical|center_horizontal"
+                android:textStyle="bold" />
+            <CheckBox
+                android:id="@+id/switch_mbldata"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </TableRow>
+
+        <TableRow>
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:src="@drawable/quicksettings_autorot"
+            />
+            <TextView
+                android:id="@+id/tv_autorot"
+                android:text="@string/switch_autorot_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:paddingLeft="3sp"
+                android:paddingRight="3sp"
+                android:gravity="center_vertical|center_horizontal"
+                android:textStyle="bold" />
+            <CheckBox
+                android:id="@+id/switch_autorot"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </TableRow>
+</TableLayout>
