@@ -567,14 +567,14 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         mItems.remove(mExtendPmHome);
         mItems.remove(mExtendPmMenu);
         mItems.remove(mExtendPmBack);
+        mItems.remove(mPoweroff);
+        mItems.remove(mReboot);
+        mItems.remove(mSuspend);
+        mItems.remove(mHibernate);
         mItems.remove(mAirplaneModeOn);
         mItems.remove(mProfile);
         mItems.remove(mPowerSaverOn);
         mItems.remove(mScreenshot);
-        mItems.remove(mReboot);
-        mItems.remove(mSuspend);
-        mItems.remove(mHibernate);
-        mItems.remove(mPoweroff);
         mItems.remove(mSilentModeToggle);
 
         if(mExtendPm){
@@ -585,6 +585,22 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
             if(mExtendPmShowHome && !mItems.contains(mExtendPmHome))
                 mItems.add(0, mExtendPmHome);
         }
+
+        if (!mItems.contains(mPoweroff)) {
+           mItems.add(mPoweroff);
+        };
+
+        if (!mItems.contains(mReboot)) {
+           mItems.add(mReboot);
+        };
+
+        if (mEnableSuspendToggle && !mItems.contains(mSuspend)) {
+           mItems.add(mSuspend);
+        };
+
+        if (mEnableHibernateToggle && !mItems.contains(mHibernate)) {
+           mItems.add(mHibernate);
+        };
 
         if (mEnableAirplaneToggle && !mItems.contains(mAirplaneModeOn)) {
            mItems.add(mAirplaneModeOn);
@@ -600,22 +616,6 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
         if (mEnableScreenshotToggle && !mItems.contains(mScreenshot)) {
            mItems.add(mScreenshot);
-        };
-
-        if (!mItems.contains(mReboot)) {
-           mItems.add(mReboot);
-        };
-
-        if (mEnableSuspendToggle && !mItems.contains(mSuspend)) {
-           mItems.add(mSuspend);
-        };
-
-        if (mEnableHibernateToggle && !mItems.contains(mHibernate)) {
-           mItems.add(mHibernate);
-        };
-
-        if (!mItems.contains(mPoweroff)) {
-           mItems.add(mPoweroff);
         };
 
         if (mEnableSilentToggle && !mItems.contains(mSilentModeToggle)) {
