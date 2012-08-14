@@ -1400,7 +1400,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         Resources res = mContext.getResources();
         int heightSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_STATS_SIZE, 25); // this value size for icon
+                Settings.System.STATUSBAR_STATS_SIZE, 25); // this value size for statusbar
         int heightSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, heightSizeval, res.getDisplayMetrics());
         final int height = heightSizepx;
 

@@ -2081,6 +2081,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
             if (Config.LOGV)
                 Log.v(TAG, "Selected default opacity: " + opacity);
 
+            // for global background app works
             int crtransBackgroundAppss = Settings.System.getInt(getContext().getContentResolver(), Settings.System.TRANSPARENT_BACKGROUND_FULL, 0);
             if (crtransBackgroundAppss == 1) {
                mDefaultOpacity = PixelFormat.TRANSLUCENT;
@@ -2222,7 +2223,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
         if (a.getBoolean(com.android.internal.R.styleable.Window_windowFullscreen, false)) {
             setFlags(FLAG_FULLSCREEN, FLAG_FULLSCREEN&(~getForcedWindowFlags()));
         }
-
+            // for global background app works
         int transBackgroundAppss = Settings.System.getInt(getContext().getContentResolver(), Settings.System.TRANSPARENT_BACKGROUND_FULL, 0);
         if (transBackgroundAppss == 2) {
             setFlags(FLAG_SHOW_WALLPAPER, FLAG_SHOW_WALLPAPER&(~getForcedWindowFlags()));
@@ -2339,6 +2340,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
         if (getContainer() == null) {
             Drawable drawable = mBackgroundDrawable;
             if (mBackgroundResource != 0) {
+            // for global background app works
                 int transBackgroundApp = Settings.System.getInt(getContext().getContentResolver(), Settings.System.TRANSPARENT_BACKGROUND_APP, 0);
                 int backgroundAppColor = Settings.System.getInt(getContext().getContentResolver(), Settings.System.BACKGROUND_APP_COLOR, 0xFF33B5E5);
               switch (transBackgroundApp) {

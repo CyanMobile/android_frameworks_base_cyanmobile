@@ -1733,7 +1733,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             if (DEBUG_LAYOUT) Log.i(TAG, "mNavigationBar frame: " + navr);
             if(mBottomBar && !mNaviShow){
                 int statSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_STATS_SIZE, 25);
+                Settings.System.STATUSBAR_STATS_SIZE, 25); // this value size for statusbar
                 int statSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                      statSizeval, mContext.getResources().getDisplayMetrics());
                 //get status bar height from dimen.xml
