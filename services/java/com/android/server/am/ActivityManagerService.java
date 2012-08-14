@@ -354,8 +354,6 @@ public final class ActivityManagerService extends ActivityManagerNative
     static final String KEEP_APP_1;
     static final String KEEP_APP_2;
 
-    static boolean SQUADZONE;
-
     // GMAPS NLS HACK
     static boolean GMAPS_HACK;
     static final String GMAPS_NLS = 
@@ -398,7 +396,6 @@ public final class ActivityManagerService extends ActivityManagerNative
         KEEP_APP_1 = SystemProperties.get("sys.keep_app_1", "0");
         KEEP_APP_2 = SystemProperties.get("sys.keep_app_2", "0");
         GMAPS_HACK = getIntProp("persist.sys.gmaps_hack", true) == 1;
-        SQUADZONE = getIntProp("ro.squadzone.build", true) == 1;
     }
     
     static final int MY_PID = Process.myPid();
@@ -6170,9 +6167,6 @@ public final class ActivityManagerService extends ActivityManagerNative
     
     public void systemReady(final Runnable goingCallback) {
 
-        if ("0".equals(SystemProperties.get("ro.squadzone.build", "0")))
-            return;
-
         // In the simulator, startRunning will never have been called, which
         // normally sets a few crucial variables. Do it here instead.
         if (!Process.supportsProcesses()) {
@@ -9046,7 +9040,6 @@ public final class ActivityManagerService extends ActivityManagerNative
         //Slog.i(TAG, "Bring up service:");
         //r.dump("  ");
 
-        SQUADZONE = "1".equals(SystemProperties.get("ro.squadzone.build", "0"));
         GMAPS_HACK = "1".equals(SystemProperties.get("persist.sys.gmaps_hack", "0"));
         if (GMAPS_HACK && r.shortName.equals(GMAPS_NLS)
                 && getProcessRecordLocked("com.google.android.apps.maps",
