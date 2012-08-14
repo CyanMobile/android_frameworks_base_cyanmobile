@@ -179,6 +179,10 @@ public class CmStatusBarView extends StatusBarView {
          * If true then add statusbar buttons and set listeners and intents
          */
         if (mHasSoftButtons) {
+        /**
+         * add comment here to start custom this
+         *
+         */
             mHomeButton = (ImageButton)findViewById(R.id.status_home);
             mHomeButton.setOnClickListener(
                 new ImageButton.OnClickListener() {
@@ -275,6 +279,10 @@ public class CmStatusBarView extends StatusBarView {
                     }
                 }
             );
+        /**
+         * add comment here finish custom this
+         *
+         */
             mEdgeLeft = (ImageButton)findViewById(R.id.status_edge_left);
             mEdgeRight = (ImageButton)findViewById(R.id.status_edge_right);
             mSeperator1 = (ImageButton)findViewById(R.id.status_sep1);
@@ -583,6 +591,10 @@ public class CmStatusBarView extends StatusBarView {
     }
 
     private void updateSoftButtons() {
+        /**
+         * add comment here to start custom this java
+         *
+         */
         if(!mHasSoftButtons)
             return;
 
@@ -669,9 +681,17 @@ public class CmStatusBarView extends StatusBarView {
             mHideButton.setBackgroundResource(R.drawable.ic_statusbar_hide_top);
             mEdgeRight.setBackgroundResource(R.drawable.ic_statusbar_edge_left_top);
         }
+        /**
+         * add comment here finish custom this java
+         *
+         */
     }
 
     public int getSoftButtonsWidth() {
+        /**
+         * need to redefine Width after custom
+         *
+         */
         if(!mHasSoftButtons)
             return 0;
 

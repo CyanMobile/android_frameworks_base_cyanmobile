@@ -128,13 +128,13 @@ public class CmWifiText extends TextView {
 
     private void updateSignalText() {
         mClockColor = (Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5));
+                Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5)); // this value for color
 
         style = Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.STATUS_BAR_CM_WIFI_TEXT, STYLE_HIDE);
 
         int mCarrierSizeval = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.STATUSBAR_ICON_FONT_SIZE, 10);
+                Settings.System.STATUSBAR_ICON_FONT_SIZE, 10); // this value size for font
         int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, mCarrierSizeval, getContext().getResources().getDisplayMetrics());
         mCarrierSize = CarrierSizepx;
 

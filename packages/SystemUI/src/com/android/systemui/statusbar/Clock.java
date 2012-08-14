@@ -254,10 +254,10 @@ public class Clock extends TextView {
         mAmPmStyle = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_AM_PM, 2));
 	mClockColor = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5));
+                Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5)); // this value for color
 
         int mCarrierSizeval = Settings.System.getInt(resolver,
-                Settings.System.STATUSBAR_CLOCK_FONT_SIZE, 10);
+                Settings.System.STATUSBAR_CLOCK_FONT_SIZE, 10); // this value size for font
         int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, mCarrierSizeval, mContext.getResources().getDisplayMetrics());
         mCarrierSize = CarrierSizepx;
 

@@ -236,19 +236,19 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private BrightnessPanel mBrightnessPanel = null;
 
     // notification color default variables
-    int mBlackColor = 0xFF000000;
-    int mWhiteColor = 0xFFFFFFFF;
+    int mBlackColor = 0xFF000000; // this value for color
+    int mWhiteColor = 0xFFFFFFFF; // this value for color
 
     // notfication color temp variables
     int mItemText = mWhiteColor;
-    int mItemTime = 0xFF33B5E5;
-    int mItemTitle = 0xFF33B5E5;
-    int mDateColor = 0xFF33B5E5;
+    int mItemTime = 0xFF33B5E5; // this value for color
+    int mItemTitle = 0xFF33B5E5; // this value for color
+    int mDateColor = 0xFF33B5E5; // this value for color
     int mButtonText = mBlackColor;
-    int mNotifyNone = 0xFF33B5E5;
-    int mNotifyTicker = 0xFF33B5E5;
-    int mNotifyLatest = 0xFF33B5E5;
-    int mNotifyOngoing = 0xFF33B5E5;
+    int mNotifyNone = 0xFF33B5E5; // this value for color
+    int mNotifyTicker = 0xFF33B5E5; // this value for color
+    int mNotifyLatest = 0xFF33B5E5; // this value for color
+    int mNotifyOngoing = 0xFF33B5E5; // this value for color
 
     // Tracking finger for opening/closing.
     int mEdgeBorder; // corresponds to R.dimen.status_bar_edge_ignore
@@ -423,7 +423,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             LogoStatusBar = (Settings.System.getInt(resolver,
                     Settings.System.CARRIER_LOGO_STATUS_BAR, 0) == 1);
             mClockColor = (Settings.System.getInt(resolver,
-                    Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5));
+                    Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5)); // this value for color
             updateColors();
             updateLayout();
             updateCarrierLabel();
@@ -589,7 +589,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mTouchDispatcher = new ItemTouchDispatcher(this);
 
         int mIconSizeval = Settings.System.getInt(context.getContentResolver(),
-                Settings.System.STATUSBAR_ICONS_SIZE, 25);
+                Settings.System.STATUSBAR_ICONS_SIZE, 25); // this value size for icon
 
         int IconSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mIconSizeval, res.getDisplayMetrics());
         mIconSize = IconSizepx;
@@ -990,7 +990,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
               @Override
               public void onClick(View v) {
                  mNotificationsToggle.setTextColor(mClockColor);
-                 mButtonsToggle.setTextColor(Color.parseColor("#666666"));
+                 mButtonsToggle.setTextColor(Color.parseColor("#666666")); // this value for color
                  LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
                  parent.setBackgroundResource(R.drawable.title_bar_portrait);
                  mPowerAndCarrier.setVisibility(View.GONE);
@@ -1003,7 +1003,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
               @Override
               public void onClick(View v) {
                  mButtonsToggle.setTextColor(mClockColor);
-                 mNotificationsToggle.setTextColor(Color.parseColor("#666666"));
+                 mNotificationsToggle.setTextColor(Color.parseColor("#666666")); // this value for color
                  LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
                  parent.setBackgroundResource(R.drawable.title_bar_portrait);
                  mNotifications.setVisibility(View.GONE);
@@ -1365,7 +1365,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.SHOW_NAVI_BUTTONS, 1) == 1) && (Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.NAVI_BUTTONS, 1) == 1));
         int naviSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_NAVI_SIZE, 25);
+                Settings.System.STATUSBAR_NAVI_SIZE, 25); // this value size for navibar
         int naviSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, naviSizeval, res.getDisplayMetrics());
         final int size = naviSizepx;
 
@@ -1400,7 +1400,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         Resources res = mContext.getResources();
         int heightSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_STATS_SIZE, 25);
+                Settings.System.STATUSBAR_STATS_SIZE, 25); // this value size for icon
         int heightSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, heightSizeval, res.getDisplayMetrics());
         final int height = heightSizepx;
 
@@ -2532,7 +2532,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         Drawable bg;
         Resources res = mContext.getResources();
         int expheightSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_NAVI_SIZE, 25);
+                Settings.System.STATUSBAR_NAVI_SIZE, 25); // this value size for navibar
         int expheightSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, expheightSizeval, res.getDisplayMetrics());
         /// ---------- Expanded View --------------
         pixelFormat = PixelFormat.TRANSLUCENT;
@@ -2713,7 +2713,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     void updateExpandedHeight() {
         Resources res = mContext.getResources();
         int mexpheightSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_NAVI_SIZE, 25);
+                Settings.System.STATUSBAR_NAVI_SIZE, 25); // this value size for navibar
         int mexpheightSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mexpheightSizeval, res.getDisplayMetrics());
         if (mExpandedView != null) {
             mExpandedParams.height = mBottomBar ? getExpandedHeight() : (getExpandedHeight()-mexpheightSizepx);

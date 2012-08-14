@@ -60,8 +60,10 @@
 
     <!-- user interface sound effects -->
     <integer name="def_power_sounds_enabled">1</integer>
+    <!-- battery sound effects -->
     <string name="def_low_battery_sound" translatable="false">/system/media/audio/ui/LowBattery.ogg</string>
     <string name="def_full_battery_sound" translatable="false">/system/media/audio/ui/FullBattery.ogg</string>
+    <!-- charging sound effects -->
     <string name="def_charging_battery_sound" translatable="false">/system/media/audio/ui/Chargers.ogg</string>
     <string name="def_discharging_battery_sound" translatable="false">/system/media/audio/ui/Dischargers.ogg</string>
     <integer name="def_dock_sounds_enabled">0</integer>

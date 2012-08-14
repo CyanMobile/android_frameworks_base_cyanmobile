@@ -172,10 +172,10 @@ public class CmSignalText extends TextView {
                 Settings.System.STATUS_BAR_CM_SIGNAL_TEXT, STYLE_HIDE);
 
         mClockColor = (Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5));
+                Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5)); // this value for color
 
         int mCarrierSizeval = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.STATUSBAR_ICON_FONT_SIZE, 10);
+                Settings.System.STATUSBAR_ICON_FONT_SIZE, 10); // this value size for font
         int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, mCarrierSizeval, getContext().getResources().getDisplayMetrics());
         mCarrierSize = CarrierSizepx;
 
