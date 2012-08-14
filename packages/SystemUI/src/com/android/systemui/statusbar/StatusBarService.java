@@ -518,6 +518,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mStatusBarContainer = container;
         addStatusBarView();
         makeBatterySideBarViewLeft();
+        makeBatterySideBarViewRight()
         addNavigationBar();
 
         // Lastly, call to the icon policy to install/update all the icons.
@@ -1132,6 +1133,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     private void makeBatterySideBarViewLeft() {
+        if (!mShowCmBatterySideBar) {
+            return;
+        }
 
         CmBatterySideBar batterySideBarLeft = (CmBatterySideBar) View.inflate(this, R.layout.battery_sidebars, null);
 
@@ -1152,6 +1156,32 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         lp.setTitle("Battery SideBarLeft");
 
         wm.addView(batterySideBarLeft, lp);
+    }
+
+    private void makeBatterySideBarViewRight() {
+        if (!mShowCmBatterySideBar) {
+            return;
+        }
+
+        CmBatterySideBar batterySideBarRight = (CmBatterySideBar) View.inflate(this, R.layout.battery_sidebars, null);
+
+        WindowManagerImpl wm = WindowManagerImpl.getDefault();
+        DisplayMetrics metrics = new DisplayMetrics();
+        wm.getDefaultDisplay().getMetrics(metrics);
+	
+        Resources res = getResources();
+        int width = res.getDimensionPixelSize(R.dimen.battery_sidebar_width);
+
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                width, metrics.heightPixels,
+                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                PixelFormat.RGBX_8888);
+        lp.gravity = Gravity.RIGHT;
+        lp.setTitle("Battery SideBarRight");
+
+        wm.addView(batterySideBarRight, lp);
     }
 
     private void updateCarrierLabel() {
