@@ -346,7 +346,7 @@ public interface WindowManager extends ViewManager {
         public static final int TYPE_STATUS_BAR_PANEL   = FIRST_SYSTEM_WINDOW+14;
 
         /**
-         * Window type: Navigation bar (when distinct from status bar)
+         * Window type: Navigation bar (when distinct from statusbar)
          * @hide
          */
         public static final int TYPE_NAVIGATION_BAR = FIRST_SYSTEM_WINDOW+15;

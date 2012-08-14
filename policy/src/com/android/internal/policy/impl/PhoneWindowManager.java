@@ -165,7 +165,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static final int INPUT_METHOD_LAYER = 12;
     // on-screen keyboards and other such input method user interfaces go here.
     static final int INPUT_METHOD_DIALOG_LAYER = 13;
-    // the navigation bar, if available, shows atop most things
+    // the Navigation bar, if available, shows atop most things
     static final int NAVIGATION_BAR_LAYER = 14;
     // the keyguard; nothing on top of these can take focus, since they are
     // responsible for power management when displayed.
