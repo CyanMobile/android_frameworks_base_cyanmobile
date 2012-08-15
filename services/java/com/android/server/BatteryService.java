@@ -157,6 +157,7 @@ class BatteryService extends Binder {
 
         final ContentResolver cr = mContext.getContentResolver();
 
+        // this play for charger plug/unpluged sound
         mChargingSounds = new SoundPool(1, AudioManager.STREAM_SYSTEM, 0);
 
         String soundCharger = Settings.System.getString(cr, Settings.System.CHARGING_BATTERY_SOUND);
