@@ -387,8 +387,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SOFT_BUTTONS_LEFT) ? 1 : 0);
             mButtonsLeft = (Settings.System.getInt(resolver,
                     Settings.System.SOFT_BUTTONS_LEFT, defValue) == 1);
-            // mNaviButtons = (Settings.System.getInt(resolver,
-            //        Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_USE_DEAD_ZONE) ? 1 : 0);
             mDeadZone = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_DEAD_ZONE, defValue) == 1);
@@ -836,20 +834,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                        return true;
                    }
                });
-
-        //mRecentApps = (RecentApps)mExpandedView.findViewById(R.id.recent_apps);
-        //mRecentApps.setupSettingsObserver(mHandler);
-        //mRecentApps.setGlobalButtonOnClickListener(new View.OnClickListener() {
-        //            public void onClick(View v) {
-        //               animateCollapse();
-        //           }
-        //        });
-        //mRecentApps.setGlobalButtonOnLongClickListener(new View.OnLongClickListener() {
-        //           public boolean onLongClick(View v) {
-        //               animateCollapse();
-        //               return true;
-        //           }
-        //       });
 
         mPowerWidgetOne = (PowerWidgetOne)mExpandedView.findViewById(R.id.exp_power_stat_one);
         mPowerWidgetOne.setGlobalButtonOnClickListener(new View.OnClickListener() {
@@ -1317,7 +1301,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         PowerWidgetTwo powerTwo=(PowerWidgetTwo)mExpandedView.findViewById(R.id.exp_power_stat_two);
         PowerWidgetThree powerThree=(PowerWidgetThree)mExpandedView.findViewById(R.id.exp_power_stat_three);
         PowerWidgetFour powerFour=(PowerWidgetFour)mExpandedView.findViewById(R.id.exp_power_stat_four);
-        //RecentApps recent=(RecentApps)mExpandedView.findViewById(R.id.recent_apps);
         //FrameLayout notifications=(FrameLayout)mExpandedView.findViewById(R.id.notifications);
 
         // remove involved views

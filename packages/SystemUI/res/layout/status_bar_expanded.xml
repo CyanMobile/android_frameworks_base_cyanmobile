@@ -41,11 +41,6 @@
             android:layout_height="wrap_content"
             />
 
-        <!-- <com.android.systemui.statusbar.RecentApps android:id="@+id/recent_apps"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            /> -->
-
         <com.android.systemui.statusbar.MusicControls android:id="@+id/exp_music_controls"
              android:layout_width="match_parent"
              android:layout_height="wrap_content"
