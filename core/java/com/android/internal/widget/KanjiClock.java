@@ -39,10 +39,11 @@ import java.text.DateFormatSymbols;
 import java.util.Calendar;
 
 /**
- * Displays the time fuzzy style
+ * Displays the time Kanji style
  */
 public class KanjiClock extends LinearLayout {
 
+    // Dunno what this means, just add from Google translate xD
     private final static String J_0 = "\u96F6";
     private final static String J_1 = "\u4E00";
     private final static String J_2 = "\u4E8C";
@@ -61,6 +62,7 @@ public class KanjiClock extends LinearLayout {
     private final static String J_HOUR = "\u6642";
     private final static String J_MINUTE = "\u5206";
     private final static String J_SECOND = "\u79D2";
+
     private Calendar mCalendar;
     private String mFormat;
     private TextView mTimeDisplay;
@@ -141,7 +143,14 @@ public class KanjiClock extends LinearLayout {
         super.onFinishInflate();
 
         mTimeDisplay = (TextView) findViewById(R.id.timeDisplay);
-        mTimeDisplay.setTypeface(Typeface.createFromFile("/system/fonts/DroidSans.ttf"));
+        int font = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.CLOCK_FONT, 0);
+        if (font == 0) {
+            mTimeDisplay.setTypeface(Typeface.createFromFile("/system/fonts/DroidSans.ttf"));
+        } else if (font == 1) {
+            mTimeDisplay.setTypeface(Typeface
+                    .createFromFile("/system/fonts/DroidSansJapanese.ttf"));
+        }
         mCalendar = Calendar.getInstance();
     }
 
