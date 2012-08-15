@@ -2591,6 +2591,7 @@ public final class ActivityThread {
                 }
             }
 
+            // this create a bigthumbnail for the recents activity...
             Bitmap bigThumbnail = createBigThumbnailBitmap(r);
                 if (bigThumbnail != null){
                     try {
