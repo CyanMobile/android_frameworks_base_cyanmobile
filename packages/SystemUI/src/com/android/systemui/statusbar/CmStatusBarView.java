@@ -862,28 +862,20 @@ public class CmStatusBarView extends StatusBarView {
     Runnable mResetHome = new Runnable() {
         public void run() {
             if(mShowHome == 1 && mIsBottom) {
-               mHomeButton.setImageBitmap(null);
                mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_home_bottom);
             } else if(mShowHome == 1 && !mIsBottom) {
-               mHomeButton.setImageBitmap(null);
                mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_home_top);
             } else if(mShowHome == 2 && mIsBottom) {
-               mHomeButton.setImageBitmap(null);
                mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_back_bottom);
             } else if(mShowHome == 2 && !mIsBottom) {
-               mHomeButton.setImageBitmap(null);
                mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_back_top);
             } else if(mShowHome == 3 && mIsBottom) {
-               mHomeButton.setImageBitmap(null);
                mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_search_bottom);
             } else if(mShowHome == 3 && !mIsBottom) {
-               mHomeButton.setImageBitmap(null);
                mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_search_top);
             } else if(mShowHome == 4 && mIsBottom) {
-               mHomeButton.setImageBitmap(null);
                mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_menu_bottom);
             } else if(mShowHome == 4 && !mIsBottom) {
-               mHomeButton.setImageBitmap(null);
                mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_menu_top);
             }
         }
@@ -892,28 +884,20 @@ public class CmStatusBarView extends StatusBarView {
     Runnable mResetBack = new Runnable() {
         public void run() {
             if(mShowBack == 1 && mIsBottom) {
-               mBackButton.setImageBitmap(null);
                mBackButton.setBackgroundResource(R.drawable.ic_statusbar_home_bottom);
             } else if(mShowBack == 1 && !mIsBottom) {
-               mBackButton.setImageBitmap(null);
                mBackButton.setBackgroundResource(R.drawable.ic_statusbar_home_top);
             } else if(mShowBack == 2 && mIsBottom) {
-               mBackButton.setImageBitmap(null);
                mBackButton.setBackgroundResource(R.drawable.ic_statusbar_back_bottom);
             } else if(mShowBack == 2 && !mIsBottom) {
-               mBackButton.setImageBitmap(null);
                mBackButton.setBackgroundResource(R.drawable.ic_statusbar_back_top);
             } else if(mShowBack == 3 && mIsBottom) {
-               mBackButton.setImageBitmap(null);
                mBackButton.setBackgroundResource(R.drawable.ic_statusbar_search_bottom);
             } else if(mShowBack == 3 && !mIsBottom) {
-               mBackButton.setImageBitmap(null);
                mBackButton.setBackgroundResource(R.drawable.ic_statusbar_search_top);
             } else if(mShowBack == 4 && mIsBottom) {
-               mBackButton.setImageBitmap(null);
                mBackButton.setBackgroundResource(R.drawable.ic_statusbar_menu_bottom);
             } else if(mShowBack == 4 && !mIsBottom) {
-               mBackButton.setImageBitmap(null);
                mBackButton.setBackgroundResource(R.drawable.ic_statusbar_menu_top);
             }
         }
@@ -922,28 +906,20 @@ public class CmStatusBarView extends StatusBarView {
     Runnable mResetMenu = new Runnable() {
         public void run() {
             if(mShowMenu == 1 && mIsBottom) {
-               mMenuButton.setImageBitmap(null);
                mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_home_bottom);
             } else if(mShowMenu == 1 && !mIsBottom) {
-               mMenuButton.setImageBitmap(null);
                mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_home_top);
             } else if(mShowMenu == 2 && mIsBottom) {
-               mMenuButton.setImageBitmap(null);
                mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_back_bottom);
             } else if(mShowMenu == 2 && !mIsBottom) {
-               mMenuButton.setImageBitmap(null);
                mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_back_top);
             } else if(mShowMenu == 3 && mIsBottom) {
-               mMenuButton.setImageBitmap(null);
                mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_search_bottom);
             } else if(mShowMenu == 3 && !mIsBottom) {
-               mMenuButton.setImageBitmap(null);
                mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_search_top);
             } else if(mShowMenu == 4 && mIsBottom) {
-               mMenuButton.setImageBitmap(null);
                mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_menu_bottom);
             } else if(mShowMenu == 4 && !mIsBottom) {
-               mMenuButton.setImageBitmap(null);
                mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_menu_top);
             }
         }
@@ -952,28 +928,20 @@ public class CmStatusBarView extends StatusBarView {
     Runnable mResetSearch = new Runnable() {
         public void run() {
             if(mShowSearch == 1 && mIsBottom) {
-               mSearchButton.setImageBitmap(null);
                mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_home_bottom);
             } else if(mShowSearch == 1 && !mIsBottom) {
-               mSearchButton.setImageBitmap(null);
                mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_home_top);
             } else if(mShowSearch == 2 && mIsBottom) {
-               mSearchButton.setImageBitmap(null);
                mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_back_bottom);
             } else if(mShowSearch == 2 && !mIsBottom) {
-               mSearchButton.setImageBitmap(null);
                mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_back_top);
             } else if(mShowSearch == 3 && mIsBottom) {
-               mSearchButton.setImageBitmap(null);
                mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_search_bottom);
             } else if(mShowSearch == 3 && !mIsBottom) {
-               mSearchButton.setImageBitmap(null);
                mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_search_top);
             } else if(mShowSearch == 4 && mIsBottom) {
-               mSearchButton.setImageBitmap(null);
                mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_menu_bottom);
             } else if(mShowSearch == 4 && !mIsBottom) {
-               mSearchButton.setImageBitmap(null);
                mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_menu_top);
             }
         }
