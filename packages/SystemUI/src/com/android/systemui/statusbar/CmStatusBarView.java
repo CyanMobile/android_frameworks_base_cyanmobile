@@ -80,10 +80,6 @@ public class CmStatusBarView extends StatusBarView {
     int mShowBack;
     int mShowSearch;
     boolean mShowQuickNa;
-    private Bitmap mCustomHomeIcon;
-    private Bitmap mCustomMenuIcon;
-    private Bitmap mCustomBackIcon;
-    private Bitmap mCustomSearchIcon;
     ViewGroup mIcons;
 
     // used for fullscreen handling and broadcasts
@@ -711,7 +707,7 @@ public class CmStatusBarView extends StatusBarView {
 
     private void onFullscreenAttempt()
     {
-        if(mShowQuickNa || mShowSearch || mShowBack || mShowMenu || mShowHome)
+        if(mShowQuickNa || (mShowSearch != 0) || (mShowBack != 0) || (mShowMenu != 0) || (mShowHome != 0))
             mSeperator5.setVisibility(View.VISIBLE);
         mHideButton.setVisibility(View.VISIBLE);
         updateSoftButtons();
@@ -815,13 +811,13 @@ public class CmStatusBarView extends StatusBarView {
             return 0;
 
         int ret=0;
-        if(mShowHome)
+        if(mShowHome != 0)
             ret+=mHomeButton.getWidth();
-        if(mShowMenu)
+        if(mShowMenu != 0)
             ret+=mMenuButton.getWidth()+mSeperator1.getWidth();
-        if(mShowBack)
+        if(mShowBack != 0)
             ret+=mBackButton.getWidth()+mSeperator2.getWidth();
-        if(mShowSearch)
+        if(mShowSearch != 0)
             ret+=mSearchButton.getWidth()+mSeperator3.getWidth();
         if(mShowQuickNa)
             ret+=mQuickNaButton.getWidth()+mSeperator4.getWidth();

@@ -887,25 +887,25 @@ public class NavigationBarView extends LinearLayout {
             mQuickButton.setOnLongClickListener(
                     new ImageButton.OnLongClickListener() {
                         public boolean onLongClick(View v) {
-                          if(mShowQuick == 0) {
+                          if(mShowQuicker == 0) {
                              Intent intent = new Intent(Intent.ACTION_MAIN);
                              intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowQuick == 3) {
+                          } else if(mShowQuicker == 3) {
                              quickActionss.show(v);
 			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowQuick == 1) {
+                          } else if(mShowQuicker == 1) {
                              quickActionmm.show(v);
 			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowQuick == 2) {
+                          } else if(mShowQuicker == 2) {
                              quickActionrr.show(v);
 			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowQuick == 4) {
+                          } else if(mShowQuicker == 4) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;

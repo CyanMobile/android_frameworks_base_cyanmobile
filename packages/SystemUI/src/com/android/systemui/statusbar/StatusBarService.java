@@ -518,7 +518,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mStatusBarContainer = container;
         addStatusBarView();
         makeBatterySideBarViewLeft();
-        makeBatterySideBarViewRight()
+        makeBatterySideBarViewRight();
         addNavigationBar();
 
         // Lastly, call to the icon policy to install/update all the icons.
