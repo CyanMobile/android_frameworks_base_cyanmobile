@@ -370,7 +370,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.TRANSPARENT_NAVI_BAR), false, this);
             resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.NAVI_BAR_COLOR), false, this);       
+                    Settings.System.getUriFor(Settings.System.NAVI_BAR_COLOR), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.USE_SOFT_BUTTONS), false, this);
             onChange(true);
         }
 
@@ -420,6 +422,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.STATUS_BAR_NOTIF, 1) == 1);
             mShowCmBatterySideBar = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_BATTERY, 0) == 4);
+            mHasSoftButtons = (Settings.System.getInt(resolver,
+                    Settings.System.USE_SOFT_BUTTONS, 0) == 1);
             LogoStatusBar = (Settings.System.getInt(resolver,
                     Settings.System.CARRIER_LOGO_STATUS_BAR, 0) == 1);
             mClockColor = (Settings.System.getInt(resolver,
@@ -529,9 +533,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         // set up settings observer
         SettingsObserver settingsObserver = new SettingsObserver(mHandler);
         settingsObserver.observe();
-
-        // load config to determine if we want statusbar buttons
-        mHasSoftButtons = CmSystem.getDefaultBool(mContext, CmSystem.CM_HAS_SOFT_BUTTONS);
     }
 
     @Override
