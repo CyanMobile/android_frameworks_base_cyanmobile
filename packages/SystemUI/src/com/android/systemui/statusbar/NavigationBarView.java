@@ -529,11 +529,31 @@ public class NavigationBarView extends LinearLayout {
             mHomeButton.setOnLongClickListener(
                 new ImageButton.OnLongClickListener() {
                     public boolean onLongClick(View v) {
-                        Intent intent = new Intent(Intent.ACTION_MAIN);
-                        intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        getContext().startActivity(intent);
-                        return true;
+                          if(mShowHome == 1) {
+                             Intent intent = new Intent(Intent.ACTION_MAIN);
+                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
+                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                             getContext().startActivity(intent);
+                             return true;
+                          } else if(mShowHome == 4) {
+                             quickActionss.show(v);
+			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowHome == 2) {
+                             quickActionmm.show(v);
+			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowHome == 3) {
+                             quickActionrr.show(v);
+			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowHome == 5) {
+                             quickAction.show(v);
+			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else {
+                             return false;
+                          }
                     }
                 }
             );
@@ -593,9 +613,31 @@ public class NavigationBarView extends LinearLayout {
             mMenuButton.setOnLongClickListener(
                 new ImageButton.OnLongClickListener() {
                     public boolean onLongClick(View v) {
-                        quickActionss.show(v);
-			quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
-                        return true;
+                          if(mShowMenu == 1) {
+                             Intent intent = new Intent(Intent.ACTION_MAIN);
+                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
+                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                             getContext().startActivity(intent);
+                             return true;
+                          } else if(mShowMenu == 4) {
+                             quickActionss.show(v);
+			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowMenu == 2) {
+                             quickActionmm.show(v);
+			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowMenu == 3) {
+                             quickActionrr.show(v);
+			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowMenu == 5) {
+                             quickAction.show(v);
+			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else {
+                             return false;
+                          }
                     }
                 }
             );
@@ -655,9 +697,31 @@ public class NavigationBarView extends LinearLayout {
             mBackButton.setOnLongClickListener(
                     new ImageButton.OnLongClickListener() {
                         public boolean onLongClick(View v) {
-                            quickActionmm.show(v);
-			    quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
-                            return true;
+                          if(mShowBack == 1) {
+                             Intent intent = new Intent(Intent.ACTION_MAIN);
+                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
+                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                             getContext().startActivity(intent);
+                             return true;
+                          } else if(mShowBack == 4) {
+                             quickActionss.show(v);
+			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowBack == 2) {
+                             quickActionmm.show(v);
+			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowBack == 3) {
+                             quickActionrr.show(v);
+			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowBack == 5) {
+                             quickAction.show(v);
+			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else {
+                             return false;
+                          }
                         }
                     }
                 );
@@ -717,9 +781,31 @@ public class NavigationBarView extends LinearLayout {
             mSearchButton.setOnLongClickListener(
                     new ImageButton.OnLongClickListener() {
                         public boolean onLongClick(View v) {
-                            quickActionrr.show(v);
-			    quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
-                            return true;
+                          if(mShowSearch == 1) {
+                             Intent intent = new Intent(Intent.ACTION_MAIN);
+                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
+                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                             getContext().startActivity(intent);
+                             return true;
+                          } else if(mShowSearch == 4) {
+                             quickActionss.show(v);
+			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowSearch == 2) {
+                             quickActionmm.show(v);
+			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowSearch == 3) {
+                             quickActionrr.show(v);
+			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowSearch == 5) {
+                             quickAction.show(v);
+			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else {
+                             return false;
+                          }
                         }
                     }
                 );
@@ -801,9 +887,31 @@ public class NavigationBarView extends LinearLayout {
             mQuickButton.setOnLongClickListener(
                     new ImageButton.OnLongClickListener() {
                         public boolean onLongClick(View v) {
-                            quickAction.show(v);
-			    quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
-                            return true;
+                          if(mShowQuick == 0) {
+                             Intent intent = new Intent(Intent.ACTION_MAIN);
+                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
+                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                             getContext().startActivity(intent);
+                             return true;
+                          } else if(mShowQuick == 3) {
+                             quickActionss.show(v);
+			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowQuick == 1) {
+                             quickActionmm.show(v);
+			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowQuick == 2) {
+                             quickActionrr.show(v);
+			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowQuick == 4) {
+                             quickAction.show(v);
+			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else {
+                             return false;
+                          }
                         }
                     }
                 );

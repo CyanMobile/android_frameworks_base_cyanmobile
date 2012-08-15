@@ -75,11 +75,15 @@ public class CmStatusBarView extends StatusBarView {
     boolean mHasSoftButtons;  // toggled by config.xml
     boolean mIsBottom;   // this and below booleans toggled by system settings from cmparts
     boolean mIsLeft;
-    boolean mShowHome;
-    boolean mShowMenu;
-    boolean mShowBack;
-    boolean mShowSearch;
+    int mShowHome;
+    int mShowMenu;
+    int mShowBack;
+    int mShowSearch;
     boolean mShowQuickNa;
+    private Bitmap mCustomHomeIcon;
+    private Bitmap mCustomMenuIcon;
+    private Bitmap mCustomBackIcon;
+    private Bitmap mCustomSearchIcon;
     ViewGroup mIcons;
 
     // used for fullscreen handling and broadcasts
@@ -137,17 +141,17 @@ public class CmStatusBarView extends StatusBarView {
             mIsLeft = (Settings.System.getInt(resolver,
                     Settings.System.SOFT_BUTTONS_LEFT, defValue) == 1);
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SHOW_SOFT_HOME) ? 1 : 0);
-            mShowHome = (Settings.System.getInt(resolver,
-                    Settings.System.SOFT_BUTTON_SHOW_HOME, defValue) == 1);
+            mShowHome = Settings.System.getInt(resolver,
+                    Settings.System.SOFT_BUTTON_SHOW_HOME, defValue);
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SHOW_SOFT_MENU) ? 1 : 0);
-            mShowMenu = (Settings.System.getInt(resolver,
-                    Settings.System.SOFT_BUTTON_SHOW_MENU, defValue) == 1);
+            mShowMenu = Settings.System.getInt(resolver,
+                    Settings.System.SOFT_BUTTON_SHOW_MENU, defValue);
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SHOW_SOFT_BACK) ? 1 : 0);
-            mShowBack = (Settings.System.getInt(resolver,
-                    Settings.System.SOFT_BUTTON_SHOW_BACK, defValue) == 1);
+            mShowBack = Settings.System.getInt(resolver,
+                    Settings.System.SOFT_BUTTON_SHOW_BACK, defValue);
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SHOW_SOFT_SEARCH) ? 1 : 0);
-            mShowSearch = (Settings.System.getInt(resolver,
-                    Settings.System.SOFT_BUTTON_SHOW_SEARCH, defValue) == 1);
+            mShowSearch = Settings.System.getInt(resolver,
+                    Settings.System.SOFT_BUTTON_SHOW_SEARCH, defValue);
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SHOW_SOFT_QUICK_NA) ? 1 : 0);
             mShowQuickNa = (Settings.System.getInt(resolver,
                     Settings.System.SOFT_BUTTON_SHOW_QUICK_NA, defValue) == 1);
@@ -185,45 +189,152 @@ public class CmStatusBarView extends StatusBarView {
                     public void onClick(View v) {
                         if(mService.mExpanded)
                             mQuickNaButton.performClick();
+                      if(mShowHome == 1) {
                         if(DEBUG) Slog.i(TAG, "Home clicked");
                         simulateKeypress(KeyEvent.KEYCODE_HOME);
+                        updateSoftButtons();
+                        mHandler.postDelayed(mResetHome, 70);
+                      } else if(mShowHome == 4) {
+                        if(DEBUG) Slog.i(TAG, "Menu clicked");
+                        simulateKeypress(KeyEvent.KEYCODE_MENU);
+                        updateSoftButtons();
+                        mHandler.postDelayed(mResetHome, 70);
+                      } else if(mShowHome == 2) {
+                        if(DEBUG) Slog.i(TAG, "Back clicked");
+                        simulateKeypress(KeyEvent.KEYCODE_BACK);
+                        updateSoftButtons();
+                        mHandler.postDelayed(mResetHome, 70);
+                      } else if(mShowHome == 3) {
+                        if(DEBUG) Slog.i(TAG, "Search clicked");
+                        simulateKeypress(KeyEvent.KEYCODE_SEARCH);
+                        updateSoftButtons();
+                        mHandler.postDelayed(mResetHome, 70);
+                      }
                     }
                 }
             );
             mHomeButton.setOnLongClickListener(
-                new ImageButton.OnLongClickListener() {
-                    public boolean onLongClick(View v) {
-                        Intent intent = new Intent(Intent.ACTION_MAIN);
-                        intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        getContext().startActivity(intent);
-                        return true;
+                    new ImageButton.OnLongClickListener() {
+                        public boolean onLongClick(View v) {
+                          if(mShowHome == 1) {
+                             Intent intent = new Intent(Intent.ACTION_MAIN);
+                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
+                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                             getContext().startActivity(intent);
+                             return true;
+                          } else if(mShowHome == 4) {
+                             return false;
+                          } else if(mShowHome == 2) {
+                             simulateKeypress(KEYCODE_VIRTUAL_BACK_LONG);
+                             return true;
+                          } else if(mShowHome == 3) {
+                             runCustomAppSearch();
+                             return true;
+                          } else {
+                             return false;
+                          }
+                        }
                     }
-                }
-            );
+                );
             mMenuButton = (ImageButton)findViewById(R.id.status_menu);
             mMenuButton.setOnClickListener(
                 new ImageButton.OnClickListener() {
                     public void onClick(View v) {
+                      if(mShowMenu == 1) {
+                        if(DEBUG) Slog.i(TAG, "Home clicked");
+                        simulateKeypress(KeyEvent.KEYCODE_HOME);
+                        updateSoftButtons();
+                        mHandler.postDelayed(mResetMenu, 70);
+                      } else if(mShowMenu == 4) {
                         if(DEBUG) Slog.i(TAG, "Menu clicked");
                         simulateKeypress(KeyEvent.KEYCODE_MENU);
+                        updateSoftButtons();
+                        mHandler.postDelayed(mResetMenu, 70);
+                      } else if(mShowMenu == 2) {
+                        if(DEBUG) Slog.i(TAG, "Back clicked");
+                        simulateKeypress(KeyEvent.KEYCODE_BACK);
+                        updateSoftButtons();
+                        mHandler.postDelayed(mResetMenu, 70);
+                      } else if(mShowMenu == 3) {
+                        if(DEBUG) Slog.i(TAG, "Search clicked");
+                        simulateKeypress(KeyEvent.KEYCODE_SEARCH);
+                        updateSoftButtons();
+                        mHandler.postDelayed(mResetMenu, 70);
+                      }
                     }
                 }
             );
+            mMenuButton.setOnLongClickListener(
+                    new ImageButton.OnLongClickListener() {
+                        public boolean onLongClick(View v) {
+                          if(mShowMenu == 1) {
+                             Intent intent = new Intent(Intent.ACTION_MAIN);
+                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
+                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                             getContext().startActivity(intent);
+                             return true;
+                          } else if(mShowMenu == 4) {
+                             return false;
+                          } else if(mShowMenu == 2) {
+                             simulateKeypress(KEYCODE_VIRTUAL_BACK_LONG);
+                             return true;
+                          } else if(mShowMenu == 3) {
+                             runCustomAppSearch();
+                             return true;
+                          } else {
+                             return false;
+                          }
+                        }
+                    }
+                );
             mBackButton = (ImageButton)findViewById(R.id.status_back);
             mBackButton.setOnClickListener(
                 new ImageButton.OnClickListener() {
                     public void onClick(View v) {
+                      if(mShowBack == 1) {
+                        if(DEBUG) Slog.i(TAG, "Home clicked");
+                        simulateKeypress(KeyEvent.KEYCODE_HOME);
+                        updateSoftButtons();
+                        mHandler.postDelayed(mResetBack, 70);
+                      } else if(mShowBack == 4) {
+                        if(DEBUG) Slog.i(TAG, "Menu clicked");
+                        simulateKeypress(KeyEvent.KEYCODE_MENU);
+                        updateSoftButtons();
+                        mHandler.postDelayed(mResetBack, 70);
+                      } else if(mShowBack == 2) {
                         if(DEBUG) Slog.i(TAG, "Back clicked");
                         simulateKeypress(KeyEvent.KEYCODE_BACK);
+                        updateSoftButtons();
+                        mHandler.postDelayed(mResetBack, 70);
+                      } else if(mShowBack == 3) {
+                        if(DEBUG) Slog.i(TAG, "Search clicked");
+                        simulateKeypress(KeyEvent.KEYCODE_SEARCH);
+                        updateSoftButtons();
+                        mHandler.postDelayed(mResetBack, 70);
+                      }
                     }
                 }
             );
             mBackButton.setOnLongClickListener(
                     new ImageButton.OnLongClickListener() {
                         public boolean onLongClick(View v) {
-                            simulateKeypress(KEYCODE_VIRTUAL_BACK_LONG);
-                            return true;
+                          if(mShowBack == 1) {
+                             Intent intent = new Intent(Intent.ACTION_MAIN);
+                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
+                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                             getContext().startActivity(intent);
+                             return true;
+                          } else if(mShowBack == 4) {
+                             return false;
+                          } else if(mShowBack == 2) {
+                             simulateKeypress(KEYCODE_VIRTUAL_BACK_LONG);
+                             return true;
+                          } else if(mShowBack == 3) {
+                             runCustomAppSearch();
+                             return true;
+                          } else {
+                             return false;
+                          }
                         }
                     }
                 );
@@ -231,23 +342,50 @@ public class CmStatusBarView extends StatusBarView {
             mSearchButton.setOnClickListener(
                 new ImageButton.OnClickListener() {
                     public void onClick(View v) {
+                      if(mShowSearch == 1) {
+                        if(DEBUG) Slog.i(TAG, "Home clicked");
+                        simulateKeypress(KeyEvent.KEYCODE_HOME);
+                        updateSoftButtons();
+                        mHandler.postDelayed(mResetSearch, 70);
+                      } else if(mShowSearch == 4) {
+                        if(DEBUG) Slog.i(TAG, "Menu clicked");
+                        simulateKeypress(KeyEvent.KEYCODE_MENU);
+                        updateSoftButtons();
+                        mHandler.postDelayed(mResetSearch, 70);
+                      } else if(mShowSearch == 2) {
+                        if(DEBUG) Slog.i(TAG, "Back clicked");
+                        simulateKeypress(KeyEvent.KEYCODE_BACK);
+                        updateSoftButtons();
+                        mHandler.postDelayed(mResetSearch, 70);
+                      } else if(mShowSearch == 3) {
                         if(DEBUG) Slog.i(TAG, "Search clicked");
-                        CmStatusBarView.this.simulateKeypress(KeyEvent.KEYCODE_SEARCH);
+                        simulateKeypress(KeyEvent.KEYCODE_SEARCH);
+                        updateSoftButtons();
+                        mHandler.postDelayed(mResetSearch, 70);
+                      }
                     }
                 }
             );
             mSearchButton.setOnLongClickListener(
                     new ImageButton.OnLongClickListener() {
                         public boolean onLongClick(View v) {
-                            // start custom app
-                            boolean mCustomLongSearchAppToggle=(Settings.System.getInt(getContext().getContentResolver(),
-                                    Settings.System.USE_CUSTOM_LONG_SEARCH_APP_TOGGLE, 0) == 1);
-
-                            if(mCustomLongSearchAppToggle){
-                                runCustomApp(Settings.System.getString(getContext().getContentResolver(),
-                                    Settings.System.USE_CUSTOM_LONG_SEARCH_APP_ACTIVITY));
-                            }
-                            return true;
+                          if(mShowSearch == 1) {
+                             Intent intent = new Intent(Intent.ACTION_MAIN);
+                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
+                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                             getContext().startActivity(intent);
+                             return true;
+                          } else if(mShowSearch == 4) {
+                             return false;
+                          } else if(mShowSearch == 2) {
+                             simulateKeypress(KEYCODE_VIRTUAL_BACK_LONG);
+                             return true;
+                          } else if(mShowSearch == 3) {
+                             runCustomAppSearch();
+                             return true;
+                          } else {
+                             return false;
+                          }
                         }
                     }
                 );
@@ -606,36 +744,40 @@ public class CmStatusBarView extends StatusBarView {
         mQuickNaButton.setVisibility(View.VISIBLE);
 
         // now toggle off unneeded stuff
-        if(!mShowHome){
+        if (mShowHome == 0) {
             mHomeButton.setVisibility(View.GONE);
             mSeperator1.setVisibility(View.GONE);
         }
-        if(!mShowMenu){
+
+        if (mShowMenu == 0) {
             mMenuButton.setVisibility(View.GONE);
             mSeperator2.setVisibility(View.GONE);
         }
-        if(!mShowBack){
+
+        if (mShowBack == 0) {
             mBackButton.setVisibility(View.GONE);
             mSeperator3.setVisibility(View.GONE);
         }
-        if(!mShowSearch){
+
+        if (mShowSearch == 0) {
             mSearchButton.setVisibility(View.GONE);
             mSeperator4.setVisibility(View.GONE);
         }
-        if(!mShowQuickNa)
+
+        if (!mShowQuickNa)
             mQuickNaButton.setVisibility(View.GONE);
 
         // adjust seperators
-        if(!mShowQuickNa)
+        if (!mShowQuickNa)
             mSeperator4.setVisibility(View.GONE);
-        if(!mShowQuickNa && !mShowSearch)
+        if (!mShowQuickNa && (mShowSearch == 0))
             mSeperator3.setVisibility(View.GONE);
-        if(!mShowQuickNa && !mShowSearch && !mShowBack)
+        if (!mShowQuickNa && (mShowSearch == 0) && (mShowBack == 0))
             mSeperator2.setVisibility(View.GONE);
-        if(!mShowQuickNa && !mShowSearch && !mShowBack && !mShowMenu)
+        if (!mShowQuickNa && (mShowSearch == 0) && (mShowBack == 0) && (mShowMenu == 0))
             mSeperator1.setVisibility(View.GONE);
         // nothing displayed at all
-        if(!mShowQuickNa && !mShowSearch && !mShowBack && !mShowMenu && !mShowHome && mHideButton.getVisibility()==View.GONE){
+        if (!mShowQuickNa && (mShowSearch == 0) && (mShowBack == 0) && (mShowMenu == 0) && (mShowHome == 0) && mHideButton.getVisibility()==View.GONE) {
             mEdgeLeft.setVisibility(View.GONE);
             mEdgeRight.setVisibility(View.GONE);
         }
@@ -643,13 +785,9 @@ public class CmStatusBarView extends StatusBarView {
         // replace resources depending on top or bottom bar
         if(mIsBottom){
             mEdgeLeft.setBackgroundResource(R.drawable.ic_statusbar_edge_right_bottom);
-            mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_home_bottom);
             mSeperator1.setBackgroundResource(R.drawable.ic_statusbar_sep_bottom);
-            mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_menu_bottom);
             mSeperator2.setBackgroundResource(R.drawable.ic_statusbar_sep_bottom);
-            mBackButton.setBackgroundResource(R.drawable.ic_statusbar_back_bottom);
             mSeperator3.setBackgroundResource(R.drawable.ic_statusbar_sep_bottom);
-            mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_search_bottom);
             mSeperator4.setBackgroundResource(R.drawable.ic_statusbar_sep_bottom);
             mQuickNaButton.setBackgroundResource(R.drawable.ic_statusbar_na_up_bottom);
             mSeperator5.setBackgroundResource(R.drawable.ic_statusbar_sep_bottom);
@@ -657,19 +795,19 @@ public class CmStatusBarView extends StatusBarView {
             mEdgeRight.setBackgroundResource(R.drawable.ic_statusbar_edge_left_bottom);
         }else{
             mEdgeLeft.setBackgroundResource(R.drawable.ic_statusbar_edge_right_top);
-            mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_home_top);
             mSeperator1.setBackgroundResource(R.drawable.ic_statusbar_sep_top);
-            mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_menu_top);
             mSeperator2.setBackgroundResource(R.drawable.ic_statusbar_sep_top);
-            mBackButton.setBackgroundResource(R.drawable.ic_statusbar_back_top);
             mSeperator3.setBackgroundResource(R.drawable.ic_statusbar_sep_top);
-            mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_search_top);
             mSeperator4.setBackgroundResource(R.drawable.ic_statusbar_sep_top);
             mQuickNaButton.setBackgroundResource(R.drawable.ic_statusbar_na_up_top);
             mSeperator5.setBackgroundResource(R.drawable.ic_statusbar_sep_top);
             mHideButton.setBackgroundResource(R.drawable.ic_statusbar_hide_top);
             mEdgeRight.setBackgroundResource(R.drawable.ic_statusbar_edge_left_top);
         }
+        mHandler.postDelayed(mResetHome, 10);
+        mHandler.postDelayed(mResetMenu, 10);
+        mHandler.postDelayed(mResetBack, 10);
+        mHandler.postDelayed(mResetSearch, 10);
     }
 
     public int getSoftButtonsWidth() {
@@ -695,6 +833,17 @@ public class CmStatusBarView extends StatusBarView {
         return ret;
     }
 
+    private void runCustomAppSearch() {
+        // start custom app
+        boolean mCustomLongSearchAppToggle=(Settings.System.getInt(getContext().getContentResolver(),
+               Settings.System.USE_CUSTOM_LONG_SEARCH_APP_TOGGLE, 0) == 1);
+
+        if(mCustomLongSearchAppToggle){
+              runCustomApp(Settings.System.getString(getContext().getContentResolver(),
+                      Settings.System.USE_CUSTOM_LONG_SEARCH_APP_ACTIVITY));
+        }
+    }
+
     private void runCustomApp(String uri) {
         if (uri != null) {
             try {
@@ -709,6 +858,126 @@ public class CmStatusBarView extends StatusBarView {
             }
         }
     }
+
+    Runnable mResetHome = new Runnable() {
+        public void run() {
+            if(mShowHome == 1 && mIsBottom) {
+               mHomeButton.setImageBitmap(null);
+               mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_home_bottom);
+            } else if(mShowHome == 1 && !mIsBottom) {
+               mHomeButton.setImageBitmap(null);
+               mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_home_top);
+            } else if(mShowHome == 2 && mIsBottom) {
+               mHomeButton.setImageBitmap(null);
+               mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_back_bottom);
+            } else if(mShowHome == 2 && !mIsBottom) {
+               mHomeButton.setImageBitmap(null);
+               mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_back_top);
+            } else if(mShowHome == 3 && mIsBottom) {
+               mHomeButton.setImageBitmap(null);
+               mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_search_bottom);
+            } else if(mShowHome == 3 && !mIsBottom) {
+               mHomeButton.setImageBitmap(null);
+               mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_search_top);
+            } else if(mShowHome == 4 && mIsBottom) {
+               mHomeButton.setImageBitmap(null);
+               mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_menu_bottom);
+            } else if(mShowHome == 4 && !mIsBottom) {
+               mHomeButton.setImageBitmap(null);
+               mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_menu_top);
+            }
+        }
+    };
+
+    Runnable mResetBack = new Runnable() {
+        public void run() {
+            if(mShowBack == 1 && mIsBottom) {
+               mBackButton.setImageBitmap(null);
+               mBackButton.setBackgroundResource(R.drawable.ic_statusbar_home_bottom);
+            } else if(mShowBack == 1 && !mIsBottom) {
+               mBackButton.setImageBitmap(null);
+               mBackButton.setBackgroundResource(R.drawable.ic_statusbar_home_top);
+            } else if(mShowBack == 2 && mIsBottom) {
+               mBackButton.setImageBitmap(null);
+               mBackButton.setBackgroundResource(R.drawable.ic_statusbar_back_bottom);
+            } else if(mShowBack == 2 && !mIsBottom) {
+               mBackButton.setImageBitmap(null);
+               mBackButton.setBackgroundResource(R.drawable.ic_statusbar_back_top);
+            } else if(mShowBack == 3 && mIsBottom) {
+               mBackButton.setImageBitmap(null);
+               mBackButton.setBackgroundResource(R.drawable.ic_statusbar_search_bottom);
+            } else if(mShowBack == 3 && !mIsBottom) {
+               mBackButton.setImageBitmap(null);
+               mBackButton.setBackgroundResource(R.drawable.ic_statusbar_search_top);
+            } else if(mShowBack == 4 && mIsBottom) {
+               mBackButton.setImageBitmap(null);
+               mBackButton.setBackgroundResource(R.drawable.ic_statusbar_menu_bottom);
+            } else if(mShowBack == 4 && !mIsBottom) {
+               mBackButton.setImageBitmap(null);
+               mBackButton.setBackgroundResource(R.drawable.ic_statusbar_menu_top);
+            }
+        }
+    };
+
+    Runnable mResetMenu = new Runnable() {
+        public void run() {
+            if(mShowMenu == 1 && mIsBottom) {
+               mMenuButton.setImageBitmap(null);
+               mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_home_bottom);
+            } else if(mShowMenu == 1 && !mIsBottom) {
+               mMenuButton.setImageBitmap(null);
+               mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_home_top);
+            } else if(mShowMenu == 2 && mIsBottom) {
+               mMenuButton.setImageBitmap(null);
+               mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_back_bottom);
+            } else if(mShowMenu == 2 && !mIsBottom) {
+               mMenuButton.setImageBitmap(null);
+               mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_back_top);
+            } else if(mShowMenu == 3 && mIsBottom) {
+               mMenuButton.setImageBitmap(null);
+               mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_search_bottom);
+            } else if(mShowMenu == 3 && !mIsBottom) {
+               mMenuButton.setImageBitmap(null);
+               mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_search_top);
+            } else if(mShowMenu == 4 && mIsBottom) {
+               mMenuButton.setImageBitmap(null);
+               mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_menu_bottom);
+            } else if(mShowMenu == 4 && !mIsBottom) {
+               mMenuButton.setImageBitmap(null);
+               mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_menu_top);
+            }
+        }
+    };
+
+    Runnable mResetSearch = new Runnable() {
+        public void run() {
+            if(mShowSearch == 1 && mIsBottom) {
+               mSearchButton.setImageBitmap(null);
+               mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_home_bottom);
+            } else if(mShowSearch == 1 && !mIsBottom) {
+               mSearchButton.setImageBitmap(null);
+               mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_home_top);
+            } else if(mShowSearch == 2 && mIsBottom) {
+               mSearchButton.setImageBitmap(null);
+               mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_back_bottom);
+            } else if(mShowSearch == 2 && !mIsBottom) {
+               mSearchButton.setImageBitmap(null);
+               mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_back_top);
+            } else if(mShowSearch == 3 && mIsBottom) {
+               mSearchButton.setImageBitmap(null);
+               mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_search_bottom);
+            } else if(mShowSearch == 3 && !mIsBottom) {
+               mSearchButton.setImageBitmap(null);
+               mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_search_top);
+            } else if(mShowSearch == 4 && mIsBottom) {
+               mSearchButton.setImageBitmap(null);
+               mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_menu_bottom);
+            } else if(mShowSearch == 4 && !mIsBottom) {
+               mSearchButton.setImageBitmap(null);
+               mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_menu_top);
+            }
+        }
+    };
 
     /**
      * Runnable to hold simulate a keypress.
