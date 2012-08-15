@@ -28,9 +28,9 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_C_INCLUDES := \
 	$(call include-path-for, corecg graphics)
 
-## ifeq ($(TARGET_BOOTANIMATION_PRELOAD),true)
+ifeq ($(TARGET_BOOTANIMATION_PRELOAD),true)
     LOCAL_CFLAGS += -DPRELOAD_BOOTANIMATION
-## endif
+endif
 
 ifeq ($(TARGET_BOOTANIMATION_TEXTURE_CACHE),true)
     LOCAL_CFLAGS += -DNO_TEXTURE_CACHE=0
