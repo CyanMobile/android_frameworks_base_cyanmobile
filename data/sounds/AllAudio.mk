@@ -16,7 +16,3 @@
 
 $(call inherit-product, frameworks/base/data/sounds/OriginalAudio.mk)
 $(call inherit-product, frameworks/base/data/sounds/cm_audio.mk)
-$(call inherit-product, frameworks/base/data/sounds/AudioPackage2.mk)
-$(call inherit-product, frameworks/base/data/sounds/AudioPackage3.mk)
-$(call inherit-product, frameworks/base/data/sounds/AudioPackage4.mk)
-$(call inherit-product, frameworks/base/data/sounds/AudioPackage5.mk)
