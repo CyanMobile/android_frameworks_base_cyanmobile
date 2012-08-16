@@ -271,7 +271,8 @@ public class LocationManager {
         provider.setAccuracy(info.getInt("accuracy"));
         return provider;
     }
-    
+
+    /** @hide */
     public void setGPSSource(String device) {
         try {
             mService.setGPSSource(device);
