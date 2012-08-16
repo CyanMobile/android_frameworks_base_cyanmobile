@@ -29,6 +29,7 @@
         android:id="@+id/centerClockex"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/title_bar_portrait"
         android:orientation="horizontal" >
 
         <com.android.systemui.statusbar.PowerClock
@@ -45,6 +46,18 @@
             android:shadowDy="0"
             android:shadowRadius="3.0"
             android:layout_weight="1.0" />
+
+        <ImageView android:id="@+id/settingIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical|right"
+            android:layout_alignParentRight="true"
+            android:scaleType="fitCenter"
+            android:layout_toRightOf="@+id/centerCloex"
+            android:layout_alignBottom="@+id/centerCloex"
+            android:layout_weight="1.0"
+            android:src="@drawable/ic_sysbar_set"
+            />
      </LinearLayout>
 
     <LinearLayout

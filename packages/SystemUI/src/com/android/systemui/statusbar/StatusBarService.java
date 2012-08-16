@@ -90,7 +90,6 @@ import android.widget.LinearLayout;
 import android.widget.RemoteViews;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.ImageView;
 import android.net.Uri;
 import java.io.File;
 
@@ -150,6 +149,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     LinearLayout mLeftClock;
     IconMerger mNotificationIcons;
     LinearLayout mStatusIcons;
+    ImageView mSettingsIconButton;
 
     // expanded notifications
     Dialog mExpandedDialog;
@@ -769,6 +769,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 	mMusicToggleButton = (ImageView)mExpandedView.findViewById(R.id.music_toggle_button);
         mMusicToggleButton.setOnClickListener(mMusicToggleButtonListener);
         mCenterClockex = (LinearLayout)mExpandedView.findViewById(R.id.centerClock);
+        mSettingsIconButton = (ImageView)mExpandedView.findViewById(R.id.settingIcon);
+        mSettingsIconButton.setOnClickListener(mSettingsIconButtonListener);
 
         if (mStatusBarCarrierLogo) {
             if (LogoStatusBar) {
@@ -1305,6 +1307,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         PowerWidgetFour powerFour=(PowerWidgetFour)mExpandedView.findViewById(R.id.exp_power_stat_four);
         LinearLayout powerClockex=(LinearLayout)mExpandedView.findViewById(R.id.centerClockex);
         PowerClock powClock=(PowerClock)mExpandedView.findViewById(R.id.centerCloex);
+        ImageView settIcon = (ImageView)mExpandedView.findViewById(R.id.settingIcon);
         //RecentApps recent=(RecentApps)mExpandedView.findViewById(R.id.recent_apps);
         //FrameLayout notifications=(FrameLayout)mExpandedView.findViewById(R.id.notifications);
 
@@ -1317,6 +1320,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         //powerAndCarrier.removeView(recent);
         mExpandedView.removeView(powerAndCarrier);
         powerClockex.removeView(powClock);
+        powerClockex.removeView(settIcon);
         mExpandedView.removeView(powerClockex);
 
         // readd in right order
@@ -1328,6 +1332,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         powerAndCarrier.addView(powerOne, mBottomBar && !mCompactCarrier ? 1 : 0);
         powerAndCarrier.addView(power, mBottomBar && !mCompactCarrier ? 1 : 0);
         mExpandedView.addView(powerClockex, mBottomBar ? 1 : 0);
+        powerClockex.addView(settIcon, mBottomBar && !mCompactCarrier ? 1 : 0);
         powerClockex.addView(powClock, mBottomBar && !mCompactCarrier ? 1 : 0);
 
         // Remove all notification views
@@ -2782,12 +2787,24 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     };
 
+    private View.OnClickListener mSettingsIconButtonListener = new View.OnClickListener() {
+        public void onClick(View v) {
+                Intent intent = new Intent(Intent.ACTION_MAIN);
+                intent.setClassName("com.android.settings", "com.android.settings.MainSettings");
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                v.getContext().startActivity(intent);
+                animateCollapse();
+        }
+    };
+
     private View.OnClickListener mSettingsButtonListener = new View.OnClickListener() {
         public void onClick(View v) {
             if (Settings.System.getInt(getContentResolver(),
                       Settings.System.ENABLE_SETTING_BUTTON, 0) == 1) {
-                v.getContext().startActivity(new Intent(Settings.ACTION_SETTINGS)
-                          .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                Intent intent = new Intent(Intent.ACTION_MAIN);
+                intent.setClassName("com.android.settings", "com.android.settings.MainSettings");
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                v.getContext().startActivity(intent);
                 animateCollapse();
             } else if (Settings.System.getInt(getContentResolver(),
                       Settings.System.ENABLE_SETTING_BUTTON, 0) == 2) {
