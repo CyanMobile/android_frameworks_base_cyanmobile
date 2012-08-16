@@ -130,16 +130,15 @@ public final class DateView extends TextView {
     private final void updateClock() {
         Date now = new Date();
         Resources res = Resources.getSystem();
-        setText(DateFormat.format(res.getString(com.android.internal.R.string.abbrev_wday_month_day_year),now));
+        setText(DateFormat.format("EEEE, MMMM d, yyyy",now));
         setTextSize(mCarrierSize);
-        
     }
 
     private void updateSettings(){
         ContentResolver resolver = mContext.getContentResolver();
 
         int mCarrierSizeval = Settings.System.getInt(resolver,
-                Settings.System.STATUSBAR_ICON_FONT_SIZE, 10); // this value size for font
+                Settings.System.STATUSBAR_ICON_FONT_SIZE, 10);
         int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, mCarrierSizeval, mContext.getResources().getDisplayMetrics());
         mCarrierSize = CarrierSizepx;
 

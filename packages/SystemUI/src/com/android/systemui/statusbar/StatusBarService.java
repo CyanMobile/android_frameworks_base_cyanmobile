@@ -1870,17 +1870,17 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             if (mShowCmBatteryStatusBar) {
                 mCmBatteryStatusBar.setVisibility(View.GONE);
             }
-            mIcons.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
-            mCenterClock.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
-            mLeftClock.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
-            mCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
-            mCenterCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
-            mLeftCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
-            mCarrierLogoLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
-            mCarrierLogoCenterLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
-            mCarrierLogoLeftLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
+            mIcons.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
+            mCenterClock.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
+            mLeftClock.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
+            mCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
+            mCenterCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
+            mLeftCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
+            mCarrierLogoLayout.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
+            mCarrierLogoCenterLayout.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
+            mCarrierLogoLeftLayout.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
             if (mShowCmBatteryStatusBar) {
-                mCmBatteryStatusBar.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
+                mCmBatteryStatusBar.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
             }
         }
     }
@@ -1978,17 +1978,17 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             if (mShowCmBatteryStatusBar) {
                 mCmBatteryStatusBar.setVisibility(View.VISIBLE);
             }
-            mIcons.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
-            mCenterClock.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
-            mLeftClock.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
-            mCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
-            mCenterCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
-            mLeftCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
-            mCarrierLogoLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
-            mCarrierLogoCenterLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
-            mCarrierLogoLeftLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
+            mIcons.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
+            mCenterClock.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
+            mLeftClock.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
+            mCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
+            mCenterCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
+            mLeftCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
+            mCarrierLogoLayout.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
+            mCarrierLogoCenterLayout.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
+            mCarrierLogoLeftLayout.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
             if (mShowCmBatteryStatusBar) {
-                mCmBatteryStatusBar.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
+                mCmBatteryStatusBar.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
             }
         }
 

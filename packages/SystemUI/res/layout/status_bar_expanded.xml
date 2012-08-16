@@ -32,10 +32,9 @@
         android:orientation="horizontal" >
 
         <com.android.systemui.statusbar.PowerClock
-            android:gravity="center"
             android:id="@+id/centerCloex"
-            android:layout_gravity="center"
-            android:layout_centerInParent="true"
+            android:gravity="center_vertical|left"
+            android:layout_alignParentLeft="true"
             android:layout_width="wrap_content"
             android:layout_height="fill_parent"
             android:ellipsize="none"
