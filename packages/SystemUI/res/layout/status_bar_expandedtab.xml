@@ -32,6 +32,29 @@
     android:layout_weight="1"
     android:id="@+id/notifications_layout" >
 
+    <LinearLayout
+        android:id="@+id/centerClockex"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <com.android.systemui.statusbar.PowerClock
+            android:gravity="center"
+            android:id="@+id/centerCloex"
+            android:layout_gravity="center"
+            android:layout_centerInParent="true"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:ellipsize="none"
+            android:textSize="36sp"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:shadowColor="#C0000000"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="3.0"
+            android:layout_weight="1.0" />
+     </LinearLayout>
+
     <FrameLayout android:id="@+id/notifications"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -220,6 +243,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
+
+        <!-- <com.android.systemui.statusbar.RecentApps android:id="@+id/recent_apps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            /> -->
 
         <com.android.systemui.statusbar.MusicControls android:id="@+id/exp_music_controls"
              android:layout_width="match_parent"

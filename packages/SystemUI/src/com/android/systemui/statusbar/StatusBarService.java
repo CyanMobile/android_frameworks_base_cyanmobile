@@ -146,6 +146,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     // icons
     LinearLayout mIcons;
     LinearLayout mCenterClock;
+    LinearLayout mCenterClockex;
     LinearLayout mLeftClock;
     IconMerger mNotificationIcons;
     LinearLayout mStatusIcons;
@@ -767,6 +768,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mBottomNotificationLinearLayout = (LinearLayout)mExpandedView.findViewById(R.id.bottomNotificationLinearLayout);
 	mMusicToggleButton = (ImageView)mExpandedView.findViewById(R.id.music_toggle_button);
         mMusicToggleButton.setOnClickListener(mMusicToggleButtonListener);
+        mCenterClockex = (LinearLayout)mExpandedView.findViewById(R.id.centerClock);
 
         if (mStatusBarCarrierLogo) {
             if (LogoStatusBar) {
@@ -1301,6 +1303,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         PowerWidgetTwo powerTwo=(PowerWidgetTwo)mExpandedView.findViewById(R.id.exp_power_stat_two);
         PowerWidgetThree powerThree=(PowerWidgetThree)mExpandedView.findViewById(R.id.exp_power_stat_three);
         PowerWidgetFour powerFour=(PowerWidgetFour)mExpandedView.findViewById(R.id.exp_power_stat_four);
+        LinearLayout powerClockex=(LinearLayout)mExpandedView.findViewById(R.id.centerClockex);
+        PowerClock powClock=(PowerClock)mExpandedView.findViewById(R.id.centerCloex);
+        //RecentApps recent=(RecentApps)mExpandedView.findViewById(R.id.recent_apps);
         //FrameLayout notifications=(FrameLayout)mExpandedView.findViewById(R.id.notifications);
 
         // remove involved views
@@ -1311,6 +1316,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         powerAndCarrier.removeView(powerFour);
         //powerAndCarrier.removeView(recent);
         mExpandedView.removeView(powerAndCarrier);
+        powerClockex.removeView(powClock);
+        mExpandedView.removeView(powerClockex);
 
         // readd in right order
         mExpandedView.addView(powerAndCarrier, mBottomBar ? 1 : 0);
@@ -1320,6 +1327,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         powerAndCarrier.addView(powerTwo, mBottomBar && !mCompactCarrier ? 1 : 0);
         powerAndCarrier.addView(powerOne, mBottomBar && !mCompactCarrier ? 1 : 0);
         powerAndCarrier.addView(power, mBottomBar && !mCompactCarrier ? 1 : 0);
+        mExpandedView.addView(powerClockex, mBottomBar ? 1 : 0);
+        powerClockex.addView(powClock, mBottomBar && !mCompactCarrier ? 1 : 0);
 
         // Remove all notification views
         mNotificationLinearLayout.removeAllViews();
@@ -1849,6 +1858,30 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         if (!mTicking) {
             setDateViewVisibility(true, com.android.internal.R.anim.fade_in);
 	    setNotificationIconVisibility(false, com.android.internal.R.anim.fade_out);
+            mIcons.setVisibility(View.GONE);
+            mCenterClock.setVisibility(View.GONE);
+            mLeftClock.setVisibility(View.GONE);
+            mCarrierLabelStatusBarLayout.setVisibility(View.GONE);
+            mCenterCarrierLabelStatusBarLayout.setVisibility(View.GONE);
+            mLeftCarrierLabelStatusBarLayout.setVisibility(View.GONE);
+            mCarrierLogoLayout.setVisibility(View.GONE);
+            mCarrierLogoCenterLayout.setVisibility(View.GONE);
+            mCarrierLogoLeftLayout.setVisibility(View.GONE);
+            if (mShowCmBatteryStatusBar) {
+                mCmBatteryStatusBar.setVisibility(View.GONE);
+            }
+            mIcons.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
+            mCenterClock.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
+            mLeftClock.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
+            mCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
+            mCenterCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
+            mLeftCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
+            mCarrierLogoLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
+            mCarrierLogoCenterLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
+            mCarrierLogoLeftLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
+            if (mShowCmBatteryStatusBar) {
+                mCmBatteryStatusBar.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
+            }
         }
     }
 
@@ -1933,6 +1966,30 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
         if (mDateView.getVisibility() == View.VISIBLE) {
             setDateViewVisibility(false, com.android.internal.R.anim.fade_out);
+            mIcons.setVisibility(View.VISIBLE);
+            mCenterClock.setVisibility(View.VISIBLE);
+            mLeftClock.setVisibility(View.VISIBLE);
+            mCarrierLabelStatusBarLayout.setVisibility(View.VISIBLE);
+            mCenterCarrierLabelStatusBarLayout.setVisibility(View.VISIBLE);
+            mLeftCarrierLabelStatusBarLayout.setVisibility(View.VISIBLE);
+            mCarrierLogoLayout.setVisibility(View.VISIBLE);
+            mCarrierLogoCenterLayout.setVisibility(View.VISIBLE);
+            mCarrierLogoLeftLayout.setVisibility(View.VISIBLE);
+            if (mShowCmBatteryStatusBar) {
+                mCmBatteryStatusBar.setVisibility(View.VISIBLE);
+            }
+            mIcons.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
+            mCenterClock.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
+            mLeftClock.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
+            mCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
+            mCenterCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
+            mLeftCarrierLabelStatusBarLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
+            mCarrierLogoLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
+            mCarrierLogoCenterLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
+            mCarrierLogoLeftLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
+            if (mShowCmBatteryStatusBar) {
+                mCmBatteryStatusBar.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
+            }
         }
 
         if (!mExpanded) {
@@ -2337,6 +2394,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         void tickerStarting() {
             if (SPEW) Slog.d(TAG, "tickerStarting");
             mTicking = true;
+          if (!mExpandedVisible) {
             mIcons.setVisibility(View.GONE);
             mCenterClock.setVisibility(View.GONE);
             mLeftClock.setVisibility(View.GONE);
@@ -2349,8 +2407,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             if (mShowCmBatteryStatusBar) {
                 mCmBatteryStatusBar.setVisibility(View.GONE);
             }
+          }
             mTickerView.setVisibility(View.VISIBLE);
             mTickerView.startAnimation(loadAnim(com.android.internal.R.anim.push_up_in, null));
+          if (!mExpandedVisible) {
             mIcons.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
             mCenterClock.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
             mLeftClock.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
@@ -2363,6 +2423,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             if (mShowCmBatteryStatusBar) {
                 mCmBatteryStatusBar.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
             }
+          }
             if (mExpandedVisible) {
                 setDateViewVisibility(false, com.android.internal.R.anim.push_up_out);
             }
@@ -2372,6 +2433,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         void tickerDone() {
             if (SPEW) Slog.d(TAG, "tickerDone");
             mTicking = false;
+          if (!mExpandedVisible) {
             mIcons.setVisibility(View.VISIBLE);
             mCenterClock.setVisibility(View.VISIBLE);
             mLeftClock.setVisibility(View.VISIBLE);
@@ -2384,7 +2446,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             if (mShowCmBatteryStatusBar) {
                 mCmBatteryStatusBar.setVisibility(View.VISIBLE);
             }
+          }
             mTickerView.setVisibility(View.GONE);
+          if (!mExpandedVisible) {
             mIcons.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
             mCenterClock.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
             mLeftClock.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
@@ -2397,6 +2461,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             if (mShowCmBatteryStatusBar) {
                 mCmBatteryStatusBar.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
             }
+          }
             mTickerView.startAnimation(loadAnim(com.android.internal.R.anim.push_down_out, null));
             if (mExpandedVisible) {
                 setDateViewVisibility(true, com.android.internal.R.anim.push_down_in);
@@ -2406,6 +2471,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         void tickerHalting() {
             if (SPEW) Slog.d(TAG, "tickerHalting");
             mTicking = false;
+          if (!mExpandedVisible) {
             mIcons.setVisibility(View.VISIBLE);
             mCenterClock.setVisibility(View.VISIBLE);
             mLeftClock.setVisibility(View.VISIBLE);
@@ -2418,7 +2484,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             if (mShowCmBatteryStatusBar) {
                 mCmBatteryStatusBar.setVisibility(View.VISIBLE);
             }
+          }
             mTickerView.setVisibility(View.GONE);
+          if (!mExpandedVisible) {
             mIcons.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
             mCenterClock.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
             mLeftClock.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
@@ -2431,6 +2499,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             if (mShowCmBatteryStatusBar) {
                 mCmBatteryStatusBar.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
             }
+          }
             mTickerView.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
             if (mExpandedVisible) {
                 setDateViewVisibility(true, com.android.internal.R.anim.fade_in);
@@ -2869,6 +2938,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     CenterClock centerClo = (CenterClock)mStatusBarView.findViewById(R.id.centerClo);
                     if ( centerClo != null ) {
                         centerClo.invalidate();
+                    }
+                    PowerClock centerCloex = (PowerClock)mExpandedView.findViewById(R.id.centerCloex);
+                    if ( centerCloex != null ) {
+                        centerCloex.invalidate();
                     }
                     LeftClock clockLeft = (LeftClock)mStatusBarView.findViewById(R.id.clockLe);
                     if ( clockLeft != null ) {
