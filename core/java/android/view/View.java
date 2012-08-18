@@ -32,6 +32,7 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
+import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Region;
@@ -1592,6 +1593,11 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     protected int mOverScrollEffect;
 
     /**
+     * Controls the scroll effect.
+     */
+    private int mOverscrollColors;
+
+    /**
      * The parent this view is attached to.
      * {@hide}
      *
@@ -2420,6 +2426,11 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
             scrollabilityCache.scrollBar.setAlwaysDrawVerticalTrack(true);
         }
 
+        mOverscrollColors = Settings.System.getInt(mContext.getContentResolver(),
+			                    Settings.System.OVERSCROLL_COLOR, 0);
+        if (mOverscrollColors != 0){
+            scrollabilityCache.scrollBar.setColorFilter(mOverscrollColors, Mode.MULTIPLY);
+        }
         // Re-apply user/background padding so that scrollbar(s) get added
         recomputePadding();
     }
