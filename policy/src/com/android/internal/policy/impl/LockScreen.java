@@ -292,7 +292,8 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
             Settings.System.LOCKSCREEN_FUZZY_CLOCK, 1) == 1);
 
     private boolean mUseKanjiClock = (Settings.System.getInt(mContext.getContentResolver(),
-            Settings.System.LOCKSCREEN_FUZZY_CLOCK, 1) == 2);
+            Settings.System.LOCKSCREEN_FUZZY_CLOCK, 1) == 2) || (Settings.System.getInt(mContext.getContentResolver(),
+            Settings.System.LOCKSCREEN_FUZZY_CLOCK, 1) == 3);
 
     private double mGestureSensitivity;
     private boolean mGestureTrail;

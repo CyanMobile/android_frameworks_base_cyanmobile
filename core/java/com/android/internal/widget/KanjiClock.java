@@ -68,6 +68,7 @@ public class KanjiClock extends LinearLayout {
     private TextView mTimeDisplay;
     private ContentObserver mFormatChangeObserver;
     private int mAttached = 0; // for debugging - tells us whether attach/detach is unbalanced
+    private boolean fullkanji;
 
     /* called by system on minute ticks */
     private final Handler mHandler = new Handler();
@@ -143,6 +144,10 @@ public class KanjiClock extends LinearLayout {
         super.onFinishInflate();
 
         mTimeDisplay = (TextView) findViewById(R.id.timeDisplay);
+
+        fullkanji = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.LOCKSCREEN_FUZZY_CLOCK, 1) == 3;
+
         int font = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.CLOCK_FONT, 0);
         if (font == 0) {
@@ -211,7 +216,14 @@ public class KanjiClock extends LinearLayout {
         int mAmPm = mCalendar.get(mCalendar.AM_PM);
         String mTimeString;
 
-        mTimeString = getKanjiHour(mHour) + " " + getKanjiMinute(mMinutes) + " " + getKanjiSecond(mSeconds, mAmPm);
+        fullkanji = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.LOCKSCREEN_FUZZY_CLOCK, 1) == 3;
+
+        if (fullkanji) {
+           mTimeString = getKanjiHour(mHour) + " " + getKanjiMinute(mMinutes) + " " + getKanjiSecond(mSeconds, mAmPm);
+        } else {
+           mTimeString = calendarHour.toString() + J_HOUR + " " + calendarMinute.toString() + J_MINUTE + " " + calendarSecond.toString() + J_SECOND + (amPm == Calendar.AM ? J_AM : J_PM);
+        }
 
         //print the time
         mTimeDisplay.setText(mTimeString);
