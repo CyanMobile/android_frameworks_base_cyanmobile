@@ -568,9 +568,9 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         mItems.remove(mExtendPmMenu);
         mItems.remove(mExtendPmBack);
         mItems.remove(mPoweroff);
-        mItems.remove(mReboot);
         mItems.remove(mSuspend);
         mItems.remove(mHibernate);
+        mItems.remove(mReboot);
         mItems.remove(mAirplaneModeOn);
         mItems.remove(mProfile);
         mItems.remove(mPowerSaverOn);
@@ -590,16 +590,16 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
            mItems.add(mPoweroff);
         };
 
-        if (!mItems.contains(mReboot)) {
-           mItems.add(mReboot);
-        };
-
         if (mEnableSuspendToggle && !mItems.contains(mSuspend)) {
            mItems.add(mSuspend);
         };
 
         if (mEnableHibernateToggle && !mItems.contains(mHibernate)) {
            mItems.add(mHibernate);
+        };
+
+        if (!mItems.contains(mReboot)) {
+           mItems.add(mReboot);
         };
 
         if (mEnableAirplaneToggle && !mItems.contains(mAirplaneModeOn)) {

@@ -1307,6 +1307,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         PowerWidgetFour powerFour=(PowerWidgetFour)mExpandedView.findViewById(R.id.exp_power_stat_four);
         LinearLayout powerClockex=(LinearLayout)mExpandedView.findViewById(R.id.centerClockex);
         PowerClock powClock=(PowerClock)mExpandedView.findViewById(R.id.centerCloex);
+        PowerDateView powDate=(PowerDateView)mExpandedView.findViewById(R.id.datestats);
         ImageView settIcon = (ImageView)mExpandedView.findViewById(R.id.settingIcon);
         //RecentApps recent=(RecentApps)mExpandedView.findViewById(R.id.recent_apps);
         //FrameLayout notifications=(FrameLayout)mExpandedView.findViewById(R.id.notifications);
@@ -1320,6 +1321,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         //powerAndCarrier.removeView(recent);
         mExpandedView.removeView(powerAndCarrier);
         powerClockex.removeView(powClock);
+        powerClockex.removeView(powDate);
         powerClockex.removeView(settIcon);
         mExpandedView.removeView(powerClockex);
 
@@ -1333,6 +1335,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         powerAndCarrier.addView(power, mBottomBar && !mCompactCarrier ? 1 : 0);
         mExpandedView.addView(powerClockex, mBottomBar ? 1 : 0);
         powerClockex.addView(settIcon, mBottomBar && !mCompactCarrier ? 1 : 0);
+        powerClockex.addView(powDate, mBottomBar && !mCompactCarrier ? 1 : 0);
         powerClockex.addView(powClock, mBottomBar && !mCompactCarrier ? 1 : 0);
 
         // Remove all notification views
@@ -1949,8 +1952,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         if (mDateView.getVisibility() == View.VISIBLE) {
             setDateViewVisibility(false, com.android.internal.R.anim.fade_out);
             setAllViewVisibility(true, com.android.internal.R.anim.fade_in);
+        } else if (mDateView.getVisibility() == View.INVISIBLE || mDateView.getVisibility() == View.GONE) {
+            setAllViewVisibility(true, com.android.internal.R.anim.fade_in);
         }
-
         if (!mExpanded) {
             return;
         }
