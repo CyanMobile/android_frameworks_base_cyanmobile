@@ -998,7 +998,7 @@ public class AccountManagerService
         final int index = titleAndSubtitle.indexOf('\n');
         final String title = titleAndSubtitle.substring(0, index);
         final String subtitle = titleAndSubtitle.substring(index + 1);
-        n.setLatestEventInfo(mContext,
+        n.setLatestEventInfo(getUiContext(),
                 title, subtitle,
                 PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT));
         ((NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE))
