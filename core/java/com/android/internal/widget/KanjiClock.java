@@ -222,7 +222,7 @@ public class KanjiClock extends LinearLayout {
         if (fullkanji) {
            mTimeString = getKanjiHour(mHour) + " " + getKanjiMinute(mMinutes) + " " + getKanjiSecond(mSeconds, mAmPm);
         } else {
-           mTimeString = calendarHour.toString() + J_HOUR + " " + calendarMinute.toString() + J_MINUTE + " " + calendarSecond.toString() + J_SECOND + (amPm == Calendar.AM ? J_AM : J_PM);
+           mTimeString = getHours(mHour) + " " + getMinutes(mMinutes) + " " + getSeconds(mSeconds, mAmPm);
         }
 
         //print the time
@@ -240,6 +240,18 @@ public class KanjiClock extends LinearLayout {
 
     private String getKanjiSecond(Integer calendarSecond, Integer amPm) {
         return getKanji(calendarSecond.toString()) + J_SECOND + (amPm == Calendar.AM ? J_AM : J_PM);
+    }
+
+    private String getHours(Integer calendarHour) {
+        return calendarHour.toString() + J_HOUR;
+    }
+
+    private String getMinutes(Integer calendarMinute) {
+        return calendarMinute.toString() + J_MINUTE;
+    }
+
+    private String getSeconds(Integer calendarSecond, Integer amPm) {
+        return calendarSecond.toString() + J_SECOND + (amPm == Calendar.AM ? J_AM : J_PM);
     }
 
     private String getKanji(String arabicNumber) {
