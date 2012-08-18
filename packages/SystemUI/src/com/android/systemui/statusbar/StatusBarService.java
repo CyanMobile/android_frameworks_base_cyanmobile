@@ -1975,7 +1975,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 performExpand();
             }
             else if ((!mBottomBar && mAnimY < mStatusBarView.getHeight())
-                    || (mBottomBar && mAnimY > (mDisplay.getHeight()-mStatusBarView.getHeight()))) {
+                    || (mBottomBar && mAnimY > mDisplay.getHeight())) {
                 if (SPEW) Slog.d(TAG, "Animation completed to collapsed state.");
                 mAnimating = false;
                 if(mBottomBar)
@@ -2015,10 +2015,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     void doRevealAnimation() {
-        int h = mCloseView.getHeight() + mStatusBarView.getHeight();
+        int h = mCloseView.getHeight();
 
         if(mBottomBar)
-            h = mDisplay.getHeight() - mStatusBarView.getHeight();
+            h = mDisplay.getHeight();
         if (mAnimatingReveal && mAnimating &&
                 ((mBottomBar && mAnimY > h) || (!mBottomBar && mAnimY < h))) {
             incrementAnim();
@@ -2040,7 +2040,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         if (opening) {
             mAnimAccel = 40000.0f;
             mAnimVel = 200;
-            mAnimY = mBottomBar ? mDisplay.getHeight() : mStatusBarView.getHeight();
+            mAnimY = mDisplay.getHeight();
             updateExpandedViewPos((int)mAnimY);
             mAnimating = true;
             mAnimatingReveal = true;
@@ -2613,7 +2613,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     + " mTrackingPosition=" + mTrackingPosition);
         }
 
-        int h = mBottomBar ? 0 : mStatusBarView.getHeight();
+        int h = 0;
         int disph = mBottomBar ? mDisplay.getHeight() : (mDisplay.getHeight()-mNavigationBarView.getHeight());
 
         // If the expanded view is not visible, make sure they're still off screen.
@@ -2705,7 +2705,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     int getExpandedHeight() {
-        return (mDisplay.getHeight()-mStatusBarView.getHeight()-mCloseView.getHeight());
+        return (mDisplay.getHeight()-mCloseView.getHeight());
     }
 
     void updateExpandedHeight() {

@@ -150,11 +150,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static final int APPLICATION_LAYER = 2;
     static final int PHONE_LAYER = 3;
     static final int SEARCH_BAR_LAYER = 4;
-    static final int STATUS_BAR_PANEL_LAYER = 5;
-    static final int SYSTEM_DIALOG_LAYER = 6;
+    static final int SYSTEM_DIALOG_LAYER = 5;
     // toasts and the plugged-in battery thing
-    static final int TOAST_LAYER = 7;
-    static final int STATUS_BAR_LAYER = 8;
+    static final int TOAST_LAYER = 6;
+    static final int STATUS_BAR_LAYER = 7;
+    static final int STATUS_BAR_PANEL_LAYER = 8;
     // SIM errors and unlock.  Not sure if this really should be in a high layer.
     static final int PRIORITY_PHONE_LAYER = 9;
     // like the ANR / app crashed dialogs
