@@ -498,8 +498,9 @@ struct NativeCode : public ANativeActivity {
     void* dlhandle;
     ANativeActivity_createFunc* createActivityFunc;
     
-    String8 internalDataPath;
-    String8 externalDataPath;
+    String8 internalDataPathObj;
+    String8 externalDataPathObj;
+    String8 obbPathObj;
     
     sp<ANativeWindow> nativeWindow;
     int32_t lastWindowWidth;
@@ -630,7 +631,8 @@ static int mainWorkCallback(int fd, int events, void* data) {
 static jint
 loadNativeCode_native(JNIEnv* env, jobject clazz, jstring path, jstring funcName,
         jobject messageQueue,
-        jstring internalDataDir, jstring externalDataDir, int sdkVersion,
+        jobject messageQueue, jstring internalDataDir, jstring obbDir,
+        jstring externalDataDir, int sdkVersion,
         jobject jAssetMgr, jbyteArray savedState)
 {
     LOG_TRACE("loadNativeCode_native");
@@ -687,18 +689,23 @@ loadNativeCode_native(JNIEnv* env, jobject clazz, jstring path, jstring funcName
         code->clazz = env->NewGlobalRef(clazz);
 
         const char* dirStr = env->GetStringUTFChars(internalDataDir, NULL);
-        code->internalDataPath = dirStr;
-        code->internalDataPath = code->internalDataPath.string();
-        env->ReleaseStringUTFChars(path, dirStr);
+        code->internalDataPathObj = dirStr;
+        code->internalDataPath = code->internalDataPathObj.string();
+        env->ReleaseStringUTFChars(internalDataDir, dirStr);
     
         dirStr = env->GetStringUTFChars(externalDataDir, NULL);
-        code->externalDataPath = dirStr;
-        code->externalDataPath = code->externalDataPath.string();
-        env->ReleaseStringUTFChars(path, dirStr);
+        code->externalDataPathObj = dirStr;
+        code->externalDataPath = code->externalDataPathObj.string();
+        env->ReleaseStringUTFChars(externalDataDir, dirStr);
 
         code->sdkVersion = sdkVersion;
         
         code->assetManager = assetManagerForJavaObject(env, jAssetMgr);
+
+        dirStr = env->GetStringUTFChars(obbDir, NULL);
+        code->obbPathObj = dirStr;
+        code->obbPath = code->obbPathObj.string();
+        env->ReleaseStringUTFChars(obbDir, dirStr);
 
         jbyte* rawSavedState = NULL;
         jsize rawSavedSize = 0;
@@ -1005,7 +1012,7 @@ finishPreDispatchKeyEvent_native(JNIEnv* env, jobject clazz, jint handle,
 }
 
 static const JNINativeMethod g_methods[] = {
-    { "loadNativeCode", "(Ljava/lang/String;Ljava/lang/String;Landroid/os/MessageQueue;Ljava/lang/String;Ljava/lang/String;ILandroid/content/res/AssetManager;[B)I",
+    { "loadNativeCode", "(Ljava/lang/String;Ljava/lang/String;Landroid/os/MessageQueue;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILandroid/content/res/AssetManager;[B)I",
             (void*)loadNativeCode_native },
     { "unloadNativeCode", "(I)V", (void*)unloadNativeCode_native },
     { "onStartNative", "(I)V", (void*)onStart_native },
