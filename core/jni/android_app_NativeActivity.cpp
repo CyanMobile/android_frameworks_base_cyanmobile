@@ -630,7 +630,6 @@ static int mainWorkCallback(int fd, int events, void* data) {
 
 static jint
 loadNativeCode_native(JNIEnv* env, jobject clazz, jstring path, jstring funcName,
-        jobject messageQueue,
         jobject messageQueue, jstring internalDataDir, jstring obbDir,
         jstring externalDataDir, int sdkVersion,
         jobject jAssetMgr, jbyteArray savedState)
