@@ -8321,6 +8321,13 @@ public class WindowManagerService extends IWindowManager.Stub
         return false;
     }
 
+    public void getInitialDisplaySize(Point size) {
+        synchronized(mWindowMap) {
+            size.x = mInitialDisplayWidth;
+            size.y = mInitialDisplayHeight;
+        }
+    }
+
     // -------------------------------------------------------------
     // Internals
     // -------------------------------------------------------------

@@ -87,6 +87,7 @@ class ProcessRecord {
     String adjType;             // Debugging: primary thing impacting oom_adj.
     int adjTypeCode;            // Debugging: adj code to report to app.
     Object adjSource;           // Debugging: option dependent object.
+    int adjSourceOom;           // Debugging: oom_adj of adjSource's process.
     Object adjTarget;           // Debugging: target component impacting oom_adj.
     
     // contains HistoryRecord objects
@@ -251,8 +252,8 @@ class ProcessRecord {
         processName = _processName;
         pkgList.add(_info.packageName);
         thread = _thread;
-        maxAdj = ActivityManagerService.EMPTY_APP_ADJ;
-        hiddenAdj = ActivityManagerService.HIDDEN_APP_MIN_ADJ;
+        maxAdj = ProcessList.EMPTY_APP_ADJ;
+        hiddenAdj = ProcessList.HIDDEN_APP_MIN_ADJ;
         curRawAdj = setRawAdj = -100;
         curAdj = setAdj = -100;
         persistent = false;

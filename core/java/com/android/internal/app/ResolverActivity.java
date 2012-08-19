@@ -16,6 +16,8 @@
 
 package com.android.internal.app;
 
+import android.app.ActivityManager;
+import android.app.ActivityManagerNative;
 import com.android.internal.R;
 import android.content.ComponentName;
 import android.content.Context;
@@ -30,6 +32,8 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.PatternMatcher;
+import android.os.Process;
+import android.os.RemoteException;
 import android.util.Config;
 import android.util.Log;
 import android.view.View;
@@ -54,14 +58,27 @@ import java.util.Set;
  */
 public class ResolverActivity extends AlertActivity implements
         DialogInterface.OnClickListener, CheckBox.OnCheckedChangeListener {
+
+    private int mLaunchedFromUid;
     private ResolveListAdapter mAdapter;
     private CheckBox mAlwaysCheck;
     private TextView mClearDefaultHint;
     private PackageManager mPm;
 
+    private Intent makeMyIntent() {
+        Intent intent = new Intent(getIntent());
+        // The resolver activity is set to be hidden from recent tasks.
+        // we don't want this attribute to be propagated to the next activity
+        // being launched.  Note that if the original Intent also had this
+        // flag set, we are now losing it.  That should be a very rare case
+        // and we can live with this.
+        intent.setFlags(intent.getFlags()&~Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+        return intent;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        onCreate(savedInstanceState, new Intent(getIntent()),
+        onCreate(savedInstanceState, makeMyIntent(),
                 getResources().getText(com.android.internal.R.string.whichApplication),
                 null, null, true);
     }
@@ -70,6 +87,12 @@ public class ResolverActivity extends AlertActivity implements
             CharSequence title, Intent[] initialIntents, List<ResolveInfo> rList,
             boolean alwaysUseOption, boolean alwaysChoose) {
         super.onCreate(savedInstanceState);
+        try {
+            mLaunchedFromUid = ActivityManagerNative.getDefault().getLaunchedFromUid(
+                    getActivityToken());
+        } catch (RemoteException e) {
+            mLaunchedFromUid = -1;
+        }
         mPm = getPackageManager();
         intent.setComponent(null);
 
@@ -89,9 +112,12 @@ public class ResolverActivity extends AlertActivity implements
                                                         com.android.internal.R.id.clearDefaultHint);
             mClearDefaultHint.setVisibility(View.GONE);
         }
-        mAdapter = new ResolveListAdapter(this, intent, initialIntents, rList);
+        mAdapter = new ResolveListAdapter(this, intent, initialIntents, rList, mLaunchedFromUid);
         int count = mAdapter.getCount();
-        if (count > 1 || (count == 1 && alwaysChoose)) {
+        if (mLaunchedFromUid < 0) {
+            finish();
+            return;
+        } else if (count > 1 || (count == 1 && alwaysChoose)) {
             ap.mAdapter = mAdapter;
         } else if (count == 1) {
             startActivity(mAdapter.intentForPosition(0));
@@ -116,6 +142,23 @@ public class ResolverActivity extends AlertActivity implements
         boolean alwaysCheck = (mAlwaysCheck != null && mAlwaysCheck.isChecked());
         onIntentSelected(ri, intent, alwaysCheck);
         finish();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if ((getIntent().getFlags()&Intent.FLAG_ACTIVITY_NEW_TASK) != 0) {
+            // This resolver is in the unusual situation where it has been
+            // launched at the top of a new task.  We don't let it be added
+            // to the recent tasks shown to the user, and we need to make sure
+            // that each time we are launched we get the correct launching
+            // uid (not re-using the same resolver from an old launching uid),
+            // so we will now finish ourself since being no longer visible,
+            // the user probably can't get back to us.
+            if (!isChangingConfigurations()) {
+                finish();
+            }
+        }
     }
 
     protected void onIntentSelected(ResolveInfo ri, Intent intent, boolean alwaysCheck) {
@@ -221,29 +264,57 @@ public class ResolverActivity extends AlertActivity implements
     }
 
     private final class ResolveListAdapter extends BaseAdapter {
+        private final Intent[] mInitialIntents;
+        private final List<ResolveInfo> mBaseResolveList;
         private final Intent mIntent;
+        private final int mLaunchedFromUid;
         private final LayoutInflater mInflater;
 
+        private List<ResolveInfo> mCurrentResolveList;
         private List<DisplayResolveInfo> mList;
 
         public ResolveListAdapter(Context context, Intent intent,
-                Intent[] initialIntents, List<ResolveInfo> rList) {
+                Intent[] initialIntents, List<ResolveInfo> rList, int launchedFromUid) {
             mIntent = new Intent(intent);
             mIntent.setComponent(null);
+            mInitialIntents = initialIntents;
+            mBaseResolveList = rList;
+            mLaunchedFromUid = launchedFromUid;
             mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            rebuildList();
+        }
 
-            if (rList == null) {
-                rList = mPm.queryIntentActivities(
+        private void rebuildList() {
+            if (mBaseResolveList != null) {
+                mCurrentResolveList = mBaseResolveList;
+            } else {
+                mCurrentResolveList = mPm.queryIntentActivities(
                         intent, PackageManager.MATCH_DEFAULT_ONLY
                         | (mAlwaysCheck != null ? PackageManager.GET_RESOLVED_FILTER : 0));
+                // Filter out any activities that the launched uid does not
+                // have permission for.  We don't do this when we have an explicit
+                // list of resolved activities, because that only happens when
+                // we are being subclassed, so we can safely launch whatever
+                // they gave us.
+                if (mCurrentResolveList != null) {
+                    for (int i=mCurrentResolveList.size()-1; i >= 0; i--) {
+                        ActivityInfo ai = mCurrentResolveList.get(i).activityInfo;
+                        int granted = ActivityManager.checkComponentPermission(
+                                ai.permission, ai.applicationInfo.uid, ai.applicationInfo.reqUid);
+                        if (granted != PackageManager.PERMISSION_GRANTED) {
+                            // Access not allowed!
+                            mCurrentResolveList.remove(i);
+                        }
+                    }
+                }
             }
             int N;
-            if ((rList != null) && ((N = rList.size()) > 0)) {
+            if ((mCurrentResolveList != null) && ((N = mCurrentResolveList.size()) > 0)) {
                 // Only display the first matches that are either of equal
                 // priority or have asked to be default options.
-                ResolveInfo r0 = rList.get(0);
+                ResolveInfo r0 = mCurrentResolveList.get(0);
                 for (int i=1; i<N; i++) {
-                    ResolveInfo ri = rList.get(i);
+                    ResolveInfo ri = mCurrentResolveList.get(i);
                     if (Config.LOGV) Log.v(
                         "ResolveListActivity",
                         r0.activityInfo.name + "=" +
@@ -253,7 +324,7 @@ public class ResolverActivity extends AlertActivity implements
                    if (r0.priority != ri.priority ||
                         r0.isDefault != ri.isDefault) {
                         while (i < N) {
-                            rList.remove(i);
+                            mCurrentResolveList.remove(i);
                             N--;
                         }
                     }
@@ -261,7 +332,7 @@ public class ResolverActivity extends AlertActivity implements
                 if (N > 1) {
                     ResolveInfo.DisplayNameComparator rComparator =
                             new ResolveInfo.DisplayNameComparator(mPm);
-                    Collections.sort(rList, rComparator);
+                    Collections.sort(mCurrentResolveList, rComparator);
                 }
                 
                 mList = new ArrayList<DisplayResolveInfo>();
@@ -296,14 +367,14 @@ public class ResolverActivity extends AlertActivity implements
                 
                 // Check for applications with same name and use application name or
                 // package name if necessary
-                r0 = rList.get(0);
+                r0 = mCurrentResolveList.get(0);
                 int start = 0;
                 CharSequence r0Label =  r0.loadLabel(mPm);
                 for (int i = 1; i < N; i++) {
                     if (r0Label == null) {
                         r0Label = r0.activityInfo.packageName;
                     }
-                    ResolveInfo ri = rList.get(i);
+                    ResolveInfo ri = mCurrentResolveList.get(i);
                     CharSequence riLabel = ri.loadLabel(mPm);
                     if (riLabel == null) {
                         riLabel = ri.activityInfo.packageName;
@@ -311,13 +382,13 @@ public class ResolverActivity extends AlertActivity implements
                     if (riLabel.equals(r0Label)) {
                         continue;
                     }
-                    processGroup(rList, start, (i-1), r0, r0Label);
+                    processGroup(mCurrentResolveList, start, (i-1), r0, r0Label);
                     r0 = ri;
                     r0Label = riLabel;
                     start = i;
                 }
                 // Process last group
-                processGroup(rList, start, (N-1), r0, r0Label);
+                processGroup(mCurrentResolveList, start, (N-1), r0, r0Label);
             }
         }
 

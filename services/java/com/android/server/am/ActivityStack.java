@@ -973,6 +973,7 @@ public class ActivityStack {
                             TAG, "Making visible and scheduling visibility: " + r);
                     try {
                         mService.mWindowManager.setAppVisibility(r, true);
+                        r.app.pendingUiClean = true;
                         r.app.thread.scheduleWindowVisibility(r, true);
                         r.stopFreezingScreenLocked(false);
                     } catch (Exception e) {

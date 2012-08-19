@@ -17,21 +17,27 @@
 
 package android.app;
 
+import com.android.internal.util.MemInfoReader;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.IPackageDataObserver;
-import android.content.res.Configuration;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Point;
 import android.os.Debug;
 import android.os.RemoteException;
 import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.os.Process;
 import android.os.SystemProperties;
 import android.text.TextUtils;
+import android.util.Slog;
+import android.view.Display;
 import java.util.List;
 
 /**
@@ -66,10 +72,81 @@ public class ActivityManager {
     static public int staticGetMemoryClass() {
         // Really brain dead right now -- just take this from the configured
         // vm heap size, and assume it is in megabytes and thus ends with "m".
+        String vmHeapSize = SystemProperties.get("dalvik.vm.heapgrowthlimit", "");
+        if (vmHeapSize != null && !"".equals(vmHeapSize)) {
+            return Integer.parseInt(vmHeapSize.substring(0, vmHeapSize.length()-1));
+        }
+        return staticGetLargeMemoryClass();
+    }
+    
+    /**
+     * Return the approximate per-application memory class of the current
+     * device when an application is running with a large heap.  This is the
+     * space available for memory-intensive applications; most applications
+     * should not need this amount of memory, and should instead stay with the
+     * {@link #getMemoryClass()} limit.  The returned value is in megabytes.
+     * This may be the same size as {@link #getMemoryClass()} on memory
+     * constrained devices, or it may be significantly larger on devices with
+     * a large amount of available RAM.
+     *
+     * <p>The is the size of the application's Dalvik heap if it has
+     * specified <code>android:largeHeap="true"</code> in its manifest.
+     */
+    public int getLargeMemoryClass() {
+        return staticGetLargeMemoryClass();
+    }
+    
+    /** @hide */
+    static public int staticGetLargeMemoryClass() {
+        // Really brain dead right now -- just take this from the configured
+        // vm heap size, and assume it is in megabytes and thus ends with "m".
         String vmHeapSize = SystemProperties.get("dalvik.vm.heapsize", "16m");
         return Integer.parseInt(vmHeapSize.substring(0, vmHeapSize.length()-1));
     }
-    
+
+    /**
+     * Use to decide whether the running device can be considered a "large
+     * RAM" device.  Exactly what memory limit large RAM is will vary, but
+     * it essentially means there is plenty of RAM to have lots of background
+     * processes running under decent loads.
+     * @hide
+     */
+    static public boolean isLargeRAM() {
+        MemInfoReader reader = new MemInfoReader();
+        reader.readMemInfo();
+        if (reader.getTotalSize() >= (640*1024*1024)) {
+            // Currently 640MB RAM available to the kernel is the point at
+            // which we have plenty of RAM to spare.
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Used by persistent processes to determine if they are running on a
+     * higher-end device so should be okay using hardware drawing acceleration
+     * (which tends to consume a lot more RAM).
+     * @hide
+     */
+    static public boolean isHighEndGfx(Display display) {
+        MemInfoReader reader = new MemInfoReader();
+        reader.readMemInfo();
+        if (reader.getTotalSize() >= (512*1024*1024)) {
+            // If the device has at least 512MB RAM available to the kernel,
+            // we can afford the overhead of graphics acceleration.
+            return true;
+        }
+        Point p = new Point();
+        display.getRealSize(p);
+        int pixels = p.x * p.y;
+        if (pixels >= (1024*600)) {
+            // If this is a sufficiently large screen, then there are enough
+            // pixels on it that we'd really like to use hw drawing.
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Information you can retrieve about tasks that the user has most recently
      * started or visited.
@@ -547,7 +624,14 @@ public class ActivityManager {
          * system to run well.
          */
         public long availMem;
-        
+
+        /**
+         * The total memory accessible by the kernel.  This is basically the
+         * RAM size of the device, not including below-kernel fixed allocations
+         * like DMA buffers, RAM for the baseband CPU, etc.
+         */
+        public long totalMem;
+
         /**
          * The threshold of {@link #availMem} at which we consider memory to be
          * low and start killing background services and other non-extraneous
@@ -561,6 +645,18 @@ public class ActivityManager {
          */
         public boolean lowMemory;
 
+        /** @hide */
+        public long hiddenAppThreshold;
+
+        /** @hide */
+        public long secondaryServerThreshold;
+
+        /** @hide */
+        public long visibleAppThreshold;
+
+        /** @hide */
+        public long foregroundAppThreshold;
+
         public MemoryInfo() {
         }
 
@@ -570,14 +666,24 @@ public class ActivityManager {
 
         public void writeToParcel(Parcel dest, int flags) {
             dest.writeLong(availMem);
+            dest.writeLong(totalMem);
             dest.writeLong(threshold);
             dest.writeInt(lowMemory ? 1 : 0);
+            dest.writeLong(hiddenAppThreshold);
+            dest.writeLong(secondaryServerThreshold);
+            dest.writeLong(visibleAppThreshold);
+            dest.writeLong(foregroundAppThreshold);
         }
         
         public void readFromParcel(Parcel source) {
             availMem = source.readLong();
+            totalMem = source.readLong();
             threshold = source.readLong();
             lowMemory = source.readInt() != 0;
+            hiddenAppThreshold = source.readLong();
+            secondaryServerThreshold = source.readLong();
+            visibleAppThreshold = source.readLong();
+            foregroundAppThreshold = source.readLong();
         }
 
         public static final Creator<MemoryInfo> CREATOR
@@ -886,7 +992,13 @@ public class ActivityManager {
          * is the name of the component that is being used in this process.
          */
         public ComponentName importanceReasonComponent;
-        
+
+        /**
+         * When {@link importanceReasonPid} is non-0, this is the importance
+         * of the other pid. @hide
+         */
+        public int importanceReasonImportance;
+
         public RunningAppProcessInfo() {
             importance = IMPORTANCE_FOREGROUND;
             importanceReasonCode = REASON_UNKNOWN;
@@ -913,6 +1025,7 @@ public class ActivityManager {
             dest.writeInt(importanceReasonCode);
             dest.writeInt(importanceReasonPid);
             ComponentName.writeToParcel(importanceReasonComponent, dest);
+            dest.writeInt(importanceReasonImportance);
         }
 
         public void readFromParcel(Parcel source) {
@@ -926,6 +1039,7 @@ public class ActivityManager {
             importanceReasonCode = source.readInt();
             importanceReasonPid = source.readInt();
             importanceReasonComponent = ComponentName.readFromParcel(source);
+            importanceReasonImportance = source.readInt();
         }
 
         public static final Creator<RunningAppProcessInfo> CREATOR = 
@@ -1093,4 +1207,32 @@ public class ActivityManager {
         } catch (RemoteException e) {
         }
     }
+
+    /** @hide */
+    public static int checkComponentPermission(String permission, int uid,
+            int reqUid) {
+
+        // Root, system server and our own process get to do everything.
+        if (uid == 0 || uid == Process.SYSTEM_UID ||
+            !Process.supportsProcesses()) {
+            return PackageManager.PERMISSION_GRANTED;
+        }
+        // If the target requires a specific UID, always fail for others.
+        if (reqUid >= 0 && uid != reqUid) {
+            Slog.w(TAG, "Permission denied: checkComponentPermission() reqUid=" + reqUid);
+            return PackageManager.PERMISSION_DENIED;
+        }
+        if (permission == null) {
+            return PackageManager.PERMISSION_GRANTED;
+        }
+        try {
+            return AppGlobals.getPackageManager()
+                    .checkUidPermission(permission, uid);
+        } catch (RemoteException e) {
+            // Should never happen, but if it does... deny!
+            Slog.e(TAG, "PackageManager is dead?!?", e);
+        }
+        return PackageManager.PERMISSION_DENIED;
+    }
+
 }
