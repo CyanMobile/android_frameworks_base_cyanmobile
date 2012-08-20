@@ -192,12 +192,6 @@ android_media_AudioSystem_getStreamVolumeIndex(JNIEnv *env, jobject thiz, jint s
     return index;
 }
 
-static jint
-android_media_AudioSystem_getDevicesForStream(JNIEnv *env, jobject thiz, jint stream)
-{
-    return (jint) AudioSystem::getDevicesForStream(static_cast <AudioSystem::stream_type>(stream));
-}
-
 // ----------------------------------------------------------------------------
 
 static JNINativeMethod gMethods[] = {
@@ -214,8 +208,7 @@ static JNINativeMethod gMethods[] = {
     {"getForceUse",         "(I)I",     (void *)android_media_AudioSystem_getForceUse},
     {"initStreamVolume",    "(III)I",   (void *)android_media_AudioSystem_initStreamVolume},
     {"setStreamVolumeIndex","(II)I",    (void *)android_media_AudioSystem_setStreamVolumeIndex},
-    {"getStreamVolumeIndex","(I)I",     (void *)android_media_AudioSystem_getStreamVolumeIndex},
-    {"getDevicesForStream", "(I)I",     (void *)android_media_AudioSystem_getDevicesForStream}
+    {"getStreamVolumeIndex","(I)I",     (void *)android_media_AudioSystem_getStreamVolumeIndex}
 };
 
 const char* const kClassPathName = "android/media/AudioSystem";

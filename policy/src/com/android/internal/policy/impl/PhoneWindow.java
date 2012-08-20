@@ -103,8 +103,6 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
 
     private final static boolean SWEEP_OPEN_MENU = false;
 
-    private int  mVolumeControlStream = -1;
-
     /**
      * Simple callback used by the context menu and its submenus. The options
      * menu submenus do not use this (their behavior is more complex).
@@ -1198,11 +1196,6 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
                                 mVolumeControlStreamType,
                                 AudioManager.FLAG_SHOW_UI);
                     } else {
-                        int flags =  AudioManager.FLAG_SHOW_UI | AudioManager.FLAG_VIBRATE;
-                        if (mVolumeControlStream != -1) {
-                            mVolumeControlStreamType = mVolumeControlStream;
-                            flags |= AudioManager.FLAG_FORCE_STREAM;
-                        }
                         audioManager.adjustSuggestedStreamVolume(
                                 keyCode == KeyEvent.KEYCODE_VOLUME_UP
                                         ? AudioManager.ADJUST_RAISE
@@ -2676,17 +2669,6 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
             sendCloseSystemWindows("search");
             return cb.onSearchRequested();
         }
-    }
-
-    /**
-     * forces the stream controlled by hard volume keys
-     * specifying streamType == -1 releases control to the
-     * logic.
-     *
-     * @hide
-     */
-    public void forceVolumeControlStream(int streamType) {
-        mVolumeControlStream = streamType;
     }
 
     @Override

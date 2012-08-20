@@ -16,10 +16,6 @@
 
 package android.media;
 
-import static android.media.AudioManager.RINGER_MODE_NORMAL;
-import static android.media.AudioManager.RINGER_MODE_SILENT;
-import static android.media.AudioManager.RINGER_MODE_VIBRATE;
-
 import java.util.NoSuchElementException;
 import android.app.ActivityManagerNative;
 import android.content.BroadcastReceiver;
@@ -477,12 +473,7 @@ public class AudioService extends IAudioService.Stub {
     /** @see AudioManager#adjustVolume(int, int, int) */
     public void adjustSuggestedStreamVolume(int direction, int suggestedStreamType, int flags) {
 
-        int streamType;
-        if ((flags & AudioManager.FLAG_FORCE_STREAM) != 0) {
-            streamType = suggestedStreamType;
-        } else {
-            streamType = getActiveStreamType(suggestedStreamType);
-        }
+        int streamType = getActiveStreamType(suggestedStreamType);
 
  
         if ((flags & AudioManager.FLAG_PLAY_SOUND) != 0) {
@@ -525,16 +516,9 @@ public class AudioService extends IAudioService.Stub {
         // or the stream type is one that is affected by ringer modes
         if ((flags & AudioManager.FLAG_ALLOW_RINGER_MODES) != 0
                 || streamType == AudioSystem.STREAM_RING) {
-            // do not vibrate if already in vibrate mode
-            if (mRingerMode == AudioManager.RINGER_MODE_VIBRATE) {
-                flags &= ~AudioManager.FLAG_VIBRATE;
-            }
             // Check if the ringer mode changes with this volume adjustment. If
             // it does, it will handle adjusting the volume, so we won't below
             adjustVolume = checkForRingerModeChange(oldIndex, direction);
-            if (mRingerMode == AudioManager.RINGER_MODE_SILENT) {
-                streamState.setLastAudibleIndex(0, device);
-            }
         }
 
         // If stream is muted, adjust last audible index only

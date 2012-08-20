@@ -46,6 +46,4 @@
     <dimen name="password_keyboard_key_height">56dip</dimen>
     <!-- Default correction for the space key in the password keyboard -->
     <dimen name="password_keyboard_spacebar_vertical_correction">4dip</dimen>
-    <!-- Volume panel y offset -->
-    <dimen name="volume_panel_top">80dp</dimen>
 </resources>
