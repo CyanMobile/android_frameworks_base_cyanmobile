@@ -261,6 +261,11 @@ public final class ActivityManagerService extends ActivityManagerNative
     // How long we wait until we timeout on key dispatching during instrumentation.
     static final int INSTRUMENTATION_KEY_DISPATCHING_TIMEOUT = 60*1000;
     
+    // GMAPS NLS HACK	
+    static boolean GMAPS_HACK;
+    static final String GMAPS_NLS = 
+            "com.google.android.apps.maps/com.google.android.location.internal.server.NetworkLocationService";
+
     static final int MY_PID = Process.myPid();
     
     static final String[] EMPTY_STRING_ARRAY = new String[0];
@@ -1563,7 +1568,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             // it a little more strongly.
             app.lruWeight = app.lastActivityTime - ProcessList.CONTENT_APP_IDLE_OFFSET;
             // Also don't let it kick out the first few "real" hidden processes.
-            skipTop = MIN_HIDDEN_APPS;
+            skipTop = ProcessList.MIN_HIDDEN_APPS;
         } else {
             // If this process doesn't have activities, we less strongly
             // want to keep it around, and generally want to avoid getting
@@ -5888,12 +5893,6 @@ public final class ActivityManagerService extends ActivityManagerNative
             // then constrain it so we will kill all hidden procs.
             if (worstType < ProcessList.EMPTY_APP_ADJ && worstType > ProcessList.HIDDEN_APP_MIN_ADJ) {
                 worstType = ProcessList.HIDDEN_APP_MIN_ADJ;
-            }
-
-            // If this is not a secure call, don't let it kill processes that
-            // are important.
-            if (!secure && worstType < ProcessList.SECONDARY_SERVER_ADJ) {
-                worstType = ProcessList.SECONDARY_SERVER_ADJ;
             }
 
             Slog.w(TAG, "Killing processes " + reason + " at adjustment " + worstType);
