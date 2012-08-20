@@ -26,6 +26,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.IPackageDataObserver;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.os.Debug;
@@ -137,7 +138,6 @@ public class ActivityManager {
             return true;
         }
         Point p = new Point();
-        display.getRealSize(p);
         int pixels = p.x * p.y;
         if (pixels >= (1024*600)) {
             // If this is a sufficiently large screen, then there are enough
