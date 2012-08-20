@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.graphics.PixelFormat;
 import android.graphics.Canvas;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -99,6 +100,12 @@ public class KeyguardViewManager implements KeyguardWindowController {
         if (DEBUG)
             Log.d(TAG, "show(); mKeyguardView==" + mKeyguardView + "; showMode==" + showMode.name());
 
+        /* boolean enableLockScreenRotation = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.LOCKSCREEN_ROTATION, 0) != 0;
+        boolean enableAccelerometerRotation = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.ACCELEROMETER_ROTATION, 0) != 0;
+        boolean enableScreenRotation = (enableLockScreenRotation && enableAccelerometerRotation); */
+
         if (mKeyguardHost == null) {
             if (DEBUG) Log.d(TAG, "keyguard host is null, creating it...");
 
@@ -124,6 +131,16 @@ public class KeyguardViewManager implements KeyguardWindowController {
             mViewManager.addView(mKeyguardHost, lp);
         }
 
+        /* if (enableScreenRotation) {
+            if (DEBUG) Log.d(TAG, "Rotation sensor for lock screen On!");
+            mWindowLayoutParams.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR;
+        } else {
+            if (DEBUG) Log.d(TAG, "Rotation sensor for lock screen Off!");
+            mWindowLayoutParams.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_NOSENSOR;
+        }
+
+        mViewManager.updateViewLayout(mKeyguardHost, mWindowLayoutParams); */
+
         if (mKeyguardView == null) {
             if (DEBUG) Log.d(TAG, "keyguard view is null, creating it...");
             mKeyguardView = mKeyguardViewProperties.createKeyguardView(mContext, mUpdateMonitor, this);
@@ -148,6 +165,7 @@ public class KeyguardViewManager implements KeyguardWindowController {
             mKeyguardView.onLockedButNotSecured(false);
         }
 
+        /* mViewManager.updateViewLayout(mKeyguardHost, mWindowLayoutParams); */
         mKeyguardHost.setVisibility(View.VISIBLE);
         mKeyguardView.requestFocus();
     }
