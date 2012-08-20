@@ -283,7 +283,7 @@ public class ResolverActivity extends AlertActivity implements
                     for (int i=mCurrentResolveList.size()-1; i >= 0; i--) {
                         ActivityInfo ai = mCurrentResolveList.get(i).activityInfo;
                         int granted = ActivityManager.checkComponentPermission(
-                                ai.permission, ai.applicationInfo.uid, ai.reqUid);
+                                ai.permission, ai.applicationInfo.uid, -1);
                         if (granted != PackageManager.PERMISSION_GRANTED) {
                             // Access not allowed!
                             mCurrentResolveList.remove(i);
