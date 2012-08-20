@@ -144,23 +144,6 @@ public class ResolverActivity extends AlertActivity implements
         finish();
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        if ((getIntent().getFlags()&Intent.FLAG_ACTIVITY_NEW_TASK) != 0) {
-            // This resolver is in the unusual situation where it has been
-            // launched at the top of a new task.  We don't let it be added
-            // to the recent tasks shown to the user, and we need to make sure
-            // that each time we are launched we get the correct launching
-            // uid (not re-using the same resolver from an old launching uid),
-            // so we will now finish ourself since being no longer visible,
-            // the user probably can't get back to us.
-            if (!isChangingConfigurations()) {
-                finish();
-            }
-        }
-    }
-
     protected void onIntentSelected(ResolveInfo ri, Intent intent, boolean alwaysCheck) {
         if (alwaysCheck) {
             // Build a reasonable intent filter, based on what matched.
@@ -289,7 +272,7 @@ public class ResolverActivity extends AlertActivity implements
                 mCurrentResolveList = mBaseResolveList;
             } else {
                 mCurrentResolveList = mPm.queryIntentActivities(
-                        intent, PackageManager.MATCH_DEFAULT_ONLY
+                        mIntent, PackageManager.MATCH_DEFAULT_ONLY
                         | (mAlwaysCheck != null ? PackageManager.GET_RESOLVED_FILTER : 0));
                 // Filter out any activities that the launched uid does not
                 // have permission for.  We don't do this when we have an explicit
@@ -300,7 +283,7 @@ public class ResolverActivity extends AlertActivity implements
                     for (int i=mCurrentResolveList.size()-1; i >= 0; i--) {
                         ActivityInfo ai = mCurrentResolveList.get(i).activityInfo;
                         int granted = ActivityManager.checkComponentPermission(
-                                ai.permission, ai.applicationInfo.uid, ai.applicationInfo.reqUid);
+                                ai.permission, ai.applicationInfo.uid, ai.reqUid);
                         if (granted != PackageManager.PERMISSION_GRANTED) {
                             // Access not allowed!
                             mCurrentResolveList.remove(i);
@@ -338,9 +321,9 @@ public class ResolverActivity extends AlertActivity implements
                 mList = new ArrayList<DisplayResolveInfo>();
                 
                 // First put the initial items at the top.
-                if (initialIntents != null) {
-                    for (int i=0; i<initialIntents.length; i++) {
-                        Intent ii = initialIntents[i];
+                if (mInitialIntents != null) {
+                    for (int i=0; i<mInitialIntents.length; i++) {
+                        Intent ii = mInitialIntents[i];
                         if (ii == null) {
                             continue;
                         }
