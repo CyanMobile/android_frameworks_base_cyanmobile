@@ -264,6 +264,12 @@ public class AudioManager {
     public static final int FLAG_VIBRATE = 1 << 4;
 
     /**
+     * forces use of specified stream
+     * @hide
+     */
+    public static final int FLAG_FORCE_STREAM = 1 << 5;
+
+    /**
      * Ringer mode that will be silent and will not vibrate. (This overrides the
      * vibrate setting.)
      *
@@ -874,7 +880,7 @@ public class AudioManager {
      *         false if otherwise
      */
     public boolean isBluetoothA2dpOn() {
-        if (AudioSystem.getDeviceConnectionState(AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP,"")
+        if (AudioSystem.getDeviceConnectionState(DEVICE_OUT_BLUETOOTH_A2DP,"")
             == AudioSystem.DEVICE_STATE_UNAVAILABLE) {
             return false;
         } else {
@@ -899,9 +905,9 @@ public class AudioManager {
      *         false if otherwise
      */
     public boolean isWiredHeadsetOn() {
-        if (AudioSystem.getDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADSET,"")
+        if (AudioSystem.getDeviceConnectionState(DEVICE_OUT_WIRED_HEADSET,"")
                 == AudioSystem.DEVICE_STATE_UNAVAILABLE &&
-            AudioSystem.getDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE,"")
+            AudioSystem.getDeviceConnectionState(DEVICE_OUT_WIRED_HEADPHONE,"")
                 == AudioSystem.DEVICE_STATE_UNAVAILABLE) {
             return false;
         } else {
@@ -1578,4 +1584,119 @@ public class AudioManager {
       * {@hide}
       */
      private IBinder mICallBack = new Binder();
+
+    /**
+     * Checks whether the phone is in silent mode, with or without vibrate.
+     *
+     * @return true if phone is in silent mode, with or without vibrate.
+     *
+     * @see #getRingerMode()
+     *
+     * @hide pending API Council approval
+     */
+    public boolean isSilentMode() {
+        int ringerMode = getRingerMode();
+        boolean silentMode =
+            (ringerMode == RINGER_MODE_SILENT) ||
+            (ringerMode == RINGER_MODE_VIBRATE);
+        return silentMode;
+    }
+
+    // This section re-defines new output device constants from AudioSystem, because the AudioSystem
+    // class is not used by other parts of the framework, which instead use definitions and methods
+    // from AudioManager. AudioSystem is an internal class used by AudioManager and AudioService.
+
+    /** {@hide} The audio output device code for the small speaker at the front of the device used
+     *  when placing calls.  Does not refer to an in-ear headphone without attached microphone,
+     *  such as earbuds, earphones, or in-ear monitors (IEM). Those would be handled as a
+     *  {@link #DEVICE_OUT_WIRED_HEADPHONE}.
+     */
+    public static final int DEVICE_OUT_EARPIECE = AudioSystem.DEVICE_OUT_EARPIECE;
+    /** {@hide} The audio output device code for the built-in speaker */
+    public static final int DEVICE_OUT_SPEAKER = AudioSystem.DEVICE_OUT_SPEAKER;
+    /** {@hide} The audio output device code for a wired headset with attached microphone */
+    public static final int DEVICE_OUT_WIRED_HEADSET = AudioSystem.DEVICE_OUT_WIRED_HEADSET;
+    /** {@hide} The audio output device code for a wired headphone without attached microphone */
+    public static final int DEVICE_OUT_WIRED_HEADPHONE = AudioSystem.DEVICE_OUT_WIRED_HEADPHONE;
+    /** {@hide} The audio output device code for generic Bluetooth SCO, for voice */
+    public static final int DEVICE_OUT_BLUETOOTH_SCO = AudioSystem.DEVICE_OUT_BLUETOOTH_SCO;
+    /** {@hide} The audio output device code for Bluetooth SCO Headset Profile (HSP) and
+     *  Hands-Free Profile (HFP), for voice
+     */
+    public static final int DEVICE_OUT_BLUETOOTH_SCO_HEADSET =
+            AudioSystem.DEVICE_OUT_BLUETOOTH_SCO_HEADSET;
+    /** {@hide} The audio output device code for Bluetooth SCO car audio, for voice */
+    public static final int DEVICE_OUT_BLUETOOTH_SCO_CARKIT =
+            AudioSystem.DEVICE_OUT_BLUETOOTH_SCO_CARKIT;
+    /** {@hide} The audio output device code for generic Bluetooth A2DP, for music */
+    public static final int DEVICE_OUT_BLUETOOTH_A2DP = AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP;
+    /** {@hide} The audio output device code for Bluetooth A2DP headphones, for music */
+    public static final int DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES =
+            AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES;
+    /** {@hide} The audio output device code for Bluetooth A2DP external speaker, for music */
+    public static final int DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER =
+            AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER;
+    /** {@hide} The audio output device code for S/PDIF or HDMI */
+    public static final int DEVICE_OUT_AUX_DIGITAL = AudioSystem.DEVICE_OUT_AUX_DIGITAL;
+    /** {@hide} The audio output device code for fm */
+    public static final int DEVICE_OUT_FM = AudioSystem.DEVICE_OUT_FM;
+    /** {@hide} This is not used as a returned value from {@link #getDevicesForStream}, but could be
+     *  used in the future in a set method to select whatever default device is chosen by the
+     *  platform-specific implementation.
+     */
+    public static final int DEVICE_OUT_DEFAULT = AudioSystem.DEVICE_OUT_DEFAULT;
+
+    /**
+     * Return the enabled devices for the specified output stream type.
+     *
+     * @param streamType The stream type to query. One of
+     *            {@link #STREAM_VOICE_CALL},
+     *            {@link #STREAM_SYSTEM},
+     *            {@link #STREAM_RING},
+     *            {@link #STREAM_MUSIC},
+     *            {@link #STREAM_ALARM},
+     *            {@link #STREAM_NOTIFICATION},
+     *            {@link #STREAM_DTMF}.
+     *
+     * @return The bit-mask "or" of audio output device codes for all enabled devices on this
+     *         stream. Zero or more of
+     *            {@link #DEVICE_OUT_EARPIECE},
+     *            {@link #DEVICE_OUT_SPEAKER},
+     *            {@link #DEVICE_OUT_WIRED_HEADSET},
+     *            {@link #DEVICE_OUT_WIRED_HEADPHONE},
+     *            {@link #DEVICE_OUT_BLUETOOTH_SCO},
+     *            {@link #DEVICE_OUT_BLUETOOTH_SCO_HEADSET},
+     *            {@link #DEVICE_OUT_BLUETOOTH_SCO_CARKIT},
+     *            {@link #DEVICE_OUT_BLUETOOTH_A2DP},
+     *            {@link #DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES},
+     *            {@link #DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER},
+     *            {@link #DEVICE_OUT_AUX_DIGITAL},
+     *            {@link #DEVICE_OUT_FM},
+     *            {@link #DEVICE_OUT_DEFAULT} is not used here.
+     *
+     * The implementation may support additional device codes beyond those listed, so
+     * the application should ignore any bits which it does not recognize.
+     * Note that the information may be imprecise when the implementation
+     * cannot distinguish whether a particular device is enabled.
+     *
+     * {@hide}
+     */
+    public int getDevicesForStream(int streamType) {
+        switch (streamType) {
+        case STREAM_VOICE_CALL:
+        case STREAM_SYSTEM:
+        case STREAM_RING:
+        case STREAM_MUSIC:
+        case STREAM_ALARM:
+        case STREAM_NOTIFICATION:
+        case STREAM_BLUETOOTH_SCO:
+        case STREAM_SYSTEM_ENFORCED:
+        case STREAM_DTMF:
+        case STREAM_TTS:
+        case STREAM_FM:
+            return AudioSystem.getDevicesForStream(streamType);
+        default:
+            return 0;
+        }
+    }
 }

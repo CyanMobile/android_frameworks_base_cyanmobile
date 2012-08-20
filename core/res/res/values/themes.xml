@@ -476,6 +476,11 @@
         <item name="android:imeExtractExitAnimation">@android:anim/input_method_extract_exit</item>
     </style>
 
+    <style name="Theme.Panel.Volume">
+        <item name="android:windowAnimationStyle">@android:style/Animation.VolumePanel</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
     <!-- Theme for the search input bar. -->
     <style name="Theme.SearchBar" parent="Theme.Panel">
         <item name="windowContentOverlay">@null</item>        

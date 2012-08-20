@@ -188,6 +188,12 @@
     <!-- A special animation value used internally for popup windows. -->
     <style name="Animation.PopupWindow" />
 
+    <!-- Window animations used for volume panel. -->
+    <style name="Animation.VolumePanel">
+        <item name="windowEnterAnimation">@null</item>
+        <item name="windowExitAnimation">@anim/fade_out</item>
+    </style>
+
     <!-- Status Bar Styles -->
 
     <style name="TextAppearance.StatusBar">

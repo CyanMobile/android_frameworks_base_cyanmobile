@@ -351,6 +351,13 @@ public interface WindowManager extends ViewManager {
          */
         public static final int TYPE_NAVIGATION_BAR = FIRST_SYSTEM_WINDOW+15;
 
+       /**
+         * Window type: The volume level overlay/dialog shown when the user
+         * changes the system volume.
+         * @hide
+         */
+        public static final int TYPE_VOLUME_OVERLAY = FIRST_SYSTEM_WINDOW+16;
+
         /**
          * Window type: secure system overlay windows, which need to be displayed
          * on top of everything else.  These windows must not take input
