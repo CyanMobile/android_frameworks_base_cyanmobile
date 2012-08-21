@@ -60,7 +60,7 @@ public class NavigationBarView extends LinearLayout {
     public static final int KEYCODE_VIRTUAL_HOME_LONG=KeyEvent.getMaxKeyCode()+1;
     public static final int KEYCODE_VIRTUAL_BACK_LONG=KeyEvent.getMaxKeyCode()+2;
 
-    private static final int ID_APPLICATION = 1;
+    /*private static final int ID_APPLICATION = 1;
     private static final int ID_DISPLAY = 2;
     private static final int ID_INPUT = 3;
     private static final int ID_UIN = 4;
@@ -88,7 +88,7 @@ public class NavigationBarView extends LinearLayout {
     private static final int ID_DEVELOP = 26;
     private static final int ID_ADWLAUNCHER = 27;
     private static final int ID_BACKILL = 28;
-    private static final int ID_SCREENSHOT = 29;
+    private static final int ID_SCREENSHOT = 29;*/
 
     View mNaviBackground;
     View mNaviAdd;
@@ -198,7 +198,7 @@ public class NavigationBarView extends LinearLayout {
         }
 
         if (mNVShow) {
-	    ActionItem appItem = new ActionItem(ID_APPLICATION, "Application");
+	    /*ActionItem appItem = new ActionItem(ID_APPLICATION, "Application");
 	    ActionItem dispItem = new ActionItem(ID_DISPLAY, "Display");
             ActionItem inpItem = new ActionItem(ID_INPUT, "Input");
             ActionItem uisItem = new ActionItem(ID_UIN, "Interface");
@@ -471,7 +471,7 @@ public class NavigationBarView extends LinearLayout {
 			@Override
 			public void onDismiss() {
 			}
-                });
+                }); */
 
             mHomeButton = (ImageButton)findViewById(R.id.home);
             mHomeButton.setOnClickListener(
@@ -535,22 +535,28 @@ public class NavigationBarView extends LinearLayout {
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowHome == 4) {
+                          /*} else if(mShowHome == 4) {
                              quickActionss.show(v);
 			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
-                             return true;
+                             return true;*/
                           } else if(mShowHome == 2) {
-                             quickActionmm.show(v);
-			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             /*quickActionmm.show(v);
+			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);*/
+                                    if (mLongPressBackKills) {
+                                        simulateKeypress(KEYCODE_VIRTUAL_BACK_LONG);
+                                    } else {
+                                        Toast toast = Toast.makeText(mContext, "Enable Kill app back button option to use this!",Toast.LENGTH_LONG);
+                                        toast.show();
+                                    }
                              return true;
-                          } else if(mShowHome == 3) {
+                          /*} else if(mShowHome == 3) {
                              quickActionrr.show(v);
 			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
                           } else if(mShowHome == 5) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
-                             return true;
+                             return true;*/
                           } else {
                              return false;
                           }
@@ -619,22 +625,28 @@ public class NavigationBarView extends LinearLayout {
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowMenu == 4) {
+                          /*} else if(mShowMenu == 4) {
                              quickActionss.show(v);
 			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
-                             return true;
+                             return true;*/
                           } else if(mShowMenu == 2) {
-                             quickActionmm.show(v);
-			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             /*quickActionmm.show(v);
+			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);*/
+                                    if (mLongPressBackKills) {
+                                        simulateKeypress(KEYCODE_VIRTUAL_BACK_LONG);
+                                    } else {
+                                        Toast toast = Toast.makeText(mContext, "Enable Kill app back button option to use this!",Toast.LENGTH_LONG);
+                                        toast.show();
+                                    }
                              return true;
-                          } else if(mShowMenu == 3) {
+                          /*} else if(mShowMenu == 3) {
                              quickActionrr.show(v);
 			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
                           } else if(mShowMenu == 5) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
-                             return true;
+                             return true;*/
                           } else {
                              return false;
                           }
@@ -703,22 +715,28 @@ public class NavigationBarView extends LinearLayout {
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowBack == 4) {
+                          /*} else if(mShowBack == 4) {
                              quickActionss.show(v);
 			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
-                             return true;
+                             return true;*/
                           } else if(mShowBack == 2) {
-                             quickActionmm.show(v);
-			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             /*quickActionmm.show(v);
+			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);*/
+                                    if (mLongPressBackKills) {
+                                        simulateKeypress(KEYCODE_VIRTUAL_BACK_LONG);
+                                    } else {
+                                        Toast toast = Toast.makeText(mContext, "Enable Kill app back button option to use this!",Toast.LENGTH_LONG);
+                                        toast.show();
+                                    }
                              return true;
-                          } else if(mShowBack == 3) {
+                          /*} else if(mShowBack == 3) {
                              quickActionrr.show(v);
 			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
                           } else if(mShowBack == 5) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
-                             return true;
+                             return true;*/
                           } else {
                              return false;
                           }
@@ -787,22 +805,28 @@ public class NavigationBarView extends LinearLayout {
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowSearch == 4) {
+                          /*} else if(mShowSearch == 4) {
                              quickActionss.show(v);
 			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
-                             return true;
+                             return true;*/
                           } else if(mShowSearch == 2) {
-                             quickActionmm.show(v);
-			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             /*quickActionmm.show(v);
+			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);*/
+                                    if (mLongPressBackKills) {
+                                        simulateKeypress(KEYCODE_VIRTUAL_BACK_LONG);
+                                    } else {
+                                        Toast toast = Toast.makeText(mContext, "Enable Kill app back button option to use this!",Toast.LENGTH_LONG);
+                                        toast.show();
+                                    }
                              return true;
-                          } else if(mShowSearch == 3) {
+                          /*} else if(mShowSearch == 3) {
                              quickActionrr.show(v);
 			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
                           } else if(mShowSearch == 5) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
-                             return true;
+                             return true;*/
                           } else {
                              return false;
                           }
@@ -893,22 +917,28 @@ public class NavigationBarView extends LinearLayout {
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowQuicker == 3) {
+                          /*} else if(mShowQuicker == 3) {
                              quickActionss.show(v);
 			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
-                             return true;
+                             return true;*/
                           } else if(mShowQuicker == 1) {
-                             quickActionmm.show(v);
-			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             /*quickActionmm.show(v);
+			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);*/
+                                    if (mLongPressBackKills) {
+                                        simulateKeypress(KEYCODE_VIRTUAL_BACK_LONG);
+                                    } else {
+                                        Toast toast = Toast.makeText(mContext, "Enable Kill app back button option to use this!",Toast.LENGTH_LONG);
+                                        toast.show();
+                                    }
                              return true;
-                          } else if(mShowQuicker == 2) {
+                          /*} else if(mShowQuicker == 2) {
                              quickActionrr.show(v);
 			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
                           } else if(mShowQuicker == 4) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
-                             return true;
+                             return true;*/
                           } else {
                              return false;
                           }
