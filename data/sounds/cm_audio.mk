@@ -25,4 +25,5 @@ PRODUCT_COPY_FILES += \
 	$(LOCAL_PATH)/ringtones/Silmarillia.ogg:system/media/audio/ringtones/Silmarillia.ogg \
 	$(LOCAL_PATH)/ringtones/Gigolo.ogg:system/media/audio/ringtones/Gigolo.ogg \
 	$(LOCAL_PATH)/ringtones/House_of_house.ogg:system/media/audio/ringtones/House_of_house.ogg \
+	$(LOCAL_PATH)/ringtones/CmxTone.ogg:system/media/audio/ringtones/CmxTone.ogg \
 	$(LOCAL_PATH)/ringtones/CyanTone.ogg:system/media/audio/ringtones/CyanTone.ogg
