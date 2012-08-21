@@ -165,7 +165,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static final int INPUT_METHOD_LAYER = 12;
     // on-screen keyboards and other such input method user interfaces go here.
     static final int INPUT_METHOD_DIALOG_LAYER = 13;
-    // the Navigation bar, if available, shows atop most things
+    // the navigation bar, if available, shows atop most things
     static final int NAVIGATION_BAR_LAYER = 14;
     // the keyguard; nothing on top of these can take focus, since they are
     // responsible for power management when displayed.
@@ -299,6 +299,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static final Rect mTmpDisplayFrame = new Rect();
     static final Rect mTmpContentFrame = new Rect();
     static final Rect mTmpVisibleFrame = new Rect();
+    static final Rect mTmpNavigationFrame = new Rect();
 
     WindowState mTopFullscreenOpaqueWindowState;
     boolean mForceStatusBar;
@@ -1138,7 +1139,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         case TYPE_WALLPAPER:
             return WALLPAPER_LAYER;
         case TYPE_NAVIGATION_BAR:
-            return NAVIGATION_BAR_LAYER;
+            return (mShowNavi ? NAVIGATION_BAR_LAYER : null);
         }
         Log.e(TAG, "Unknown window type: " + type);
         return APPLICATION_LAYER;
@@ -1709,8 +1710,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mDockBottom = mContentBottom = mCurBottom = displayHeight;
         mDockLayer = 0x10000000;
 
-        // decide where the status bar goes ahead of time
-        if (mStatusBar != null) {
          // start with the current dock rect, which will be (0,0,displayWidth,displayHeight)
          final Rect pf = mTmpParentFrame;
          final Rect df = mTmpDisplayFrame;
@@ -1719,24 +1718,34 @@ public class PhoneWindowManager implements WindowManagerPolicy {
          pf.top = df.top = vf.top = 0;
          pf.right = df.right = vf.right = displayWidth;
          pf.bottom = df.bottom = vf.bottom = displayHeight;
-            Rect navr = null;
-            if (mNavigationBar != null && mNaviShow && mShowNavi) {
-                mNavigationBar.computeFrameLw(pf, df, vf, vf);
-                if (mNavigationBar.isVisibleLw() && mShowNavi) {
-                    navr = mNavigationBar.getFrameLw();
-                        // Navigation bar horizontal, at bottom
-                        if (mDockBottom == navr.bottom) {
-                            mDockBottom = mContentBottom = mCurBottom = navr.top;
-                        }
-                }
+
+        // decide where the status bar goes ahead of time
+        if (mStatusBar != null) {
+            if (mNavigationBar != null) {
+                final boolean navVisible = (mNavigationBar.isVisibleLw() && mNaviShow && mShowNavi);
+                int navSizeval = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUSBAR_NAVI_SIZE, 25);
+                int navSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                     navSizeval, mContext.getResources().getDisplayMetrics());
+                final int mNavigationBarHeight = navSizepx;
+                    mTmpNavigationFrame.set(0, displayHeight-mNavigationBarHeight,
+                            displayWidth, displayHeight);
+                    if (navVisible) {
+                        mDockBottom = mContentBottom = mCurBottom = mTmpNavigationFrame.top;
+                    } else {
+                        mTmpNavigationFrame.offset(0, mNavigationBarHeight);
+                    }
+                mNavigationBar.computeFrameLw(mTmpNavigationFrame, mTmpNavigationFrame,
+                                        mTmpNavigationFrame, mTmpNavigationFrame);
+            } else {
+                mDockBottom = mContentBottom = mCurBottom = displayHeight;
             }
-            if (DEBUG_LAYOUT) Log.i(TAG, "mNavigationBar frame: " + navr);
+            if (DEBUG_LAYOUT) Log.i(TAG, "mNavigationBar frame: " + mTmpNavigationFrame);
             if(mBottomBar && !mNaviShow){
                 int statSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_STATS_SIZE, 25); // this value size for statusbar
+                Settings.System.STATUSBAR_STATS_SIZE, 25);
                 int statSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                      statSizeval, mContext.getResources().getDisplayMetrics());
-                //get status bar height from dimen.xml
                 final int statusbar_height = statSizepx;
                 //setting status bar's top, to bottom of the screen, minus status bar height
                 pf.top = df.top = vf.top = (displayHeight-statusbar_height);
@@ -1747,11 +1756,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             if (mStatusBar.isVisibleLw()) {
                 // If the status bar is hidden, we don't want to cause
                 // windows behind it to scroll.
+                final Rect r = mStatusBar.getFrameLw();
                 if(mBottomBar && !mNaviShow) {
                     //setting activites bottoms, to top of status bar
-                    mDockBottom = mContentBottom = mCurBottom = mStatusBar.getFrameLw().top;
+                    mDockBottom = mContentBottom = mCurBottom = r.top;
                 } else {
-                    mDockTop = mContentTop = mCurTop = mStatusBar.getFrameLw().bottom;
+                    mDockTop = mContentTop = mCurTop = r.bottom;
                 }
                 if (DEBUG_LAYOUT) Log.v(TAG, "Status bar: mDockBottom="
                         + mDockBottom + " mContentBottom="
