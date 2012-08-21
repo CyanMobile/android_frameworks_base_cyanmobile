@@ -36,6 +36,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.text.format.DateFormat;
 import android.text.TextUtils;
+import android.view.KeyEvent;
 import android.util.Log;
 import com.android.internal.R;
 import com.android.internal.telephony.IccCard;
@@ -511,6 +512,28 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
         mDate.setText(DateFormat.format(mDateFormatString, new Date()));
     }
 
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_HOME) {
+            event.startTracking();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean onKeyLongPress(int keyCode, KeyEvent event) {
+        int ls = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.LOCKSCREEN_STYLE_PREF, 6);
+        if (keyCode == KeyEvent.KEYCODE_HOME) {
+            if (ls == 6 || ls == 7 || ls == 8) {
+                HoneycombLockscreen.handleHomeLongPress(getContext());
+            } else {
+                LockScreen.handleHomeLongPress(getContext());
+            }
+        }
+        return false;
+    }
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {

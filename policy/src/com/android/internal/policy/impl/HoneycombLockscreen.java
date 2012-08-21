@@ -183,6 +183,8 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
 
     private Bitmap[] mCustomRingAppIcons = new Bitmap[4];
 
+    private static final String TOGGLE_FLASHLIGHT = "net.cactii.flash2.TOGGLE_FLASHLIGHT";
+
     private boolean mTrackballUnlockScreen = (Settings.System.getInt(mContext.getContentResolver(),
             Settings.System.TRACKBALL_UNLOCK_SCREEN, 0) == 1);
 
@@ -692,6 +694,18 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         }
     }
 
+    static void handleHomeLongPress(Context context) {
+        int homeLongAction = (Settings.System.getInt(context.getContentResolver(),
+                Settings.System.LOCKSCREEN_LONG_HOME_ACTION, -1));
+        if (homeLongAction == 1) {
+            Intent intent = new Intent(LockScreen.TOGGLE_FLASHLIGHT);
+            intent.putExtra("strobe", false);
+            intent.putExtra("period", 0);
+            intent.putExtra("bright", false);
+            context.sendBroadcast(intent);
+        }
+    }
+
     private boolean isSilentMode() {
         return mAudioManager.getRingerMode() != AudioManager.RINGER_MODE_NORMAL;
     }
@@ -734,7 +748,19 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                 || (keyCode == KeyEvent.KEYCODE_MENU && mEnableMenuKeyInLockScreen)) {
 
             mCallback.goToUnlockScreen();
-            Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
+                    Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
+            return false;
+        } else if (keyCode == KeyEvent.KEYCODE_HOME) {
+            event.startTracking();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean onKeyLongPress(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_HOME) {
+          handleHomeLongPress(mContext);
         }
         return false;
     }

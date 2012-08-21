@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.location.LocationManager;
 import android.net.wifi.WifiManager;
+import android.content.Intent;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.Settings;
@@ -26,6 +27,7 @@ public final class ConnectionSettings implements Parcelable {
     public static final int PROFILE_CONNECTION_WIMAX = 3;
     public static final int PROFILE_CONNECTION_GPS = 4;
     public static final int PROFILE_CONNECTION_BLUETOOTH = 7;
+    public static final int PROFILE_CONNECTION_AIRPLANE = 8;
 
     /** @hide */
     public static final Parcelable.Creator<ConnectionSettings> CREATOR = new Parcelable.Creator<ConnectionSettings>() {
@@ -89,6 +91,26 @@ public final class ConnectionSettings implements Parcelable {
         Boolean state;
 
         switch (getConnectionId()) {
+            case PROFILE_CONNECTION_AIRPLANE:
+                state = (Settings.System.getInt(context.getContentResolver(), Settings.System.AIRPLANE_MODE_ON, 0) == 1);
+                if (getValue() == 1) {
+                    if (!state) {
+                        Settings.System.putInt(context.getContentResolver(),  Settings.System.AIRPLANE_MODE_ON, 1);
+                        Intent intentOn = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+                        intentOn.addFlags(Intent.FLAG_RECEIVER_REPLACE_PENDING);
+                        intentOn.putExtra("state", true);
+                        context.sendBroadcast(intentOn);
+                    }
+                } else {
+                    if (state) {
+                        Settings.System.putInt(context.getContentResolver(),  Settings.System.AIRPLANE_MODE_ON, 0);
+                        Intent intentOff = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+                        intentOff.addFlags(Intent.FLAG_RECEIVER_REPLACE_PENDING);
+                        intentOff.putExtra("state", false);
+                        context.sendBroadcast(intentOff);
+                    }
+                }
+                break;
             case PROFILE_CONNECTION_BLUETOOTH:
                 state = bta.isEnabled();
                 if (getValue() == 1) {

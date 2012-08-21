@@ -180,6 +180,8 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
     private String mDateFormatString;
     private boolean mEnableMenuKeyInLockScreen;
 
+    private static final String TOGGLE_FLASHLIGHT = "net.cactii.flash2.TOGGLE_FLASHLIGHT";
+
     private boolean mTrackballUnlockScreen = (Settings.System.getInt(mContext.getContentResolver(),
             Settings.System.TRACKBALL_UNLOCK_SCREEN, 0) == 1);
 
@@ -959,6 +961,18 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         }
     }
 
+    static void handleHomeLongPress(Context context) {
+        int homeLongAction = (Settings.System.getInt(context.getContentResolver(),
+                Settings.System.LOCKSCREEN_LONG_HOME_ACTION, -1));
+        if (homeLongAction == 1) {
+            Intent intent = new Intent(LockScreen.TOGGLE_FLASHLIGHT);
+            intent.putExtra("strobe", false);
+            intent.putExtra("period", 0);
+            intent.putExtra("bright", false);
+            context.sendBroadcast(intent);
+        }
+    }
+
     private boolean isSilentMode() {
         return mAudioManager.getRingerMode() != AudioManager.RINGER_MODE_NORMAL;
     }
@@ -1048,6 +1062,18 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
 
             mCallback.goToUnlockScreen();
                     Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
+            return false;
+        } else if (keyCode == KeyEvent.KEYCODE_HOME) {
+            event.startTracking();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean onKeyLongPress(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_HOME) {
+          handleHomeLongPress(mContext);
         }
         return false;
     }
@@ -1622,7 +1648,29 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 }
                 break;
             case CARRIER_TYPE_CUSTOM:
-                return carrierLabelCustom;
+                // If the custom carrier label contains any "$x" items then we must
+                // replace those with the proper text.
+                //  - $n = new line
+                //  - $d = default carrier text
+                //  - $p = plmn carrier text
+                //  - $s = spn carrier text
+                //
+                // First we create the default carrier text in case we need it.
+                StringBuilder defaultStr = new StringBuilder();
+                if (telephonyPlmn != null && TextUtils.isEmpty(telephonySpn)) {
+                    defaultStr.append(telephonyPlmn.toString());
+                } else if (telephonySpn != null && TextUtils.isEmpty(telephonyPlmn)) {
+                    defaultStr.append(telephonySpn.toString());
+                } else if (telephonyPlmn != null && telephonySpn != null) {
+                    defaultStr.append(telephonyPlmn.toString() + "|" + telephonySpn.toString());
+                }
+
+                String customStr = carrierLabelCustom;
+                customStr = customStr.replaceAll("\\$n", "\n");
+                customStr = customStr.replaceAll("\\$d", (defaultStr != null) ? defaultStr.toString() : "");
+                customStr = customStr.replaceAll("\\$p", (telephonyPlmn != null) ? telephonyPlmn.toString() : "");
+                customStr = customStr.replaceAll("\\$s", (telephonySpn != null) ? telephonySpn.toString() : "");
+                return customStr;
          }
          return "";
      }

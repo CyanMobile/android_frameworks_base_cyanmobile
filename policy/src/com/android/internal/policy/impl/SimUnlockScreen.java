@@ -308,6 +308,24 @@ public class SimUnlockScreen extends LinearLayout implements KeyguardScreen, Vie
             return true;
         }
 
+        if (keyCode == KeyEvent.KEYCODE_HOME) {
+            event.startTracking();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean onKeyLongPress(int keyCode, KeyEvent event) {
+        int ls = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.LOCKSCREEN_STYLE_PREF, 6);
+        if (keyCode == KeyEvent.KEYCODE_HOME) {
+            if (ls == 6 || ls == 7 || ls == 8) {
+                HoneycombLockscreen.handleHomeLongPress(getContext());
+            } else {
+                LockScreen.handleHomeLongPress(getContext());
+            }
+        }
         return false;
     }
 
