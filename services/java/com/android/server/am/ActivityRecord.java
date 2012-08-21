@@ -16,11 +16,9 @@
 
 package com.android.server.am;
 
-import com.android.internal.app.ResolverActivity;
 import com.android.server.AttributeCache;
 import com.android.server.am.ActivityStack.ActivityState;
 
-import com.android.internal.app.ResolverActivity;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -29,7 +27,6 @@ import android.content.pm.ApplicationInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.Message;
 import android.os.Process;
 import android.os.RemoteException;
@@ -39,7 +36,6 @@ import android.util.Log;
 import android.util.Slog;
 import android.util.TimeUtils;
 import android.view.IApplicationToken;
-import android.view.WindowManager;
 
 import java.io.PrintWriter;
 import java.lang.ref.WeakReference;
@@ -52,7 +48,6 @@ import java.util.HashSet;
 class ActivityRecord extends IApplicationToken.Stub {
     final ActivityManagerService service; // owner
     final ActivityStack stack; // owner
-    final IApplicationToken.Stub appToken; // window manager token
     final ActivityInfo info; // all about me
     final int launchedFromUid; // always the uid who started the activity.
     final Intent intent;    // the original intent that generated us
@@ -189,63 +184,6 @@ class ActivityRecord extends IApplicationToken.Stub {
         }
     }
 
-    static class Token extends IApplicationToken.Stub {
-        final WeakReference<ActivityRecord> weakActivity;
-
-        Token(ActivityRecord activity) {
-            weakActivity = new WeakReference<ActivityRecord>(activity);
-        }
-
-        @Override public void windowsVisible() throws RemoteException {
-            ActivityRecord activity = weakActivity.get();
-            if (activity != null) {
-                activity.windowsVisible();
-            }
-        }
-
-        @Override public void windowsGone() throws RemoteException {
-            ActivityRecord activity = weakActivity.get();
-            if (activity != null) {
-                activity.windowsGone();
-            }
-        }
-
-        @Override public boolean keyDispatchingTimedOut() throws RemoteException {
-            ActivityRecord activity = weakActivity.get();
-            if (activity != null) {
-                return activity.keyDispatchingTimedOut();
-            }
-            return false;
-        }
-
-        @Override public long getKeyDispatchingTimeout() throws RemoteException {
-            ActivityRecord activity = weakActivity.get();
-            if (activity != null) {
-                return activity.getKeyDispatchingTimeout();
-            }
-            return 0;
-        }
-
-        public String toString() {
-            StringBuilder sb = new StringBuilder(128);
-            sb.append("Token{");
-            sb.append(Integer.toHexString(System.identityHashCode(this)));
-            sb.append(' ');
-            sb.append(weakActivity.get());
-            sb.append('}');
-            return sb.toString();
-        }
-    }
-
-    static ActivityRecord forToken(IBinder token) {
-        try {
-            return token != null ? ((Token)token).weakActivity.get() : null;
-        } catch (ClassCastException e) {
-            Slog.w(ActivityManagerService.TAG, "Bad activity token: " + token, e);
-            return null;
-        }
-    }
-
     ActivityRecord(ActivityManagerService _service, ActivityStack _stack, ProcessRecord _caller,
             int _launchedFromUid, Intent _intent, String _resolvedType,
             ActivityInfo aInfo, Configuration _configuration,
@@ -253,7 +191,6 @@ class ActivityRecord extends IApplicationToken.Stub {
             boolean _componentSpecified) {
         service = _service;
         stack = _stack;
-        appToken = new Token(this);
         info = aInfo;
         launchedFromUid = _launchedFromUid;
         intent = _intent;
@@ -339,7 +276,7 @@ class ActivityRecord extends IApplicationToken.Stub {
                         _intent.getData() == null &&
                         _intent.getType() == null &&
                         (intent.getFlags()&Intent.FLAG_ACTIVITY_NEW_TASK) != 0 &&
-                        !ResolverActivity.class.getName().equals(realActivity.getClassName())) {
+                        !"android".equals(realActivity.getClassName())) {
                     // This sure looks like a home activity!
                     // Note the last check is so we don't count the resolver
                     // activity as being home...  really, we don't care about
@@ -432,7 +369,7 @@ class ActivityRecord extends IApplicationToken.Stub {
                 ar.add(intent);
                 service.grantUriPermissionFromIntentLocked(callingUid, packageName,
                         intent, getUriPermissionsLocked());
-                app.thread.scheduleNewIntent(ar, appToken);
+                app.thread.scheduleNewIntent(ar, this);
                 sent = true;
             } catch (RemoteException e) {
                 Slog.w(ActivityManagerService.TAG,
@@ -457,14 +394,14 @@ class ActivityRecord extends IApplicationToken.Stub {
     void pauseKeyDispatchingLocked() {
         if (!keysPaused) {
             keysPaused = true;
-            service.mWindowManager.pauseKeyDispatching(appToken);
+            service.mWindowManager.pauseKeyDispatching(this);
         }
     }
 
     void resumeKeyDispatchingLocked() {
         if (keysPaused) {
             keysPaused = false;
-            service.mWindowManager.resumeKeyDispatching(appToken);
+            service.mWindowManager.resumeKeyDispatching(this);
         }
     }
 
@@ -480,14 +417,14 @@ class ActivityRecord extends IApplicationToken.Stub {
     
     public void startFreezingScreenLocked(ProcessRecord app, int configChanges) {
         if (mayFreezeScreenLocked(app)) {
-            service.mWindowManager.startAppFreezingScreen(appToken, configChanges);
+            service.mWindowManager.startAppFreezingScreen(this, configChanges);
         }
     }
     
     public void stopFreezingScreenLocked(boolean force) {
         if (force || frozenBeforeDestroy) {
             frozenBeforeDestroy = false;
-            service.mWindowManager.stopAppFreezingScreen(appToken, force);
+            service.mWindowManager.stopAppFreezingScreen(this, force);
         }
     }
     

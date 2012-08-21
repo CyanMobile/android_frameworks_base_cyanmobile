@@ -16,8 +16,6 @@
 
 package com.android.internal.app;
 
-import android.app.ActivityManager;
-import android.app.ActivityManagerNative;
 import com.android.internal.R;
 import android.content.ComponentName;
 import android.content.Context;
@@ -32,8 +30,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.PatternMatcher;
-import android.os.Process;
-import android.os.RemoteException;
 import android.util.Config;
 import android.util.Log;
 import android.view.View;
@@ -59,26 +55,14 @@ import java.util.Set;
 public class ResolverActivity extends AlertActivity implements
         DialogInterface.OnClickListener, CheckBox.OnCheckedChangeListener {
 
-    private int mLaunchedFromUid;
     private ResolveListAdapter mAdapter;
     private CheckBox mAlwaysCheck;
     private TextView mClearDefaultHint;
     private PackageManager mPm;
 
-    private Intent makeMyIntent() {
-        Intent intent = new Intent(getIntent());
-        // The resolver activity is set to be hidden from recent tasks.
-        // we don't want this attribute to be propagated to the next activity
-        // being launched.  Note that if the original Intent also had this
-        // flag set, we are now losing it.  That should be a very rare case
-        // and we can live with this.
-        intent.setFlags(intent.getFlags()&~Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-        return intent;
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        onCreate(savedInstanceState, makeMyIntent(),
+        onCreate(savedInstanceState, new Intent(getIntent()),
                 getResources().getText(com.android.internal.R.string.whichApplication),
                 null, null, true);
     }
@@ -87,12 +71,6 @@ public class ResolverActivity extends AlertActivity implements
             CharSequence title, Intent[] initialIntents, List<ResolveInfo> rList,
             boolean alwaysUseOption, boolean alwaysChoose) {
         super.onCreate(savedInstanceState);
-        try {
-            mLaunchedFromUid = ActivityManagerNative.getDefault().getLaunchedFromUid(
-                    getActivityToken());
-        } catch (RemoteException e) {
-            mLaunchedFromUid = -1;
-        }
         mPm = getPackageManager();
         intent.setComponent(null);
 
@@ -112,12 +90,9 @@ public class ResolverActivity extends AlertActivity implements
                                                         com.android.internal.R.id.clearDefaultHint);
             mClearDefaultHint.setVisibility(View.GONE);
         }
-        mAdapter = new ResolveListAdapter(this, intent, initialIntents, rList, mLaunchedFromUid);
+        mAdapter = new ResolveListAdapter(this, intent, initialIntents, rList);
         int count = mAdapter.getCount();
-        if (mLaunchedFromUid < 0) {
-            finish();
-            return;
-        } else if (count > 1 || (count == 1 && alwaysChoose)) {
+        if (count > 1 || (count == 1 && alwaysChoose)) {
             ap.mAdapter = mAdapter;
         } else if (count == 1) {
             startActivity(mAdapter.intentForPosition(0));
@@ -250,19 +225,17 @@ public class ResolverActivity extends AlertActivity implements
         private final Intent[] mInitialIntents;
         private final List<ResolveInfo> mBaseResolveList;
         private final Intent mIntent;
-        private final int mLaunchedFromUid;
         private final LayoutInflater mInflater;
 
         private List<ResolveInfo> mCurrentResolveList;
         private List<DisplayResolveInfo> mList;
 
         public ResolveListAdapter(Context context, Intent intent,
-                Intent[] initialIntents, List<ResolveInfo> rList, int launchedFromUid) {
+                Intent[] initialIntents, List<ResolveInfo> rList) {
             mIntent = new Intent(intent);
             mIntent.setComponent(null);
             mInitialIntents = initialIntents;
             mBaseResolveList = rList;
-            mLaunchedFromUid = launchedFromUid;
             mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             rebuildList();
         }
@@ -274,22 +247,6 @@ public class ResolverActivity extends AlertActivity implements
                 mCurrentResolveList = mPm.queryIntentActivities(
                         mIntent, PackageManager.MATCH_DEFAULT_ONLY
                         | (mAlwaysCheck != null ? PackageManager.GET_RESOLVED_FILTER : 0));
-                // Filter out any activities that the launched uid does not
-                // have permission for.  We don't do this when we have an explicit
-                // list of resolved activities, because that only happens when
-                // we are being subclassed, so we can safely launch whatever
-                // they gave us.
-                if (mCurrentResolveList != null) {
-                    for (int i=mCurrentResolveList.size()-1; i >= 0; i--) {
-                        ActivityInfo ai = mCurrentResolveList.get(i).activityInfo;
-                        int granted = ActivityManager.checkComponentPermission(
-                                ai.permission, ai.applicationInfo.uid, -1);
-                        if (granted != PackageManager.PERMISSION_GRANTED) {
-                            // Access not allowed!
-                            mCurrentResolveList.remove(i);
-                        }
-                    }
-                }
             }
             int N;
             if ((mCurrentResolveList != null) && ((N = mCurrentResolveList.size()) > 0)) {

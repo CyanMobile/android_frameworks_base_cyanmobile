@@ -322,10 +322,6 @@ public interface IActivityManager extends IInterface {
             int mode) throws RemoteException;
     public void showBootMessage(CharSequence msg, boolean always) throws RemoteException;
 
-    // This is not public because you need to be very careful in how you
-    // manage your activity to make sure it is always the uid you expect.
-    public int getLaunchedFromUid(IBinder activityToken) throws RemoteException;
-
     /*
      * Private non-Binder interfaces
      */
@@ -537,5 +533,4 @@ public interface IActivityManager extends IInterface {
     int GRANT_URI_PERMISSION_FROM_OWNER_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+116;
     int REVOKE_URI_PERMISSION_FROM_OWNER_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+117;
     int SHOW_BOOT_MESSAGE_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+118;
-    int GET_LAUNCHED_FROM_UID_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+119;
 }

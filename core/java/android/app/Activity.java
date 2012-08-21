@@ -3782,8 +3782,7 @@ public class Activity extends ContextThemeWrapper
         mCurrentConfig = config;
     }
 
-    /** @hide */
-    public final IBinder getActivityToken() {
+    final IBinder getActivityToken() {
         return mParent != null ? mParent.getActivityToken() : mToken;
     }
 

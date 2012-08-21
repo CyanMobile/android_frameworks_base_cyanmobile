@@ -4026,10 +4026,31 @@ public final class ActivityManagerService extends ActivityManagerNative
             uid = tlsIdentity.uid;
             pid = tlsIdentity.pid;
         }
-        if (pid == MY_PID) {
+
+        // Root, system server and our own process get to do everything.
+        if (uid == 0 || uid == Process.SYSTEM_UID || pid == MY_PID ||
+            !Process.supportsProcesses()) {
             return PackageManager.PERMISSION_GRANTED;
         }
-        return ActivityManager.checkComponentPermission(permission, uid, reqUid);
+
+        // If the target requires a specific UID, always fail for others.
+        if (reqUid >= 0 && uid != reqUid) {
+            Slog.w(TAG, "Permission denied: checkComponentPermission() reqUid=" + reqUid);
+            return PackageManager.PERMISSION_DENIED;
+        }
+
+        if (permission == null) {
+            return PackageManager.PERMISSION_GRANTED;
+        }
+
+        try {
+            return AppGlobals.getPackageManager()
+                    .checkUidPermission(permission, uid);
+        } catch (RemoteException e) {
+            // Should never happen, but if it does... deny!
+            Slog.e(TAG, "PackageManager is dead?!?", e);
+        }
+        return PackageManager.PERMISSION_DENIED;
     }
 
     /**
@@ -4774,13 +4795,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                             maxNum < N ? maxNum : N);
             for (int i=0; i<N && maxNum > 0; i++) {
                 TaskRecord tr = mRecentTasks.get(i);
-                // Return the entry if desired by the caller.  We always return
-                // the first entry, because callers always expect this to be the
-                // forground app.  We may filter others if the caller has
-                // not supplied RECENT_WITH_EXCLUDED and there is some reason
-                // we should exclude the entry.
-                if (i == 0
-                        || ((flags&ActivityManager.RECENT_WITH_EXCLUDED) != 0)
+                if (((flags&ActivityManager.RECENT_WITH_EXCLUDED) != 0)
                         || (tr.intent == null)
                         || ((tr.intent.getFlags()
                                 &Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS) == 0)) {
@@ -11481,14 +11496,6 @@ public final class ActivityManagerService extends ActivityManagerNative
             SystemProperties.set(Configuration.THEME_ID_PERSISTENCE_PROPERTY, t.getThemeId());
             SystemProperties.set(Configuration.THEME_PACKAGE_NAME_PERSISTENCE_PROPERTY, t.getThemePackageName());  
         }
-    }
-
-    public int getLaunchedFromUid(IBinder activityToken) {
-        ActivityRecord srec = ActivityRecord.forToken(activityToken);
-        if (srec == null) {
-            return -1;
-        }
-        return srec.launchedFromUid;
     }
 
     // =========================================================
