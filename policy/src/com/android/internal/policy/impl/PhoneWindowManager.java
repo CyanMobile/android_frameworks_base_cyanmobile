@@ -1106,9 +1106,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
         switch (type) {
         case TYPE_STATUS_BAR:
-            return STATUS_BAR_LAYER;
+            return (mBottomBar ? STATUS_BAR_PANEL_LAYER : STATUS_BAR_LAYER);
         case TYPE_STATUS_BAR_PANEL:
-            return STATUS_BAR_PANEL_LAYER;
+            return (mBottomBar ? STATUS_BAR_LAYER : STATUS_BAR_PANEL_LAYER);
         case TYPE_SYSTEM_DIALOG:
             return SYSTEM_DIALOG_LAYER;
         case TYPE_SEARCH_BAR:
