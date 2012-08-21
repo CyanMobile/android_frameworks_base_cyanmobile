@@ -9,7 +9,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.View.OnTouchListener;
 
-import android.widget.PopupWindow;
+import android.widget.PopupWindowAction;
 import android.content.Context;
 
 /**
@@ -20,7 +20,7 @@ import android.content.Context;
  */
 public class PopupWindows {
 	protected Context mContext;
-	protected PopupWindow mWindow;
+	protected PopupWindowAction mWindow;
 	protected View mRootView;
 	protected Drawable mBackground = null;
 	protected WindowManager mWindowManager;
@@ -32,7 +32,7 @@ public class PopupWindows {
 	 */
 	public PopupWindows(Context context) {
 		mContext	= context;
-		mWindow 	= new PopupWindow(context);
+		mWindow 	= new PopupWindowAction(context);
 
 		mWindow.setTouchInterceptor(new OnTouchListener() {
 			@Override
@@ -121,7 +121,7 @@ public class PopupWindows {
 	 * 
 	 * @param listener
 	 */
-	public void setOnDismissListener(PopupWindow.OnDismissListener listener) {
+	public void setOnDismissListener(PopupWindowAction.OnDismissListener listener) {
 		mWindow.setOnDismissListener(listener);  
 	}
 

@@ -118,6 +118,7 @@ import static android.view.WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_TOAST;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 import static android.view.WindowManager.LayoutParams.TYPE_NAVIGATION_BAR;
+import static android.view.WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL;
 import android.view.WindowManagerImpl;
 import android.view.WindowManagerPolicy;
 import android.view.animation.Animation;
@@ -167,13 +168,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static final int INPUT_METHOD_DIALOG_LAYER = 13;
     // the navigation bar, if available, shows atop most things
     static final int NAVIGATION_BAR_LAYER = 14;
+    // some panels (e.g. search) need to show on top of the navigation bar
+    static final int NAVIGATION_BAR_PANEL_LAYER = 15;
     // the keyguard; nothing on top of these can take focus, since they are
     // responsible for power management when displayed.
-    static final int KEYGUARD_LAYER = 15;
-    static final int KEYGUARD_DIALOG_LAYER = 16;
+    static final int KEYGUARD_LAYER = 16;
+    static final int KEYGUARD_DIALOG_LAYER = 17;
     // things in here CAN NOT take focus, but are shown on top of everything else.
-    static final int SYSTEM_OVERLAY_LAYER = 17;
-    static final int SECURE_SYSTEM_OVERLAY_LAYER = 18;
+    static final int SYSTEM_OVERLAY_LAYER = 18;
+    static final int SECURE_SYSTEM_OVERLAY_LAYER = 19;
 
     static final int APPLICATION_MEDIA_SUBLAYER = -2;
     static final int APPLICATION_MEDIA_OVERLAY_SUBLAYER = -1;
@@ -1140,6 +1143,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             return WALLPAPER_LAYER;
         case TYPE_NAVIGATION_BAR:
             return (mShowNavi ? NAVIGATION_BAR_LAYER : null);
+        case TYPE_NAVIGATION_BAR_PANEL:
+            return NAVIGATION_BAR_PANEL_LAYER;
         }
         Log.e(TAG, "Unknown window type: " + type);
         return APPLICATION_LAYER;
@@ -1325,6 +1330,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         android.Manifest.permission.STATUS_BAR_SERVICE,
                         "PhoneWindowManager");
                 mNavigationBar = win;
+                break;
+            case TYPE_NAVIGATION_BAR_PANEL:
+                mContext.enforceCallingOrSelfPermission(
+                        android.Manifest.permission.STATUS_BAR_SERVICE,
+                        "PhoneWindowManager");
                 break;
             case TYPE_STATUS_BAR_PANEL:
                 mContext.enforceCallingOrSelfPermission(

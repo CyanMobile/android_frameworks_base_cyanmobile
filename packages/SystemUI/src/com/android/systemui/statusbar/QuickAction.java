@@ -8,7 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.ScrollView;
 import android.widget.RelativeLayout;
-import android.widget.PopupWindow.OnDismissListener;
+import android.widget.PopupWindowAction.OnDismissListener;
 
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -268,11 +268,11 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
 		int dyTop			= anchorRect.top;
 		int dyBottom		= screenHeight - anchorRect.bottom;
 
-		boolean onTop		= (dyTop > dyBottom) ? true : false;
+		boolean onTop		= true;
 
 		if (onTop) {
 			if (rootHeight > dyTop) {
-				yPos 			= 15;
+				yPos 			= 25;
 				LayoutParams l 	= mScroller.getLayoutParams();
 				l.height		= dyTop - anchor.getHeight();
 			} else {

@@ -346,10 +346,16 @@ public interface WindowManager extends ViewManager {
         public static final int TYPE_STATUS_BAR_PANEL   = FIRST_SYSTEM_WINDOW+14;
 
         /**
-         * Window type: Navigation bar (when distinct from statusbar)
+         * Window type: Navigation bar (when distinct from status bar)
          * @hide
          */
         public static final int TYPE_NAVIGATION_BAR = FIRST_SYSTEM_WINDOW+15;
+
+        /**
+         * Window type: Navigation bar panel (when navigation bar is distinct from status bar)
+         * @hide
+         */
+        public static final int TYPE_NAVIGATION_BAR_PANEL = FIRST_SYSTEM_WINDOW+16;
 
         /**
          * Window type: secure system overlay windows, which need to be displayed
@@ -361,7 +367,7 @@ public interface WindowManager extends ViewManager {
          * obtain permission to create secure system overlays.
          * @hide
          */
-        public static final int TYPE_SECURE_SYSTEM_OVERLAY = FIRST_SYSTEM_WINDOW+16;
+        public static final int TYPE_SECURE_SYSTEM_OVERLAY = FIRST_SYSTEM_WINDOW+17;
 
         /**
          * End of types of system windows.
