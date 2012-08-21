@@ -220,9 +220,9 @@ public class KanjiClock extends LinearLayout {
                 Settings.System.LOCKSCREEN_FUZZY_CLOCK, 1) == 3;
 
         if (fullkanji) {
-           mTimeString = getKanjiHour(mHour) + " " + getKanjiMinute(mMinutes) + " " + getKanjiSecond(mSeconds, mAmPm);
+           mTimeString = getKanjiHour(mHour, mAmPm) + " " + getKanjiMinute(mMinutes) + " " + getKanjiSecond(mSeconds);
         } else {
-           mTimeString = getHours(mHour) + " " + getMinutes(mMinutes) + " " + getSeconds(mSeconds, mAmPm);
+           mTimeString = getHours(mHour, mAmPm) + " " + getMinutes(mMinutes) + " " + getSeconds(mSeconds);
         }
 
         //print the time
@@ -230,28 +230,28 @@ public class KanjiClock extends LinearLayout {
 
     }
 
-    private String getKanjiHour(Integer calendarHour) {
-        return getKanji(calendarHour.toString()) + J_HOUR;
+    private String getKanjiHour(Integer calendarHour, Integer amPm) {
+        return (amPm == Calendar.AM ? J_AM : J_PM) + " " + getKanji(calendarHour.toString()) + J_HOUR;
     }
 
     private String getKanjiMinute(Integer calendarMinute) {
         return getKanji(calendarMinute.toString()) + J_MINUTE;
     }
 
-    private String getKanjiSecond(Integer calendarSecond, Integer amPm) {
-        return getKanji(calendarSecond.toString()) + J_SECOND + (amPm == Calendar.AM ? J_AM : J_PM);
+    private String getKanjiSecond(Integer calendarSecond) {
+        return getKanji(calendarSecond.toString()) + J_SECOND;
     }
 
-    private String getHours(Integer calendarHour) {
-        return calendarHour.toString() + J_HOUR;
+    private String getHours(Integer calendarHour, Integer amPm) {
+        return (amPm == Calendar.AM ? J_AM : J_PM) + " " + calendarHour.toString() + J_HOUR;
     }
 
     private String getMinutes(Integer calendarMinute) {
         return calendarMinute.toString() + J_MINUTE;
     }
 
-    private String getSeconds(Integer calendarSecond, Integer amPm) {
-        return calendarSecond.toString() + J_SECOND + (amPm == Calendar.AM ? J_AM : J_PM);
+    private String getSeconds(Integer calendarSecond) {
+        return calendarSecond.toString() + J_SECOND;
     }
 
     private String getKanji(String arabicNumber) {
