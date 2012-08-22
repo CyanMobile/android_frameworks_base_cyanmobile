@@ -698,7 +698,7 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         int homeLongAction = (Settings.System.getInt(context.getContentResolver(),
                 Settings.System.LOCKSCREEN_LONG_HOME_ACTION, -1));
         if (homeLongAction == 1) {
-            Intent intent = new Intent(LockScreen.TOGGLE_FLASHLIGHT);
+            Intent intent = new Intent(HoneycombLockscreen.TOGGLE_FLASHLIGHT);
             intent.putExtra("strobe", false);
             intent.putExtra("period", 0);
             intent.putExtra("bright", false);
