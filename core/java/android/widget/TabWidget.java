@@ -226,7 +226,6 @@ public class TabWidget extends LinearLayout implements OnFocusChangeListener {
      * Sets the drawable to use as a divider between the tab indicators.
      * @param drawable the divider drawable
      */
-    @Override
     public void setDividerDrawable(Drawable drawable) {
         mDividerDrawable = drawable;
         requestLayout();
