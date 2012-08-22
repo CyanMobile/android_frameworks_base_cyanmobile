@@ -71,6 +71,7 @@ import android.util.Slog;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.Gravity;
+import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -78,6 +79,7 @@ import android.view.Surface;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
@@ -113,6 +115,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     // values changed onCreate if its a bottomBar
     static int EXPANDED_LEAVE_ALONE = -10000;
     static int EXPANDED_FULL_OPEN = -10001;
+
+    private static final float BRIGHTNESS_CONTROL_PADDING = 0.15f;
+    private static final int BRIGHTNESS_CONTROL_LONG_PRESS_TIMEOUT = 750; // ms
+    private static final int BRIGHTNESS_CONTROL_LINGER_THRESHOLD = 20;
+    private boolean mBrightnessControl;
 
     private static final int MSG_ANIMATE = 1000;
     private static final int MSG_ANIMATE_REVEAL = 1001;
@@ -237,19 +244,19 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private BrightnessPanel mBrightnessPanel = null;
 
     // notification color default variables
-    int mBlackColor = 0xFF000000; // this value for color
-    int mWhiteColor = 0xFFFFFFFF; // this value for color
+    int mBlackColor = 0xFF000000;
+    int mWhiteColor = 0xFFFFFFFF;
 
     // notfication color temp variables
     int mItemText = mWhiteColor;
-    int mItemTime = 0xFF33B5E5; // this value for color
-    int mItemTitle = 0xFF33B5E5; // this value for color
-    int mDateColor = 0xFF33B5E5; // this value for color
+    int mItemTime = 0xFF33B5E5;
+    int mItemTitle = 0xFF33B5E5;
+    int mDateColor = 0xFF33B5E5;
     int mButtonText = mBlackColor;
-    int mNotifyNone = 0xFF33B5E5; // this value for color
-    int mNotifyTicker = 0xFF33B5E5; // this value for color
-    int mNotifyLatest = 0xFF33B5E5; // this value for color
-    int mNotifyOngoing = 0xFF33B5E5; // this value for color
+    int mNotifyNone = 0xFF33B5E5;
+    int mNotifyTicker = 0xFF33B5E5;
+    int mNotifyLatest = 0xFF33B5E5;
+    int mNotifyOngoing = 0xFF33B5E5;
 
     // Tracking finger for opening/closing.
     int mEdgeBorder; // corresponds to R.dimen.status_bar_edge_ignore
@@ -374,6 +381,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.getUriFor(Settings.System.NAVI_BAR_COLOR), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.USE_SOFT_BUTTONS), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.STATUS_BAR_BRIGHTNESS_TOGGLE), false, this);
             onChange(true);
         }
 
@@ -388,6 +397,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SOFT_BUTTONS_LEFT) ? 1 : 0);
             mButtonsLeft = (Settings.System.getInt(resolver,
                     Settings.System.SOFT_BUTTONS_LEFT, defValue) == 1);
+            // mNaviButtons = (Settings.System.getInt(resolver,
+            //        Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_USE_DEAD_ZONE) ? 1 : 0);
             mDeadZone = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_DEAD_ZONE, defValue) == 1);
@@ -426,7 +437,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             LogoStatusBar = (Settings.System.getInt(resolver,
                     Settings.System.CARRIER_LOGO_STATUS_BAR, 0) == 1);
             mClockColor = (Settings.System.getInt(resolver,
-                    Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5)); // this value for color
+                    Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5));
+            boolean autoBrightness = Settings.System.getInt(
+                    resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, 0) ==
+                    Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
+            mBrightnessControl = !autoBrightness && Settings.System.getInt(
+                    resolver, Settings.System.STATUS_BAR_BRIGHTNESS_TOGGLE, 0) == 1;
             updateColors();
             updateLayout();
             updateCarrierLabel();
@@ -435,7 +451,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     // for brightness control on status bar
-    int mLinger = 0;
+    int mLinger;
+    int mInitialTouchX;
+    int mInitialTouchY;
 
     private class ExpandedDialog extends Dialog {
         ExpandedDialog(Context context) {
@@ -455,6 +473,14 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             return super.dispatchKeyEvent(event);
         }
     }
+
+    Runnable mLongPressBrightnessChange = new Runnable() {
+        public void run() {
+            mStatusBarView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+            adjustBrightness(mInitialTouchX);
+            mLinger = BRIGHTNESS_CONTROL_LINGER_THRESHOLD + 1;
+        }
+    };
 
 
     @Override
@@ -590,7 +616,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mTouchDispatcher = new ItemTouchDispatcher(this);
 
         int mIconSizeval = Settings.System.getInt(context.getContentResolver(),
-                Settings.System.STATUSBAR_ICONS_SIZE, 25); // this value size for icon
+                Settings.System.STATUSBAR_ICONS_SIZE, 25);
 
         int IconSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mIconSizeval, res.getDisplayMetrics());
         mIconSize = IconSizepx;
@@ -702,6 +728,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         // figure out which pixel-format to use for the status bar.
         mPixelFormat = PixelFormat.TRANSLUCENT;
+//        Drawable bg = mStatusBarView.getBackground();
+//        if (bg != null) {
+//            mPixelFormat = bg.getOpacity();
+//        }
 
         mStatusIcons = (LinearLayout)mStatusBarView.findViewById(R.id.statusIcons);
         mNotificationIcons = (IconMerger)mStatusBarView.findViewById(R.id.notificationIcons);
@@ -834,6 +864,20 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                        return true;
                    }
                });
+
+        //mRecentApps = (RecentApps)mExpandedView.findViewById(R.id.recent_apps);
+        //mRecentApps.setupSettingsObserver(mHandler);
+        //mRecentApps.setGlobalButtonOnClickListener(new View.OnClickListener() {
+        //            public void onClick(View v) {
+        //               animateCollapse();
+        //           }
+        //        });
+        //mRecentApps.setGlobalButtonOnLongClickListener(new View.OnLongClickListener() {
+        //           public boolean onLongClick(View v) {
+        //               animateCollapse();
+        //               return true;
+        //           }
+        //       });
 
         mPowerWidgetOne = (PowerWidgetOne)mExpandedView.findViewById(R.id.exp_power_stat_one);
         mPowerWidgetOne.setGlobalButtonOnClickListener(new View.OnClickListener() {
@@ -976,7 +1020,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
               @Override
               public void onClick(View v) {
                  mNotificationsToggle.setTextColor(mClockColor);
-                 mButtonsToggle.setTextColor(Color.parseColor("#666666")); // this value for color
+                 mButtonsToggle.setTextColor(Color.parseColor("#666666"));
                  LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
                  parent.setBackgroundResource(R.drawable.title_bar_portrait);
                  mPowerAndCarrier.setVisibility(View.GONE);
@@ -989,7 +1033,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
               @Override
               public void onClick(View v) {
                  mButtonsToggle.setTextColor(mClockColor);
-                 mNotificationsToggle.setTextColor(Color.parseColor("#666666")); // this value for color
+                 mNotificationsToggle.setTextColor(Color.parseColor("#666666"));
                  LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
                  parent.setBackgroundResource(R.drawable.title_bar_portrait);
                  mNotifications.setVisibility(View.GONE);
@@ -1392,7 +1436,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.SHOW_NAVI_BUTTONS, 1) == 1) && (Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.NAVI_BUTTONS, 1) == 1));
         int naviSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_NAVI_SIZE, 25); // this value size for navibar
+                Settings.System.STATUSBAR_NAVI_SIZE, 25);
         int naviSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, naviSizeval, res.getDisplayMetrics());
         final int size = naviSizepx;
 
@@ -1427,7 +1471,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         Resources res = mContext.getResources();
         int heightSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_STATS_SIZE, 25); // this value size for statusbar
+                Settings.System.STATUSBAR_STATS_SIZE, 25);
         int heightSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, heightSizeval, res.getDisplayMetrics());
         final int height = heightSizepx;
 
@@ -2119,6 +2163,39 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         stopTracking();
     }
 
+    private void adjustBrightness(int x) {
+        float screen_width = (float)(mContext.getResources().getDisplayMetrics().widthPixels);
+        float raw = ((float) x) / screen_width;
+        int minBrightness = 4;
+        // Add a padding to the brightness control on both sides to
+        // make it easier to reach min/max brightness
+        float padded = Math.min(1.0f - BRIGHTNESS_CONTROL_PADDING,
+                Math.max(BRIGHTNESS_CONTROL_PADDING, raw));
+        float value = (padded - BRIGHTNESS_CONTROL_PADDING) /
+                (1 - (2.0f * BRIGHTNESS_CONTROL_PADDING));
+
+        int newBrightness = minBrightness + (int) Math.round(value *
+                (android.os.Power.BRIGHTNESS_ON - minBrightness));
+        newBrightness = Math.min(newBrightness, android.os.Power.BRIGHTNESS_ON);
+        newBrightness = Math.max(newBrightness, minBrightness);
+
+       try {
+            IPowerManager power = IPowerManager.Stub.asInterface(
+                    ServiceManager.getService("power"));
+            if (power != null) {
+                power.setBacklightBrightness(newBrightness);
+                Settings.System.putInt(mContext.getContentResolver(),
+                        Settings.System.SCREEN_BRIGHTNESS, newBrightness);
+                if (mBrightnessPanel == null) {
+                    mBrightnessPanel = new BrightnessPanel(mContext);
+                    mBrightnessPanel.postBrightnessChanged(newBrightness, android.os.Power.BRIGHTNESS_ON);
+                }
+            }
+        } catch (RemoteException e) {
+            Slog.w(TAG, "Setting Brightness failed: " + e);
+        }
+    }
+
     boolean interceptTouchEvent(MotionEvent event) {
         if (SPEW) {
             Slog.d(TAG, "Touch: rawY=" + event.getRawY() + " event=" + event + " mDisabled="
@@ -2135,9 +2212,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         final int statusBarSize = mStatusBarView.getHeight();
         final int hitSize = statusBarSize*2;
+        final int y = (int)event.getRawY();
+        final int x = (int)event.getRawX();
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            final int y = (int)event.getRawY();
             mLinger = 0;
+            mInitialTouchX = x;
+            mInitialTouchY = y;
             if (!mExpanded) {
                 mViewDelta = mBottomBar ? mDisplay.getHeight() - y : statusBarSize - y;
             } else {
@@ -2150,7 +2230,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 // We drop events at the edge of the screen to make the windowshade come
                 // down by accident less, especially when pushing open a device with a keyboard
                 // that rotates (like g1 and droid)
-                int x = (int)event.getRawX();
 
                 final int edgeBorder = mEdgeBorder;
                 int edgeLeft = mButtonsLeft ? mStatusBarView.getSoftButtonsWidth() : 0;
@@ -2169,79 +2248,48 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     mVelocityTracker.addMovement(event);
                 }
             }
+            if (mTracking && mBrightnessControl) {
+                mHandler.removeCallbacks(mLongPressBrightnessChange);
+                mHandler.postDelayed(mLongPressBrightnessChange,
+                        BRIGHTNESS_CONTROL_LONG_PRESS_TIMEOUT);
+            }
         } else if (mTracking) {
             mVelocityTracker.addMovement(event);
             int minY = statusBarSize + mCloseView.getHeight();
             if (mBottomBar)
                 minY = mDisplay.getHeight() - statusBarSize - mCloseView.getHeight();
             if (event.getAction() == MotionEvent.ACTION_MOVE) {
-                int y = (int)event.getRawY();
                 if ((!mBottomBar && mAnimatingReveal && y < minY) ||
                         (mBottomBar && mAnimatingReveal && y > minY)) {
-                        try {
-                                if (Settings.System.getInt(mStatusBarView.getContext().getContentResolver(),Settings.System.STATUS_BAR_BRIGHTNESS_TOGGLE) == 1){
-                                        //Credit for code goes to daryelv github : https://github.com/daryelv/android_frameworks_base
-                                        // See if finger is moving left/right an adequate amount
-                                        mVelocityTracker.computeCurrentVelocity(1000);
-                                        float yVel = mVelocityTracker.getYVelocity();
-                                        if (yVel < 0) {
-                                                yVel = -yVel;
-                                        }
-                                        if (yVel < 50.0f) {
-                                                if (mLinger > 50) {
-                                                        // Check that Auto-Brightness not enabled
-                                                        Context context = mStatusBarView.getContext();
-                                                        boolean auto_brightness = false;
-                                                        int brightness_mode = 0;
-                                                        try {
-                                                                brightness_mode = Settings.System.getInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS_MODE);
-                                                        }catch (SettingNotFoundException e){
-                                                                auto_brightness = false;
-                                                        }
-                                                        auto_brightness = (brightness_mode == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC);
-                                                        if (auto_brightness)
-                                                        {
-                                                                // do nothing - Don't manually set brightness from statusbar
-                                                        }
-                                                        else
-                                                        {
-                                                                // set brightness according to x position on statusbar
-                                                                float x = (float)event.getRawX();
-                                                                float screen_width = (float)(context.getResources().getDisplayMetrics().widthPixels);
-                                                                // Brightness set from the 90% of pixels in the middle of screen, can't always get to the edges
-                                                                int new_brightness = (int)(((x - (screen_width * 0.05f))/(screen_width * 0.9f)) * (float)android.os.Power.BRIGHTNESS_ON );
-                                                                // don't let screen go completely dim or past 100% bright
-                                                                if (new_brightness < 10) new_brightness = 10;
-                                                                if (new_brightness > android.os.Power.BRIGHTNESS_ON ) new_brightness = android.os.Power.BRIGHTNESS_ON;
-                                                                // Set the brightness
-                                                                try {
-                                                                        IPowerManager.Stub.asInterface(ServiceManager.getService("power")).setBacklightBrightness(new_brightness);
-                                                                        Settings.System.putInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, new_brightness);
-                                                                        if (mBrightnessPanel == null)
-                                                                                   mBrightnessPanel = new BrightnessPanel(mContext);
-                                                                        mBrightnessPanel.postBrightnessChanged(new_brightness, android.os.Power.BRIGHTNESS_ON);
-                                                                }catch (Exception e){
-                                                                        Slog.w(TAG, "Setting Brightness failed: " + e);
-                                                                }
-                                                       }
-                                                }
-                                                else
-                                                {
-                                                        mLinger++;
-                                                }
-                                        }
-                                        else
-                                        {
-                                                mLinger = 0;
-                                        }
-                                }
-                }catch (SettingNotFoundException e){
-                }
+                     if (mBrightnessControl){
+                         mVelocityTracker.computeCurrentVelocity(1000);
+                         float yVel = mVelocityTracker.getYVelocity();
+                         if (yVel < 0) {
+                             yVel = -yVel;
+                         }
+                         if (yVel < 50.0f) {
+                             if (mLinger > BRIGHTNESS_CONTROL_LINGER_THRESHOLD) {
+                                 adjustBrightness(x);
+                             } else {
+                                 mLinger++;
+                             }
+                         } else {
+                             mLinger = 0;
+                         }
+                         int touchSlop = ViewConfiguration.get(mContext).getScaledTouchSlop();
+                         if (Math.abs(x - mInitialTouchX) > touchSlop ||
+                                Math.abs(y - mInitialTouchY) > touchSlop) {
+                            mHandler.removeCallbacks(mLongPressBrightnessChange);
+                         }
+                     }
                 } else  {
+                    mHandler.removeCallbacks(mLongPressBrightnessChange);
                     mAnimatingReveal = false;
                     updateExpandedViewPos(y + (mBottomBar ? -mViewDelta : mViewDelta));
                 }
             } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                mHandler.removeCallbacks(mLongPressBrightnessChange);
+                mLinger = 0;
                 mVelocityTracker.computeCurrentVelocity(1000);
 
                 float yVel = mVelocityTracker.getYVelocity();
@@ -2499,7 +2547,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         Drawable bg;
         Resources res = mContext.getResources();
         int expheightSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_NAVI_SIZE, 25); // this value size for navibar
+                Settings.System.STATUSBAR_NAVI_SIZE, 25);
         int expheightSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, expheightSizeval, res.getDisplayMetrics());
         /// ---------- Expanded View --------------
         pixelFormat = PixelFormat.TRANSLUCENT;
@@ -2707,7 +2755,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     void updateExpandedHeight() {
         Resources res = mContext.getResources();
         int mexpheightSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_NAVI_SIZE, 25); // this value size for navibar
+                Settings.System.STATUSBAR_NAVI_SIZE, 25);
         int mexpheightSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mexpheightSizeval, res.getDisplayMetrics());
         if (mExpandedView != null) {
             mExpandedParams.height = mBottomBar ? getExpandedHeight() : (getExpandedHeight()-mexpheightSizepx);
@@ -2838,9 +2886,20 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         public void onClick(View v) {
             if(Settings.System.getInt(getContentResolver(),
                       Settings.System.USE_CUSTOM_SHORTCUT_TOGGLE, 0) == 1) {
+               if (mBrightnessControl) {
+                   final View vW = v;
+                   mHandler.postDelayed(new Runnable() {
+                       public void run() {
+                           ShortcutPopupWindow shortCutWindow = new ShortcutPopupWindow(vW);
+                           shortCutWindow.showLikeQuickAction();
+                           animateCollapse();
+                       }
+                   }, (BRIGHTNESS_CONTROL_LONG_PRESS_TIMEOUT + 50));
+               } else {
                  ShortcutPopupWindow shortCutWindow = new ShortcutPopupWindow(v);
                  shortCutWindow.showLikeQuickAction();
                  animateCollapse();
+               }
             }
         }
     };
