@@ -183,8 +183,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
 
     private Bitmap[] mCustomRingAppIcons = new Bitmap[4];
 
-    private static final String TOGGLE_FLASHLIGHT = "net.cactii.flash2.TOGGLE_FLASHLIGHT";
-
     private boolean mTrackballUnlockScreen = (Settings.System.getInt(mContext.getContentResolver(),
             Settings.System.TRACKBALL_UNLOCK_SCREEN, 0) == 1);
 
@@ -698,7 +696,7 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         int homeLongAction = (Settings.System.getInt(context.getContentResolver(),
                 Settings.System.LOCKSCREEN_LONG_HOME_ACTION, -1));
         if (homeLongAction == 1) {
-            Intent intent = new Intent(LockScreen.TOGGLE_FLASHLIGHT);
+            Intent intent = new Intent("net.cactii.flash2.TOGGLE_FLASHLIGHT");
             intent.putExtra("strobe", false);
             intent.putExtra("period", 0);
             intent.putExtra("bright", false);
