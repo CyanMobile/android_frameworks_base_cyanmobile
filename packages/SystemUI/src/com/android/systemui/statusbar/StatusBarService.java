@@ -2186,10 +2186,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 power.setBacklightBrightness(newBrightness);
                 Settings.System.putInt(mContext.getContentResolver(),
                         Settings.System.SCREEN_BRIGHTNESS, newBrightness);
-                if (mBrightnessPanel == null) {
+                if (mBrightnessPanel == null)
                     mBrightnessPanel = new BrightnessPanel(mContext);
-                    mBrightnessPanel.postBrightnessChanged(newBrightness, android.os.Power.BRIGHTNESS_ON);
-                }
+                mBrightnessPanel.postBrightnessChanged(newBrightness, android.os.Power.BRIGHTNESS_ON);
             }
         } catch (RemoteException e) {
             Slog.w(TAG, "Setting Brightness failed: " + e);
