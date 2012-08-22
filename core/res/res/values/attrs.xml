@@ -301,6 +301,15 @@
              because there will be no such interaction coming. -->
         <attr name="windowNoDisplay" format="boolean" />
 
+        <!-- Control whether a container should automatically close itself if
+             the user touches outside of it.  This only applies to activities
+             and dialogs.
+
+             <p>Note: this attribute will only be respected for applications
+             that are targeting {@link android.os.Build.VERSION_CODES#HONEYCOMB}
+             or later. -->
+        <attr name="windowCloseOnTouchOutside" format="boolean" />
+
         <!-- ============ -->
         <!-- Alert Dialog styles -->
         <!-- ============ -->
@@ -994,6 +1003,7 @@
         <attr name="windowSoftInputMode" />
         <attr name="windowDisablePreview" />
         <attr name="windowNoDisplay" />
+        <attr name="windowCloseOnTouchOutside" />
         <attr name="textColor" />
         <attr name="backgroundDimEnabled" />
         <attr name="backgroundDimAmount" />

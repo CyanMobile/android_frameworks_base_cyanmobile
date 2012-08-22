@@ -108,6 +108,8 @@ public abstract class Window {
     private Window mActiveChild;
     private boolean mIsActive = false;
     private boolean mHasChildren = false;
+    private boolean mCloseOnTouchOutside = false;
+    private boolean mSetCloseOnTouchOutside = false;
     private int mForcedWindowFlags = 0;
 
     private int mFeatures = DEFAULT_FEATURES;
@@ -763,7 +765,40 @@ public abstract class Window {
     protected final boolean hasSoftInputMode() {
         return mHasSoftInputMode;
     }
-    
+
+    /** @hide */
+    public void setCloseOnTouchOutside(boolean close) {
+        mCloseOnTouchOutside = close;
+        mSetCloseOnTouchOutside = true;
+    }
+
+    /** @hide */
+    public boolean hasSetCloseOnTouchOutside() {
+        return mSetCloseOnTouchOutside;
+    }
+
+    /** @hide */
+    public abstract void alwaysReadCloseOnTouchAttr();
+
+    /** @hide */
+    public boolean shouldCloseOnTouch(Context context, MotionEvent event) {
+        if (mCloseOnTouchOutside && event.getAction() == MotionEvent.ACTION_DOWN
+                && isOutOfBounds(context, event) && peekDecorView() != null) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isOutOfBounds(Context context, MotionEvent event) {
+        final int x = (int) event.getX();
+        final int y = (int) event.getY();
+        final int slop = ViewConfiguration.get(context).getScaledWindowTouchSlop();
+        final View decorView = getDecorView();
+        return (x < -slop) || (y < -slop)
+                || (x > (decorView.getWidth()+slop))
+                || (y > (decorView.getHeight()+slop));
+    }
+
     /**
      * Enable extended screen features.  This must be called before
      * setContentView().  May be called as many times as desired as long as it

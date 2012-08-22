@@ -61,7 +61,12 @@
          at performing a blur.  Used by parts of the UI to turn off
          the blur effect where it isn't worth the performance hit. -->
     <bool name="config_sf_slowBlur">true</bool>
-    
+
+    <!-- Whether dialogs should close automatically when the user touches outside
+         of them.  This should not normally be modified; the default value will
+         pick the correct behavior depending on the screen size. -->
+    <bool name="config_closeDialogWhenTouchOutside">true</bool>
+
     <!-- The duration (in milliseconds) of a short animation. -->
     <integer name="config_shortAnimTime">150</integer>
     <integer name="config_activityShortDur">150</integer>

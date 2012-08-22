@@ -45,7 +45,7 @@
             android:layout_below="@android:id/title"
             android:layout_alignLeft="@android:id/title"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:maxLines="2"
+            android:maxLines="5"
             android:textColor="?android:attr/textColorSecondary" />
 
     </RelativeLayout>

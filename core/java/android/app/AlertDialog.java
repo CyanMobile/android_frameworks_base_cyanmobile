@@ -23,6 +23,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Message;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -61,11 +62,13 @@ public class AlertDialog extends Dialog implements DialogInterface {
 
     protected AlertDialog(Context context, int theme) {
         super(context, theme);
+        mWindow.alwaysReadCloseOnTouchAttr();
         mAlert = new AlertController(context, this, getWindow());
     }
 
     protected AlertDialog(Context context, boolean cancelable, OnCancelListener cancelListener) {
         super(context, com.android.internal.R.style.Theme_Dialog_Alert);
+        mWindow.alwaysReadCloseOnTouchAttr();
         setCancelable(cancelable);
         setOnCancelListener(cancelListener);
         mAlert = new AlertController(context, this, getWindow());
@@ -795,7 +798,7 @@ public class AlertDialog extends Dialog implements DialogInterface {
         public AlertDialog create() {
             final AlertDialog dialog = new AlertDialog(P.mContext, mTheme);
             P.apply(dialog.mAlert);
-            dialog.setCancelable(P.mCancelable);
+            dialog.setCanceledOnTouchOutside(P.mCancelable);
             dialog.setOnCancelListener(P.mOnCancelListener);
             if (P.mOnKeyListener != null) {
                 dialog.setOnKeyListener(P.mOnKeyListener);

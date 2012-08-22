@@ -36,7 +36,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
@@ -85,12 +84,6 @@ public class Dialog implements DialogInterface, Window.Callback,
     private Message mCancelMessage;
     private Message mDismissMessage;
     private Message mShowMessage;
-
-    /**
-     * Whether to cancel the dialog when a touch is received outside of the
-     * window's bounds.
-     */
-    private boolean mCanceledOnTouchOutside = false;
     
     private OnKeyListener mOnKeyListener;
 
@@ -553,23 +546,11 @@ public class Dialog implements DialogInterface, Window.Callback,
      *         happens outside of the window bounds.
      */
     public boolean onTouchEvent(MotionEvent event) {
-        if (mCancelable && mCanceledOnTouchOutside && event.getAction() == MotionEvent.ACTION_DOWN
-                && isOutOfBounds(event)) {
+        if (mCancelable && mShowing && mWindow.shouldCloseOnTouch(mContext, event)) {
             cancel();
             return true;
         }
-        
         return false;
-    }
-
-    private boolean isOutOfBounds(MotionEvent event) {
-        final int x = (int) event.getX();
-        final int y = (int) event.getY();
-        final int slop = ViewConfiguration.get(mContext).getScaledWindowTouchSlop();
-        final View decorView = getWindow().getDecorView();
-        return (x < -slop) || (y < -slop)
-                || (x > (decorView.getWidth()+slop))
-                || (y > (decorView.getHeight()+slop));
     }
     
     /**
@@ -935,7 +916,7 @@ public class Dialog implements DialogInterface, Window.Callback,
             mCancelable = true;
         }
         
-        mCanceledOnTouchOutside = cancel;
+        mWindow.setCloseOnTouchOutside(cancel);
     }
     
     /**
@@ -944,7 +925,6 @@ public class Dialog implements DialogInterface, Window.Callback,
      */
     public void cancel() {
         if (mCancelMessage != null) {
-            
             // Obtain a new message so this dialog can be re-used
             Message.obtain(mCancelMessage).sendToTarget();
         }
