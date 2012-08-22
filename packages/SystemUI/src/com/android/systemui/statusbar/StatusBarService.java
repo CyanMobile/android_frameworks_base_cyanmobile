@@ -288,6 +288,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     // boolean mNaviButtons;
     boolean mDeadZone;
     boolean mHasSoftButtons;
+    boolean autoBrightness = false;
     Context mContext;
 
     // tracks changes to settings, so status bar is moved to top/bottom
@@ -438,7 +439,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.CARRIER_LOGO_STATUS_BAR, 0) == 1);
             mClockColor = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5));
-            boolean autoBrightness = Settings.System.getInt(
+            autoBrightness = Settings.System.getInt(
                     resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, 0) ==
                     Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
             mBrightnessControl = !autoBrightness && Settings.System.getInt(
