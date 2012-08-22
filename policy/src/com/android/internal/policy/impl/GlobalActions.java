@@ -782,8 +782,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
         abstract public void onPress();
 
-        public View create(
-                Context context, View convertView, ViewGroup parent, LayoutInflater inflater) {
+        public View create(Context context, View convertView, ViewGroup parent, LayoutInflater inflater) {
             View v = inflater.inflate(R.layout.global_actions_item, parent, false);
 
             ImageView icon = (ImageView) v.findViewById(R.id.icon);
@@ -791,7 +790,10 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
             v.findViewById(R.id.status).setVisibility(View.GONE);
 
-            icon.setImageDrawable(context.getResources().getDrawable(mIconResId));
+            if (icon != null) {
+                icon.setImageDrawable(context.getResources().getDrawable(mIconResId));
+            }
+
             if (mMessage != null) {
                 messageView.setText(mMessage);
             } else {
@@ -819,19 +821,25 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
         abstract public void onPress();
 
-        public View create(
-                Context context, View convertView, ViewGroup parent, LayoutInflater inflater) {
-            View v = inflater.inflate(R
-                            .layout.global_actions_item, parent, false);
+        public View create(Context context, View convertView, ViewGroup parent, LayoutInflater inflater) {
+            View v = inflater.inflate(R.layout.global_actions_item, parent, false);
 
             ImageView icon = (ImageView) v.findViewById(R.id.icon);
             TextView messageView = (TextView) v.findViewById(R.id.message);
             TextView statusView = (TextView) v.findViewById(R.id.status);
-            statusView.setVisibility(View.VISIBLE);
-            statusView.setText(mProfileManager.getActiveProfile().getName());
 
-            icon.setImageDrawable(context.getResources().getDrawable(com.android.internal.R.drawable.ic_lock_profile));
-            messageView.setText(R.string.global_action_choose_profile);
+            if (statusView != null) {
+                statusView.setVisibility(View.VISIBLE);
+                statusView.setText(mProfileManager.getActiveProfile().getName());
+            }
+
+            if (icon != null) {
+                icon.setImageDrawable(context.getResources().getDrawable(com.android.internal.R.drawable.ic_lock_profile));
+            }
+
+            if (messageView != null) {
+                messageView.setText(R.string.global_action_choose_profile);
+            }
 
             return v;
         }
@@ -896,8 +904,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
         }
 
-        public View create(Context context, View convertView, ViewGroup parent,
-                LayoutInflater inflater) {
+        public View create(Context context, View convertView, ViewGroup parent, LayoutInflater inflater) {
             willCreate();
 
             View v = inflater.inflate(R.layout.global_actions_item, parent, false);
@@ -983,8 +990,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
             return index;
         }
 
-        public View create(Context context, View convertView, ViewGroup parent,
-                LayoutInflater inflater) {
+        public View create(Context context, View convertView, ViewGroup parent, LayoutInflater inflater) {
             View v = inflater.inflate(R.layout.global_actions_silent_mode, parent, false);
 
             int selectedIndex = ringerModeToIndex(mAudioManager.getRingerMode());
