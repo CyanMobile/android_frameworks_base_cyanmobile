@@ -289,6 +289,8 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
 
         // vibrate mode will be the same for the life of this screen
         mLockPatternView.setTactileFeedbackEnabled(mLockPatternUtils.isTactileFeedbackEnabled());
+ 
+        mLockPatternView.setLockPatternSize(mLockPatternUtils.getLockPatternSize());
 
         // assume normal footer mode for now
         updateFooter(FooterMode.Normal);
@@ -296,6 +298,8 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
         mUpdateMonitor.registerInfoCallback(this);
         mUpdateMonitor.registerSimStateCallback(this);
         setFocusableInTouchMode(true);
+
+        mLockPatternUtils.updateLockPatternSize();
 
         // Required to get Marquee to work.
         mCarrier.setSelected(true);
@@ -705,6 +709,7 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
         }
 
         public void onPatternDetected(List<LockPatternView.Cell> pattern) {
+            mLockPatternUtils.updateLockPatternSize();
             if (mLockPatternUtils.checkPattern(pattern)) {
                 mLockPatternView
                         .setDisplayMode(LockPatternView.DisplayMode.Correct);

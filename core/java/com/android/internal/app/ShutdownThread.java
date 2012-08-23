@@ -242,7 +242,6 @@ public final class ShutdownThread extends Thread {
           Log.i(TAG, "Enable shutdown animation...");
         }
 
-        // this will reset Transparent background
         if (Settings.System.getInt(context.getContentResolver(),
                     Settings.System.TRANSPARENT_BACKGROUND_FULL, 0) == 2) {
             Settings.System.putInt(context.getContentResolver(),
