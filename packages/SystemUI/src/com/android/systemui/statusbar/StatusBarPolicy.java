@@ -1198,25 +1198,19 @@ public class StatusBarPolicy {
                             }
                         }
                     });
+                b.setNeutralButton("Cancel",
+                            new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (mSmsDialog != null) {
+                                mSmsDialog.dismiss();
+                            }
+                        }
+                    });
             AlertDialog d = b.create();
             d.setOnDismissListener(mSmsListener);
             d.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
             d.show();
             mSmsDialog = d;
-
-            final ContentResolver cr = mContext.getContentResolver();
-            final String soundPath = Settings.System.getString(cr,
-                Settings.System.FULL_BATTERY_SOUND);
-            if (soundPath != null) {
-                final Uri soundUri = Uri.parse("file://" + soundPath);
-                if (soundUri != null) {
-                    final Ringtone sfx = RingtoneManager.getRingtone(mContext, soundUri);
-                    if (sfx != null) {
-                        sfx.setStreamType(AudioManager.STREAM_MUSIC);
-                        sfx.play();
-                    }
-                }
-            }
     }
 
     private final void updateCallState(int state) {
