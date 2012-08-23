@@ -151,11 +151,13 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     // icons
     LinearLayout mIcons;
+    LinearLayout mIconsExpand;
     LinearLayout mCenterClock;
     LinearLayout mCenterClockex;
     LinearLayout mLeftClock;
     IconMerger mNotificationIcons;
     LinearLayout mStatusIcons;
+    LinearLayout mStatusIconsExpand;
     ImageView mSettingsIconButton;
 
     // expanded notifications
@@ -173,6 +175,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     TextView mCompactClearButton;
     ViewGroup mClearButtonParent;
     CmBatteryMiniIcon mCmBatteryMiniIcon;
+    CmBatteryMiniIcon mCmBatteryMiniIconExpand;
+    CmProfileIndicator mProfileExpand;
+    CmSignalText mSignalExpand;
+    CmWifiText mWifiExpand;
+    CmBatteryText mBatteryExpand;
+
     // drag bar
     CloseDragHandle mCloseView;
     // ongoing
@@ -797,6 +805,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mCenterClockex = (LinearLayout)mExpandedView.findViewById(R.id.centerClock);
         mSettingsIconButton = (ImageView)mExpandedView.findViewById(R.id.settingIcon);
         mSettingsIconButton.setOnClickListener(mSettingsIconButtonListener);
+        mStatusIconsExpand = (LinearLayout)mExpandedView.findViewById(R.id.statusIconsexpand);
+        mIconsExpand = (LinearLayout)mExpandedView.findViewById(R.id.iconsexpand);
+        mCmBatteryMiniIconExpand = (CmBatteryMiniIcon)mExpandedView.findViewById(R.id.CmBatteryMiniIconexpand);
 
         if (mStatusBarCarrierLogo) {
             if (LogoStatusBar) {
@@ -1508,7 +1519,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
         StatusBarIconView view = new StatusBarIconView(this, slot);
         view.set(icon);
+        StatusBarIconView viewEx = new StatusBarIconView(this, slot);
+        viewEx.set(icon);
         mStatusIcons.addView(view, viewIndex, new LinearLayout.LayoutParams(mIconSize, mIconSize));
+        mStatusIconsExpand.addView(viewEx, viewIndex, new LinearLayout.LayoutParams(mIconSize, mIconSize));
     }
 
     public void updateIcon(String slot, int index, int viewIndex,
@@ -1518,7 +1532,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     + " old=" + old + " icon=" + icon);
         }
         StatusBarIconView view = (StatusBarIconView)mStatusIcons.getChildAt(viewIndex);
+        StatusBarIconView viewEx = (StatusBarIconView)mStatusIconsExpand.getChildAt(viewIndex);
         view.set(icon);
+        viewEx.set(icon);
     }
 
     public void removeIcon(String slot, int index, int viewIndex) {
@@ -1526,6 +1542,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             Slog.d(TAG, "removeIcon slot=" + slot + " index=" + index + " viewIndex=" + viewIndex);
         }
         mStatusIcons.removeViewAt(viewIndex);
+        mStatusIconsExpand.removeViewAt(viewIndex);
     }
 
     public void addNotification(IBinder key, StatusBarNotification notification) {
@@ -2497,6 +2514,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     public void run() {
                         Slog.d(TAG, "mStatusIcons:");
                         mStatusIcons.debug();
+                        Slog.d(TAG, "mStatusIconsExpand:");
+                        mStatusIconsExpand.debug();
                     }
                 });
         }
@@ -2947,6 +2966,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mCurrentTheme = (CustomTheme)newTheme.clone();
             mCmBatteryMiniIcon.updateIconCache();
             mCmBatteryMiniIcon.updateMatrix();
+            mCmBatteryMiniIconExpand.updateIconCache();
+            mCmBatteryMiniIconExpand.updateMatrix();
             // restart system ui on theme change
             try {
                 Runtime.getRuntime().exec("pkill -TERM -f  com.android.systemui");
