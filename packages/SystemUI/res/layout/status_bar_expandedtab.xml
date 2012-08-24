@@ -45,17 +45,17 @@
             android:id="@+id/centerCloex"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="8dp"
+            android:layout_marginLeft="6dp"
             android:singleLine="true"
-            android:textSize="38sp"
+            android:textSize="34sp"
             android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <com.android.systemui.statusbar.PowerDateView android:id="@+id/datestats"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="8dp"
-        android:layout_marginRight="8dp"
+        android:layout_marginLeft="6dp"
+        android:layout_marginRight="6dp"
         android:textSize="12sp"
         android:maxLines="2"
         android:layout_toRightOf="@+id/centerCloex"
@@ -69,81 +69,17 @@
             android:src="@drawable/ic_sysbar_set"
             />
 
-        <LinearLayout android:id="@+id/clear_all_layout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginRight="8dp"
-            android:gravity="center_vertical"
-            android:layout_toRightOf="@+id/settingIcon"
-        >
-            <TextView android:id="@+id/clear_all_button"
+        <TextView android:id="@+id/clear_all_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_toRightOf="@+id/centerCloex"
                 android:layout_gravity="center_vertical"
-                android:textSize="10sp"
+                android:textSize="14sp"
                 android:text="@string/status_bar_clear_all_button"
                 style="?android:attr/buttonStyle"
                 android:background="@android:drawable/btn_default_small"
             />
-        </LinearLayout>
      </LinearLayout>
-
-   <LinearLayout android:id="@+id/iconsexpand"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/title_bar_portrait"
-        android:gravity="center_vertical"
-        android:baselineAligned="false"
-        android:orientation="horizontal" >
-
-        <com.android.systemui.statusbar.CmProfileIndicator
-            android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_alignParentRight="true"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"/>
-
-        <LinearLayout android:id="@+id/statusIconsexpand"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_alignParentRight="true"
-            android:paddingRight="1dip"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"/>
-
-        <com.android.systemui.statusbar.CmSignalText
-            android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:paddingRight="2dip"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"/>
-
-        <com.android.systemui.statusbar.CmWifiText
-            android:id="@+id/wifi_signal_text"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:paddingRight="2dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"/>
-
-        <com.android.systemui.statusbar.CmBatteryText
-            android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:paddingRight="2dip"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"/>
-
-        <com.android.systemui.statusbar.CmBatteryMiniIcon
-            android:id="@+id/CmBatteryMiniIconexpand"
-            android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
-            android:layout_width="wrap_content"
-            android:layout_height="25dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"/>
-    </LinearLayout>
 
     <FrameLayout android:id="@+id/notifications"
         android:layout_width="match_parent"

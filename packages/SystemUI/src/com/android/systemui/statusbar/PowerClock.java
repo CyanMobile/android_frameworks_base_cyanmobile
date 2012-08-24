@@ -153,7 +153,6 @@ public class PowerClock extends TextView {
         mCalendar.setTimeInMillis(System.currentTimeMillis());
         setTextColor(mClockColor);
         setText(getSmallTime());
-        setTypeface(Typeface.createFromFile("/system/fonts/HoneycombAndroidClock.ttf"));
     }
 
     private final CharSequence getSmallTime() {
