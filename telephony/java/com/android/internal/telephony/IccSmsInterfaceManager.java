@@ -212,6 +212,18 @@ public abstract class IccSmsInterfaceManager extends ISms.Stub {
         return data;
     }
 
+    /**
+     * stk send sms Samsung way
+     * @param smsc
+     * @param pdu
+     * @param sentIntent
+     * @param deliveryIntent
+     */
+    public void sendRawPduSat(byte[] smsc, byte[] pdu, PendingIntent sentIntent,
+            PendingIntent deliveryIntent) {
+        mDispatcher.sendRawPdu(smsc, pdu, sentIntent, deliveryIntent);
+    }
+
     protected abstract void log(String msg);
 
 }

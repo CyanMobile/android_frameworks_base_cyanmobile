@@ -18,6 +18,7 @@ package com.android.internal.telephony.test;
 
 
 import android.os.AsyncResult;
+import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
@@ -1478,5 +1479,21 @@ public final class SimulatedCommands extends BaseCommands
 
     public void getGsmBroadcastConfig(Message response) {
         unimplemented(response);
+    }
+
+    /**
+     * added samsung part to command interface
+     * @param h
+     * @param what
+     * @param obj
+     */
+    public void setOnStkSendSmsResult(Handler h, int what, Object obj) {
+    }
+
+    /**
+     *
+     * @param h
+     */
+    public void unSetOnStkSendSmsResult(Handler h) {
     }
 }

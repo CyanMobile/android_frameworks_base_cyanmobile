@@ -274,4 +274,5 @@ cat include/telephony/ril.h | \
     int RIL_UNSOL_OEM_HOOK_RAW = 1028;
     int RIL_UNSOL_RINGBACK_TONE = 1029;
     int RIL_UNSOL_RESEND_INCALL_MUTE = 1030;
+    int RIL_UNSOL_STK_SEND_SMS_RESULT = 11002; /* Samsung specific */
 }

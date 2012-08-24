@@ -369,4 +369,16 @@ class SipCommandInterface extends BaseCommands implements CommandsInterface {
 
     public void exitEmergencyCallbackMode(Message response) {
     }
+
+    /**
+     * added samsung part to command interface
+     * @param h
+     * @param what
+     * @param obj
+     */
+    public void setOnStkSendSmsResult(Handler h, int what, Object obj) {
+    }
+
+    public void unSetOnStkSendSmsResult(Handler h) {
+    }
 }

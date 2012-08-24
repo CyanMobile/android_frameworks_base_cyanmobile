@@ -151,7 +151,7 @@ public class GSMPhone extends PhoneBase {
             mSubInfo = new PhoneSubInfo(this);
         }
         mStkService = StkService.getInstance(mCM, mSIMRecords, mContext,
-                (SIMFileHandler)mIccFileHandler, mSimCard);
+                (SIMFileHandler)mIccFileHandler, mSimCard, getIccSmsInterfaceManager());
 
         mCM.registerForAvailable(this, EVENT_RADIO_AVAILABLE, null);
         mSIMRecords.registerForRecordsLoaded(this, EVENT_SIM_RECORDS_LOADED, null);

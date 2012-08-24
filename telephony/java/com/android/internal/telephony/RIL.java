@@ -30,6 +30,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
 import android.net.LocalSocket;
 import android.net.LocalSocketAddress;
 import android.os.AsyncResult;
@@ -39,6 +40,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Parcel;
 import android.os.PowerManager;
+import android.os.Registrant;
 import android.os.SystemProperties;
 import android.os.PowerManager.WakeLock;
 import android.telephony.NeighboringCellInfo;
@@ -282,6 +284,26 @@ public class RIL extends BaseCommands implements CommandsInterface {
             }
         }
     };
+
+    protected Registrant mStkSendSmsResultRegistrant;
+    /**
+     * samsung stk service implementation - set up registrant for sending
+     * sms send result from modem(RIL) to catService
+     * @param h
+     * @param what
+     * @param obj
+     */
+    public void setOnStkSendSmsResult(Handler h, int what, Object obj) {
+        mStkSendSmsResultRegistrant = new Registrant(h, what, obj);
+    }
+
+    /**
+     *
+     * @param h
+     */
+    public void unSetOnStkSendSmsResult(Handler h) {
+        mStkSendSmsResultRegistrant.clear();
+    }
 
     class RILSender extends Handler implements Runnable {
         public RILSender(Looper looper) {
@@ -2433,6 +2455,8 @@ public class RIL extends BaseCommands implements CommandsInterface {
             case RIL_UNSOL_OEM_HOOK_RAW: ret = responseRaw(p); break;
             case RIL_UNSOL_RINGBACK_TONE: ret = responseInts(p); break;
             case RIL_UNSOL_RESEND_INCALL_MUTE: ret = responseVoid(p); break;
+            //samsung stk service implementation
+            case RIL_UNSOL_STK_SEND_SMS_RESULT: ret = responseInts(p); break;
 
             default:
                 throw new RuntimeException("Unrecognized unsol response: " + response);
@@ -2730,6 +2754,19 @@ public class RIL extends BaseCommands implements CommandsInterface {
                     boolean playtone = (((int[])ret)[0] == 1);
                     mRingbackToneRegistrants.notifyRegistrants(
                                         new AsyncResult (null, playtone, null));
+                }
+                break;
+
+            //samsung stk service implementation
+            case RIL_UNSOL_STK_SEND_SMS_RESULT:
+                if (Resources.getSystem().
+                        getBoolean(com.android.internal.R.bool.config_samsung_stk)) {
+                    if (RILJ_LOGD) unsljLogRet(response, ret);
+
+                    if (mStkSendSmsResultRegistrant != null) {
+                        mStkSendSmsResultRegistrant.notifyRegistrant(
+                                new AsyncResult (null, ret, null));
+                    }
                 }
                 break;
 
@@ -3417,6 +3454,7 @@ public class RIL extends BaseCommands implements CommandsInterface {
             case RIL_UNSOL_OEM_HOOK_RAW: return "UNSOL_OEM_HOOK_RAW";
             case RIL_UNSOL_RINGBACK_TONE: return "UNSOL_RINGBACK_TONG";
             case RIL_UNSOL_RESEND_INCALL_MUTE: return "UNSOL_RESEND_INCALL_MUTE";
+            case RIL_UNSOL_STK_SEND_SMS_RESULT: return "RIL_UNSOL_STK_SEND_SMS_RESULT";
             default: return "<unknown reponse>";
         }
     }

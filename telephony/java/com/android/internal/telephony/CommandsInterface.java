@@ -1412,4 +1412,12 @@ public interface CommandsInterface {
      *          Callback message containing {@link IccCardStatus} structure for the card.
      */
     public void getIccCardStatus(Message result);
+
+    /**
+     * @hide
+     * samsung stk service implementation - set up registrant for sending
+     * sms send result from modem(RIL) to catService
+     */
+    void setOnStkSendSmsResult(Handler h, int what, Object obj);
+    void unSetOnStkSendSmsResult(Handler h);
 }
