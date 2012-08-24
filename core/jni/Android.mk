@@ -147,7 +147,8 @@ LOCAL_SRC_FILES:= \
 
 ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
     LOCAL_CFLAGS += -DQCOM_HARDWARE
-    LOCAL_SRC_FILES += com_android_internal_app_ActivityTrigger.cpp
+    LOCAL_SRC_FILES += \
+         com_android_internal_app_ActivityTrigger.cpp
 endif
 
 ifeq ($(BOARD_HAVE_FM_RADIO),true)

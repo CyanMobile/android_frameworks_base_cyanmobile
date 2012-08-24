@@ -23,14 +23,12 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.os.SystemProperties;
-import android.widget.Toast;
 
 import com.android.internal.telephony.IccUtils;
 import com.android.internal.telephony.CommandsInterface;
 import com.android.internal.telephony.gsm.SimCard;
 import com.android.internal.telephony.gsm.SIMFileHandler;
 import com.android.internal.telephony.gsm.SIMRecords;
-import com.android.internal.telephony.IccSmsInterfaceManager;
 
 import android.util.Config;
 
@@ -48,9 +46,7 @@ enum ComprehensionTlvTag {
   RESULT(0x03),
   DURATION(0x04),
   ALPHA_ID(0x05),
-  ADDRESS(0x06),
   USSD_STRING(0x0a),
-  SMS_TPDU(0x0b),
   TEXT_STRING(0x0d),
   TONE(0x0e),
   ITEM(0x0f),
@@ -127,9 +123,6 @@ public class StkService extends Handler implements AppInterface {
     private Context mContext;
     private StkCmdMessage mCurrntCmd = null;
     private StkCmdMessage mMenuCmd = null;
-    private IccSmsInterfaceManager mIccSms = null;
-    private int mTimeoutDest = 0;
-    private int mCallControlResultCode = 0;
 
     private RilMessageDecoder mMsgDecoder = null;
 
@@ -140,10 +133,8 @@ public class StkService extends Handler implements AppInterface {
     static final int MSG_ID_CALL_SETUP               = 4;
     static final int MSG_ID_REFRESH                  = 5;
     static final int MSG_ID_RESPONSE                 = 6;
-    static final int MSG_ID_TIMEOUT                  = 9;
 
     static final int MSG_ID_RIL_MSG_DECODED          = 10;
-    static final int MSG_ID_SEND_SMS_RESULT          = 12;//samsung ril response
 
     // Events to signal SIM presence or absent in the device.
     private static final int MSG_ID_SIM_LOADED       = 20;
@@ -155,25 +146,16 @@ public class StkService extends Handler implements AppInterface {
     private static final int DEV_ID_TERMINAL    = 0x82;
     private static final int DEV_ID_NETWORK     = 0x83;
 
-    // Sms send result constants.
-    static final int SMS_SEND_OK = 0;
-    static final int SMS_SEND_FAIL = 32790;
-    static final int SMS_SEND_RETRY = 32810;
-
-    static final int WAITING_SMS_RESULT = 2;
-    static final int WAITING_SMS_RESULT_TIME = 60000;
-
     /* Intentionally private for singleton */
     private StkService(CommandsInterface ci, SIMRecords sr, Context context,
-            SIMFileHandler fh, SimCard sc, IccSmsInterfaceManager iccSmsInt) {
+            SIMFileHandler fh, SimCard sc) {
         if (ci == null || sr == null || context == null || fh == null
-                || sc == null || iccSmsInt == null) {
+                || sc == null) {
             throw new NullPointerException(
                     "Service: Input parameters must not be null");
         }
         mCmdIf = ci;
         mContext = context;
-        mIccSms = iccSmsInt;
 
         // Get the RilMessagesDecoder for decoding the messages.
         mMsgDecoder = RilMessageDecoder.getInstance(this, fh);
@@ -184,8 +166,6 @@ public class StkService extends Handler implements AppInterface {
         mCmdIf.setOnStkEvent(this, MSG_ID_EVENT_NOTIFY, null);
         mCmdIf.setOnStkCallSetUp(this, MSG_ID_CALL_SETUP, null);
         //mCmdIf.setOnSimRefresh(this, MSG_ID_REFRESH, null);
-        // samsung ril sms send result
-        mCmdIf.setOnStkSendSmsResult(this, MSG_ID_SEND_SMS_RESULT, null);
 
         mSimRecords = sr;
 
@@ -202,7 +182,6 @@ public class StkService extends Handler implements AppInterface {
         mCmdIf.unSetOnStkProactiveCmd(this);
         mCmdIf.unSetOnStkEvent(this);
         mCmdIf.unSetOnStkCallSetUp(this);
-        mCmdIf.unSetOnStkSendSmsResult(this);
 
         this.removeCallbacksAndMessages(null);
     }
@@ -298,18 +277,6 @@ public class StkService extends Handler implements AppInterface {
             case GET_INKEY:
             case SEND_DTMF:
             case SEND_SMS:
-                if (mContext.getResources().
-                        getBoolean(com.android.internal.R.bool.config_samsung_stk)) {
-                    handleProactiveCommandSendSMS(cmdParams);
-                    if (((DisplayTextParams)cmdParams).textMsg == null || ((DisplayTextParams)cmdParams).textMsg.text == null)
-                        break;
-                    if (((DisplayTextParams)cmdParams).textMsg.text.equals("defualt message")) {
-                        ((DisplayTextParams)cmdParams).textMsg.text = mContext.getString(com.android.internal.R.string.ime_action_send);
-                        Toast toast = Toast.makeText(mContext, ((DisplayTextParams)cmdParams).textMsg.text, Toast.LENGTH_SHORT);
-                        toast.show();
-                    }
-                }
-                break;
             case SEND_SS:
             case SEND_USSD:
             case PLAY_TONE:
@@ -547,15 +514,15 @@ public class StkService extends Handler implements AppInterface {
      * @return The only Service object in the system
      */
     public static StkService getInstance(CommandsInterface ci, SIMRecords sr,
-            Context context, SIMFileHandler fh, SimCard sc, IccSmsInterfaceManager iccSmsInt) {
+            Context context, SIMFileHandler fh, SimCard sc) {
         if (sInstance == null) {
             if (ci == null || sr == null || context == null || fh == null
-                    || sc == null || iccSmsInt == null) {
+                    || sc == null) {
                 return null;
             }
             HandlerThread thread = new HandlerThread("Stk Telephony service");
             thread.start();
-            sInstance = new StkService(ci, sr, context, fh, sc, iccSmsInt);
+            sInstance = new StkService(ci, sr, context, fh, sc);
             StkLog.d(sInstance, "NEW sInstance");
         } else if ((sr != null) && (mSimRecords != sr)) {
             StkLog.d(sInstance, "Reinitialize the Service with SIMRecords");
@@ -576,7 +543,7 @@ public class StkService extends Handler implements AppInterface {
      * @return The only Service object in the system
      */
     public static AppInterface getInstance() {
-        return getInstance(null, null, null, null, null, null);
+        return getInstance(null, null, null, null, null);
     }
 
     @Override
@@ -611,64 +578,6 @@ public class StkService extends Handler implements AppInterface {
             break;
         case MSG_ID_RESPONSE:
             handleCmdResponse((StkResponseMessage) msg.obj);
-        break;
-        // Samsung ril sms send handling part
-        case MSG_ID_SEND_SMS_RESULT:
-            if (mContext.getResources().
-                        getBoolean(com.android.internal.R.bool.config_samsung_stk)) {
-                int[] sendResult;
-                AsyncResult ar;
-                StkLog.d(this, "handleMsg : MSG_ID_SEND_SMS_RESULT");
-                cancelTimeOut();
-                StkLog.d(this, "The Msg ID data:" + msg.what);
-                if (msg.obj == null)
-                    break;
-                ar = (AsyncResult) msg.obj;
-                if (ar == null || ar.result == null || mCurrntCmd == null || mCurrntCmd.mCmdDet == null)
-                    break;
-                sendResult = (int[]) ar.result;
-                switch (sendResult[0]) {
-                    default:
-                        StkLog.d(this, "SMS SEND GENERIC FAIL");
-                        if (CallControlResult.fromInt(mCallControlResultCode) ==
-                                CallControlResult.CALL_CONTROL_NOT_ALLOWED)
-                            sendTerminalResponse(mCurrntCmd.mCmdDet,
-                                    ResultCode.USIM_CALL_CONTROL_PERMANENT, true, 1, null);
-                        else
-                            sendTerminalResponse(mCurrntCmd.mCmdDet,
-                                    ResultCode.TERMINAL_CRNTLY_UNABLE_TO_PROCESS, false, 0, null);
-                        break;
-                    case SMS_SEND_OK: // '\0'
-                        StkLog.d(this, "SMS SEND OK");
-                        if (CallControlResult.fromInt(mCallControlResultCode) ==
-                                CallControlResult.CALL_CONTROL_NOT_ALLOWED)
-                            sendTerminalResponse(mCurrntCmd.mCmdDet,
-                                    ResultCode.USIM_CALL_CONTROL_PERMANENT, true, 1, null);
-                        else
-                            sendTerminalResponse(mCurrntCmd.mCmdDet, ResultCode.OK, false, 0, null);
-                        break;
-                    case SMS_SEND_FAIL:
-                        StkLog.d(this, "SMS SEND FAIL - MEMORY NOT AVAILABLE");
-                        if (CallControlResult.fromInt(mCallControlResultCode) ==
-                                CallControlResult.CALL_CONTROL_NOT_ALLOWED)
-                            sendTerminalResponse(mCurrntCmd.mCmdDet,
-                                    ResultCode.USIM_CALL_CONTROL_PERMANENT, true, 1, null);
-                        else
-                            sendTerminalResponse(mCurrntCmd.mCmdDet,
-                                    ResultCode.TERMINAL_CRNTLY_UNABLE_TO_PROCESS, false, 0, null);
-                        break;
-                    case SMS_SEND_RETRY:
-                        StkLog.d(this, "SMS SEND FAIL RETRY");
-                        if (CallControlResult.fromInt(mCallControlResultCode) ==
-                                CallControlResult.CALL_CONTROL_NOT_ALLOWED)
-                            sendTerminalResponse(mCurrntCmd.mCmdDet,
-                                    ResultCode.USIM_CALL_CONTROL_PERMANENT, true, 1, null);
-                        else
-                            sendTerminalResponse(mCurrntCmd.mCmdDet,
-                                    ResultCode.NETWORK_CRNTLY_UNABLE_TO_PROCESS, false, 0, null);
-                        break;
-                    }
-            }
             break;
         default:
             throw new AssertionError("Unrecognized STK command: " + msg.what);
@@ -781,28 +690,4 @@ public class StkService extends Handler implements AppInterface {
         sendTerminalResponse(cmdDet, resMsg.resCode, false, 0, resp);
         mCurrntCmd = null;
     }
-
-    /**
-     * samsung send sms
-     * @param cmdPar
-     */
-    private void handleProactiveCommandSendSMS(CommandParams cmdPar) {
-        StkLog.d(this, "The smscaddress is: " + ((SendSMSParams)cmdPar).smscAddress);
-        StkLog.d(this, "The SMS tpdu is: " + ((SendSMSParams)cmdPar).pdu);
-        mIccSms.sendRawPduSat(IccUtils.hexStringToBytes(((SendSMSParams)cmdPar).smscAddress),
-                IccUtils.hexStringToBytes(((SendSMSParams)cmdPar).pdu), null, null);
-        startTimeOut(WAITING_SMS_RESULT, WAITING_SMS_RESULT_TIME);
-    }
-
-    private void cancelTimeOut() {
-        removeMessages(MSG_ID_TIMEOUT);
-        mTimeoutDest = 0;
-    }
-
-    private void startTimeOut(int timeout, int delay) {
-        cancelTimeOut();
-        mTimeoutDest = timeout;
-        sendMessageDelayed(obtainMessage(MSG_ID_TIMEOUT), delay);
-    }
-
 }
