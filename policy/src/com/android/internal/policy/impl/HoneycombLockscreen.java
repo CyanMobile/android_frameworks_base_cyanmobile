@@ -413,8 +413,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         mCarrier.setVisibility(View.INVISIBLE);
         }
 
-        Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 1);
-
         mCusText = (TextView) findViewById(R.id.custext);
         mCusText.setText(mCustomText);
         mCusText.setTextColor(CColours);
@@ -548,7 +546,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                 musicIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 getContext().startActivity(musicIntent);
                 mCallback.goToUnlockScreen();
-                    Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
             }
         });
 
@@ -746,7 +743,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                 || (keyCode == KeyEvent.KEYCODE_MENU && mEnableMenuKeyInLockScreen)) {
 
             mCallback.goToUnlockScreen();
-                    Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
             return false;
         } else if (keyCode == KeyEvent.KEYCODE_HOME) {
             event.startTracking();
@@ -775,7 +771,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
 
         if (whichHandle == UnlockRing.OnTriggerListener.UNLOCK_HANDLE) {
             mCallback.goToUnlockScreen();
-            Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
         } else if (mCustomRingAppActivities[0] != null && mCustomAppToggle
                 && whichHandle == UnlockRing.OnTriggerListener.QUADRANT_1) {
             if (mCustomRingAppActivities[0].equals(TOGGLE_SILENT)) {
@@ -789,7 +784,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                             | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
                     mContext.startActivity(i);
                     mCallback.goToUnlockScreen();
-                        Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
                 } catch (Exception e) {
                 }
             }
@@ -806,7 +800,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                             | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
                     mContext.startActivity(i);
                     mCallback.goToUnlockScreen();
-                        Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
                 } catch (Exception e) {
                 }
             }
@@ -823,7 +816,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                             | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
                     mContext.startActivity(i);
                     mCallback.goToUnlockScreen();
-                        Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
                 } catch (Exception e) {
                 }
             }
@@ -840,7 +832,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                             | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
                     mContext.startActivity(i);
                     mCallback.goToUnlockScreen();
-                        Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
                 } catch (Exception e) {
                 }
             }
@@ -849,7 +840,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
 
     public void onCircularSelectorTrigger(View v, int Trigger) {
         mCallback.goToUnlockScreen();
-          Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
     }
 
     /** {@inheritDoc} */
@@ -879,7 +869,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                     | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
            getContext().startActivity(mCustomApps[0]);
            mCallback.goToUnlockScreen();
-           Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
        break;
      case SenseLikeLock.OnSenseLikeSelectorTriggerListener.LOCK_ICON_SHORTCUT_TWO_TRIGGERED:
        vibe.vibrate(pattern, -1);
@@ -887,7 +876,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                     | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
            getContext().startActivity(mCustomApps[1]);
            mCallback.goToUnlockScreen();
-           Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
        break;
      case SenseLikeLock.OnSenseLikeSelectorTriggerListener.LOCK_ICON_SHORTCUT_THREE_TRIGGERED:
        vibe.vibrate(pattern, -1);
@@ -895,7 +883,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                     | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
            getContext().startActivity(mCustomApps[2]);
            mCallback.goToUnlockScreen();
-           Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
        break;
      case SenseLikeLock.OnSenseLikeSelectorTriggerListener.LOCK_ICON_SHORTCUT_FOUR_TRIGGERED:
        vibe.vibrate(pattern, -1);
@@ -903,11 +890,9 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                     | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
            getContext().startActivity(mCustomApps[3]);
            mCallback.goToUnlockScreen();
-           Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
        break;
      case SenseLikeLock.OnSenseLikeSelectorTriggerListener.LOCK_ICON_TRIGGERED:
        mCallback.goToUnlockScreen();
-       Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
        break;
      }
      
@@ -1568,7 +1553,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
             final boolean isKeyboardOpen = mKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO;
             if (mUpdateMonitor.isKeyguardBypassEnabled() && isKeyboardOpen) {
                 mCallback.goToUnlockScreen();
-                Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
                 return;
             }
         }
@@ -1869,7 +1853,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                 | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
             mContext.startActivity(i);
             mCallback.goToUnlockScreen();
-                    Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
         } catch (URISyntaxException e) {
         } catch (ActivityNotFoundException e) {
         }

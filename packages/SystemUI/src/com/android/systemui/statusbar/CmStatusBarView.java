@@ -136,18 +136,14 @@ public class CmStatusBarView extends StatusBarView {
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SOFT_BUTTONS_LEFT) ? 1 : 0);
             mIsLeft = (Settings.System.getInt(resolver,
                     Settings.System.SOFT_BUTTONS_LEFT, defValue) == 1);
-            defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SHOW_SOFT_HOME) ? 1 : 0);
             mShowHome = Settings.System.getInt(resolver,
-                    Settings.System.SOFT_BUTTON_SHOW_HOME, defValue);
-            defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SHOW_SOFT_MENU) ? 1 : 0);
+                    Settings.System.SOFT_BUTTON_SHOW_HOME, 1);
             mShowMenu = Settings.System.getInt(resolver,
-                    Settings.System.SOFT_BUTTON_SHOW_MENU, defValue);
-            defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SHOW_SOFT_BACK) ? 1 : 0);
+                    Settings.System.SOFT_BUTTON_SHOW_MENU, 4);
             mShowBack = Settings.System.getInt(resolver,
-                    Settings.System.SOFT_BUTTON_SHOW_BACK, defValue);
-            defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SHOW_SOFT_SEARCH) ? 1 : 0);
+                    Settings.System.SOFT_BUTTON_SHOW_BACK, 2);
             mShowSearch = Settings.System.getInt(resolver,
-                    Settings.System.SOFT_BUTTON_SHOW_SEARCH, defValue);
+                    Settings.System.SOFT_BUTTON_SHOW_SEARCH, 3);
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SHOW_SOFT_QUICK_NA) ? 1 : 0);
             mShowQuickNa = (Settings.System.getInt(resolver,
                     Settings.System.SOFT_BUTTON_SHOW_QUICK_NA, defValue) == 1);

@@ -1,4 +1,4 @@
-<com.android.systemui.statusbar.CmBatterySideBar
+<com.android.systemui.statusbar.batteries.CmBatterySideBar
     xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/StatusBar.BatterySideBar"
     android:orientation="vertical"

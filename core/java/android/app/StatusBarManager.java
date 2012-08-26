@@ -55,6 +55,12 @@ public class StatusBarManager {
     public static final int DISABLE_NOTIFICATION_TICKER = 0x00000008;
 
     /**
+     * Flag for {@link #disable} to hide only the clock.  You might use this if your activity has
+     * its own clock making the status bar's clock redundant.
+     */
+    public static final int DISABLE_CLOCK = 0x00000010;
+
+    /**
      * Re-enable all of the status bar features that you've disabled.
      */
     public static final int DISABLE_NONE = 0x00000000;

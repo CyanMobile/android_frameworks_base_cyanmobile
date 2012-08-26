@@ -112,8 +112,6 @@ public class AccountUnlockScreen extends RelativeLayout implements KeyguardScree
 
         mInstructions = (TextView) findViewById(R.id.instructions);
 
-        Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 1);
-
         mLogin = (EditText) findViewById(R.id.login);
         mLogin.setFilters(new InputFilter[] { new LoginFilter.UsernameFilterGeneric() } );
         mLogin.addTextChangedListener(this);
@@ -211,7 +209,6 @@ public class AccountUnlockScreen extends RelativeLayout implements KeyguardScree
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     mContext.startActivity(intent);
                     mCallback.reportSuccessfulUnlockAttempt();
-                    Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
                     // close the keyguard
                     mCallback.keyguardDone(true);
                 } else {

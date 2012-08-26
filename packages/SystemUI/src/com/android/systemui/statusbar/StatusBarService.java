@@ -21,13 +21,35 @@ import com.android.internal.statusbar.IStatusBarService;
 import com.android.internal.statusbar.StatusBarIcon;
 import com.android.internal.statusbar.StatusBarIconList;
 import com.android.internal.statusbar.StatusBarNotification;
-import com.android.systemui.statusbar.CmBatteryMiniIcon.SettingsObserver;
+import com.android.systemui.statusbar.batteries.CmBatteryMiniIcon;
+import com.android.systemui.statusbar.batteries.CmBatterySideBar;
+import com.android.systemui.statusbar.batteries.CmBatteryStatusBar;
+import com.android.systemui.statusbar.carrierlabels.CarrierLabel;
+import com.android.systemui.statusbar.carrierlabels.CarrierLabelBottom;
+import com.android.systemui.statusbar.carrierlabels.CarrierLabelStatusBar;
+import com.android.systemui.statusbar.carrierlabels.CarrierLogo;
+import com.android.systemui.statusbar.carrierlabels.CenterCarrierLabelStatusBar;
+import com.android.systemui.statusbar.carrierlabels.CenterCarrierLogo;
+import com.android.systemui.statusbar.carrierlabels.LeftCarrierLabelStatusBar;
+import com.android.systemui.statusbar.carrierlabels.LeftCarrierLogo;
+import com.android.systemui.statusbar.clocks.CenterClock;
+import com.android.systemui.statusbar.clocks.Clock;
+import com.android.systemui.statusbar.clocks.LeftClock;
+import com.android.systemui.statusbar.clocks.PowerClock;
+import com.android.systemui.statusbar.cmcustom.BackLogo;
+import com.android.systemui.statusbar.dates.DateView;
+import com.android.systemui.statusbar.dates.PowerDateView;
+import com.android.systemui.statusbar.popups.BrightnessPanel;
+import com.android.systemui.statusbar.popups.QuickSettingsPopupWindow;
+import com.android.systemui.statusbar.popups.ShortcutPopupWindow;
+import com.android.systemui.statusbar.popups.WeatherPopup;
 import com.android.systemui.statusbar.powerwidget.PowerWidget;
 import com.android.systemui.statusbar.powerwidget.PowerWidgetBottom;
 import com.android.systemui.statusbar.powerwidget.PowerWidgetOne;
 import com.android.systemui.statusbar.powerwidget.PowerWidgetTwo;
 import com.android.systemui.statusbar.powerwidget.PowerWidgetThree;
 import com.android.systemui.statusbar.powerwidget.PowerWidgetFour;
+import com.android.systemui.statusbar.powerwidget.MusicControls;
 import com.android.systemui.R;
 import android.os.IPowerManager;
 import android.provider.Settings.SettingNotFoundException;
@@ -95,7 +117,6 @@ import android.widget.TextView;
 import android.net.Uri;
 import java.io.File;
 
-import com.android.systemui.statusbar.CmBatterySideBar;
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -1832,6 +1853,22 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
+    public void showClock(boolean show) {
+      if (mStatusBarView != null) {
+       Clock clock = (Clock)mStatusBarView.findViewById(R.id.clock);
+       if (clock != null) {
+           clock.VisibilityChecks(show);
+       }
+       CenterClock centerClo = (CenterClock)mStatusBarView.findViewById(R.id.centerClo);
+       if (centerClo != null) {
+           centerClo.VisibilityChecks(show);
+       }
+       LeftClock clockLeft = (LeftClock)mStatusBarView.findViewById(R.id.clockLe);
+       if (clockLeft != null) {
+           clockLeft.VisibilityChecks(show);
+       }
+      }
+    }
 
     /**
      * State is one or more of the DISABLE constants from StatusBarManager.
@@ -1841,6 +1878,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         final int diff = state ^ old;
         mDisabled = state;
 
+        if ((diff & StatusBarManager.DISABLE_CLOCK) != 0) {
+            boolean show = (state & StatusBarManager.DISABLE_CLOCK) == 0;
+            Slog.d(TAG, "DISABLE_CLOCK: " + (show ? "no" : "yes"));
+            showClock(show);
+        }
         if ((diff & StatusBarManager.DISABLE_EXPAND) != 0) {
             if ((state & StatusBarManager.DISABLE_EXPAND) != 0) {
                 if (SPEW) Slog.d(TAG, "DISABLE_EXPAND: yes");
@@ -2929,23 +2971,23 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 // update clock for changing font
                 if (mStatusBarView != null) {
                     Clock clock = (Clock)mStatusBarView.findViewById(R.id.clock);
-                    if ( clock != null ) {
+                    if (clock != null) {
                         clock.invalidate();
                     }
                     CenterClock centerClo = (CenterClock)mStatusBarView.findViewById(R.id.centerClo);
-                    if ( centerClo != null ) {
+                    if (centerClo != null) {
                         centerClo.invalidate();
                     }
                     PowerClock centerCloex = (PowerClock)mExpandedView.findViewById(R.id.centerCloex);
-                    if ( centerCloex != null ) {
+                    if (centerCloex != null) {
                         centerCloex.invalidate();
                     }
                     PowerDateView powDateView = (PowerDateView)mExpandedView.findViewById(R.id.datestats);
-                    if ( powDateView != null ) {
+                    if (powDateView != null) {
                         powDateView.invalidate();
                     }
                     LeftClock clockLeft = (LeftClock)mStatusBarView.findViewById(R.id.clockLe);
-                    if ( clockLeft != null ) {
+                    if (clockLeft != null) {
                         clockLeft.invalidate();
                     }
                 }

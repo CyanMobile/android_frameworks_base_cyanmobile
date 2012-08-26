@@ -28,13 +28,13 @@
     <LinearLayout
         android:id="@+id/centerClockex"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="46dp"
         android:background="@drawable/title_bar_portrait"
         android:gravity="center_vertical"
         android:baselineAligned="false"
         android:orientation="horizontal" >
 
-        <com.android.systemui.statusbar.PowerClock
+        <com.android.systemui.statusbar.clocks.PowerClock
             android:id="@+id/centerCloex"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -43,10 +43,10 @@
             android:textSize="34sp"
             android:textAppearance="?android:attr/textAppearanceMedium" />
 
-    <com.android.systemui.statusbar.PowerDateView android:id="@+id/datestats"
+    <com.android.systemui.statusbar.dates.PowerDateView android:id="@+id/datestats"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_marginLeft="6dp"
         android:layout_marginRight="6dp"
         android:textSize="12sp"
@@ -55,8 +55,8 @@
         />
 
         <ImageView android:id="@+id/settingIcon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="44dp"
+            android:layout_height="match_parent"
             android:scaleType="center"
             android:layout_toRightOf="@+id/centerCloex"
             android:src="@drawable/ic_sysbar_set"
@@ -64,7 +64,7 @@
 
         <TextView android:id="@+id/clear_all_button"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_toRightOf="@+id/centerCloex"
                 android:layout_gravity="center_vertical"
                 android:textSize="14sp"
@@ -90,7 +90,7 @@
             android:layout_height="wrap_content"
             />
 
-        <com.android.systemui.statusbar.MusicControls android:id="@+id/exp_music_controls"
+        <com.android.systemui.statusbar.powerwidget.MusicControls android:id="@+id/exp_music_controls"
              android:layout_width="match_parent"
              android:layout_height="wrap_content"
              />
@@ -101,7 +101,7 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
         >
-            <com.android.systemui.statusbar.CarrierLabel
+            <com.android.systemui.statusbar.carrierlabels.CarrierLabel
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -235,7 +235,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             >
-            <com.android.systemui.statusbar.CarrierLabel
+            <com.android.systemui.statusbar.carrierlabels.CarrierLabel
                  android:gravity="bottom|right|center"
                  android:textAppearance="@style/TextAppearance.StatusBar.Title"
                  android:singleLine="true"

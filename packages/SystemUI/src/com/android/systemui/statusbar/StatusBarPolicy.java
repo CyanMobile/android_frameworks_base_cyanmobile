@@ -62,6 +62,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.android.systemui.statusbar.cmcustom.SmsHelper;
 import com.android.internal.app.IBatteryStats;
 import com.android.internal.telephony.IccCard;
 import com.android.internal.telephony.TelephonyIntents;

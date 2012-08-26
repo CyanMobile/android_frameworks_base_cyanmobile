@@ -119,8 +119,6 @@ public class SimUnlockScreen extends LinearLayout implements KeyguardScreen, Vie
         mEmergencyCallButton.setOnClickListener(this);
         mOkButton.setOnClickListener(this);
 
-        Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 1);
-
         setFocusableInTouchMode(true);
     }
 
@@ -267,7 +265,6 @@ public class SimUnlockScreen extends LinearLayout implements KeyguardScreen, Vie
                     // the sim is unlocked so it knows right away
                     mUpdateMonitor.reportSimPinUnlocked();
                     mCallback.goToUnlockScreen();
-                    Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
                 } else {
                     // check the airplane mode
                     if (Settings.System.getInt(mContext.getContentResolver(),Settings.System.AIRPLANE_MODE_ON,0) == 1) {
@@ -349,7 +346,6 @@ public class SimUnlockScreen extends LinearLayout implements KeyguardScreen, Vie
             final boolean isKeyboardOpen = mKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO;
             if (mUpdateMonitor.isKeyguardBypassEnabled() && isKeyboardOpen) {
                 mCallback.goToUnlockScreen();
-                Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
             }
         }
         

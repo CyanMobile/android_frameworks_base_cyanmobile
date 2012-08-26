@@ -50,6 +50,8 @@ import android.os.Handler;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 
+import com.android.systemui.statusbar.popups.ActionItem;
+import com.android.systemui.statusbar.popups.QuickAction;
 import com.android.systemui.R;
 
 public class NavigationBarView extends LinearLayout {

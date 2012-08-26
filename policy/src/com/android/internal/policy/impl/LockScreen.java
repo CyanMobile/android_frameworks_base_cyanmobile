@@ -442,8 +442,6 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         mCarrier.setVisibility(View.INVISIBLE);
         }
 
-           Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 1);
-
         mCusText = (TextView) findViewById(R.id.custext);
         mCusText.setText(mCustomText);
         mCusText.setTextColor(CColours);
@@ -617,7 +615,6 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 musicIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 getContext().startActivity(musicIntent);
                 mCallback.goToUnlockScreen();
-                    Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
             }
         });
 
@@ -792,7 +789,6 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                         callIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         getContext().startActivity(callIntent);
                         mCallback.goToUnlockScreen();
-                            Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
                     } else if (whichHandle == SlidingTab.OnTriggerListener.RIGHT_HANDLE) {
                         if (mCustomAppActivity != null) {
                             runActivity(mCustomAppActivity);
@@ -1059,7 +1055,6 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 || (keyCode == KeyEvent.KEYCODE_MENU && mEnableMenuKeyInLockScreen)) {
 
             mCallback.goToUnlockScreen();
-                    Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
             return false;
         } else if (keyCode == KeyEvent.KEYCODE_HOME) {
             event.startTracking();
@@ -1080,7 +1075,6 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
     public void onTrigger(View v, int whichHandle) {
         if (whichHandle == SlidingTab.OnTriggerListener.LEFT_HANDLE) {
             mCallback.goToUnlockScreen();
-                    Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
         } else if (whichHandle == SlidingTab.OnTriggerListener.RIGHT_HANDLE) {
             toggleSilentMode();
             updateRightTabResources();
@@ -1108,7 +1102,6 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
 
         if (mUnlockTrigger) {
             mCallback.goToUnlockScreen();
-                    Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
         } else if (mCustomAppTrigger) {
             if (mCustomAppActivity != null) {
                 runActivity(mCustomAppActivity);
@@ -1141,7 +1134,6 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
 
         if (mUnlockTrigger) {
             mCallback.goToUnlockScreen();
-                    Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
         }else if (mCustomAppTrigger) {
             if (mCustomRingAppActivities[whichApp] != null) {
                 runActivity(mCustomRingAppActivities[whichApp]);
@@ -1687,7 +1679,6 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
             final boolean isKeyboardOpen = mKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO;
             if (mSliderUnlockScreen && isKeyboardOpen) {
                 mCallback.goToUnlockScreen();
-                    Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
                 return;
             }
         }
@@ -1877,7 +1868,6 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
             if (uri != null) {
                 if ("UNLOCK".equals(uri)) {
                     mCallback.goToUnlockScreen();
-                        Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
                 } else if ("SOUND".equals(uri)) {
                     toggleSilentMode();
                     mCallback.pokeWakelock();
@@ -1913,7 +1903,6 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                             mCallback.pokeWakelock();
                         } else {
                             mCallback.goToUnlockScreen();
-                                Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
                         }
                     } catch (URISyntaxException e) {
                     } catch (ActivityNotFoundException e) {
@@ -2045,7 +2034,6 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
             mContext.startActivity(i);
             mCallback.goToUnlockScreen();
-                    Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
         } catch (URISyntaxException e) {
         } catch (ActivityNotFoundException e) {
         }

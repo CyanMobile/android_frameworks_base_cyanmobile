@@ -15,15 +15,6 @@
 ** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
 ** See the License for the specific language governing permissions and 
 ** limitations under the License.
-**
-**
-**
-**
-**
-**
-**
-** This layout only for ldpi and mdpi devices.
-** need to changing margin right/left to 20dp if hdpi
 */
 -->
 
@@ -45,7 +36,7 @@
       android:layout_height="match_parent"
       android:layout_width="match_parent">
 
-    <com.android.systemui.statusbar.CmBatteryNaviBar
+    <com.android.systemui.statusbar.batteries.CmBatteryNaviBar
         style="@style/StatusBar.BatteryBar"
         android:layout_gravity="top"
         android:layout_width="match_parent"

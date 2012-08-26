@@ -88,7 +88,7 @@ public abstract class PowerButton {
                 boolean visible = Settings.System.getInt(cr,
                         Settings.System.EXPANDED_HIDE_INDICATOR, 1) != 1;
                 int colorMaskBase = Settings.System.getInt(cr,
-                        Settings.System.EXPANDED_VIEW_WIDGET_COLOR, 0xFF33B5E5); // this value for color
+                        Settings.System.EXPANDED_VIEW_WIDGET_COLOR, 0xFF33B5E5);
                 int colorMask;
 
                 mIndicatorView.setVisibility(visible ? View.VISIBLE : View.GONE);

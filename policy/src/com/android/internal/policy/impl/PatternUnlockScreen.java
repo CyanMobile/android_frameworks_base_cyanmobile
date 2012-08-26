@@ -219,8 +219,6 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
         ViewGroup lockWallpaper = (ViewGroup) findViewById(R.id.pattern);
         LockScreen.setBackground(getContext(), lockWallpaper);
 
-        Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 1);
-
         mCarrier = (TextView) findViewById(R.id.carrier);
         mClock = (DigitalClock) findViewById(R.id.time);
         mTime = (TextView) findViewById(R.id.timeDisplay);
@@ -717,7 +715,6 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
                 updateStatusLines();
                 mCallback.keyguardDone(true);
                 mCallback.reportSuccessfulUnlockAttempt();
-                Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
             } else {
                 if (pattern.size() > MIN_PATTERN_BEFORE_POKE_WAKELOCK) {
                     mCallback.pokeWakelock(UNLOCK_PATTERN_WAKE_INTERVAL_MS);

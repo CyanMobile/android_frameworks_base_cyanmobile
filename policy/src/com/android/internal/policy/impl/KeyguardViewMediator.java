@@ -651,7 +651,6 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                 && !mKeyguardViewProperties.isSecure() && mKeyguardViewManager.isShowing()) {
             if (DEBUG) Log.d(TAG, "bypassing keyguard on sliding open of keyboard with non-secure keyguard");
             mHandler.sendEmptyMessage(KEYGUARD_DONE_AUTHENTICATING);
-            Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
             return true;
         }
         return false;
@@ -1250,7 +1249,8 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
             boolean enable = !mShowing || (mHidden && !isSecure());
             mStatusBarManager.disable(enable ?
                          StatusBarManager.DISABLE_NONE :
-                         StatusBarManager.DISABLE_EXPAND);
+                         (StatusBarManager.DISABLE_EXPAND
+                          | StatusBarManager.DISABLE_CLOCK));
         }
     }
 

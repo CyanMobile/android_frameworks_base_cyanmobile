@@ -92,7 +92,6 @@ public class PasswordUnlockScreen extends LinearLayout implements KeyguardScreen
         }
         ViewGroup lockWallpaper = (ViewGroup) findViewById(R.id.password);
         LockScreen.setBackground(getContext(), lockWallpaper);
-        Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 1);
         final int quality = lockPatternUtils.getKeyguardStoredPasswordQuality();
         final boolean isAlpha = DevicePolicyManager.PASSWORD_QUALITY_ALPHABETIC == quality
                 || DevicePolicyManager.PASSWORD_QUALITY_ALPHANUMERIC == quality;
@@ -133,7 +132,6 @@ public class PasswordUnlockScreen extends LinearLayout implements KeyguardScreen
                     if (mLockPatternUtils.checkPassword(entry)) {
                         mCallback.keyguardDone(true);
                         mCallback.reportSuccessfulUnlockAttempt();
-                        Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
                     }
                     return false;
                 }
@@ -188,7 +186,6 @@ public class PasswordUnlockScreen extends LinearLayout implements KeyguardScreen
         if (mLockPatternUtils.checkPassword(entry)) {
             mCallback.keyguardDone(true);
             mCallback.reportSuccessfulUnlockAttempt();
-            Settings.System.putInt(mContext.getContentResolver(), Settings.System.SHOW_STATUS_BAR_LOCK, 0);
         } else if (entry.length() > MINIMUM_PASSWORD_LENGTH_BEFORE_REPORT ) {
             // to avoid accidental lockout, only count attempts that are long enough to be a
             // real password. This may require some tweaking.

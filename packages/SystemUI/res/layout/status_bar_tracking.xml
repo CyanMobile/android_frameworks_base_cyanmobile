@@ -45,7 +45,7 @@
              android:background="@drawable/title_bar_portrait"
              />
 
-        <com.android.systemui.statusbar.CarrierLabelBottom
+        <com.android.systemui.statusbar.carrierlabels.CarrierLabelBottom
              android:id="@+id/carrierlabel_bottom"
              android:textAppearance="@android:style/TextAppearance.StatusBar.Icon" 
              android:background="@drawable/title_bar_portrait" 
