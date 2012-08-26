@@ -78,9 +78,7 @@ public class CenterClock extends TextView {
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_AM_PM), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_CENTERCLOCK), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.SHOW_STATUS_BAR_LOCK), false, this);
+                    Settings.System.STATUS_BAR_CLOCK), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_CLOCKCOLOR), false, this);
             resolver.registerContentObserver(
@@ -276,7 +274,7 @@ public class CenterClock extends TextView {
         }
 
         mShowCenterClock = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_CENTERCLOCK, 0) == 1);
+                Settings.System.STATUS_BAR_CLOCK, 1) == 2);
 
         if(mShowCenterClock)
             setVisibility(mShowClocker ? View.VISIBLE : View.GONE);

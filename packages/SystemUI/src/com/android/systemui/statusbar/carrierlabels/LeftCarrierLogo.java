@@ -52,7 +52,7 @@ public class LeftCarrierLogo extends TextView {
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.CARRIER_LOGO_LEFT),
+                    Settings.System.getUriFor(Settings.System.CARRIER_LOGO),
                     false, this);
             onChange(true);
         }
@@ -108,7 +108,7 @@ public class LeftCarrierLogo extends TextView {
         ContentResolver resolver = mContext.getContentResolver();
 
         mCarrierLogoLeft = (Settings.System.getInt(resolver,
-                Settings.System.CARRIER_LOGO_LEFT, 0) == 1);
+                Settings.System.CARRIER_LOGO, 0) == 3);
 
         if(mCarrierLogoLeft)
             setVisibility(View.VISIBLE);

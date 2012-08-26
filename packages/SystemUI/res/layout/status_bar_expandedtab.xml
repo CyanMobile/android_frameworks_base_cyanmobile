@@ -27,16 +27,48 @@
 
 <!-- START STACK 1 -->
 <LinearLayout 
-    android:layout_width="match_parent"
+    android:layout_width="fill_parent"
     android:layout_height="wrap_content"
+    android:id="@+id/power_and_carrier"
+    android:visibility="gone"
     android:layout_weight="1"
-    android:id="@+id/notifications_layout" >
+    android:orientation="vertical"
+     >
+
+        <LinearLayout android:id="@+id/carrier_label_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+        >
+            <com.android.systemui.statusbar.carrierlabels.CarrierLabel
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginTop="1dp"
+                android:layout_marginLeft="5dp"
+                android:layout_gravity="center_vertical"
+                android:paddingBottom="1dp"
+                android:paddingLeft="4dp"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:textColor="@color/carrier_label_text_color"
+                />
+
+         <ImageView android:id="@+id/music_toggle_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginTop="1dp"
+            android:paddingBottom="1dp"
+            android:layout_toLeftOf="@+id/clear_all_button"
+            android:src="@drawable/ic_music_toggle"
+            />
+        </LinearLayout>
 
     <LinearLayout
         android:id="@+id/centerClockex"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:background="@drawable/title_bar_portrait"
+        android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:baselineAligned="false"
         android:orientation="horizontal" >
@@ -44,11 +76,10 @@
         <com.android.systemui.statusbar.clocks.PowerClock
             android:id="@+id/centerCloex"
             android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
+            android:layout_height="wrap_content"
             android:layout_marginLeft="6dp"
+            android:paddingBottom="1dp"
             android:singleLine="true"
-            android:layout_weight="1.0"
-            android:ellipsize="none"
             android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Clock" />
 
     <com.android.systemui.statusbar.dates.PowerDateView android:id="@+id/datestats"
@@ -57,7 +88,7 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="6dp"
         android:layout_marginRight="6dp"
-        android:layout_weight="1.0"
+        android:paddingBottom="1dp"
         android:textSize="12sp"
         android:maxLines="2"
         />
@@ -65,6 +96,7 @@
         <ImageView android:id="@+id/settingIcon"
             android:layout_width="48dp"
             android:layout_height="48dp"
+            android:paddingBottom="1dp"
             android:scaleType="center"
             android:src="@drawable/ic_sysbar_set"
             />
@@ -81,6 +113,49 @@
                 android:background="@android:drawable/btn_default_small"
             />
      </LinearLayout>
+
+        <com.android.systemui.statusbar.powerwidget.PowerWidget android:id="@+id/exp_power_stat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+
+        <com.android.systemui.statusbar.powerwidget.PowerWidgetOne android:id="@+id/exp_power_stat_one"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+
+        <com.android.systemui.statusbar.powerwidget.PowerWidgetTwo android:id="@+id/exp_power_stat_two"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+
+        <com.android.systemui.statusbar.powerwidget.PowerWidgetThree android:id="@+id/exp_power_stat_three"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+
+        <com.android.systemui.statusbar.powerwidget.PowerWidgetFour android:id="@+id/exp_power_stat_four"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+
+        <com.android.systemui.statusbar.powerwidget.MusicControls android:id="@+id/exp_music_controls"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/title_bar_shadow"
+            android:scaleType="fitXY"
+        />
+</LinearLayout>
+<LinearLayout 
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:id="@+id/notifications_layout" >
 
     <FrameLayout android:id="@+id/notifications"
         android:layout_width="match_parent"
@@ -192,82 +267,6 @@
 
     </FrameLayout>
 </LinearLayout>
-<LinearLayout 
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:id="@+id/power_and_carrier"
-    android:visibility="gone"
-    android:layout_weight="1"
-    android:orientation="vertical"
-     >
-
-        <LinearLayout android:id="@+id/carrier_label_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-        >
-            <com.android.systemui.statusbar.carrierlabels.CarrierLabel
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginTop="1dp"
-                android:layout_marginLeft="5dp"
-                android:layout_gravity="center_vertical"
-                android:paddingBottom="1dp"
-                android:paddingLeft="4dp"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:textColor="@color/carrier_label_text_color"
-                />
-
-         <ImageView android:id="@+id/music_toggle_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_marginTop="1dp"
-            android:paddingBottom="1dp"
-            android:layout_toLeftOf="@+id/clear_all_button"
-            android:src="@drawable/ic_music_toggle"
-            />
-        </LinearLayout>
-
-        <com.android.systemui.statusbar.powerwidget.PowerWidget android:id="@+id/exp_power_stat"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            />
-
-        <com.android.systemui.statusbar.powerwidget.PowerWidgetOne android:id="@+id/exp_power_stat_one"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            />
-
-        <com.android.systemui.statusbar.powerwidget.PowerWidgetTwo android:id="@+id/exp_power_stat_two"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            />
-
-        <com.android.systemui.statusbar.powerwidget.PowerWidgetThree android:id="@+id/exp_power_stat_three"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            />
-
-        <com.android.systemui.statusbar.powerwidget.PowerWidgetFour android:id="@+id/exp_power_stat_four"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            />
-
-        <com.android.systemui.statusbar.powerwidget.MusicControls android:id="@+id/exp_music_controls"
-             android:layout_width="match_parent"
-             android:layout_height="wrap_content"
-             />
-
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:src="@drawable/title_bar_shadow"
-            android:scaleType="fitXY"
-        />
-</LinearLayout>
 <!-- END STACK 2 -->
 <LinearLayout 
     android:layout_width="match_parent"
@@ -284,9 +283,9 @@
       android:layout_weight="1"
       android:textAppearance="@style/TextAppearance.StatusBar.Title"
       android:textColor="@color/carrier_label_text_color"
-      android:text="@string/status_bar_notifications"
+      android:text="@string/status_bar_powerwidget"
       android:gravity="center"
-      android:id="@+id/statusbar_notification_toggle"
+      android:id="@+id/statusbar_buttons_toggle"
       android:clickable="true"
       />
   <TextView 
@@ -295,10 +294,10 @@
       android:layout_weight="1"
       android:textAppearance="@style/TextAppearance.StatusBar.Title"
       android:textColor="@color/carrier_label_text_color"
-      android:text="@string/status_bar_powerwidget"
-      android:layout_toRightOf="@+id/statusbar_notification_toggle"
+      android:text="@string/status_bar_notifications"
+      android:layout_toRightOf="@+id/statusbar_buttons_toggle"
       android:gravity="center"
-      android:id="@+id/statusbar_buttons_toggle"
+      android:id="@+id/statusbar_notification_toggle"
       android:clickable="true"
       />
 </LinearLayout>

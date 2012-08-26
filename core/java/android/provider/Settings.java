@@ -1532,24 +1532,6 @@ public final class Settings {
          */
         public static final String TRANSPARENT_NOTIFICATION_BACKGROUND = "transparent_notification_background";
 
-	/**
-         * Whether to Center the clock in status bar
-         * 0: don't center the clock
-         * 1: center the clock
-         * default: 1
-         * @hide
-         */
-        public static final String STATUS_BAR_CENTERCLOCK = "status_bar_centerclock";
-
-	/**
-         * Whether to Left the clock in status bar
-         * 0: don't left the clock
-         * 1: left the clock
-         * default: 1
-         * @hide
-         */
-        public static final String STATUS_BAR_LEFTCLOCK = "status_bar_leftclock";
-
         /**
          * The color to render the status bar clock
          * hex value including alpha
@@ -1576,7 +1558,7 @@ public final class Settings {
         public static final String TEXT_FULLOFCOLOR = "text_fullofcolor";
 
         /**
-         * The color to render the status bar clock
+         * The color to render the status bar carrier
          * hex value including alpha
          * default: ffffff00
          * @hide
@@ -1584,7 +1566,7 @@ public final class Settings {
         public static final String STATUS_BAR_CARRIERCOLOR = "status_bar_carriercolor";
 
         /**
-         * The color to render the status bar clock
+         * The color to render the lockscreen
          * hex value including alpha
          * default: ffffff00
          * @hide
@@ -2844,7 +2826,6 @@ public final class Settings {
 
         /**
          * Whether to show the alarm icon in status bar
-         * of the stock clock
          * 0: don't show the alarm icon
          * 1: show the alarm icon
          * default: 1
@@ -2902,7 +2883,6 @@ public final class Settings {
 
         /**
          * Whether to show the clock in status bar
-         * of the stock battery icon
          * 0: don't show the clock
          * 1: show the clock
          * default: 1
@@ -3229,46 +3209,11 @@ public final class Settings {
         public static final String LONG_VOL_BOTH_ACTION = "long_vol_both_action";
 
         /**
-         * Whether to use compact carrier label layout
-         *
-         * @hide
-         */
-        public static final String STATUS_BAR_COMPACT_CARRIER = "status_bar_compact_carrier";
-
-        /**
          * Whether to use carrier logo layout
          *
          * @hide
          */
         public static final String CARRIER_LOGO = "carrier_logo";
-
-        /**
-         * Whether to use center carrier logo layout
-         *
-         * @hide
-         */
-        public static final String CARRIER_LOGO_CENTER = "carrier_logo_center";
-
-        /**
-         * Whether to use left carrier logo layout
-         *
-         * @hide
-         */
-        public static final String CARRIER_LOGO_LEFT = "carrier_logo_left";
-
-        /**
-         * Whether to use left carrier bottom layout
-         *
-         * @hide
-         */
-        public static final String CARRIER_LABEL_BOTTOM = "carrier_label_bottom";
-
-        /**
-         * Whether to hide carrier label layout
-         *
-         * @hide
-         */
-        public static final String STATUS_BAR_HIDE_CARRIER = "status_bar_hide_carrier";
 
         /**
          * Whether to reverse statusbar layout
@@ -3282,21 +3227,7 @@ public final class Settings {
          *
          * @hide
          */
-        public static final String STATUS_BAR_STATUSBAR_CARRIER = "status_bar_statusbar_carrier";
-
-        /**
-         * Whether to add statusbar center carrier label layout
-         *
-         * @hide
-         */
-        public static final String STATUS_BAR_STATUSBAR_CARRIER_CENTER = "status_bar_statusbar_carrier_center";
-
-        /**
-         * Whether to add statusbar left carrier label layout
-         *
-         * @hide
-         */
-        public static final String STATUS_BAR_STATUSBAR_CARRIER_LEFT = "status_bar_statusbar_carrier_left";
+        public static final String STATUS_BAR_CARRIER = "status_bar_carrier";
 
         /**
          * @hide

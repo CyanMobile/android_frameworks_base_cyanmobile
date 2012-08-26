@@ -310,6 +310,17 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     boolean mHasSoftButtons;
     boolean autoBrightness = false;
     Context mContext;
+    private int mStatusBarCarrier;
+    private int mStatusBarCarrierLogo;
+    private int mStatusBarClock;
+    private boolean mHideStatusBar = false;
+    private boolean mShowDate = true;
+    private boolean mShowNotif = true;
+    private boolean mStatusBarReverse = false;
+    private boolean mStatusBarTab = false;
+    private boolean LogoStatusBar = false;
+    private boolean mShowCmBatteryStatusBar = false;
+    private boolean mShowCmBatterySideBar = false;
 
     // tracks changes to settings, so status bar is moved to top/bottom
     // as soon as cmparts setting is changed
@@ -333,23 +344,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_DEAD_ZONE), false, this);
             resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.STATUS_BAR_COMPACT_CARRIER), false, this);
-            resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.STATUS_BAR_STATUSBAR_CARRIER), false, this);
-            resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.STATUS_BAR_STATUSBAR_CARRIER_CENTER), false, this);
-            resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.STATUS_BAR_STATUSBAR_CARRIER_LEFT), false, this);
+                    Settings.System.getUriFor(Settings.System.STATUS_BAR_CARRIER), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.CARRIER_LOGO), false, this);
             resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.CARRIER_LOGO_CENTER), false, this);
-            resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.CARRIER_LOGO_LEFT), false, this);
-            resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.CARRIER_LABEL_BOTTOM), false, this);
-            resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.STATUS_BAR_HIDE_CARRIER), false, this);
+                    Settings.System.getUriFor(Settings.System.STATUS_BAR_CLOCK), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_REVERSE), false, this);
             resolver.registerContentObserver(
@@ -418,35 +417,21 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SOFT_BUTTONS_LEFT) ? 1 : 0);
             mButtonsLeft = (Settings.System.getInt(resolver,
                     Settings.System.SOFT_BUTTONS_LEFT, defValue) == 1);
-            // mNaviButtons = (Settings.System.getInt(resolver,
-            //        Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_USE_DEAD_ZONE) ? 1 : 0);
             mDeadZone = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_DEAD_ZONE, defValue) == 1);
-            mCompactCarrier = (Settings.System.getInt(resolver,
-                    Settings.System.STATUS_BAR_COMPACT_CARRIER, 0) == 1);
             mHideStatusBar = (Settings.System.getInt(resolver,
                     Settings.System.SYSTEMUI_STATUSBAR_VISIBILITY, 0) == 1);
-            mStatusBarCarrier = (Settings.System.getInt(resolver,
-                    Settings.System.STATUS_BAR_STATUSBAR_CARRIER, 0) == 1);
-            mStatusBarCarrierCenter = (Settings.System.getInt(resolver,
-                    Settings.System.STATUS_BAR_STATUSBAR_CARRIER_CENTER, 0) == 1);
-            mStatusBarCarrierLeft = (Settings.System.getInt(resolver,
-                    Settings.System.STATUS_BAR_STATUSBAR_CARRIER_LEFT, 0) == 1);
-            mStatusBarCarrierLogo = (Settings.System.getInt(resolver,
-                    Settings.System.CARRIER_LOGO, 0) == 1);
-            mStatusBarCarrierLogoCenter = (Settings.System.getInt(resolver,
-                    Settings.System.CARRIER_LOGO_CENTER, 0) == 1);
-            mStatusBarCarrierLogoLeft = (Settings.System.getInt(resolver,
-                    Settings.System.CARRIER_LOGO_LEFT, 0) == 1);
-            mStatusBarCarrierLabelBottom = (Settings.System.getInt(resolver,
-                    Settings.System.CARRIER_LABEL_BOTTOM, 0) == 1);
+            mStatusBarCarrier = Settings.System.getInt(resolver,
+                    Settings.System.STATUS_BAR_CARRIER, 6);
+            mStatusBarClock = Settings.System.getInt(resolver,
+                    Settings.System.STATUS_BAR_CLOCK, 1);
+            mStatusBarCarrierLogo = Settings.System.getInt(resolver,
+                    Settings.System.CARRIER_LOGO, 0);
             mStatusBarReverse = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_REVERSE, 0) == 1);
             mShowCmBatteryStatusBar = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_BATTERY, 0) == 5);
-            mHideCarrier = (Settings.System.getInt(resolver,
-                    Settings.System.STATUS_BAR_HIDE_CARRIER, 0) == 1);
             mShowDate = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_DATE, 1) == 1);
             mShowNotif = (Settings.System.getInt(resolver,
@@ -594,40 +579,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         return null;
     }
 
-    private boolean mCompactCarrier = false;
-
-    private boolean mStatusBarCarrier = false;
-
-    private boolean mStatusBarCarrierCenter = false;
-
-    private boolean mStatusBarCarrierLeft = false;
-
-    private boolean mHideStatusBar = false;
-
-    private boolean mStatusBarCarrierLogo = false;
-
-    private boolean mStatusBarCarrierLogoCenter = false;
-
-    private boolean mStatusBarCarrierLogoLeft = false;
-
-    private boolean mStatusBarCarrierLabelBottom = false;
-
-    private boolean mHideCarrier = false;
-
-    private boolean mShowDate = true;
-
-    private boolean mShowNotif = true;
-
-    private boolean mStatusBarReverse = false;
-
-    private boolean mStatusBarTab = false;
-
-    private boolean LogoStatusBar = false;
-
-    private boolean mShowCmBatteryStatusBar = false;
-
-    private boolean mShowCmBatterySideBar = false;
-
     // ================================================================================
     // Constructing the view
     // ================================================================================
@@ -643,28 +594,16 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mIconSize = IconSizepx;
 
         //Check for compact carrier layout and apply if enabled
-        mCompactCarrier = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.STATUS_BAR_COMPACT_CARRIER, 0) == 1;
-        mHideCarrier = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.STATUS_BAR_HIDE_CARRIER, 0) == 1;
         mStatusBarCarrier = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.STATUS_BAR_STATUSBAR_CARRIER, 0) == 1;
-        mStatusBarCarrierCenter = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.STATUS_BAR_STATUSBAR_CARRIER_CENTER, 0) == 1;
-        mStatusBarCarrierLeft = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.STATUS_BAR_STATUSBAR_CARRIER_LEFT, 0) == 1;
+                                                Settings.System.STATUS_BAR_CARRIER, 6);
+        mStatusBarClock = Settings.System.getInt(getContentResolver(),
+                                                Settings.System.STATUS_BAR_CLOCK, 1);
         mStatusBarCarrierLogo = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.CARRIER_LOGO, 0) == 1;
-        mStatusBarCarrierLogoCenter = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.CARRIER_LOGO_CENTER, 0) == 1;
-        mStatusBarCarrierLogoLeft = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.CARRIER_LOGO_LEFT, 0) == 1;
-        mStatusBarCarrierLabelBottom = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.CARRIER_LABEL_BOTTOM, 0) == 1;
+                                                Settings.System.CARRIER_LOGO, 0);
         mStatusBarReverse = Settings.System.getInt(getContentResolver(),
                                                 Settings.System.STATUS_BAR_REVERSE, 0) == 1;
         mStatusBarTab = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.EXPANDED_VIEW_WIDGET, 0) == 4;
+                                                Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4;
         mShowCmBatteryStatusBar = Settings.System.getInt(getContentResolver(),
                                                 Settings.System.STATUS_BAR_BATTERY, 0) == 5;
         LogoStatusBar = Settings.System.getInt(getContentResolver(),
@@ -749,15 +688,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         // figure out which pixel-format to use for the status bar.
         mPixelFormat = PixelFormat.TRANSLUCENT;
-//        Drawable bg = mStatusBarView.getBackground();
-//        if (bg != null) {
-//            mPixelFormat = bg.getOpacity();
-//        }
 
         mStatusIcons = (LinearLayout)mStatusBarView.findViewById(R.id.statusIcons);
+        mStatusIcons.setOnClickListener(mIconButtonListener);
         mNotificationIcons = (IconMerger)mStatusBarView.findViewById(R.id.notificationIcons);
         mIcons = (LinearLayout)mStatusBarView.findViewById(R.id.icons);
-        mIcons.setOnClickListener(mIconButtonListener);
         mCenterClock = (LinearLayout)mStatusBarView.findViewById(R.id.centerClock);
         mLeftClock = (LinearLayout)mStatusBarView.findViewById(R.id.clockLeft);
         mCarrierLabelStatusBarLayout = (CarrierLabelStatusBar)mStatusBarView.findViewById(R.id.carrier_label_status_bar_layout);
@@ -818,51 +753,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mCenterClockex = (LinearLayout)mExpandedView.findViewById(R.id.centerClock);
         mSettingsIconButton = (ImageView)mExpandedView.findViewById(R.id.settingIcon);
         mSettingsIconButton.setOnClickListener(mSettingsIconButtonListener);
-
-        if (mStatusBarCarrierLogo) {
-            if (LogoStatusBar) {
-               Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/lg_background"));
-               Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
-               Drawable bgrImage = new BitmapDrawable(bitmapImage);
-               mCarrierLogoLayout.setBackgroundDrawable(bgrImage);
-               mCarrierLogoCenterLayout.setVisibility(View.GONE);
-               mCarrierLogoLeftLayout.setVisibility(View.GONE);
-            } else {
-               mCarrierLogoLayout.setBackgroundDrawable(getResources().getDrawable(R.drawable.ic_statusbar_carrier_logos));
-               mCarrierLogoCenterLayout.setVisibility(View.GONE);
-               mCarrierLogoLeftLayout.setVisibility(View.GONE);
-            }
-        } else if (mStatusBarCarrierLogoCenter) {
-            if (LogoStatusBar) {
-               Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/lg_background"));
-               Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
-               Drawable bgrImage = new BitmapDrawable(bitmapImage);
-               mCarrierLogoCenterLayout.setBackgroundDrawable(bgrImage);
-               mCarrierLogoLayout.setVisibility(View.GONE);
-               mCarrierLogoLeftLayout.setVisibility(View.GONE);
-            } else {
-               mCarrierLogoCenterLayout.setBackgroundDrawable(getResources().getDrawable(R.drawable.ic_statusbar_carrier_logos));
-               mCarrierLogoLayout.setVisibility(View.GONE);
-               mCarrierLogoLeftLayout.setVisibility(View.GONE);
-            }
-        } else if (mStatusBarCarrierLogoLeft) {
-            if (LogoStatusBar) {
-               Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/lg_background"));
-               Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
-               Drawable bgrImage = new BitmapDrawable(bitmapImage);
-               mCarrierLogoLeftLayout.setBackgroundDrawable(bgrImage);
-               mCarrierLogoLayout.setVisibility(View.GONE);
-               mCarrierLogoCenterLayout.setVisibility(View.GONE);
-            } else {
-               mCarrierLogoLeftLayout.setBackgroundDrawable(getResources().getDrawable(R.drawable.ic_statusbar_carrier_logos));
-               mCarrierLogoLayout.setVisibility(View.GONE);
-               mCarrierLogoCenterLayout.setVisibility(View.GONE);
-            }
-        } else {
-            mCarrierLogoLayout.setVisibility(View.GONE);
-            mCarrierLogoCenterLayout.setVisibility(View.GONE);
-            mCarrierLogoLeftLayout.setVisibility(View.GONE);
-        }
 
         mExpandedView.setVisibility(View.GONE);
         mOngoingTitle.setVisibility(View.GONE);
@@ -995,10 +885,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mContext=context;
 
         if (mStatusBarTab) {
-        mNotifications = (LinearLayout)mExpandedView.findViewById(R.id.notifications_layout);
-        mNotificationsToggle = (TextView)mExpandedView.findViewById(R.id.statusbar_notification_toggle);
-        mButtonsToggle = (TextView)mExpandedView.findViewById(R.id.statusbar_buttons_toggle);
-        mPowerAndCarrier.setVisibility(View.GONE);
+            mNotifications = (LinearLayout)mExpandedView.findViewById(R.id.notifications_layout);
+            mNotificationsToggle = (TextView)mExpandedView.findViewById(R.id.statusbar_notification_toggle);
+            mButtonsToggle = (TextView)mExpandedView.findViewById(R.id.statusbar_buttons_toggle);
+            mNotifications.setVisibility(View.GONE);
         }
 
         mSettingsButton = (View)mTrackingView.findViewById(R.id.settingUp);
@@ -1053,6 +943,35 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         updateLayout();
         updateCarrierLabel();
 
+        if (mStatusBarCarrierLogo == 1) {
+            if (LogoStatusBar) {
+               Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/lg_background"));
+               Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
+               Drawable bgrImage = new BitmapDrawable(bitmapImage);
+               mCarrierLogoLayout.setBackgroundDrawable(bgrImage);
+            } else {
+               mCarrierLogoLayout.setBackgroundDrawable(getResources().getDrawable(R.drawable.ic_statusbar_carrier_logos));
+            }
+        } else if (mStatusBarCarrierLogo == 2) {
+            if (LogoStatusBar) {
+               Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/lg_background"));
+               Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
+               Drawable bgrImage = new BitmapDrawable(bitmapImage);
+               mCarrierLogoCenterLayout.setBackgroundDrawable(bgrImage);
+            } else {
+               mCarrierLogoCenterLayout.setBackgroundDrawable(getResources().getDrawable(R.drawable.ic_statusbar_carrier_logos));
+            }
+        } else if (mStatusBarCarrierLogo == 3) {
+            if (LogoStatusBar) {
+               Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/lg_background"));
+               Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
+               Drawable bgrImage = new BitmapDrawable(bitmapImage);
+               mCarrierLogoLeftLayout.setBackgroundDrawable(bgrImage);
+            } else {
+               mCarrierLogoLeftLayout.setBackgroundDrawable(getResources().getDrawable(R.drawable.ic_statusbar_carrier_logos));
+            }
+        }
+
         mEdgeBorder = res.getDimensionPixelSize(R.dimen.status_bar_edge_ignore);
 
         // set the inital view visibility
@@ -1072,34 +991,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mButtonText = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_CLEAR_BUTTON, mButtonText);
 
-        if (mCompactCarrier) {
+        if (mStatusBarCarrier == 5) {
             mCompactClearButton.setTextColor(mButtonText);
-        } else if (mStatusBarCarrier) {
-            mCompactClearButton.setTextColor(mButtonText);
-        } else if (mStatusBarCarrierCenter) {
-            mCompactClearButton.setTextColor(mButtonText);
-        } else if (mStatusBarCarrierLeft) {
-            mCompactClearButton.setTextColor(mButtonText);
-        } else if (mStatusBarCarrierLogo) {
-            mCompactClearButton.setTextColor(mButtonText);
-        } else if (mStatusBarCarrierLogoCenter) {
-            mCompactClearButton.setTextColor(mButtonText);
-        } else if (mStatusBarCarrierLogoLeft) {
-            mCompactClearButton.setTextColor(mButtonText);
-        } else if (mStatusBarTab && mStatusBarCarrier) {
-            mCompactClearButton.setTextColor(mButtonText);
-        } else if (mStatusBarTab && mStatusBarCarrierCenter) {
-            mCompactClearButton.setTextColor(mButtonText);
-        } else if (mStatusBarTab && mStatusBarCarrierLeft) {
-            mCompactClearButton.setTextColor(mButtonText);
-        } else if (mStatusBarTab && mStatusBarCarrierLogo) {
-            mCompactClearButton.setTextColor(mButtonText);
-        } else if (mStatusBarTab && mStatusBarCarrierLogoCenter) {
-            mCompactClearButton.setTextColor(mButtonText);
-        } else if (mStatusBarTab && mStatusBarCarrierLogoLeft) {
-            mCompactClearButton.setTextColor(mButtonText);
-        } else if (mStatusBarTab && mCompactCarrier) {
-            mCompactClearButton.setTextColor(mButtonText);
+        } else {
+            mClearButton.setTextColor(mButtonText);
         }
 
         mNotifyNone = Settings.System
@@ -1157,7 +1052,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     private void updateSettings() {
         int changedVal = Settings.System.getInt(getContentResolver(),
-                Settings.System.EXPANDED_VIEW_WIDGET, 0);
+                Settings.System.EXPANDED_VIEW_WIDGET, 1);
         // check that it's not 0 to not reset the variable
         // this should be the only place mLastPowerToggle is set
         if (changedVal != 0) {
@@ -1219,9 +1114,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     private void updateCarrierLabel() {
-        if (mCompactCarrier) {
+        if (mStatusBarCarrier == 5) {
             mCarrierLabelLayout.setVisibility(View.GONE);
-            mClearButton.setVisibility(View.INVISIBLE);
             mCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mCenterCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mLeftCarrierLabelStatusBarLayout.setVisibility(View.GONE);
@@ -1234,83 +1128,41 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             } else {
                 mCompactCarrierLayout.setVisibility(View.VISIBLE);
             }
-            if (mLatest.hasClearableItems())
-                mCompactClearButton.setVisibility(View.VISIBLE);
-        } else if (mHideCarrier) {
+        } else if (mStatusBarCarrier == 0) {
             mCarrierLabelBottomLayout.setVisibility(View.GONE);
             mCarrierLabelLayout.setVisibility(View.GONE);
-            mClearButton.setVisibility(View.INVISIBLE);
             mCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mCenterCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mLeftCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mCompactCarrierLayout.setVisibility(View.GONE);
             mMusicToggleButton.setVisibility(View.GONE);
-         } else if (mStatusBarCarrier) {
+         } else if (mStatusBarCarrier == 1) {
             mCarrierLabelBottomLayout.setVisibility(View.GONE);
             mCarrierLabelStatusBarLayout.setVisibility(View.VISIBLE);
             mCenterCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mLeftCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mCarrierLabelLayout.setVisibility(View.GONE);
-            mClearButton.setVisibility(View.INVISIBLE);
             mCompactCarrierLayout.setVisibility(View.GONE);
             mMusicToggleButton.setVisibility(View.GONE);
-            if (mLatest.hasClearableItems())
-                mCompactClearButton.setVisibility(View.VISIBLE);
-        } else if (mStatusBarCarrierCenter) {
+        } else if (mStatusBarCarrier == 2) {
             mCarrierLabelBottomLayout.setVisibility(View.GONE);
             mCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mCenterCarrierLabelStatusBarLayout.setVisibility(View.VISIBLE);
             mLeftCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mCarrierLabelLayout.setVisibility(View.GONE);
-            mClearButton.setVisibility(View.INVISIBLE);
             mCompactCarrierLayout.setVisibility(View.GONE);
             mMusicToggleButton.setVisibility(View.GONE);
-            if (mLatest.hasClearableItems())
-                mCompactClearButton.setVisibility(View.VISIBLE);
-        } else if (mStatusBarCarrierLeft) {
+        } else if (mStatusBarCarrier == 3) {
             mCarrierLabelBottomLayout.setVisibility(View.GONE);
             mCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mCenterCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mLeftCarrierLabelStatusBarLayout.setVisibility(View.VISIBLE);
             mCarrierLabelLayout.setVisibility(View.GONE);
-            mClearButton.setVisibility(View.INVISIBLE);
             mCompactCarrierLayout.setVisibility(View.GONE);
             mMusicToggleButton.setVisibility(View.GONE);
-            if (mLatest.hasClearableItems())
-                mCompactClearButton.setVisibility(View.VISIBLE);
-        } else if (mStatusBarCarrierLogo) {
-            mCarrierLogoLayout.setVisibility(View.VISIBLE);
-            mCarrierLabelLayout.setVisibility(View.GONE);
-            mClearButton.setVisibility(View.INVISIBLE);
-            mCarrierLogoCenterLayout.setVisibility(View.GONE);
-            mCarrierLogoLeftLayout.setVisibility(View.GONE);
-            mMusicToggleButton.setVisibility(View.GONE);
-            if (mLatest.hasClearableItems())
-                mCompactClearButton.setVisibility(View.VISIBLE);
-        } else if (mStatusBarCarrierLogoCenter) {
+        } else if (mStatusBarCarrier == 4) {
             mCarrierLogoLayout.setVisibility(View.GONE);
             mCarrierLabelLayout.setVisibility(View.GONE);
-            mClearButton.setVisibility(View.INVISIBLE);
-            mCarrierLogoCenterLayout.setVisibility(View.VISIBLE);
-            mCarrierLogoLeftLayout.setVisibility(View.GONE);
-            mMusicToggleButton.setVisibility(View.GONE);
-            if (mLatest.hasClearableItems())
-                mCompactClearButton.setVisibility(View.VISIBLE);
-        } else if (mStatusBarCarrierLogoLeft) {
-            mCarrierLabelBottomLayout.setVisibility(View.GONE);
-            mCarrierLogoLayout.setVisibility(View.GONE);
-            mCarrierLabelLayout.setVisibility(View.GONE);
-            mClearButton.setVisibility(View.INVISIBLE);
-            mCarrierLogoCenterLayout.setVisibility(View.GONE);
-            mCarrierLogoLeftLayout.setVisibility(View.VISIBLE);
-            mMusicToggleButton.setVisibility(View.GONE);
-            if (mLatest.hasClearableItems())
-                mCompactClearButton.setVisibility(View.VISIBLE);
-        } else if (mStatusBarCarrierLabelBottom) {
-            mCarrierLabelBottomLayout.setVisibility(View.VISIBLE);
-            mCarrierLogoLayout.setVisibility(View.GONE);
-            mCarrierLabelLayout.setVisibility(View.GONE);
-            mClearButton.setVisibility(View.INVISIBLE);
             mCarrierLogoCenterLayout.setVisibility(View.GONE);
             mCarrierLogoLeftLayout.setVisibility(View.GONE);
             mCompactCarrierLayout.setVisibility(View.GONE);
@@ -1320,18 +1172,23 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             } else {
                 mCarrierLabelBottomLayout.setVisibility(View.VISIBLE);
             }
-            if (mLatest.hasClearableItems())
-                mCompactClearButton.setVisibility(View.VISIBLE);
+        } else if (mStatusBarCarrierLogo == 1) {
+            mCarrierLogoLayout.setVisibility(View.VISIBLE);
+            mCarrierLogoCenterLayout.setVisibility(View.GONE);
+            mCarrierLogoLeftLayout.setVisibility(View.GONE);
+            mMusicToggleButton.setVisibility(View.GONE);
+        } else if (mStatusBarCarrierLogo == 2) {
+            mCarrierLogoLayout.setVisibility(View.GONE);
+            mCarrierLogoCenterLayout.setVisibility(View.VISIBLE);
+            mCarrierLogoLeftLayout.setVisibility(View.GONE);
+            mMusicToggleButton.setVisibility(View.GONE);
+        } else if (mStatusBarCarrierLogo == 3) {
+            mCarrierLogoLayout.setVisibility(View.GONE);
+            mCarrierLogoCenterLayout.setVisibility(View.GONE);
+            mCarrierLogoLeftLayout.setVisibility(View.VISIBLE);
+            mMusicToggleButton.setVisibility(View.GONE);
         } else {
-            if (!mStatusBarTab) {
-                 mCarrierLabelLayout.setVisibility(View.VISIBLE);
-                 mCompactClearButton.setVisibility(View.GONE);
-            } else {
-                 mCarrierLabelLayout.setVisibility(View.GONE);
-                 mClearButton.setVisibility(View.INVISIBLE);
-                 if (mLatest.hasClearableItems())
-                     mCompactClearButton.setVisibility(View.VISIBLE);
-            }
+            mCarrierLabelLayout.setVisibility(View.VISIBLE);
             mCarrierLabelBottomLayout.setVisibility(View.GONE);
             mCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mCenterCarrierLabelStatusBarLayout.setVisibility(View.GONE);
@@ -1342,7 +1199,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mCompactCarrierLayout.setVisibility(View.GONE);
             mMusicToggleButton.setVisibility(View.VISIBLE);
         }
-
     }
 
     private void updateLayout() {
@@ -1360,11 +1216,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         PowerWidgetTwo powerTwo=(PowerWidgetTwo)mExpandedView.findViewById(R.id.exp_power_stat_two);
         PowerWidgetThree powerThree=(PowerWidgetThree)mExpandedView.findViewById(R.id.exp_power_stat_three);
         PowerWidgetFour powerFour=(PowerWidgetFour)mExpandedView.findViewById(R.id.exp_power_stat_four);
-        LinearLayout powerClockex=(LinearLayout)mExpandedView.findViewById(R.id.centerClockex);
-        PowerClock powClock=(PowerClock)mExpandedView.findViewById(R.id.centerCloex);
-        PowerDateView powDate=(PowerDateView)mExpandedView.findViewById(R.id.datestats);
-        ImageView settIcon = (ImageView)mExpandedView.findViewById(R.id.settingIcon);
-        TextView clearIcon = (TextView)mExpandedView.findViewById(R.id.clear_all_button);
         //FrameLayout notifications=(FrameLayout)mExpandedView.findViewById(R.id.notifications);
 
         // remove involved views
@@ -1374,24 +1225,14 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         powerAndCarrier.removeView(powerThree);
         powerAndCarrier.removeView(powerFour);
         mExpandedView.removeView(powerAndCarrier);
-        powerClockex.removeView(powClock);
-        powerClockex.removeView(powDate);
-        powerClockex.removeView(settIcon);
-        powerClockex.removeView(clearIcon);
-        mExpandedView.removeView(powerClockex);
 
         // readd in right order
         mExpandedView.addView(powerAndCarrier, mBottomBar ? 1 : 0);
-        powerAndCarrier.addView(powerFour, mBottomBar && !mCompactCarrier ? 1 : 0);
-        powerAndCarrier.addView(powerThree, mBottomBar && !mCompactCarrier ? 1 : 0);
-        powerAndCarrier.addView(powerTwo, mBottomBar && !mCompactCarrier ? 1 : 0);
-        powerAndCarrier.addView(powerOne, mBottomBar && !mCompactCarrier ? 1 : 0);
-        powerAndCarrier.addView(power, mBottomBar && !mCompactCarrier ? 1 : 0);
-        mExpandedView.addView(powerClockex, mBottomBar ? 1 : 0);
-        powerClockex.addView(clearIcon, mBottomBar && !mCompactCarrier ? 1 : 0);
-        powerClockex.addView(settIcon, mBottomBar && !mCompactCarrier ? 1 : 0);
-        powerClockex.addView(powDate, mBottomBar && !mCompactCarrier ? 1 : 0);
-        powerClockex.addView(powClock, mBottomBar && !mCompactCarrier ? 1 : 0);
+        powerAndCarrier.addView(powerFour, mBottomBar && mStatusBarCarrier != 5 ? 1 : 0);
+        powerAndCarrier.addView(powerThree, mBottomBar && mStatusBarCarrier != 5 ? 1 : 0);
+        powerAndCarrier.addView(powerTwo, mBottomBar && mStatusBarCarrier != 5 ? 1 : 0);
+        powerAndCarrier.addView(powerOne, mBottomBar && mStatusBarCarrier != 5 ? 1 : 0);
+        powerAndCarrier.addView(power, mBottomBar && mStatusBarCarrier != 5 ? 1 : 0);
 
         // Remove all notification views
         mNotificationLinearLayout.removeAllViews();
@@ -1416,23 +1257,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mNotificationLinearLayout.addView(mLatestItems);
             mNotificationLinearLayout.addView(mCompactClearButton);
             mScrollView.setVisibility(View.VISIBLE);
-            if (!mStatusBarCarrierLabelBottom && !mStatusBarCarrier && !mStatusBarCarrierCenter && !mStatusBarCarrierLeft && mCompactCarrier) {
-                 mCarrierLabelBottomLayout.setVisibility(View.GONE);
-                 mCompactCarrierLayout.setVisibility(View.VISIBLE);
-            } else if (mStatusBarCarrierLabelBottom && !mStatusBarCarrier && !mStatusBarCarrierCenter && !mStatusBarCarrierLeft && !mCompactCarrier) {
-                 mCarrierLabelBottomLayout.setVisibility(View.VISIBLE);
-                 mCompactCarrierLayout.setVisibility(View.GONE);
-            } else {
-                 mCompactCarrierLayout.setVisibility(View.GONE);
-                 mCarrierLabelBottomLayout.setVisibility(View.GONE);
-            }
         }
-
-        //remove small ugly grey area if compactcarrier is enabled and power widget disabled
-        boolean hideArea = mCompactCarrier &&
-                           Settings.System.getInt(mContext.getContentResolver(),
-                                   Settings.System.EXPANDED_VIEW_WIDGET, 0) == 0;
-        mPowerAndCarrier.setVisibility(hideArea ? View.GONE : View.VISIBLE);
 
     }
 
@@ -1807,40 +1632,16 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         // (no ongoing notifications are clearable)
         if (mLatest.hasClearableItems()) {
-            if (mCompactCarrier) {
+            if (mStatusBarCarrier == 5) {
                 mCompactClearButton.setVisibility(View.VISIBLE); 
-                mClearButton.setVisibility(View.INVISIBLE);
-            } else if (mStatusBarCarrier) {
-                mCompactClearButton.setVisibility(View.VISIBLE);
-                mClearButton.setVisibility(View.INVISIBLE);
-            } else if (mStatusBarCarrierCenter) {
-                mCompactClearButton.setVisibility(View.VISIBLE);
-                mClearButton.setVisibility(View.INVISIBLE);
-            } else if (mStatusBarCarrierLeft) {
-                mCompactClearButton.setVisibility(View.VISIBLE);
-                mClearButton.setVisibility(View.INVISIBLE);
-            } else if (mStatusBarCarrierLogo) {
-                mCompactClearButton.setVisibility(View.VISIBLE);
-                mClearButton.setVisibility(View.INVISIBLE);
-            } else if (mStatusBarCarrierLogoCenter) {
-                mCompactClearButton.setVisibility(View.VISIBLE);
-                mClearButton.setVisibility(View.INVISIBLE);
-            } else if (mStatusBarCarrierLogoLeft) {
-                mCompactClearButton.setVisibility(View.VISIBLE);
-                mClearButton.setVisibility(View.INVISIBLE);
-            } else if (mStatusBarCarrierLabelBottom) {
-                mCompactClearButton.setVisibility(View.VISIBLE);
-                mClearButton.setVisibility(View.INVISIBLE);
-            } else if (mStatusBarTab) {
-                mCompactClearButton.setVisibility(View.VISIBLE);
-                mClearButton.setVisibility(View.INVISIBLE);
+                mClearButton.setVisibility(View.GONE);
             } else {
                 mCompactClearButton.setVisibility(View.GONE);
                 mClearButton.setVisibility(View.VISIBLE);
             }
         } else {
             mCompactClearButton.setVisibility(View.GONE);
-            mClearButton.setVisibility(View.INVISIBLE);
+            mClearButton.setVisibility(View.GONE);
         }
 
         mOngoingTitle.setVisibility(ongoing ? View.VISIBLE : View.GONE);
@@ -2659,27 +2460,36 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     void setAllViewVisibility(boolean visible, int anim) {
         mIcons.setVisibility(visible ? View.VISIBLE : View.GONE);
-        mCenterClock.setVisibility(visible ? View.VISIBLE : View.GONE);
-        mLeftClock.setVisibility(visible ? View.VISIBLE : View.GONE);
-        mCarrierLabelStatusBarLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
-        mCenterCarrierLabelStatusBarLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
-        mLeftCarrierLabelStatusBarLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
-        mCarrierLogoLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
-        mCarrierLogoCenterLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
-        mCarrierLogoLeftLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
+        mIcons.startAnimation(loadAnim(anim, null));
+        if (mStatusBarClock == 2) {
+            mCenterClock.setVisibility(visible ? View.VISIBLE : View.GONE);
+            mCenterClock.startAnimation(loadAnim(anim, null));
+        } else if (mStatusBarClock == 3) {
+            mLeftClock.setVisibility(visible ? View.VISIBLE : View.GONE);
+            mLeftClock.startAnimation(loadAnim(anim, null));
+        }
+        if (mStatusBarCarrier == 1) {
+            mCarrierLabelStatusBarLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
+            mCarrierLabelStatusBarLayout.startAnimation(loadAnim(anim, null));
+        } else if (mStatusBarCarrier == 2) {
+            mCenterCarrierLabelStatusBarLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
+            mCenterCarrierLabelStatusBarLayout.startAnimation(loadAnim(anim, null));
+        } else if (mStatusBarCarrier == 3) {
+            mLeftCarrierLabelStatusBarLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
+            mLeftCarrierLabelStatusBarLayout.startAnimation(loadAnim(anim, null));
+        }
+        if (mStatusBarCarrierLogo == 1) {
+            mCarrierLogoLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
+            mCarrierLogoLayout.startAnimation(loadAnim(anim, null));
+        } else if (mStatusBarCarrierLogo == 2) {
+            mCarrierLogoCenterLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
+            mCarrierLogoCenterLayout.startAnimation(loadAnim(anim, null));
+        } else if (mStatusBarCarrierLogo == 3) {
+            mCarrierLogoLeftLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
+            mCarrierLogoLeftLayout.startAnimation(loadAnim(anim, null));
+        }
         if (mShowCmBatteryStatusBar) {
             mCmBatteryStatusBar.setVisibility(visible ? View.VISIBLE : View.GONE);
-        }
-        mIcons.startAnimation(loadAnim(anim, null));
-        mCenterClock.startAnimation(loadAnim(anim, null));
-        mLeftClock.startAnimation(loadAnim(anim, null));
-        mCarrierLabelStatusBarLayout.startAnimation(loadAnim(anim, null));
-        mCenterCarrierLabelStatusBarLayout.startAnimation(loadAnim(anim, null));
-        mLeftCarrierLabelStatusBarLayout.startAnimation(loadAnim(anim, null));
-        mCarrierLogoLayout.startAnimation(loadAnim(anim, null));
-        mCarrierLogoCenterLayout.startAnimation(loadAnim(anim, null));
-        mCarrierLogoLeftLayout.startAnimation(loadAnim(anim, null));
-        if (mShowCmBatteryStatusBar) {
             mCmBatteryStatusBar.startAnimation(loadAnim(anim, null));
         }
     }
@@ -2689,10 +2499,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         int old = mNotificationIcons.getVisibility();
         int v = visible ? View.VISIBLE : View.INVISIBLE;
         if (old != v) {
-           if (mStatusBarCarrierLogoCenter && mStatusBarReverse) {
+           if (mStatusBarCarrierLogo == 2 && mStatusBarReverse) {
                mNotificationIcons.setVisibility(View.INVISIBLE);
                mNotificationIcons.startAnimation(loadAnim(anim, null));
-           } else if (mStatusBarCarrierCenter && mStatusBarReverse) {
+           } else if (mStatusBarCarrier == 2 && mStatusBarReverse) {
                mNotificationIcons.setVisibility(View.INVISIBLE);
                mNotificationIcons.startAnimation(loadAnim(anim, null));
            } else {
@@ -2877,7 +2687,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     public View.OnClickListener mMusicToggleButtonListener = new View.OnClickListener() {
 	public void onClick(View v) {
-	mMusicControls.visibilityToggled();
+	   mMusicControls.visibilityToggled();
 	}
     };
 
@@ -2923,9 +2733,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     private View.OnClickListener mCarrierButtonListener = new View.OnClickListener() {
         public void onClick(View v) {
-          if (mCompactCarrier) {
+          if (mStatusBarCarrier == 5) {
             if(Settings.System.getInt(getContentResolver(),
-                      Settings.System.EXPANDED_VIEW_WIDGET, 0) == 0) {
+                      Settings.System.EXPANDED_VIEW_WIDGET, 1) == 0) {
                 QuickSettingsPopupWindow quickSettingsWindow = new QuickSettingsPopupWindow(v);
                 quickSettingsWindow.showLikeQuickAction();
             } else {
@@ -3020,7 +2830,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 // we're screwed here fellas
             }
         } else {
-            mClearButton.setText(getText(R.string.status_bar_clear_all_button));
             mOngoingTitle.setText(getText(R.string.status_bar_ongoing_events_title));
             mLatestTitle.setText(getText(R.string.status_bar_latest_events_title));
             mNoNotificationsTitle.setText(getText(R.string.status_bar_no_notifications_title));

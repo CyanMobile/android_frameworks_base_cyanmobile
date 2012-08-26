@@ -26,56 +26,6 @@
     >
 
     <LinearLayout
-        android:id="@+id/centerClockex"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:background="@drawable/title_bar_portrait"
-        android:gravity="center_vertical"
-        android:baselineAligned="false"
-        android:orientation="horizontal" >
-
-        <com.android.systemui.statusbar.clocks.PowerClock
-            android:id="@+id/centerCloex"
-            android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
-            android:layout_marginLeft="6dp"
-            android:singleLine="true"
-            android:layout_weight="1.0"
-            android:ellipsize="none"
-            android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Clock" />
-
-    <com.android.systemui.statusbar.dates.PowerDateView android:id="@+id/datestats"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="6dp"
-        android:layout_marginRight="6dp"
-        android:layout_weight="1.0"
-        android:textSize="12sp"
-        android:maxLines="2"
-        />
-
-        <ImageView android:id="@+id/settingIcon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:scaleType="center"
-            android:src="@drawable/ic_sysbar_set"
-            />
-
-        <TextView android:id="@+id/clear_all_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:textSize="14sp"
-                android:text="@string/status_bar_clear_all_button"
-                style="?android:attr/buttonStyle"
-                android:paddingLeft="5dp"
-                android:paddingRight="5dp"
-                android:background="@android:drawable/btn_default_small"
-            />
-     </LinearLayout>
-
-    <LinearLayout
         android:id="@+id/power_and_carrier"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -96,6 +46,25 @@
              android:layout_height="wrap_content"
              />
 
+        <com.android.systemui.statusbar.powerwidget.PowerWidgetOne android:id="@+id/exp_power_stat_one"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+
+        <com.android.systemui.statusbar.powerwidget.PowerWidgetTwo android:id="@+id/exp_power_stat_two"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+
+        <com.android.systemui.statusbar.powerwidget.PowerWidgetThree android:id="@+id/exp_power_stat_three"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+
+        <com.android.systemui.statusbar.powerwidget.PowerWidgetFour android:id="@+id/exp_power_stat_four"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
         <LinearLayout android:id="@+id/carrier_label_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -126,25 +95,54 @@
             />
         </LinearLayout>
 
-        <com.android.systemui.statusbar.powerwidget.PowerWidgetOne android:id="@+id/exp_power_stat_one"
-            android:layout_width="match_parent"
+    <LinearLayout
+        android:id="@+id/centerClockex"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:baselineAligned="false"
+        android:orientation="horizontal" >
+
+        <com.android.systemui.statusbar.clocks.PowerClock
+            android:id="@+id/centerCloex"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="6dp"
+            android:paddingBottom="1dp"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Clock" />
+
+    <com.android.systemui.statusbar.dates.PowerDateView android:id="@+id/datestats"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="6dp"
+        android:layout_marginRight="6dp"
+        android:paddingBottom="1dp"
+        android:textSize="12sp"
+        android:maxLines="2"
+        />
+
+        <ImageView android:id="@+id/settingIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:paddingBottom="1dp"
+            android:scaleType="center"
+            android:src="@drawable/ic_sysbar_set"
             />
 
-        <com.android.systemui.statusbar.powerwidget.PowerWidgetTwo android:id="@+id/exp_power_stat_two"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+        <TextView android:id="@+id/clear_all_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:textSize="14sp"
+                android:text="@string/status_bar_clear_all_button"
+                style="?android:attr/buttonStyle"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:background="@android:drawable/btn_default_small"
             />
-
-        <com.android.systemui.statusbar.powerwidget.PowerWidgetThree android:id="@+id/exp_power_stat_three"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            />
-
-        <com.android.systemui.statusbar.powerwidget.PowerWidgetFour android:id="@+id/exp_power_stat_four"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            />
+     </LinearLayout>
     </LinearLayout>
 
     <FrameLayout android:id="@+id/notifications"

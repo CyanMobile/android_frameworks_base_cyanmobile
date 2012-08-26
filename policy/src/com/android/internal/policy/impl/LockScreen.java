@@ -434,11 +434,11 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         mCarrier.setSelected(true);
         mCarrier.setTextColor(mCarrierColor);
         if ((Settings.System.getInt(mContext.getContentResolver(),
-            Settings.System.STATUS_BAR_STATUSBAR_CARRIER, 0) == 1) ||
+            Settings.System.STATUS_BAR_CARRIER, 6) == 1) ||
             (Settings.System.getInt(mContext.getContentResolver(),
-            Settings.System.STATUS_BAR_STATUSBAR_CARRIER_CENTER, 0) == 1) ||
+            Settings.System.STATUS_BAR_CARRIER, 6) == 2) ||
             (Settings.System.getInt(mContext.getContentResolver(),
-            Settings.System.STATUS_BAR_STATUSBAR_CARRIER_LEFT, 0) == 1)) {
+            Settings.System.STATUS_BAR_CARRIER, 6) == 3)) {
         mCarrier.setVisibility(View.INVISIBLE);
         }
 
@@ -1998,11 +1998,11 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
            mAmPm.setVisibility(visibility);
         }
         if ((Settings.System.getInt(mContext.getContentResolver(),
-            Settings.System.STATUS_BAR_STATUSBAR_CARRIER, 0) != 1) ||
+            Settings.System.STATUS_BAR_CARRIER, 0) != 1) ||
             (Settings.System.getInt(mContext.getContentResolver(),
-            Settings.System.STATUS_BAR_STATUSBAR_CARRIER_CENTER, 0) != 1) ||
+            Settings.System.STATUS_BAR_CARRIER, 0) != 2) ||
             (Settings.System.getInt(mContext.getContentResolver(),
-            Settings.System.STATUS_BAR_STATUSBAR_CARRIER_LEFT, 0) != 1)) {
+            Settings.System.STATUS_BAR_CARRIER, 0) != 3)) {
         mCarrier.setVisibility(visibility);
         }
         mNowPlaying.setVisibility(visibility);

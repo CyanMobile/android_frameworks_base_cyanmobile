@@ -80,7 +80,7 @@ public class CenterCarrierLabelStatusBar extends TextView {
                     Settings.System.getUriFor(Settings.System.CARRIER_LABEL_CUSTOM_STRING),
                     false, this);
             resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.STATUS_BAR_STATUSBAR_CARRIER_CENTER),
+                    Settings.System.getUriFor(Settings.System.STATUS_BAR_CARRIER),
                     false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_CARRIERCOLOR), false, this);
@@ -163,7 +163,7 @@ public class CenterCarrierLabelStatusBar extends TextView {
         mCarrierColor = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_CARRIERCOLOR, 0xFF33B5E5));
         mStatusBarCarrierCenter = (Settings.System.getInt(resolver,
-                    Settings.System.STATUS_BAR_STATUSBAR_CARRIER_CENTER, 0) == 1);
+                    Settings.System.STATUS_BAR_CARRIER, 6) == 2);
         int mCarrierSizeval = Settings.System.getInt(resolver,
                 Settings.System.STATUSBAR_CARRIER_FONT_SIZE, 10);
         int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, mCarrierSizeval, mContext.getResources().getDisplayMetrics());

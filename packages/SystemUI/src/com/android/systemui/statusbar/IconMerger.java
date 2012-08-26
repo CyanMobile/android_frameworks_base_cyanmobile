@@ -58,13 +58,13 @@ public class IconMerger extends LinearLayout {
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
 
-	if ((Settings.System.getInt(getContext().getContentResolver(), Settings.System.STATUS_BAR_CENTERCLOCK, 0) == 1)) {
+	if ((Settings.System.getInt(getContext().getContentResolver(), Settings.System.STATUS_BAR_CLOCK, 1) == 2)) {
             r = (((LinearLayout) this.getParent()).getRight() / 2) - 15;
         }
-        if ((Settings.System.getInt(getContext().getContentResolver(), Settings.System.STATUS_BAR_STATUSBAR_CARRIER_CENTER, 0) == 1)) {
+        if ((Settings.System.getInt(getContext().getContentResolver(), Settings.System.STATUS_BAR_CARRIER, 6) == 2)) {
             r = (((LinearLayout) this.getParent()).getRight() / 2) - 15;
         }
-        if ((Settings.System.getInt(getContext().getContentResolver(), Settings.System.CARRIER_LOGO_CENTER, 0) == 1)) {
+        if ((Settings.System.getInt(getContext().getContentResolver(), Settings.System.CARRIER_LOGO, 0) == 2)) {
             r = (((LinearLayout) this.getParent()).getRight() / 2) - 15;
         }
         final int maxWidth = r - l;

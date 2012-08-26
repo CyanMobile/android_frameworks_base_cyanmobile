@@ -78,9 +78,7 @@ public class LeftClock extends TextView {
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_AM_PM), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_LEFTCLOCK), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.SHOW_STATUS_BAR_LOCK), false, this);
+                    Settings.System.STATUS_BAR_CLOCK), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_CLOCKCOLOR), false, this);
             resolver.registerContentObserver(
@@ -277,7 +275,7 @@ public class LeftClock extends TextView {
         }
 
         mShowLeftClock = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_LEFTCLOCK, 0) == 1);
+                Settings.System.STATUS_BAR_CLOCK, 1) == 3);
 
         if(mShowLeftClock)
             setVisibility(mShowClocker ? View.VISIBLE : View.GONE);

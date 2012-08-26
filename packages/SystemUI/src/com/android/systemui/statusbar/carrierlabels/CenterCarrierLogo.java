@@ -52,7 +52,7 @@ public class CenterCarrierLogo extends TextView {
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.CARRIER_LOGO_CENTER),
+                    Settings.System.getUriFor(Settings.System.CARRIER_LOGO),
                     false, this);
             onChange(true);
         }
@@ -108,7 +108,7 @@ public class CenterCarrierLogo extends TextView {
         ContentResolver resolver = mContext.getContentResolver();
 
         mCarrierLogoCenter = (Settings.System.getInt(resolver,
-                Settings.System.CARRIER_LOGO_CENTER, 0) == 1);
+                Settings.System.CARRIER_LOGO, 0) == 2);
 
         if(mCarrierLogoCenter)
             setVisibility(View.VISIBLE);
