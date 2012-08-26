@@ -68,6 +68,9 @@ public class StatusBarManagerService extends IStatusBarService.Stub
     ArrayList<DisableRecord> mDisableRecords = new ArrayList<DisableRecord>();
     int mDisabled = 0;
 
+    Object mLock = new Object();
+    boolean mIMEVisible = false;
+
     private class DisableRecord implements IBinder.DeathRecipient {
         String pkg;
         int what;
@@ -257,11 +260,35 @@ public class StatusBarManagerService extends IStatusBarService.Stub
     }
 
 
+    public void setIMEVisible(final boolean visible) {
+        enforceStatusBar();
+
+        if (SPEW) Slog.d(TAG, (visible?"showing":"hiding") + " IME");
+
+        synchronized(mLock) {
+            if (mIMEVisible != visible) {
+                mIMEVisible = visible;
+                mHandler.post(new Runnable() {
+                    public void run() {
+                        if (mBar != null) {
+                            try {
+                                mBar.setIMEVisible(visible);
+                            } catch (RemoteException ex) {
+                            }
+                        }
+                    }
+                });
+
+            }
+        }
+    }
+
     // ================================================================================
     // Callbacks from the status bar service.
     // ================================================================================
     public void registerStatusBar(IStatusBar bar, StatusBarIconList iconList,
-            List<IBinder> notificationKeys, List<StatusBarNotification> notifications) {
+            List<IBinder> notificationKeys, List<StatusBarNotification> notifications,
+            boolean switches[]) {
         enforceStatusBarService();
 
         Slog.i(TAG, "registerStatusBar bar=" + bar);
@@ -274,6 +301,9 @@ public class StatusBarManagerService extends IStatusBarService.Stub
                 notificationKeys.add(e.getKey());
                 notifications.add(e.getValue());
             }
+        }
+        synchronized (mLock) {
+            switches[0] = mIMEVisible;;
         }
     }
 

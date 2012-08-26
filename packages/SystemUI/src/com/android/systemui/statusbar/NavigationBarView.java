@@ -114,6 +114,7 @@ public class NavigationBarView extends LinearLayout {
     private int mShowSearch;
     private int mShowQuicker;
     private boolean mLongPressBackKills;
+    private boolean mInputShow;
     private Bitmap mCustomHomeIcon;
     private Bitmap mCustomMenuIcon;
     private Bitmap mCustomBackIcon;
@@ -950,6 +951,11 @@ public class NavigationBarView extends LinearLayout {
         updateNaviButtons();
     }
 
+    public void setIMEVisible(boolean visible) {
+        mInputShow = visible;
+        updateNaviButtons();
+    }
+
     public boolean onTouchEvent(final MotionEvent event){
         if(!mNVShow)
             return super.onTouchEvent(event);
@@ -1144,7 +1150,11 @@ public class NavigationBarView extends LinearLayout {
                mHomeButton.setBackgroundResource(R.drawable.ic_sysbar_home);
             } else if(mShowHome == 2) {
                mHomeButton.setImageBitmap(null);
-               mHomeButton.setBackgroundResource(R.drawable.ic_sysbar_back);
+               if (mInputShow) {
+                   mHomeButton.setBackgroundResource(R.drawable.ic_sysbar_voldown);
+               } else {
+                   mHomeButton.setBackgroundResource(R.drawable.ic_sysbar_back);
+               }
             } else if(mShowHome == 3) {
                mHomeButton.setImageBitmap(null);
                mHomeButton.setBackgroundResource(R.drawable.ic_sysbar_search);
@@ -1179,7 +1189,11 @@ public class NavigationBarView extends LinearLayout {
                mBackButton.setBackgroundResource(R.drawable.ic_sysbar_home);
             } else if(mShowBack == 2) {
                mBackButton.setImageBitmap(null);
-               mBackButton.setBackgroundResource(R.drawable.ic_sysbar_back);
+               if (mInputShow) {
+                   mBackButton.setBackgroundResource(R.drawable.ic_sysbar_voldown);
+               } else {
+                   mBackButton.setBackgroundResource(R.drawable.ic_sysbar_back);
+               }
             } else if(mShowBack == 3) {
                mBackButton.setImageBitmap(null);
                mBackButton.setBackgroundResource(R.drawable.ic_sysbar_search);
@@ -1214,7 +1228,11 @@ public class NavigationBarView extends LinearLayout {
                mSearchButton.setBackgroundResource(R.drawable.ic_sysbar_home);
             } else if(mShowSearch == 2) {
                mSearchButton.setImageBitmap(null);
-               mSearchButton.setBackgroundResource(R.drawable.ic_sysbar_back);
+               if (mInputShow) {
+                   mSearchButton.setBackgroundResource(R.drawable.ic_sysbar_voldown);
+               } else {
+                   mSearchButton.setBackgroundResource(R.drawable.ic_sysbar_back);
+               }
             } else if(mShowSearch == 3) {
                mSearchButton.setImageBitmap(null);
                mSearchButton.setBackgroundResource(R.drawable.ic_sysbar_search);
@@ -1249,7 +1267,11 @@ public class NavigationBarView extends LinearLayout {
                mMenuButton.setBackgroundResource(R.drawable.ic_sysbar_home);
             } else if(mShowMenu == 2) {
                mMenuButton.setImageBitmap(null);
-               mMenuButton.setBackgroundResource(R.drawable.ic_sysbar_back);
+               if (mInputShow) {
+                   mMenuButton.setBackgroundResource(R.drawable.ic_sysbar_voldown);
+               } else {
+                   mMenuButton.setBackgroundResource(R.drawable.ic_sysbar_back);
+               }
             } else if(mShowMenu == 3) {
                mMenuButton.setImageBitmap(null);
                mMenuButton.setBackgroundResource(R.drawable.ic_sysbar_search);
@@ -1284,7 +1306,11 @@ public class NavigationBarView extends LinearLayout {
                mQuickButton.setBackgroundResource(R.drawable.ic_sysbar_home);
             } else if(mShowQuicker == 1) {
                mQuickButton.setImageBitmap(null);
-               mQuickButton.setBackgroundResource(R.drawable.ic_sysbar_back);
+               if (mInputShow) {
+                   mQuickButton.setBackgroundResource(R.drawable.ic_sysbar_voldown);
+               } else {
+                   mQuickButton.setBackgroundResource(R.drawable.ic_sysbar_back);
+               }
             } else if(mShowQuicker == 2) {
                mQuickButton.setImageBitmap(null);
                mQuickButton.setBackgroundResource(R.drawable.ic_sysbar_search);

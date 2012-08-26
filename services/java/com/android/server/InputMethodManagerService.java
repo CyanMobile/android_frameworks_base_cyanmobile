@@ -975,6 +975,23 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
         }
     }
 
+    public void setIMEVisible(IBinder token, boolean visible) {
+        int uid = Binder.getCallingUid();
+        long ident = Binder.clearCallingIdentity();
+        try {
+            if (token == null || mCurToken != token) {
+                Slog.w(TAG, "Ignoring setIMEVisible of uid " + uid + " token: " + token);
+                return;
+            }
+
+            synchronized (mMethodMap) {
+                mStatusBar.setIMEVisible(visible);
+            }
+        } finally {
+            Binder.restoreCallingIdentity(ident);
+        }
+    }
+
     void updateFromSettingsLocked() {
         // We are assuming that whoever is changing DEFAULT_INPUT_METHOD and
         // ENABLED_INPUT_METHODS is taking care of keeping them correctly in

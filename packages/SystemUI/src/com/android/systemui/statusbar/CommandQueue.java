@@ -49,6 +49,7 @@ class CommandQueue extends IStatusBar.Stub {
     private static final int MSG_DISABLE = 0x00050000;
 
     private static final int MSG_SET_VISIBILITY = 0x00060000;
+    private static final int MSG_SHOW_IME = 0x00070000;
     private static final int OP_EXPAND = 1;
     private static final int OP_COLLAPSE = 2;
 
@@ -75,6 +76,7 @@ class CommandQueue extends IStatusBar.Stub {
         public void disable(int state);
         public void animateExpand();
         public void animateCollapse();
+        public void setIMEVisible(boolean visible);
     }
 
     public CommandQueue(Callbacks callbacks, StatusBarIconList list) {
@@ -143,6 +145,13 @@ class CommandQueue extends IStatusBar.Stub {
         }
     }
 
+    public void setIMEVisible(boolean visible) {
+        synchronized (mList) {
+            mHandler.removeMessages(MSG_SHOW_IME);
+            mHandler.obtainMessage(MSG_SHOW_IME, visible ? 1 : 0, 0, null).sendToTarget();
+        }
+    }
+
     private final class H extends Handler {
         public void handleMessage(Message msg) {
             final int what = msg.what & MSG_MASK;
@@ -189,6 +198,9 @@ class CommandQueue extends IStatusBar.Stub {
                 }
                 case MSG_DISABLE:
                     mCallbacks.disable(msg.arg1);
+                    break;
+                case MSG_SHOW_IME:
+                    mCallbacks.setIMEVisible(msg.arg1 != 0);
                     break;
                 case MSG_SET_VISIBILITY:
                     if (msg.arg1 == OP_EXPAND) {
