@@ -48,6 +48,13 @@
         <item name="android:progressDrawable">@drawable/battery_navibar</item>
     </style>
 
+    <style name="TextAppearance.StatusBar.Expanded" parent="@android:style/TextAppearance.StatusBar" />
+
+    <style name="TextAppearance.StatusBar.Expanded.Clock">
+        <item name="android:textSize">38sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
     <style name="TextAppearance.StatusBar.IntruderAlert"
         parent="@android:style/TextAppearance.StatusBar">
     </style>

@@ -35,7 +35,7 @@
     <LinearLayout
         android:id="@+id/centerClockex"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:background="@drawable/title_bar_portrait"
         android:gravity="center_vertical"
         android:baselineAligned="false"
@@ -44,11 +44,12 @@
         <com.android.systemui.statusbar.clocks.PowerClock
             android:id="@+id/centerCloex"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="fill_parent"
             android:layout_marginLeft="6dp"
             android:singleLine="true"
-            android:textSize="36sp"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
+            android:layout_weight="1.0"
+            android:ellipsize="none"
+            android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Clock" />
 
     <com.android.systemui.statusbar.dates.PowerDateView android:id="@+id/datestats"
         android:textAppearance="?android:attr/textAppearanceMedium"
@@ -56,27 +57,27 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="6dp"
         android:layout_marginRight="6dp"
+        android:layout_weight="1.0"
         android:textSize="12sp"
         android:maxLines="2"
-        android:layout_toRightOf="@+id/centerCloex"
         />
 
         <ImageView android:id="@+id/settingIcon"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:scaleType="center"
-            android:layout_toRightOf="@+id/centerCloex"
             android:src="@drawable/ic_sysbar_set"
             />
 
         <TextView android:id="@+id/clear_all_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_toRightOf="@+id/centerCloex"
                 android:layout_gravity="center_vertical"
                 android:textSize="14sp"
                 android:text="@string/status_bar_clear_all_button"
                 style="?android:attr/buttonStyle"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
                 android:background="@android:drawable/btn_default_small"
             />
      </LinearLayout>
