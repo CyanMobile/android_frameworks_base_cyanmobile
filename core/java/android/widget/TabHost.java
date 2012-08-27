@@ -344,7 +344,7 @@ mTabHost.addTab(TAB_TAG_1, "Hello, world!", "Tab 1");
             if (event.getKeyCode() == keyCodeShouldChangeFocus
                     && mCurrentView.findFocus().focusSearch(directionShouldChangeFocus) == null) {
                mTabWidget.getChildTabViewAt(mCurrentTab).requestFocus();
-               playSoundEffect(SoundEffectConstants.NAVIGATION_UP);
+               playSoundEffect(soundEffect);
                return true;
             }
         }
