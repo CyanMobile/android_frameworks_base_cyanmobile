@@ -146,6 +146,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private static final int MSG_ANIMATE_REVEAL = 1001;
     private int mClockColor;
 
+    private static final int MSG_SHOW_INTRUDER = 1002;
+    private static final int MSG_HIDE_INTRUDER = 1003;
+
+    // will likely move to a resource or other tunable param at some point
+    private static final int INTRUDER_ALERT_DECAY_MS = 5000;
+
     StatusBarPolicy mIconPolicy;
 
     CommandQueue mCommandQueue;
@@ -174,9 +180,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     LinearLayout mIcons;
     LinearLayout mCenterClock;
     LinearLayout mCenterClockex;
+    SignalClusterView mCenterIconex;
     LinearLayout mLeftClock;
     IconMerger mNotificationIcons;
     LinearLayout mStatusIcons;
+    LinearLayout mStatusIconsExp;
     ImageView mSettingsIconButton;
 
     // expanded notifications
@@ -194,7 +202,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     TextView mCompactClearButton;
     ViewGroup mClearButtonParent;
     CmBatteryMiniIcon mCmBatteryMiniIcon;
-
     // drag bar
     CloseDragHandle mCloseView;
     // ongoing
@@ -309,6 +316,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     boolean mDeadZone;
     boolean mHasSoftButtons;
     boolean autoBrightness = false;
+    private boolean shouldTick = false;
     Context mContext;
     private int mStatusBarCarrier;
     private int mStatusBarCarrierLogo;
@@ -403,6 +411,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.getUriFor(Settings.System.USE_SOFT_BUTTONS), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_BRIGHTNESS_TOGGLE), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.STATUS_BAR_INTRUDER_ALERT), false, this);
             onChange(true);
         }
 
@@ -433,7 +443,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mShowCmBatteryStatusBar = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_BATTERY, 0) == 5);
             mShowDate = (Settings.System.getInt(resolver,
-                    Settings.System.STATUS_BAR_DATE, 1) == 1);
+                    Settings.System.STATUS_BAR_DATE, 0) == 1);
             mShowNotif = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_NOTIF, 1) == 1);
             mShowCmBatterySideBar = (Settings.System.getInt(resolver,
@@ -442,6 +452,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.USE_SOFT_BUTTONS, 0) == 1);
             LogoStatusBar = (Settings.System.getInt(resolver,
                     Settings.System.CARRIER_LOGO_STATUS_BAR, 0) == 1);
+            shouldTick = (Settings.System.getInt(resolver,
+                    Settings.System.STATUS_BAR_INTRUDER_ALERT, 1) == 1);
             mClockColor = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5));
             autoBrightness = Settings.System.getInt(
@@ -559,6 +571,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         makeBatterySideBarViewLeft();
         makeBatterySideBarViewRight();
         addNavigationBar();
+        addIntruderView();
 
         // Lastly, call to the icon policy to install/update all the icons.
         mIconPolicy = new StatusBarPolicy(this);
@@ -574,6 +587,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     public void onDestroy() {
         // we're never destroyed
     }
+
+    // for immersive activities
+    private View mIntruderAlertView;
 
     /**
      * Nobody binds to us.
@@ -631,6 +647,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mStatusBarView = (CmStatusBarView)View.inflate(context, R.layout.status_bar_reverse, null);
         }
         mStatusBarView.mService = this;
+
+        mIntruderAlertView = View.inflate(context, R.layout.intruder_alert, null);
+        mIntruderAlertView.setVisibility(View.GONE);
+        mIntruderAlertView.setClickable(true);
 
         mNavigationBarView = (NavigationBarView)View.inflate(context, R.layout.navigation_bar, null);
         mNaviBarContainer = (FrameLayout)mNavigationBarView.findViewById(R.id.navibarBackground);
@@ -754,9 +774,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mBottomNotificationLinearLayout = (LinearLayout)mExpandedView.findViewById(R.id.bottomNotificationLinearLayout);
 	mMusicToggleButton = (ImageView)mExpandedView.findViewById(R.id.music_toggle_button);
         mMusicToggleButton.setOnClickListener(mMusicToggleButtonListener);
-        mCenterClockex = (LinearLayout)mExpandedView.findViewById(R.id.centerClock);
+        mCenterClockex = (LinearLayout)mExpandedView.findViewById(R.id.centerClockex);
+        mCenterIconex = (SignalClusterView)mExpandedView.findViewById(R.id.centerIconex);
         mSettingsIconButton = (ImageView)mExpandedView.findViewById(R.id.settingIcon);
         mSettingsIconButton.setOnClickListener(mSettingsIconButtonListener);
+        mStatusIconsExp = (LinearLayout)mExpandedView.findViewById(R.id.expstatusIcons);
 
         mExpandedView.setVisibility(View.GONE);
         mOngoingTitle.setVisibility(View.GONE);
@@ -1124,7 +1146,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mCenterCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mLeftCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mCarrierLabelBottomLayout.setVisibility(View.GONE);
-            mMusicToggleButton.setVisibility(View.GONE);
             // Disable compact carrier when bottom bar is enabled for now
             // till we find a better solution (looks ugly alone at the top)
             if (mBottomBar) {
@@ -1139,7 +1160,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mCenterCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mLeftCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mCompactCarrierLayout.setVisibility(View.GONE);
-            mMusicToggleButton.setVisibility(View.GONE);
          } else if (mStatusBarCarrier == 1) {
             mCarrierLabelBottomLayout.setVisibility(View.GONE);
             mCarrierLabelStatusBarLayout.setVisibility(View.VISIBLE);
@@ -1147,7 +1167,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mLeftCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mCarrierLabelLayout.setVisibility(View.GONE);
             mCompactCarrierLayout.setVisibility(View.GONE);
-            mMusicToggleButton.setVisibility(View.GONE);
         } else if (mStatusBarCarrier == 2) {
             mCarrierLabelBottomLayout.setVisibility(View.GONE);
             mCarrierLabelStatusBarLayout.setVisibility(View.GONE);
@@ -1155,7 +1174,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mLeftCarrierLabelStatusBarLayout.setVisibility(View.GONE);
             mCarrierLabelLayout.setVisibility(View.GONE);
             mCompactCarrierLayout.setVisibility(View.GONE);
-            mMusicToggleButton.setVisibility(View.GONE);
         } else if (mStatusBarCarrier == 3) {
             mCarrierLabelBottomLayout.setVisibility(View.GONE);
             mCarrierLabelStatusBarLayout.setVisibility(View.GONE);
@@ -1163,14 +1181,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mLeftCarrierLabelStatusBarLayout.setVisibility(View.VISIBLE);
             mCarrierLabelLayout.setVisibility(View.GONE);
             mCompactCarrierLayout.setVisibility(View.GONE);
-            mMusicToggleButton.setVisibility(View.GONE);
         } else if (mStatusBarCarrier == 4) {
             mCarrierLogoLayout.setVisibility(View.GONE);
             mCarrierLabelLayout.setVisibility(View.GONE);
             mCarrierLogoCenterLayout.setVisibility(View.GONE);
             mCarrierLogoLeftLayout.setVisibility(View.GONE);
             mCompactCarrierLayout.setVisibility(View.GONE);
-            mMusicToggleButton.setVisibility(View.GONE);
             if (mBottomBar) {
                 mCarrierLabelBottomLayout.setVisibility(View.GONE);
             } else {
@@ -1180,17 +1196,14 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mCarrierLogoLayout.setVisibility(View.VISIBLE);
             mCarrierLogoCenterLayout.setVisibility(View.GONE);
             mCarrierLogoLeftLayout.setVisibility(View.GONE);
-            mMusicToggleButton.setVisibility(View.GONE);
         } else if (mStatusBarCarrierLogo == 2) {
             mCarrierLogoLayout.setVisibility(View.GONE);
             mCarrierLogoCenterLayout.setVisibility(View.VISIBLE);
             mCarrierLogoLeftLayout.setVisibility(View.GONE);
-            mMusicToggleButton.setVisibility(View.GONE);
         } else if (mStatusBarCarrierLogo == 3) {
             mCarrierLogoLayout.setVisibility(View.GONE);
             mCarrierLogoCenterLayout.setVisibility(View.GONE);
             mCarrierLogoLeftLayout.setVisibility(View.VISIBLE);
-            mMusicToggleButton.setVisibility(View.GONE);
         } else {
             mCarrierLabelLayout.setVisibility(View.VISIBLE);
             mCarrierLabelBottomLayout.setVisibility(View.GONE);
@@ -1309,6 +1322,34 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         return lp;
     }
 
+    private void addIntruderView() {
+        if (mHideStatusBar)
+            return;
+
+        Resources res = mContext.getResources();
+        int heightSizeval = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUSBAR_STATS_SIZE, 25);
+        int heightSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, heightSizeval, res.getDisplayMetrics());
+        final int height = heightSizepx;
+
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL,
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                    | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                    | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                    | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                    | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM,
+                PixelFormat.TRANSLUCENT);
+        lp.gravity = Gravity.TOP | Gravity.FILL_HORIZONTAL;
+        lp.y += height * 1.5; // FIXME
+        lp.setTitle("IntruderAlert");
+        lp.windowAnimations = R.style.Animations_PopDownMenu_Center;
+
+        WindowManagerImpl.getDefault().addView(mIntruderAlertView, lp);
+    }
+
     protected void addStatusBarView() {
         if (mHideStatusBar)
             return;
@@ -1358,6 +1399,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         StatusBarIconView view = new StatusBarIconView(this, slot);
         view.set(icon);
         mStatusIcons.addView(view, viewIndex, new LinearLayout.LayoutParams(mIconSize, mIconSize));
+        StatusBarIconView viewExp = new StatusBarIconView(this, slot);
+        viewExp.set(icon);
+        mStatusIconsExp.addView(viewExp, viewIndex, new LinearLayout.LayoutParams(mIconSize, mIconSize));
     }
 
     public void updateIcon(String slot, int index, int viewIndex,
@@ -1368,6 +1412,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
         StatusBarIconView view = (StatusBarIconView)mStatusIcons.getChildAt(viewIndex);
         view.set(icon);
+        StatusBarIconView viewExp = (StatusBarIconView)mStatusIconsExp.getChildAt(viewIndex);
+        viewExp.set(icon);
     }
 
     public void removeIcon(String slot, int index, int viewIndex) {
@@ -1375,12 +1421,17 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             Slog.d(TAG, "removeIcon slot=" + slot + " index=" + index + " viewIndex=" + viewIndex);
         }
         mStatusIcons.removeViewAt(viewIndex);
+        mStatusIconsExp.removeViewAt(viewIndex);
     }
 
     public void addNotification(IBinder key, StatusBarNotification notification) {
-        boolean shouldTick = true;
+        StatusBarIconView iconView = addNotificationViews(key, notification);
+        if (iconView == null) return;
+
+        boolean shouldTicker = true;
+
         if (notification.notification.fullScreenIntent != null) {
-            shouldTick = false;
+            shouldTicker = false;
             Slog.d(TAG, "Notification has fullScreenIntent; sending fullScreenIntent");
             try {
                 notification.notification.fullScreenIntent.send();
@@ -1388,11 +1439,27 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             }
         }
 
-        StatusBarIconView iconView = addNotificationViews(key, notification);
-        if (iconView == null) return;
+        if (shouldTicker) {
+            if (shouldTick) {
+                tick(notification);
+            } else {
+                ImageView alertIcon = (ImageView) mIntruderAlertView.findViewById(R.id.alertIcon);
+                TextView alertText = (TextView) mIntruderAlertView.findViewById(R.id.alertText);
+                alertIcon.setImageDrawable(StatusBarIconView.getIcon(
+                    alertIcon.getContext(), 
+                    iconView.getStatusBarIcon()));
+                alertText.setText(notification.notification.tickerText);
 
-        if (shouldTick) {
-            tick(notification);
+                View button = mIntruderAlertView.findViewById(R.id.intruder_alert_content);
+                button.setOnClickListener(
+                    new Launcher(notification.notification.contentIntent,
+                        notification.pkg, notification.tag, notification.id));
+
+                mHandler.sendEmptyMessage(MSG_SHOW_INTRUDER);
+
+                mHandler.removeMessages(MSG_HIDE_INTRUDER);
+                mHandler.sendEmptyMessageDelayed(MSG_HIDE_INTRUDER, INTRUDER_ALERT_DECAY_MS);
+            }
         }
 
         // Recalculate the position of the sliding windows and the titles.
@@ -1727,6 +1794,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     break;
                 case MSG_ANIMATE_REVEAL:
                     doRevealAnimation();
+                    break;
+                case MSG_SHOW_INTRUDER:
+                    setIntruderAlertVisibility(true);
+                    break;
+                case MSG_HIDE_INTRUDER:
+                    setIntruderAlertVisibility(false);
                     break;
             }
         }
@@ -2222,6 +2295,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
             // close the shade if it was open
             animateCollapse();
+
+            // If this click was on the intruder alert, hide that instead
+            mHandler.sendEmptyMessage(MSG_HIDE_INTRUDER);
         }
     }
 
@@ -2364,6 +2440,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     public void run() {
                         Slog.d(TAG, "mStatusIcons:");
                         mStatusIcons.debug();
+                        if (mStatusIconsExp != null) {
+                            Slog.d(TAG, "mStatusIconsExp:");
+                            mStatusIconsExp.debug();
+                        }
                     }
                 });
         }
@@ -2813,6 +2893,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             }
         }
     };
+
+    private void setIntruderAlertVisibility(boolean vis) {
+        mIntruderAlertView.setVisibility(vis ? View.VISIBLE : View.GONE);
+    }
 
     /**
      * Reload some of our resources when the configuration changes.

@@ -919,7 +919,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mBottomBar = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_BOTTOM, defValue) == 1);
             mShowDate = (Settings.System.getInt(resolver,
-                    Settings.System.STATUS_BAR_DATE, 1) == 1);
+                    Settings.System.STATUS_BAR_DATE, 0) == 1);
             mNaviShow = (Settings.System.getInt(resolver,
                     Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
             mShowNavi = (Settings.System.getInt(resolver,

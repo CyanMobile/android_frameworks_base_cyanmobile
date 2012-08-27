@@ -2891,6 +2891,15 @@ public final class Settings {
         public static final String STATUS_BAR_CLOCK = "status_bar_clock";
 
         /**
+         * Whether to show the intruder alert in status bar
+         * 0: don't show the intruder alert
+         * 1: show the intruder alert
+         * default: 1
+         * @hide
+         */
+        public static final String STATUS_BAR_INTRUDER_ALERT = "status_bar_clock_intruder_alert";
+
+        /**
           * Volume keys control cursor in text fields (default is 0)
           * 0 - Disabled
           * 1 - Volume up/down moves cursor to left/right
