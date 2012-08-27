@@ -1005,6 +1005,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         // set the inital view visibility
         setAreThereNotifications();
         mDateView.setVisibility(View.INVISIBLE);
+        showClock(Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_CLOCK, 1) != 0);
     }
     
     private void updateColors() {
@@ -1019,7 +1020,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mButtonText = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_CLEAR_BUTTON, mButtonText);
 
-        if ((mStatusBarCarrier == 5) && mStatusBarTab) {
+        if (mStatusBarTab) {
             mCompactClearButton.setTextColor(mButtonText);
         } else {
             mClearButton.setTextColor(mButtonText);
@@ -1705,7 +1706,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         // (no ongoing notifications are clearable)
         if (mLatest.hasClearableItems()) {
-            if ((mStatusBarCarrier == 5) && mStatusBarTab) {
+            if (mStatusBarTab) {
                 mCompactClearButton.setVisibility(View.VISIBLE); 
                 mClearButton.setVisibility(View.GONE);
             } else {

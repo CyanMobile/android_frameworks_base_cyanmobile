@@ -154,12 +154,11 @@ public class CmBatteryText extends TextView {
         int level = intent.getIntExtra("level", 0);
         if (style == BATTERY_STYLE_PERCENTS) {
             setText(Integer.toString(level));
+            setTextSize(mCarrierSize);
             if (level <= 15){
                setTextColor(Color.RED);
-               setTextSize(mCarrierSize);
             } else {
                setTextColor(mClockColor);
-               setTextSize(mCarrierSize);
             }
         } else if (style == BATTERY_STYLE_PERCENT_WITH) {
             String result = Integer.toString(level) + "% ";
@@ -171,33 +170,27 @@ public class CmBatteryText extends TextView {
             formatted.setSpan(style, start, start + 1, Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
 
             setText(formatted);
+            setTextSize(mCarrierSize);
             if (level <= 15) {
                setTextColor(Color.RED);
-               setTextSize(mCarrierSize);
             } else {
                setTextColor(mClockColor);
-               setTextSize(mCarrierSize);
             }
         } else if (style == BATTERY_STYLE_COLOR) {
             setText(Integer.toString(level));
+            setTextSize(mCarrierSize);
             if (level >= 90) {
                 setTextColor(Color.GREEN);
-               setTextSize(mCarrierSize);
             } else if (level >= 65 && level <= 90) {
                 setTextColor(Color.BLUE);
-               setTextSize(mCarrierSize);
             } else if (level >= 45 && level < 65) {
                 setTextColor(Color.YELLOW);
-               setTextSize(mCarrierSize);
             } else if (level > 15 && level < 45) {
                 setTextColor(Color.GRAY);
-               setTextSize(mCarrierSize);
             } else if (level <= 15) {
                 setTextColor(Color.RED);
-               setTextSize(mCarrierSize);
             } else {
                 setTextColor(Color.MAGENTA);
-               setTextSize(mCarrierSize);
             }
         }
     }

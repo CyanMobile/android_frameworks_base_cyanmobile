@@ -49,6 +49,7 @@ public class CmBatteryTextExp extends TextView {
     private static final int BATTERY_STYLE_COLOR   = 2;
     private int mStatusBarBattery;
     private int mClockColor;
+    private int mCarrierSize;
 
     private static int style;
 
@@ -69,6 +70,8 @@ public class CmBatteryTextExp extends TextView {
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_BATTERY_STYLE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_CLOCKCOLOR), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.STATUSBAR_ICON_FONT_SIZE), false, this);
         }
 
         @Override
@@ -143,9 +146,15 @@ public class CmBatteryTextExp extends TextView {
         mClockColor = (Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5));
 
+        int mCarrierSizeval = Settings.System.getInt(getContext().getContentResolver(),
+                Settings.System.STATUSBAR_ICON_FONT_SIZE, 10);
+        int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, mCarrierSizeval, getContext().getResources().getDisplayMetrics());
+        mCarrierSize = CarrierSizepx;
+
         int level = intent.getIntExtra("level", 0);
         if (style == BATTERY_STYLE_PERCENTS) {
             setText(Integer.toString(level));
+            setTextSize(mCarrierSize);
             if (level <= 15){
                setTextColor(Color.RED);
             } else {
@@ -161,6 +170,7 @@ public class CmBatteryTextExp extends TextView {
             formatted.setSpan(style, start, start + 1, Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
 
             setText(formatted);
+            setTextSize(mCarrierSize);
             if (level <= 15) {
                setTextColor(Color.RED);
             } else {
@@ -168,6 +178,7 @@ public class CmBatteryTextExp extends TextView {
             }
         } else if (style == BATTERY_STYLE_COLOR) {
             setText(Integer.toString(level));
+            setTextSize(mCarrierSize);
             if (level >= 90) {
                 setTextColor(Color.GREEN);
             } else if (level >= 65 && level <= 90) {
