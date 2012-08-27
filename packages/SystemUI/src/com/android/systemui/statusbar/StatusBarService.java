@@ -456,6 +456,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.STATUS_BAR_INTRUDER_ALERT, 1) == 1);
             mClockColor = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5));
+            mStatusBarTab = (Settings.System.getInt(resolver,
+                    Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4);
             autoBrightness = Settings.System.getInt(
                     resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, 0) ==
                     Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
@@ -1017,7 +1019,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mButtonText = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_CLEAR_BUTTON, mButtonText);
 
-        if (mStatusBarCarrier == 5) {
+        if ((mStatusBarCarrier == 5) && mStatusBarTab) {
             mCompactClearButton.setTextColor(mButtonText);
         } else {
             mClearButton.setTextColor(mButtonText);
@@ -1703,7 +1705,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         // (no ongoing notifications are clearable)
         if (mLatest.hasClearableItems()) {
-            if (mStatusBarCarrier == 5) {
+            if ((mStatusBarCarrier == 5) && mStatusBarTab) {
                 mCompactClearButton.setVisibility(View.VISIBLE); 
                 mClearButton.setVisibility(View.GONE);
             } else {
