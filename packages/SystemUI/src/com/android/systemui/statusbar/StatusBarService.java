@@ -1440,7 +1440,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
 
         if (shouldTicker) {
-            if (shouldTick) {
+            if (!shouldTick) {
                 tick(notification);
             } else {
                 ImageView alertIcon = (ImageView) mIntruderAlertView.findViewById(R.id.alertIcon);
