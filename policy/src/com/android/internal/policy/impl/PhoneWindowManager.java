@@ -261,8 +261,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static final long NEXT_DURATION = 400;
     private boolean mBottomBar;
     private boolean mShowDate;
+    private boolean mShowStatBar;
     private boolean mNaviShow;
     private boolean mShowNavi;
+    private boolean mShowNaviUp;
     int mPointerLocationMode = 0;
     int mBackKillTimeout;
 
@@ -399,6 +401,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.STATUS_BAR_BOTTOM), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_DATE), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.SYSTEMUI_STATUSBAR_VISIBILITY), false, this);
             resolver.registerContentObserver(Settings.Secure.getUriFor(
                     Settings.Secure.KILL_APP_LONGPRESS_BACK), false, this);
             resolver.registerContentObserver(
@@ -920,10 +924,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.STATUS_BAR_BOTTOM, defValue) == 1);
             mShowDate = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_DATE, 0) == 1);
+            mShowStatBar = (Settings.System.getInt(resolver,
+                    Settings.System.SYSTEMUI_STATUSBAR_VISIBILITY, 0) == 1);
             mNaviShow = (Settings.System.getInt(resolver,
                     Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
             mShowNavi = (Settings.System.getInt(resolver,
                     Settings.System.NAVI_BUTTONS, 1) == 1);
+            mShowNaviUp = (Settings.System.getInt(resolver,
+                    Settings.System.NAVI_BUTTONS, 1) == 2);
             int accelerometerDefault = Settings.System.getInt(resolver,
                     Settings.System.ACCELEROMETER_ROTATION, DEFAULT_ACCELEROMETER_ROTATION);
             if (mAccelerometerDefault != accelerometerDefault) {
@@ -2070,17 +2078,17 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     mTopFullscreenOpaqueWindowState.getAttrs();
                 boolean hideStatusBar =
                     (lp.flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0;
-                if (hideStatusBar) {
+                if (hideStatusBar || mShowStatBar) {
                     if (DEBUG_LAYOUT) Log.v(TAG, "Hiding status bar");
                     if (mStatusBar.hideLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
-                    if (mNavigationBar != null && mNaviShow) {
-                       Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, 0);
+                    if (mNavigationBar != null && mNaviShow && mShowNavi) {
+                       Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, 2);
                     }
                     hiding = true;
                 } else {
                     if (DEBUG_LAYOUT) Log.v(TAG, "Showing status bar");
                     if (mStatusBar.showLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
-                    if (mNavigationBar != null && mNaviShow) {
+                    if (mNavigationBar != null && mNaviShow && mShowNaviUp) {
                        Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, 1);
                     }
                 }

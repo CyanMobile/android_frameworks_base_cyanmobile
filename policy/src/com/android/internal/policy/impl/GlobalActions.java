@@ -118,6 +118,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
     private SinglePressAction mPoweroff;
 
+    private SinglePressAction mExtendedDesk;
+
     private ProfileChooseAction mProfile;
 
     private boolean mExtendPmShowHome;
@@ -128,6 +130,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private boolean mEnableSuspendToggle;
     private boolean mEnableHibernateToggle;
     private boolean mEnableSilentToggle;
+    private boolean mEnableExtendToggle;
     private boolean mEnableAirplaneToggle;
     private boolean mEnableProfileToggle;
 
@@ -160,6 +163,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                     Settings.System.getUriFor(Settings.System.POWER_DIALOG_SHOW_PROFILE), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.POWER_DIALOG_SHOW_SILENT), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.POWER_DIALOG_SHOW_EXTEND), false, this);
             onChange(true);
         }
 
@@ -193,6 +198,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                 Settings.System.POWER_DIALOG_SHOW_PROFILE, 0) == 1);
         mEnableSilentToggle = (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.POWER_DIALOG_SHOW_SILENT, 0) == 1);
+        mEnableExtendToggle = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.POWER_DIALOG_SHOW_EXTEND, 0) == 1);
         }
     }
 
@@ -476,6 +483,26 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
           }
        };
 
+       mExtendedDesk = new SinglePressAction(
+                        com.android.internal.R.drawable.ic_menu_chat_dashboard,
+                        R.string.global_actions_statusbar_status) {
+
+          public void onPress() {
+              Settings.System.putInt(mContext.getContentResolver(),
+                    Settings.System.SYSTEMUI_STATUSBAR_VISIBILITY,
+              Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.SYSTEMUI_STATUSBAR_VISIBILITY, 0) != 1 ? 1 : 0);
+          }
+
+          public boolean showDuringKeyguard() {
+             return true;
+          }
+
+          public boolean showBeforeProvisioning() {
+             return true;
+          }
+       };
+
         mItems = new ArrayList<Action>();                
 
         mAdapter = new MyAdapter();
@@ -575,6 +602,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         mItems.remove(mProfile);
         mItems.remove(mPowerSaverOn);
         mItems.remove(mScreenshot);
+        mItems.remove(mExtendedDesk);
         mItems.remove(mSilentModeToggle);
 
         if(mExtendPm){
@@ -616,6 +644,10 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
         if (mEnableScreenshotToggle && !mItems.contains(mScreenshot)) {
            mItems.add(mScreenshot);
+        };
+
+        if (mEnableExtendToggle && !mItems.contains(mExtendedDesk)) {
+           mItems.add(mExtendedDesk);
         };
 
         if (mEnableSilentToggle && !mItems.contains(mSilentModeToggle)) {

@@ -3828,6 +3828,11 @@ public final class Settings {
         */
         public static final String POWER_DIALOG_SHOW_SILENT = "power_dialog_show_silent";
 
+       /**
+        * Power Menu - Extend toggle
+        * @hide
+        */
+        public static final String POWER_DIALOG_SHOW_EXTEND = "power_dialog_show_extend";
 
         /**
         * Notification Power Widget - Mobile Data Auto 2G/3G Toggle

@@ -387,6 +387,9 @@
     <!-- status message in phone options dialog for when power saver is off -->
     <string name="global_actions_power_saver_off_status">Power saver is OFF</string>
 
+    <!-- label for statusbar toggle in options dialog -->
+    <string name="global_actions_statusbar_status">Expanded desktop</string>
+
     <!-- Displayed to the user to tell them that they have started up the phone in "safe mode" -->
     <string name="safeMode">Safe mode</string>
 

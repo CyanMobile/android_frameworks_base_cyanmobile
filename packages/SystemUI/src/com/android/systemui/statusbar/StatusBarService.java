@@ -321,7 +321,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private int mStatusBarCarrier;
     private int mStatusBarCarrierLogo;
     private int mStatusBarClock;
-    private boolean mHideStatusBar = false;
     private boolean mShowDate = true;
     private boolean mShowNotif = true;
     private boolean mStatusBarReverse = false;
@@ -341,8 +340,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_BOTTOM), false, this);
-            resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.SYSTEMUI_STATUSBAR_VISIBILITY), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.SOFT_BUTTONS_LEFT), false, this);
             resolver.registerContentObserver(
@@ -430,8 +427,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_USE_DEAD_ZONE) ? 1 : 0);
             mDeadZone = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_DEAD_ZONE, defValue) == 1);
-            mHideStatusBar = (Settings.System.getInt(resolver,
-                    Settings.System.SYSTEMUI_STATUSBAR_VISIBILITY, 0) == 1);
             mStatusBarCarrier = Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_CARRIER, 6);
             mStatusBarClock = Settings.System.getInt(resolver,
@@ -1326,9 +1321,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     private void addIntruderView() {
-        if (mHideStatusBar)
-            return;
-
         Resources res = mContext.getResources();
         int heightSizeval = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.STATUSBAR_STATS_SIZE, 25);
@@ -1354,9 +1346,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     protected void addStatusBarView() {
-        if (mHideStatusBar)
-            return;
-
         Resources res = mContext.getResources();
         int heightSizeval = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.STATUSBAR_STATS_SIZE, 25);
@@ -1373,7 +1362,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                mHideStatusBar ? 0 : height,
+                height,
                 WindowManager.LayoutParams.TYPE_STATUS_BAR,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                     | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING,
