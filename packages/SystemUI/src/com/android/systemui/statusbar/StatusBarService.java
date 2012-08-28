@@ -1000,7 +1000,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         // set the inital view visibility
         setAreThereNotifications();
         mDateView.setVisibility(View.INVISIBLE);
-        showClock(Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_CLOCK, 1) != 0);
+        //showClock(Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_CLOCK, 1) != 0);
     }
     
     private void updateColors() {
@@ -1315,7 +1315,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         lp.setTitle("NavigationBar");
         lp.gravity = Gravity.BOTTOM | Gravity.FILL_HORIZONTAL;
-        lp.windowAnimations = 0;
+        lp.windowAnimations = com.android.internal.R.style.Animation_StatusBar;
 
         return lp;
     }
@@ -1734,6 +1734,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
       }
     }
 
+    public void showNaviBar(boolean show) {
+      if (mStatusBarView != null) {
+          mNavigationBarView.VisibilityChecks(show);
+      }
+    }
+
     /**
      * State is one or more of the DISABLE constants from StatusBarManager.
      */
@@ -1746,6 +1752,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             boolean show = (state & StatusBarManager.DISABLE_CLOCK) == 0;
             Slog.d(TAG, "DISABLE_CLOCK: " + (show ? "no" : "yes"));
             showClock(show);
+        }
+        if ((diff & StatusBarManager.DISABLE_NAVIGATION) != 0) {
+            boolean show = (state & StatusBarManager.DISABLE_NAVIGATION) == 0;
+            Slog.d(TAG, "DISABLE_NAVIGATION: " + (show ? "no" : "yes"));
+            showNaviBar(show);
         }
         if ((diff & StatusBarManager.DISABLE_EXPAND) != 0) {
             if ((state & StatusBarManager.DISABLE_EXPAND) != 0) {

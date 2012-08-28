@@ -55,10 +55,16 @@ public class StatusBarManager {
     public static final int DISABLE_NOTIFICATION_TICKER = 0x00000008;
 
     /**
+     * Flag for {@link #disable} to hide only the navigation buttons.  Don't use this
+     * unless you're a special part of the system UI (i.e., setup wizard, keyguard).
+     */
+    public static final int DISABLE_NAVIGATION = 0x00000010;
+
+    /**
      * Flag for {@link #disable} to hide only the clock.  You might use this if your activity has
      * its own clock making the status bar's clock redundant.
      */
-    public static final int DISABLE_CLOCK = 0x00000010;
+    public static final int DISABLE_CLOCK = 0x00000020;
 
     /**
      * Re-enable all of the status bar features that you've disabled.

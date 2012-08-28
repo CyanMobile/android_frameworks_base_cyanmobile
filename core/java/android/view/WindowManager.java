@@ -166,7 +166,8 @@ public interface WindowManager extends ViewManager {
             @ViewDebug.IntToString(from = TYPE_INPUT_METHOD, to = "TYPE_INPUT_METHOD"),
             @ViewDebug.IntToString(from = TYPE_INPUT_METHOD_DIALOG, to = "TYPE_INPUT_METHOD_DIALOG"),
             @ViewDebug.IntToString(from = TYPE_NAVIGATION_BAR, to = "TYPE_NAVIGATION_BAR"),
-            @ViewDebug.IntToString(from = TYPE_SECURE_SYSTEM_OVERLAY, to = "TYPE_SECURE_SYSTEM_OVERLAY")
+            @ViewDebug.IntToString(from = TYPE_SECURE_SYSTEM_OVERLAY, to = "TYPE_SECURE_SYSTEM_OVERLAY"),
+            @ViewDebug.IntToString(from = TYPE_BOOT_PROGRESS, to = "TYPE_BOOT_PROGRESS")
         })
         public int type;
     
@@ -368,6 +369,13 @@ public interface WindowManager extends ViewManager {
          * @hide
          */
         public static final int TYPE_SECURE_SYSTEM_OVERLAY = FIRST_SYSTEM_WINDOW+17;
+
+        /**
+         * Window type: The boot progress dialog, goes on top of everything
+         * in the world.
+         * @hide
+         */
+        public static final int TYPE_BOOT_PROGRESS = FIRST_SYSTEM_WINDOW+18;
 
         /**
          * End of types of system windows.

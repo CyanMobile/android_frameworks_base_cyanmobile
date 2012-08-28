@@ -119,6 +119,7 @@ import static android.view.WindowManager.LayoutParams.TYPE_TOAST;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 import static android.view.WindowManager.LayoutParams.TYPE_NAVIGATION_BAR;
 import static android.view.WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL;
+import static android.view.WindowManager.LayoutParams.TYPE_BOOT_PROGRESS;
 import android.view.WindowManagerImpl;
 import android.view.WindowManagerPolicy;
 import android.view.animation.Animation;
@@ -160,23 +161,24 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static final int PRIORITY_PHONE_LAYER = 9;
     // like the ANR / app crashed dialogs
     static final int SYSTEM_ALERT_LAYER = 10;
-    // system-level error dialogs
-    static final int SYSTEM_ERROR_LAYER = 11;
     // on-screen keyboards and other such input method user interfaces go here.
-    static final int INPUT_METHOD_LAYER = 12;
+    static final int INPUT_METHOD_LAYER = 11;
     // on-screen keyboards and other such input method user interfaces go here.
-    static final int INPUT_METHOD_DIALOG_LAYER = 13;
-    // the navigation bar, if available, shows atop most things
-    static final int NAVIGATION_BAR_LAYER = 14;
-    // some panels (e.g. search) need to show on top of the navigation bar
-    static final int NAVIGATION_BAR_PANEL_LAYER = 15;
+    static final int INPUT_METHOD_DIALOG_LAYER = 12;
     // the keyguard; nothing on top of these can take focus, since they are
     // responsible for power management when displayed.
-    static final int KEYGUARD_LAYER = 16;
-    static final int KEYGUARD_DIALOG_LAYER = 17;
+    static final int KEYGUARD_LAYER = 13;
+    static final int KEYGUARD_DIALOG_LAYER = 14;
     // things in here CAN NOT take focus, but are shown on top of everything else.
-    static final int SYSTEM_OVERLAY_LAYER = 18;
+    static final int SYSTEM_OVERLAY_LAYER = 15;
+    // the navigation bar, if available, shows atop most things
+    static final int NAVIGATION_BAR_LAYER = 16;
+    // some panels (e.g. search) need to show on top of the navigation bar
+    static final int NAVIGATION_BAR_PANEL_LAYER = 17;
+    // system-level error dialogs
+    static final int SYSTEM_ERROR_LAYER = 18;
     static final int SECURE_SYSTEM_OVERLAY_LAYER = 19;
+    static final int BOOT_PROGRESS_LAYER = 20;
 
     static final int APPLICATION_MEDIA_SUBLAYER = -2;
     static final int APPLICATION_MEDIA_OVERLAY_SUBLAYER = -1;
@@ -237,6 +239,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     Handler mHandler;
 
     boolean mSystemReady;
+    boolean mSystemBooted;
     boolean mLidOpen;
     int mUiMode = Configuration.UI_MODE_TYPE_NORMAL;
     int mDockMode = Intent.EXTRA_DOCK_STATE_UNDOCKED;
@@ -976,10 +979,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     WindowManager.LayoutParams.MATCH_PARENT,
                     WindowManager.LayoutParams.MATCH_PARENT);
             lp.type = WindowManager.LayoutParams.TYPE_SECURE_SYSTEM_OVERLAY;
-            lp.flags =
-                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE|
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
+            lp.flags = WindowManager.LayoutParams.FLAG_FULLSCREEN
+                    | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                    | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                    | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
             lp.format = PixelFormat.TRANSLUCENT;
             lp.setTitle("PointerLocation");
             WindowManagerImpl wm = (WindowManagerImpl)
@@ -1076,6 +1079,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 // These types of windows can't receive input events.
                 attrs.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                         | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+                attrs.flags &= ~WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
                 break;
         }
     }
@@ -1161,6 +1165,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             return (mShowNavi ? NAVIGATION_BAR_LAYER : null);
         case TYPE_NAVIGATION_BAR_PANEL:
             return NAVIGATION_BAR_PANEL_LAYER;
+        case TYPE_BOOT_PROGRESS:
+            return BOOT_PROGRESS_LAYER;
         }
         Log.e(TAG, "Unknown window type: " + type);
         return APPLICATION_LAYER;
@@ -1931,6 +1937,19 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
                     pf.bottom = df.bottom = cf.bottom
                             = hasNavBar ? mDockBottom : mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
+                } else if (attrs.type == TYPE_NAVIGATION_BAR) {
+                    // The navigation bar has Real Ultimate Power.
+                    pf.left = df.left = mUnrestrictedScreenLeft;
+                    pf.top = df.top = mUnrestrictedScreenTop;
+                    pf.right = df.right = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
+                    pf.bottom = df.bottom = mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
+                } else if (attrs.type == TYPE_SECURE_SYSTEM_OVERLAY
+                        && ((fl & FLAG_FULLSCREEN) != 0)) {
+                    // Fullscreen secure system overlays get what they ask for.
+                    pf.left = df.left = mUnrestrictedScreenLeft;
+                    pf.top = df.top = mUnrestrictedScreenTop;
+                    pf.right = df.right = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
+                    pf.bottom = df.bottom = mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
                 } else {
                     pf.left = df.left = cf.left = mRestrictedScreenLeft;
                     pf.top = df.top = cf.top = mRestrictedScreenTop;
@@ -2305,6 +2324,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                                         mKeyguardMediator.isShowingAndNotHidden() :
                                         mKeyguardMediator.isShowing());
 
+        if (!mSystemBooted) {
+            // If we have not yet booted, don't let key events do anything.
+            return 0;
+        }
+
         if (false) {
             Log.d(TAG, "interceptKeyTq keycode=" + keyCode
                   + " screenIsOn=" + isScreenOn + " keyguardActive=" + keyguardActive);
@@ -2677,6 +2701,17 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             updateOrientationListenerLp();
             updateLockScreenTimeout();
         }
+        try {
+            mWindowManager.waitForAllDrawn();
+        } catch (RemoteException e) {
+        }
+        // Wait for one frame to give surface flinger time to do its
+        // compositing.  Yes this is a hack, but I am really not up right now for
+        // implementing some mechanism to block until SF is done. :p
+        try {
+            Thread.sleep(20);
+        } catch (InterruptedException e) {
+        }
     }
 
     /** {@inheritDoc} */
@@ -2911,6 +2946,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+    /** {@inheritDoc} */
+    public void systemBooted() {
+        synchronized (mLock) {
+            mSystemBooted = true;
+        }
+    }
+
     ProgressDialog mBootMsgDialog = null;
 
     /** {@inheritDoc} */
@@ -2923,7 +2965,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     mBootMsgDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
                     mBootMsgDialog.setIndeterminate(true);
                     mBootMsgDialog.getWindow().setType(
-                            WindowManager.LayoutParams.TYPE_SECURE_SYSTEM_OVERLAY);
+                            WindowManager.LayoutParams.TYPE_BOOT_PROGRESS);
                     mBootMsgDialog.getWindow().addFlags(
                             WindowManager.LayoutParams.FLAG_DIM_BEHIND
                             | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN);

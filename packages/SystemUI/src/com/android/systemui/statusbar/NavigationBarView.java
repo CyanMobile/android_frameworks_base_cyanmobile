@@ -956,6 +956,13 @@ public class NavigationBarView extends LinearLayout {
         updateNaviButtons();
     }
 
+    public void VisibilityChecks(boolean show) {
+        if (mShowNV) {
+            Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, show ? 1 : 2);
+        }
+        updateNaviButtons();
+    }
+
     public boolean onTouchEvent(final MotionEvent event){
         if(!mNVShow)
             return super.onTouchEvent(event);

@@ -161,4 +161,9 @@ interface IWindowManager
      * Lock the device immediately.
      */
     void lockNow();
+
+    /**
+     * Block until all windows the window manager knows about have been drawn.
+     */
+    void waitForAllDrawn();
 }

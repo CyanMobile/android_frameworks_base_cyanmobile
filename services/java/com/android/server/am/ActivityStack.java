@@ -2780,7 +2780,7 @@ public class ActivityStack {
 
                 //Slog.i(TAG, "IDLE: mBooted=" + mBooted + ", fromTimeout=" + fromTimeout);
                 if (mMainStack) {
-                    if (!mService.mBooted && !fromTimeout) {
+                    if (!mService.mBooted) {
                         mService.mBooted = true;
                         enableScreen = true;
                     }
