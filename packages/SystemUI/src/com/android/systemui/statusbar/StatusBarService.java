@@ -123,7 +123,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
-//import com.android.systemui.statusbar.RecentApps;
 
 public class StatusBarService extends Service implements CommandQueue.Callbacks {
     static final String TAG = "StatusBarService";
@@ -323,6 +322,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private int mStatusBarClock;
     private boolean mShowDate = true;
     private boolean mShowNotif = true;
+    private boolean mFirstis;
     private boolean mStatusBarReverse = false;
     private boolean mStatusBarTab = false;
     private boolean LogoStatusBar = false;
@@ -2803,10 +2803,13 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         public void onClick(View v) {
             if (Settings.System.getInt(getContentResolver(),
                       Settings.System.ENABLE_SETTING_BUTTON, 0) == 1) {
-                Intent intent = new Intent(Intent.ACTION_MAIN);
-                intent.setClassName("com.android.settings", "com.android.settings.MainSettings");
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                v.getContext().startActivity(intent);
+                if (mFirstis) {
+                    Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, 0);
+                    mFirstis = false;
+                } else {
+                    Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, 1);
+                    mFirstis = true;
+                }
                 animateCollapse();
             } else if (Settings.System.getInt(getContentResolver(),
                       Settings.System.ENABLE_SETTING_BUTTON, 0) == 2) {

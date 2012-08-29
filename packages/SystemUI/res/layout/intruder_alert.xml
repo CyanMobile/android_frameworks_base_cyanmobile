@@ -22,9 +22,7 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_height="wrap_content"
-    android:layout_width="match_parent"
-    android:paddingLeft="8dip"
-    android:paddingRight="8dip"
+    android:layout_width="wrap_content"
     >
 
     <LinearLayout
@@ -39,11 +37,6 @@
         android:focusable="true"
         android:descendantFocusability="afterDescendants"
         >
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_gravity="center" >
         <ImageView
             android:id="@+id/alertIcon"
             android:layout_width="32dp"
@@ -53,7 +46,6 @@
             android:layout_gravity="center"
             android:scaleType="fitCenter"
             />
-    </LinearLayout>
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -63,11 +55,7 @@
             android:textAppearance="@*android:style/TextAppearance.StatusBar.EventContent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_weight="1"
-            android:maxLines="5"
-            android:ellipsize="marquee"
-            android:fadingEdge="horizontal"
+            android:singleLine="false"
             />
     </LinearLayout>
     </LinearLayout>

@@ -1162,7 +1162,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         case TYPE_WALLPAPER:
             return WALLPAPER_LAYER;
         case TYPE_NAVIGATION_BAR:
-            return (mShowNavi ? NAVIGATION_BAR_LAYER : null);
+            return NAVIGATION_BAR_LAYER;
         case TYPE_NAVIGATION_BAR_PANEL:
             return NAVIGATION_BAR_PANEL_LAYER;
         case TYPE_BOOT_PROGRESS:
