@@ -3,8 +3,8 @@
     android:layout_height="match_parent"
     >
     <ImageView android:id="@+id/iconBig"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:background="@drawable/status_bar_latest_event_panel"
         android:scaleType="center"
         />

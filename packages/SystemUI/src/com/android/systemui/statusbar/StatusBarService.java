@@ -1148,8 +1148,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             // till we find a better solution (looks ugly alone at the top)
             if (mBottomBar) {
                 mCompactCarrierLayout.setVisibility(View.GONE);
-            } else {
-                mCompactCarrierLayout.setVisibility(View.VISIBLE);
             }
         } else if (mStatusBarCarrier == 0) {
             mCarrierLabelBottomLayout.setVisibility(View.GONE);
@@ -1272,6 +1270,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mNotificationLinearLayout.addView(mLatestItems);
             mNotificationLinearLayout.addView(mCompactClearButton);
             mScrollView.setVisibility(View.VISIBLE);
+            mCompactCarrierLayout.setVisibility(View.VISIBLE);
         }
 
     }
