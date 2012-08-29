@@ -1000,7 +1000,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         // set the inital view visibility
         setAreThereNotifications();
         mDateView.setVisibility(View.INVISIBLE);
-        //showClock(Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_CLOCK, 1) != 0);
+        showClock(Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_CLOCK, 1) != 0);
     }
     
     private void updateColors() {

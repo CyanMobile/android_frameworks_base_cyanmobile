@@ -958,7 +958,7 @@ public class NavigationBarView extends LinearLayout {
 
     public void VisibilityChecks(boolean show) {
         if (mShowNV) {
-            Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, show ? 1 : 2);
+            // Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, show ? 1 : 2);
         }
         updateNaviButtons();
     }

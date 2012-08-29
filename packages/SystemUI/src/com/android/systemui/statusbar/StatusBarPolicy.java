@@ -1202,9 +1202,14 @@ public class StatusBarPolicy {
                 b.setNeutralButton("Cancel",
                             new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
-                            if (mSmsDialog != null) {
-                                mSmsDialog.dismiss();
-                            }
+                             Intent ismsread = new Intent(Intent.ACTION_MAIN);
+                             ismsread.setClassName("com.android.mms",
+                                     "com.android.mms.ui.QuickReader");
+                             ismsread.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                             mContext.startActivity(ismsread);
+                             if (mSmsDialog != null) {
+                                 mSmsDialog.dismiss();
+                             }
                         }
                     });
             AlertDialog d = b.create();
@@ -1213,6 +1218,14 @@ public class StatusBarPolicy {
             d.show();
             mSmsDialog = d;
     }
+
+    public View.OnClickListener mCallButtonListener = new View.OnClickListener() {
+	public void onClick(View v) {
+	   String number = callerName;
+           Intent dialIntent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + callerName));
+           mContext.startActivity(dialIntent);
+	}
+    };
 
     private final void updateCallState(int state) {
         mPhoneState = state;

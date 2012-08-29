@@ -16,11 +16,12 @@
 
 package android.app;
 
-import java.util.Date;
+import com.android.internal.R;
 
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Parcel;
@@ -28,7 +29,11 @@ import android.os.Parcelable;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.text.format.DateUtils;
+import android.view.View;
 import android.widget.RemoteViews;
+
+import java.text.NumberFormat;
+import java.util.Date;
 
 /**
  * A class that represents how a persistent notification is to be presented to
@@ -343,7 +348,6 @@ public class Notification implements Parcelable
         if (parcel.readInt() != 0) {
             sound = Uri.CREATOR.createFromParcel(parcel);
         }
-
         audioStreamType = parcel.readInt();
         vibrate = parcel.createLongArray();
         ledARGB = parcel.readInt();
@@ -493,20 +497,28 @@ public class Notification implements Parcelable
     public void setLatestEventInfo(Context context,
             CharSequence contentTitle, CharSequence contentText, PendingIntent contentIntent) {
         RemoteViews contentView = new RemoteViews(context.getPackageName(),
-                com.android.internal.R.layout.status_bar_latest_event_content);
+                R.layout.status_bar_latest_event_content);
         if (this.icon != 0) {
-            contentView.setImageViewResource(com.android.internal.R.id.icon, this.icon);
+            contentView.setImageViewResource(R.id.iconBig, this.icon);
+            contentView.setImageViewResource(R.id.icon, this.icon);
         }
         if (contentTitle != null) {
-            contentView.setTextViewText(com.android.internal.R.id.title, contentTitle);
+            contentView.setTextViewText(R.id.title, contentTitle);
         }
         if (contentText != null) {
-            contentView.setTextViewText(com.android.internal.R.id.text, contentText);
+            contentView.setTextViewText(R.id.text, contentText);
         }
         if (this.when != 0) {
-            contentView.setLong(com.android.internal.R.id.time, "setTime", when);
+            contentView.setLong(R.id.time, "setTime", when);
+        } else {
+            contentView.setViewVisibility(R.id.time, View.GONE);
         }
-
+        if (this.number > 0) {
+            NumberFormat f = NumberFormat.getIntegerInstance();
+            contentView.setTextViewText(R.id.info, f.format(number));
+        } else {
+            contentView.setViewVisibility(R.id.info, View.GONE);
+        }
         this.contentView = contentView;
         this.contentIntent = contentIntent;
     }
