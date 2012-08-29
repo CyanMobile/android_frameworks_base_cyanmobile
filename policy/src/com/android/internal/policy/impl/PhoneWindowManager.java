@@ -165,16 +165,16 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static final int INPUT_METHOD_LAYER = 11;
     // on-screen keyboards and other such input method user interfaces go here.
     static final int INPUT_METHOD_DIALOG_LAYER = 12;
+    // the navigation bar, if available, shows atop most things
+    static final int NAVIGATION_BAR_LAYER = 13;
+    // some panels (e.g. search) need to show on top of the navigation bar
+    static final int NAVIGATION_BAR_PANEL_LAYER = 14;
     // the keyguard; nothing on top of these can take focus, since they are
     // responsible for power management when displayed.
-    static final int KEYGUARD_LAYER = 13;
-    static final int KEYGUARD_DIALOG_LAYER = 14;
+    static final int KEYGUARD_LAYER = 15;
+    static final int KEYGUARD_DIALOG_LAYER = 16;
     // things in here CAN NOT take focus, but are shown on top of everything else.
-    static final int SYSTEM_OVERLAY_LAYER = 15;
-    // the navigation bar, if available, shows atop most things
-    static final int NAVIGATION_BAR_LAYER = 16;
-    // some panels (e.g. search) need to show on top of the navigation bar
-    static final int NAVIGATION_BAR_PANEL_LAYER = 17;
+    static final int SYSTEM_OVERLAY_LAYER = 17;
     // system-level error dialogs
     static final int SYSTEM_ERROR_LAYER = 18;
     static final int SECURE_SYSTEM_OVERLAY_LAYER = 19;
