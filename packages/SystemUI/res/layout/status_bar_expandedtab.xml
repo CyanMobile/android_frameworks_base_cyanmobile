@@ -30,7 +30,6 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:id="@+id/power_and_carrier"
-    android:visibility="gone"
     android:layout_weight="1"
     android:orientation="vertical"
      >
@@ -229,6 +228,7 @@
 <LinearLayout 
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:visibility="gone"
     android:layout_weight="1"
     android:id="@+id/notifications_layout" >
 

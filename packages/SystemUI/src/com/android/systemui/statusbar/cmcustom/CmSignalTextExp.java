@@ -160,7 +160,7 @@ public class CmSignalTextExp extends TextView {
 
         int mCarrierSizeval = Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.STATUSBAR_ICON_FONT_SIZE, 10);
-        int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, mCarrierSizeval, getContext().getResources().getDisplayMetrics());
+        int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, getContext().getResources().getDisplayMetrics());
         mCarrierSize = CarrierSizepx;
 
         if (mPhoneState == StatusBarPolicy.PHONE_SIGNAL_IS_AIRPLANE_MODE) {

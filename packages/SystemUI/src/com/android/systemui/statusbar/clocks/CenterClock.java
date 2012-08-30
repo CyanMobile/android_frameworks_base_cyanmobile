@@ -261,7 +261,7 @@ public class CenterClock extends TextView {
 
         int mCarrierSizeval = Settings.System.getInt(resolver,
                 Settings.System.STATUSBAR_CLOCK_FONT_SIZE, 10);
-        int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, mCarrierSizeval, mContext.getResources().getDisplayMetrics());
+        int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, mContext.getResources().getDisplayMetrics());
         mCarrierSize = CarrierSizepx;
 
         if ((mAmPmStyle != AM_PM_STYLE) || (mCColor != mClockColor)) {

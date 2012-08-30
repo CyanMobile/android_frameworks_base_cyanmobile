@@ -100,7 +100,7 @@ public final class CmSystem {
                 case 8:
                     return Sense;
                 default:
-                    return Honeycomb;
+                    return Ring;
             }
         }
 
@@ -125,7 +125,7 @@ public final class CmSystem {
                 case Sense:
                     return 8;
                 default:
-                    return 6;
+                    return 5;
             }
         }
     }

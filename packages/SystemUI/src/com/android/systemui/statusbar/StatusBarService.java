@@ -944,7 +944,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                  LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
                  parent.setBackgroundResource(R.drawable.title_bar_portrait);
                  mPowerAndCarrier.setVisibility(View.GONE);
+                 mPowerAndCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
                  mNotifications.setVisibility(View.VISIBLE);
+                 mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
                  updateExpandedViewPos(EXPANDED_FULL_OPEN);
               }
         });
@@ -956,8 +958,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                  mNotificationsToggle.setTextColor(Color.parseColor("#666666"));
                  LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
                  parent.setBackgroundResource(R.drawable.title_bar_portrait);
-                 mNotifications.setVisibility(View.GONE);
                  mPowerAndCarrier.setVisibility(View.VISIBLE);
+                 mPowerAndCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
+                 mNotifications.setVisibility(View.GONE);
+                 mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
                  updateExpandedViewPos(EXPANDED_FULL_OPEN);
               }
         });
@@ -1314,7 +1318,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         lp.setTitle("NavigationBar");
         lp.gravity = Gravity.BOTTOM | Gravity.FILL_HORIZONTAL;
-        lp.windowAnimations = com.android.internal.R.style.Animation_StatusBar;
+        lp.windowAnimations = com.android.internal.R.style.Animation_NaviBar;
 
         return lp;
     }
