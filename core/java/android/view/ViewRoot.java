@@ -130,6 +130,8 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
 
     final W mWindow;
 
+    int mSeq;
+
     View mView;
     View mFocusedView;
     View mRealFocusedView;  // this is not set to null in touch mode
@@ -238,7 +240,14 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
             return sWindowSession;
         }
     }
-    
+
+    static final class SystemUiVisibilityInfo {
+        int seq;
+        int globalVisibility;
+        int localValue;
+        int localChanges;
+    }
+
     public ViewRoot(Context context) {
         super();
 
@@ -495,7 +504,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                 requestLayout();
                 mInputChannel = new InputChannel();
                 try {
-                    res = sWindowSession.add(mWindow, mWindowAttributes,
+                    res = sWindowSession.add(mWindow, mSeq, mWindowAttributes,
                             getHostVisibility(), mAttachInfo.mContentInsets,
                             mInputChannel);
                 } catch (RemoteException e) {
@@ -761,6 +770,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
             attachInfo.mWindowVisibility = viewVisibility;
             attachInfo.mRecomputeGlobalAttributes = false;
             attachInfo.mKeepScreenOn = false;
+            attachInfo.mSystemUiVisibility = 0;
             viewVisibilityChanged = false;
             mLastConfiguration.setTo(host.getResources().getConfiguration());
             if (!mAttached) {
@@ -850,15 +860,26 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
         }
 
         if (attachInfo.mRecomputeGlobalAttributes) {
-            //Log.i(TAG, "Computing screen on!");
+            //Log.i(TAG, "Computing view hierarchy attributes!");
             attachInfo.mRecomputeGlobalAttributes = false;
-            boolean oldVal = attachInfo.mKeepScreenOn;
+            boolean oldScreenOn = attachInfo.mKeepScreenOn;
+            int oldVis = attachInfo.mSystemUiVisibility;
+            boolean oldHasSystemUiListeners = attachInfo.mHasSystemUiListeners;
             attachInfo.mKeepScreenOn = false;
+            attachInfo.mSystemUiVisibility = 0;
+            attachInfo.mHasSystemUiListeners = false;
             host.dispatchCollectViewAttributes(0);
-            if (attachInfo.mKeepScreenOn != oldVal) {
+            if (attachInfo.mKeepScreenOn != oldScreenOn
+                    || attachInfo.mSystemUiVisibility != oldVis
+                    || attachInfo.mHasSystemUiListeners
+                    || attachInfo.mHasSystemUiListeners != oldHasSystemUiListeners) {
                 params = lp;
-                //Log.i(TAG, "Keep screen on changed: " + attachInfo.mKeepScreenOn);
             }
+        }
+
+        if (attachInfo.mForceReportNewAttributes) {
+            attachInfo.mForceReportNewAttributes = false;
+            params = lp;
         }
 
         if (mFirst || attachInfo.mViewVisibilityChanged) {
@@ -944,6 +965,8 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                     if (attachInfo.mKeepScreenOn) {
                         params.flags |= WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
                     }
+                    params.subtreeSystemUiVisibility = attachInfo.mSystemUiVisibility;
+                    params.hasSystemUiListeners = attachInfo.mHasSystemUiListeners;
                 }
                 if (DEBUG_LAYOUT) {
                     Log.i(TAG, "host=w:" + host.mMeasuredWidth + ", h:" +
@@ -1872,6 +1895,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
     public final static int FINISH_INPUT_CONNECTION = 1012;
     public final static int CHECK_FOCUS = 1013;
     public final static int CLOSE_SYSTEM_DIALOGS = 1014;
+    public final static int DISPATCH_SYSTEM_UI_VISIBILITY = 1015;
 
     @Override
     public void handleMessage(Message msg) {
@@ -2057,6 +2081,9 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                 mView.onCloseSystemDialogs((String)msg.obj);
             }
         } break;
+        case DISPATCH_SYSTEM_UI_VISIBILITY: {	
+            handleDispatchSystemUiVisibilityChanged((SystemUiVisibilityInfo)msg.obj);
+        } break;
         }
     }
     
@@ -2080,7 +2107,30 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                     + "is finished but there is no input event actually in progress.");
         }
     }
-    
+
+    public void handleDispatchSystemUiVisibilityChanged(SystemUiVisibilityInfo args) {
+        if (mSeq != args.seq) {
+            // The sequence has changed, so we need to update our value and make
+            // sure to do a traversal afterward so the window manager is given our
+            // most recent data.
+            mSeq = args.seq;
+            mAttachInfo.mForceReportNewAttributes = true;	
+            scheduleTraversals();
+        }
+        if (mView == null) return;
+        if (args.localChanges != 0) {
+            if (mAttachInfo != null) {
+                mAttachInfo.mSystemUiVisibility =
+                        (mAttachInfo.mSystemUiVisibility&~args.localChanges)
+                        | (args.localValue&args.localChanges);
+            }
+            mView.updateLocalSystemUiVisibility(args.localValue, args.localChanges);
+            mAttachInfo.mRecomputeGlobalAttributes = true;
+            scheduleTraversals();            
+        }
+        mView.dispatchSystemUiVisibilityChanged(args.globalVisibility);
+    }
+
     /**
      * Something in the current window tells us we need to change the touch mode.  For
      * example, we are not in touch mode, and the user touches the screen.
@@ -2674,7 +2724,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
         mPendingConfiguration.seq = 0;
         //Log.d(TAG, ">>>>>> CALLING relayout");
         int relayoutResult = sWindowSession.relayout(
-                mWindow, params,
+                mWindow, mSeq, params,
                 (int) (mView.mMeasuredWidth * appScale + 0.5f),
                 (int) (mView.mMeasuredHeight * appScale + 0.5f),
                 viewVisibility, insetsPending, mWinFrame,
@@ -2933,7 +2983,17 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
         msg.obj = reason;
         sendMessage(msg);
     }
-    
+
+    public void dispatchSystemUiVisibilityChanged(int seq, int globalVisibility,
+            int localValue, int localChanges) {
+        SystemUiVisibilityInfo args = new SystemUiVisibilityInfo();
+        args.seq = seq;
+        args.globalVisibility = globalVisibility;
+        args.localValue = localValue;
+        args.localChanges = localChanges;
+        sendMessage(obtainMessage(DISPATCH_SYSTEM_UI_VISIBILITY, args));
+    }
+
     /**
      * The window is getting focus so if there is anything focused/selected
      * send an {@link AccessibilityEvent} to announce that.
@@ -3143,6 +3203,16 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                     sWindowSession.wallpaperCommandComplete(asBinder(), null);
                 } catch (RemoteException e) {
                 }
+            }
+        }
+
+        @Override
+        public void dispatchSystemUiVisibilityChanged(int seq, int globalVisibility,
+                int localValue, int localChanges) {
+            final ViewRoot viewRoot = mViewRoot.get();
+            if (viewRoot != null) {
+                viewRoot.dispatchSystemUiVisibilityChanged(seq, globalVisibility,
+                        localValue, localChanges);
             }
         }
     }

@@ -64,4 +64,7 @@ oneway interface IWindow {
     
     void dispatchWallpaperCommand(String action, int x, int y,
             int z, in Bundle extras, boolean sync);
+
+    void dispatchSystemUiVisibilityChanged(int seq, int globalVisibility,
+            int localValue, int localChanges);
 }
