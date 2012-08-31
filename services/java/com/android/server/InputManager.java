@@ -360,7 +360,7 @@ public class InputManager {
         
         @SuppressWarnings("unused")
         public void notifyConfigurationChanged(long whenNanos) {
-            mWindowManagerService.sendNewConfiguration();
+            mWindowManagerService.mInputMonitor.notifyConfigurationChanged();
         }
         
         @SuppressWarnings("unused")
