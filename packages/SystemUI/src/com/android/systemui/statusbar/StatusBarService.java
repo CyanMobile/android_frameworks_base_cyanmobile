@@ -536,7 +536,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mCommandQueue = new CommandQueue(this, iconList);
         mBarService = IStatusBarService.Stub.asInterface(
                 ServiceManager.getService(Context.STATUS_BAR_SERVICE));
-        int[] switches = new int[3];
+        int[] switches = new int[2];
         try {
             mBarService.registerStatusBar(mCommandQueue, iconList, notificationKeys, notifications,
                         switches);
@@ -544,9 +544,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             // If the system process isn't there we're doomed anyway.
         }
 
-        disable(switches[0]);
-        setSystemUiVisibility(switches[1]);
-        setIMEVisible(switches[2] != 0);
+        setSystemUiVisibility(switches[0]);
+        setIMEVisible(switches[1] != 0);
 
         // Set up the initial icon state
         int N = iconList.size();

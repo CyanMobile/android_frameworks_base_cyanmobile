@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.graphics.PixelFormat;
 import android.graphics.Canvas;
+import android.os.IBinder;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
@@ -54,6 +55,10 @@ public class KeyguardViewManager implements KeyguardWindowController {
     private KeyguardViewBase mKeyguardView;
 
     private boolean mScreenOn = false;
+
+    public interface ShowListener {
+        void onShown(IBinder windowToken);
+    };
 
     /**
      * @param context Used to create views.
@@ -202,11 +207,31 @@ public class KeyguardViewManager implements KeyguardWindowController {
         }
     }
 
-    public synchronized void onScreenTurnedOn() {
+    public synchronized void onScreenTurnedOn(
+            final KeyguardViewManager.ShowListener showListener) {
         if (DEBUG) Log.d(TAG, "onScreenTurnedOn()");
         mScreenOn = true;
         if (mKeyguardView != null) {
             mKeyguardView.onScreenTurnedOn();
+            // Caller should wait for this window to be shown before turning
+            // on the screen.
+            if (mKeyguardHost.getVisibility() == View.VISIBLE) {
+                // Keyguard may be in the process of being shown, but not yet
+                // updated with the window manager...  give it a chance to do so.
+                mKeyguardHost.post(new Runnable() {
+                    @Override public void run() {
+                        if (mKeyguardHost.getVisibility() == View.VISIBLE) {
+                            showListener.onShown(mKeyguardHost.getWindowToken());
+                        } else {
+                            showListener.onShown(null);
+                        }
+                    }
+                });
+            } else {
+                showListener.onShown(null);
+            }
+        } else {
+            showListener.onShown(null);
         }
     }
 
