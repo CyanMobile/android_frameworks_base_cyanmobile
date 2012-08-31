@@ -50,14 +50,12 @@ import android.os.Handler;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 
-import com.android.internal.statusbar.IStatusBarService;
-
 import com.android.systemui.statusbar.popups.ActionItem;
 import com.android.systemui.statusbar.popups.QuickAction;
 import com.android.systemui.R;
 
 public class NavigationBarView extends LinearLayout {
-    protected IStatusBarService mBarService;
+
     private static final boolean DEBUG = false;
     private static final String TAG = "NavigationBarView";
 
@@ -123,8 +121,6 @@ public class NavigationBarView extends LinearLayout {
     private Bitmap mCustomSearchIcon;
     private Bitmap mCustomQuickIcon;
 
-    boolean mHidden;
-
     Handler mHandler;
 
     class SettingsObserver extends ContentObserver {
@@ -179,13 +175,6 @@ public class NavigationBarView extends LinearLayout {
 
     public NavigationBarView(Context context, AttributeSet attrs) {
         super(context, attrs);
-
-        mBarService = IStatusBarService.Stub.asInterface(
-                ServiceManager.getService(Context.STATUS_BAR_SERVICE));
-    }
-
-    private void setLights(final boolean on) {
-       // nothing for now
     }
 
     @Override
@@ -967,14 +956,9 @@ public class NavigationBarView extends LinearLayout {
         updateNaviButtons();
     }
 
-    public void setHidden(final boolean hide) {
-        if (hide == mHidden) return;
+    public void VisibilityChecks(boolean show) {
+        if (mShowNV) {
             // Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, show ? 1 : 2);
-        mHidden = hide;
-        if (!hide) {
-            setVisibility(View.VISIBLE);
-        } else {
-            setVisibility(View.INVISIBLE);
         }
         updateNaviButtons();
     }
@@ -1011,7 +995,7 @@ public class NavigationBarView extends LinearLayout {
             mQuickButton.onTouchEvent(event);
             return true;
         }
-        setHidden(false);
+
         return super.onTouchEvent(event);
     }
 

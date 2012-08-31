@@ -160,7 +160,6 @@ public interface WindowManager extends ViewManager {
             @ViewDebug.IntToString(from = TYPE_SYSTEM_OVERLAY, to = "TYPE_SYSTEM_OVERLAY"),
             @ViewDebug.IntToString(from = TYPE_PRIORITY_PHONE, to = "TYPE_PRIORITY_PHONE"),
             @ViewDebug.IntToString(from = TYPE_STATUS_BAR_PANEL, to = "TYPE_STATUS_BAR_PANEL"),
-            @ViewDebug.IntToString(from = TYPE_STATUS_BAR_SUB_PANEL, to = "TYPE_STATUS_BAR_SUB_PANEL"),
             @ViewDebug.IntToString(from = TYPE_SYSTEM_DIALOG, to = "TYPE_SYSTEM_DIALOG"),
             @ViewDebug.IntToString(from = TYPE_KEYGUARD_DIALOG, to = "TYPE_KEYGUARD_DIALOG"),
             @ViewDebug.IntToString(from = TYPE_SYSTEM_ERROR, to = "TYPE_SYSTEM_ERROR"),
@@ -348,21 +347,16 @@ public interface WindowManager extends ViewManager {
         public static final int TYPE_STATUS_BAR_PANEL   = FIRST_SYSTEM_WINDOW+14;
 
         /**
-         * Window type: panel that slides out from under the status bar
-         */
-        public static final int TYPE_STATUS_BAR_SUB_PANEL = FIRST_SYSTEM_WINDOW+15;
-
-        /**
          * Window type: Navigation bar (when distinct from status bar)
          * @hide
          */
-        public static final int TYPE_NAVIGATION_BAR = FIRST_SYSTEM_WINDOW+16;
+        public static final int TYPE_NAVIGATION_BAR = FIRST_SYSTEM_WINDOW+15;
 
         /**
          * Window type: Navigation bar panel (when navigation bar is distinct from status bar)
          * @hide
          */
-        public static final int TYPE_NAVIGATION_BAR_PANEL = FIRST_SYSTEM_WINDOW+17;
+        public static final int TYPE_NAVIGATION_BAR_PANEL = FIRST_SYSTEM_WINDOW+16;
 
         /**
          * Window type: secure system overlay windows, which need to be displayed
@@ -374,21 +368,14 @@ public interface WindowManager extends ViewManager {
          * obtain permission to create secure system overlays.
          * @hide
          */
-        public static final int TYPE_SECURE_SYSTEM_OVERLAY = FIRST_SYSTEM_WINDOW+18;
+        public static final int TYPE_SECURE_SYSTEM_OVERLAY = FIRST_SYSTEM_WINDOW+17;
 
         /**
          * Window type: The boot progress dialog, goes on top of everything
          * in the world.
          * @hide
          */
-        public static final int TYPE_BOOT_PROGRESS = FIRST_SYSTEM_WINDOW+19;
-
-        /**
-         * Window type: Fake window to consume touch events when the navigation
-         * bar is hidden.
-         * @hide
-         */
-        public static final int TYPE_HIDDEN_NAV_CONSUMER = FIRST_SYSTEM_WINDOW+20;
+        public static final int TYPE_BOOT_PROGRESS = FIRST_SYSTEM_WINDOW+18;
 
         /**
          * End of types of system windows.
@@ -766,13 +753,7 @@ public interface WindowManager extends ViewManager {
          * the other depending on the contents of the window.
          */
         public static final int SOFT_INPUT_ADJUST_PAN = 0x20;
-
-        /** Adjustment option for {@link #softInputMode}: set to have a window
-         * not adjust for a shown input method.  The window will not be resized,
-         * and it will not be panned to make its focus visible.
-         */
-        public static final int SOFT_INPUT_ADJUST_NOTHING = 0x30;
-
+        
         /**
          * Bit for {@link #softInputMode}: set when the user has navigated
          * forward to the window.  This is normally set automatically for
@@ -781,6 +762,27 @@ public interface WindowManager extends ViewManager {
          * be cleared automatically after the window is displayed.
          */
         public static final int SOFT_INPUT_IS_FORWARD_NAVIGATION = 0x100;
+
+        /**
+         * Default value for {@link #screenBrightness} and {@link #buttonBrightness}
+         * indicating that the brightness value is not overridden for this window
+         * and normal brightness policy should be used.
+         */
+        public static final float BRIGHTNESS_OVERRIDE_NONE = -1.0f;
+
+        /**
+         * Value for {@link #screenBrightness} and {@link #buttonBrightness}
+         * indicating that the screen or button backlight brightness should be set
+         * to the lowest value when this window is in front.
+         */
+        public static final float BRIGHTNESS_OVERRIDE_OFF = 0.0f;
+
+        /**
+         * Value for {@link #screenBrightness} and {@link #buttonBrightness}
+         * indicating that the screen or button backlight brightness should be set
+         * to the hightest value when this window is in front.
+         */
+        public static final float BRIGHTNESS_OVERRIDE_FULL = 1.0f;
 
         /**
          * Desired operating mode for any soft input area.  May any combination
@@ -842,28 +844,7 @@ public interface WindowManager extends ViewManager {
          * dim.
          */
         public float dimAmount = 1.0f;
-
-        /**
-         * Default value for {@link #screenBrightness} and {@link #buttonBrightness}
-         * indicating that the brightness value is not overridden for this window
-         * and normal brightness policy should be used.
-         */
-        public static final float BRIGHTNESS_OVERRIDE_NONE = -1.0f;
-
-        /**
-         * Value for {@link #screenBrightness} and {@link #buttonBrightness}
-         * indicating that the screen or button backlight brightness should be set
-         * to the lowest value when this window is in front.
-         */
-        public static final float BRIGHTNESS_OVERRIDE_OFF = 0.0f;
-
-        /**
-         * Value for {@link #screenBrightness} and {@link #buttonBrightness}
-         * indicating that the screen or button backlight brightness should be set
-         * to the hightest value when this window is in front.
-         */
-        public static final float BRIGHTNESS_OVERRIDE_FULL = 1.0f;
-
+    
         /**
          * This can be used to override the user's preferred brightness of
          * the screen.  A value of less than 0, the default, means to use the
@@ -901,29 +882,7 @@ public interface WindowManager extends ViewManager {
          */
         public int screenOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
         
-        /**
-         * Control the visibility of the status bar.
-         * @see View#STATUS_BAR_VISIBLE
-         * @see View#STATUS_BAR_HIDDEN
-         */ 	
-        public int systemUiVisibility;
-
-        /**
-         * @hide
-         * The ui visibility as requested by the views in this hierarchy.
-         * the combined value should be systemUiVisibility | subtreeSystemUiVisibility.
-         */
-        public int subtreeSystemUiVisibility;
-
-        /**
-         * Get callbacks about the system ui visibility changing.
-         * 
-         * TODO: Maybe there should be a bitfield of optional callbacks that we need.
-         *
-         * @hide	
-         */	
-        public boolean hasSystemUiListeners;
-
+        
         public LayoutParams() {
             super(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
             type = TYPE_APPLICATION;
@@ -1004,9 +963,6 @@ public interface WindowManager extends ViewManager {
             out.writeString(packageName);
             TextUtils.writeToParcel(mTitle, out, parcelableFlags);
             out.writeInt(screenOrientation);
-            out.writeInt(systemUiVisibility);
-            out.writeInt(subtreeSystemUiVisibility);
-            out.writeInt(hasSystemUiListeners ? 1 : 0);
         }
         
         public static final Parcelable.Creator<LayoutParams> CREATOR
@@ -1043,9 +999,6 @@ public interface WindowManager extends ViewManager {
             packageName = in.readString();
             mTitle = TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in);
             screenOrientation = in.readInt();
-            systemUiVisibility = in.readInt();
-            subtreeSystemUiVisibility = in.readInt();
-            hasSystemUiListeners = in.readInt() != 0;
         }
     
         @SuppressWarnings({"PointlessBitwiseExpression"})
@@ -1063,11 +1016,7 @@ public interface WindowManager extends ViewManager {
         public static final int SCREEN_BRIGHTNESS_CHANGED = 1<<11;
         /** {@hide} */
         public static final int BUTTON_BRIGHTNESS_CHANGED = 1<<12;
-        /** {@hide} */
-        public static final int SYSTEM_UI_VISIBILITY_CHANGED = 1<<13;
-        /** {@hide} */
-        public static final int SYSTEM_UI_LISTENER_CHANGED = 1<<14;
-
+    
         // internal buffer to backup/restore parameters under compatibility mode.
         private int[] mCompatibilityParamsBackup = null;
         
@@ -1164,20 +1113,10 @@ public interface WindowManager extends ViewManager {
                 buttonBrightness = o.buttonBrightness;
                 changes |= BUTTON_BRIGHTNESS_CHANGED;
             }
+    
             if (screenOrientation != o.screenOrientation) {
                 screenOrientation = o.screenOrientation;
                 changes |= SCREEN_ORIENTATION_CHANGED;
-            }
-            if (systemUiVisibility != o.systemUiVisibility
-                    || subtreeSystemUiVisibility != o.subtreeSystemUiVisibility) {
-                systemUiVisibility = o.systemUiVisibility;
-                subtreeSystemUiVisibility = o.subtreeSystemUiVisibility;
-                changes |= SYSTEM_UI_VISIBILITY_CHANGED;
-            }
-
-            if (hasSystemUiListeners != o.hasSystemUiListeners) {
-                hasSystemUiListeners = o.hasSystemUiListeners;
-                changes |= SYSTEM_UI_LISTENER_CHANGED;
             }
             return changes;
         }
@@ -1230,18 +1169,6 @@ public interface WindowManager extends ViewManager {
             }
             if ((flags & FLAG_COMPATIBLE_WINDOW) != 0) {
                 sb.append(" compatible=true");
-            }
-            if (systemUiVisibility != 0) {
-                sb.append(" sysui=0x");
-                sb.append(Integer.toHexString(systemUiVisibility));
-            }
-            if (subtreeSystemUiVisibility != 0) {
-                sb.append(" vsysui=0x");
-                sb.append(Integer.toHexString(subtreeSystemUiVisibility));
-            }
-            if (hasSystemUiListeners) {
-                sb.append(" sysuil=");
-                sb.append(hasSystemUiListeners);
             }
             sb.append('}');
             return sb.toString();

@@ -30,7 +30,6 @@ import android.view.InputEvent;
 import android.view.MotionEvent;
 import android.view.InputChannel;
 import android.view.InputDevice;
-import android.os.IRemoteCallback;
 
 /**
  * System private interface to the window manager.
@@ -101,8 +100,6 @@ interface IWindowManager
     void disableKeyguard(IBinder token, String tag);
     void reenableKeyguard(IBinder token);
     void exitKeyguardSecurely(IOnKeyguardExitResult callback);
-    boolean isKeyguardLocked();
-    boolean isKeyguardSecure();
     boolean inKeyguardRestrictedInputMode();
 
     void closeSystemDialogs(String reason);
@@ -166,12 +163,7 @@ interface IWindowManager
     void lockNow();
 
     /**
-     * Block until the given window has been drawn to the screen.
+     * Block until all windows the window manager knows about have been drawn.
      */
-    void waitForWindowDrawn(IBinder token, in IRemoteCallback callback);
-
-    /**
-     * Called by the status bar to notify Views of changes to System UI visiblity.
-     */
-    void statusBarVisibilityChanged(int visibility);
+    void waitForAllDrawn();
 }

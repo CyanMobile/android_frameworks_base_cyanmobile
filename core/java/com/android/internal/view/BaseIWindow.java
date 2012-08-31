@@ -27,7 +27,6 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 public class BaseIWindow extends IWindow.Stub {
-    public int mSeq;
     private IWindowSession mSession;
     
     public void setSession(IWindowSession session) {
@@ -67,12 +66,7 @@ public class BaseIWindow extends IWindow.Stub {
             }
         }
     }
-
-    public void dispatchSystemUiVisibilityChanged(int seq, int globalUi,
-            int localValue, int localChanges) {
-        mSeq = seq;
-    }
-
+    
     public void dispatchWallpaperCommand(String action, int x, int y,
             int z, Bundle extras, boolean sync) {
         if (sync) {

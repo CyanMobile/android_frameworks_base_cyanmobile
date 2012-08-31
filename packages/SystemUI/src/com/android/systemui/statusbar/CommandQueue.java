@@ -49,8 +49,7 @@ class CommandQueue extends IStatusBar.Stub {
     private static final int MSG_DISABLE = 0x00050000;
 
     private static final int MSG_SET_VISIBILITY = 0x00060000;
-    private static final int MSG_SET_SYSTEMUI_VISIBILITY = 0x00070000;
-    private static final int MSG_SHOW_IME = 0x00080000;
+    private static final int MSG_SHOW_IME = 0x00070000;
     private static final int OP_EXPAND = 1;
     private static final int OP_COLLAPSE = 2;
 
@@ -77,7 +76,6 @@ class CommandQueue extends IStatusBar.Stub {
         public void disable(int state);
         public void animateExpand();
         public void animateCollapse();
-        public void setSystemUiVisibility(int vis);
         public void setIMEVisible(boolean visible);
     }
 
@@ -147,13 +145,6 @@ class CommandQueue extends IStatusBar.Stub {
         }
     }
 
-    public void setSystemUiVisibility(int vis) {
-        synchronized (mList) {
-            mHandler.removeMessages(MSG_SET_SYSTEMUI_VISIBILITY);
-            mHandler.obtainMessage(MSG_SET_SYSTEMUI_VISIBILITY, vis, 0, null).sendToTarget();
-        }	
-    }
-
     public void setIMEVisible(boolean visible) {
         synchronized (mList) {
             mHandler.removeMessages(MSG_SHOW_IME);
@@ -207,9 +198,6 @@ class CommandQueue extends IStatusBar.Stub {
                 }
                 case MSG_DISABLE:
                     mCallbacks.disable(msg.arg1);
-                    break;
-                case MSG_SET_SYSTEMUI_VISIBILITY:
-                    mCallbacks.setSystemUiVisibility(msg.arg1);
                     break;
                 case MSG_SHOW_IME:
                     mCallbacks.setIMEVisible(msg.arg1 != 0);

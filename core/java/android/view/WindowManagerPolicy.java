@@ -21,7 +21,6 @@ import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.IBinder;
 import android.os.LocalPowerManager;
-import android.os.Looper;
 import android.view.animation.Animation;
 
 /**
@@ -220,12 +219,6 @@ public interface WindowManagerPolicy {
         public WindowManager.LayoutParams getAttrs();
 
         /**
-         * Retrieve the current system UI visibility flags associated with
-         * this window.
-         */
-        public int getSystemUiVisibility();
-
-        /**
          * Get the layer at which this window's surface will be Z-ordered.
          */
         public int getSurfaceLayer();
@@ -272,11 +265,6 @@ public interface WindowManagerPolicy {
         boolean isDisplayedLw();
 
         /**
-         * Is this window considered to be gone for purposes of layout?
-         */
-        boolean isGoneForLayoutLw();
-
-        /**
          * Returns true if this window has been shown on screen at some time in 
          * the past.  Must be called with the window manager lock held.
          * 
@@ -300,36 +288,6 @@ public interface WindowManagerPolicy {
          * Returns true if {@link #hideLw} was last called for the window.
          */
         public boolean showLw(boolean doAnimation);
-    }
-
-    /**
-     * Representation of a "fake window" that the policy has added to the
-     * window manager to consume events.
-     */
-    public interface FakeWindow {
-        /**
-         * Remove the fake window from the window manager.
-         */
-        void dismiss();
-    }
-
-    /**
-     * Interface for calling back in to the window manager that is private
-     * between it and the policy.
-     */	
-    public interface WindowManagerFuncs {
-        /**
-         * Ask the window manager to re-evaluate the system UI flags.
-         */
-        public void reevaluateStatusBarVisibility();
-
-        /**
-         * Add a fake window to the window manager.  This window sits
-         * at the top of the other windows and consumes events.
-         */
-        public FakeWindow addFakeWindow(Looper looper, InputHandler inputHandler,
-                String name, int windowType, int layoutParamsFlags, boolean canReceiveKeys,
-                boolean hasFocus, boolean touchFullscreen);
     }
 
     /**
@@ -423,7 +381,6 @@ public interface WindowManagerPolicy {
      * @param powerManager 
      */
     public void init(Context context, IWindowManager windowManager,
-            WindowManagerFuncs windowManagerFuncs,
             LocalPowerManager powerManager);
 
     /**
@@ -726,21 +683,7 @@ public interface WindowManagerPolicy {
      * immediately.
      */
     public boolean allowAppAnimationsLw();
-
-    /**
-     * A new window has been focused.
-     */
-    public int focusChangedLw(WindowState lastFocus, WindowState newFocus);
-
-    /**
-     * Called when a new system UI visibility is being reported, allowing
-     * the policy to adjust what is actually reported.
-     * @param visibility The raw visiblity reported by the status bar.
-     * @return The new desired visibility.
-     */
-    public int adjustSystemUiVisibilityLw(int visibility);
-
-
+    
     /**
      * Called after the screen turns off.
      *
@@ -749,27 +692,15 @@ public interface WindowManagerPolicy {
      */
     public void screenTurnedOff(int why);
 
-    public interface ScreenOnListener {
-        void onScreenOn();
-    };
+    /**
+     * Called after the screen turns on.
+     */
+    public void screenTurnedOn();
 
     /**
-     * Called when the power manager would like to turn the screen on.
-     * Must call back on the listener to tell it when the higher-level system
-     * is ready for the screen to go on (i.e. the lock screen is shown).
+     * Return whether the screen is currently on.
      */
-    public void screenTurningOn(ScreenOnListener screenOnListener);
-
-    /**
-     * Return whether the screen is about to turn on or is currently on.
-     */
-    public boolean isScreenOnEarly();
-
-    /**
-     * Return whether the screen is fully turned on.
-     */
-    public boolean isScreenOnFully();
-
+    public boolean isScreenOn();
 
     /**
      * Tell the policy that the lid switch has changed state.
@@ -803,24 +734,6 @@ public interface WindowManagerPolicy {
      * @see android.app.KeyguardManager#exitKeyguardSecurely(android.app.KeyguardManager.OnKeyguardExitResult)
      */
     void exitKeyguardSecurely(OnKeyguardExitResult callback);
-
-    /**
-     * isKeyguardLocked	
-     *	
-     * Return whether the keyguard is currently locked.	
-     *
-     * @return true if in keyguard is locked.	
-     */
-    public boolean isKeyguardLocked();
-	
-    /**
-     * isKeyguardSecure
-     *
-     * Return whether the keyguard requires a password to unlock.	
-     *	
-     * @return true if in keyguard is secure.
-     */	
-    public boolean isKeyguardSecure();
 
     /**
      * inKeyguardRestrictedKeyInputMode

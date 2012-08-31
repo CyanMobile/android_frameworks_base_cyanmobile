@@ -1580,133 +1580,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     public static final int OVER_SCROLL_NEVER = 2;
 
     /**
-     * View has requested the system UI (status bar) to be visible (the default).
-     *
-     * @see setSystemUiVisibility
-     */
-    public static final int SYSTEM_UI_FLAG_VISIBLE = 0;
-
-    /**
-     * View has requested the system UI to enter an unobtrusive "low profile" mode.
-     *
-     * This is for use in games, book readers, video players, or any other "immersive" application
-     * where the usual system chrome is deemed too distracting. 
-     *
-     * In low profile mode, the status bar and/or navigation icons may dim.
-     *
-     * @see #setSystemUiVisibility(int)
-     */
-    public static final int SYSTEM_UI_FLAG_LOW_PROFILE = 0x00000001;
-
-    /**
-     * View has requested that the system navigation be temporarily hidden.
-     *
-     * This is an even less obtrusive state than that called for by
-     * {@link #SYSTEM_UI_FLAG_LOW_PROFILE}; on devices that draw essential navigation controls
-     * (Home, Back, and the like) on screen, <code>SYSTEM_UI_FLAG_HIDE_NAVIGATION</code> will cause
-     * those to disappear. This is useful (in conjunction with the
-     * {@link android.view.WindowManager.LayoutParams#FLAG_FULLSCREEN FLAG_FULLSCREEN} and 
-     * {@link android.view.WindowManager.LayoutParams#FLAG_LAYOUT_IN_SCREEN FLAG_LAYOUT_IN_SCREEN}
-     * window flags) for displaying content using every last pixel on the display.
-     *
-     * There is a limitation: because navigation controls are so important, the least user
-     * interaction will cause them to reappear immediately.
-     *	
-     * @see setSystemUiVisibility
-     */
-    public static final int SYSTEM_UI_FLAG_HIDE_NAVIGATION = 0x00000002;
-
-    /**
-     * @deprecated Use {@link #SYSTEM_UI_FLAG_LOW_PROFILE} instead.
-     */
-    public static final int STATUS_BAR_HIDDEN = SYSTEM_UI_FLAG_LOW_PROFILE;
-
-    /**
-     * @deprecated Use {@link #SYSTEM_UI_FLAG_VISIBLE} instead.
-     */
-    public static final int STATUS_BAR_VISIBLE = SYSTEM_UI_FLAG_VISIBLE;
-
-    /**
-     * @hide
-     *
-     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
-     * out of the public fields to keep the undefined bits out of the developer's way.
-     *
-     * Flag to make the status bar not expandable.  Unless you also
-     * set {@link #STATUS_BAR_DISABLE_NOTIFICATION_ICONS}, new notifications will continue to show.
-     */
-    public static final int STATUS_BAR_DISABLE_EXPAND = 0x00010000;
-
-    /**
-     * @hide
-     *
-     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
-     * out of the public fields to keep the undefined bits out of the developer's way.
-     *
-     * Flag to hide notification icons and scrolling ticker text.
-     */
-    public static final int STATUS_BAR_DISABLE_NOTIFICATION_ICONS = 0x00020000;
-
-    /**
-     * @hide
-     *
-     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
-     * out of the public fields to keep the undefined bits out of the developer's way.
-     *
-     * Flag to disable incoming notification alerts.  This will not block
-     * icons, but it will block sound, vibrating and other visual or aural notifications.
-     */
-    public static final int STATUS_BAR_DISABLE_NOTIFICATION_ALERTS = 0x00040000;
-
-    /**
-     * @hide
-     *
-     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
-     * out of the public fields to keep the undefined bits out of the developer's way.
-     *
-     * Flag to hide only the scrolling ticker.  Note that
-     * {@link #STATUS_BAR_DISABLE_NOTIFICATION_ICONS} implies
-     * {@link #STATUS_BAR_DISABLE_NOTIFICATION_TICKER}.
-     */
-    public static final int STATUS_BAR_DISABLE_NOTIFICATION_TICKER = 0x00080000;
-
-    /**
-     * @hide
-     *
-     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
-     * out of the public fields to keep the undefined bits out of the developer's way.
-     *
-     * Flag to hide only the navigation buttons.  Don't use this
-     * unless you're a special part of the system UI (i.e., setup wizard, keyguard).
-     */
-    public static final int STATUS_BAR_DISABLE_NAVIGATION = 0x00100000;
-
-    /**
-     * @hide
-     *
-     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
-     * out of the public fields to keep the undefined bits out of the developer's way.
-     *
-     * Flag to hide only the clock.  You might use this if your activity has
-     * its own clock making the status bar's clock redundant.
-     */
-    public static final int STATUS_BAR_DISABLE_CLOCK = 0x00200000;
-
-    /**
-     * @hide
-     */
-    public static final int PUBLIC_STATUS_BAR_VISIBILITY_MASK = 0x0000FFFF;
-
-    /**
-     * These are the system UI flags that can be cleared by events outside
-     * of an application.  Currently this is just the ability to tap on the
-     * screen while hiding the navigation bar to have it return.
-     * @hide
-     */
-    public static final int SYSTEM_UI_CLEARABLE_FLAGS =
-               SYSTEM_UI_FLAG_LOW_PROFILE | SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-
-    /**
      * Controls the over-scroll mode for this view.
      * See {@link #overScrollBy(int, int, int, int, int, int, int, int, boolean)},
      * {@link #OVER_SCROLL_ALWAYS}, {@link #OVER_SCROLL_IF_CONTENT_SCROLLS},
@@ -1766,12 +1639,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
         @ViewDebug.FlagToString(mask = DIRTY_MASK, equals = DIRTY, name = "DIRTY")
     })
     int mPrivateFlags;
-
-    /**
-     * This view's request for the visibility of the status bar.
-     * @hide
-     */
-    int mSystemUiVisibility;
 
     /**
      * Count of how many windows this view has been attached to.
@@ -1935,8 +1802,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     private OnKeyListener mOnKeyListener;
 
     private OnTouchListener mOnTouchListener;
-
-    private OnSystemUiVisibilityChangeListener mOnSystemUiVisibilityChangeListener;
 
     /**
      * The application environment this view lives in.
@@ -4298,22 +4163,17 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     }
 
     void performCollectViewAttributes(int visibility) {
-        if ((visibility & VISIBILITY_MASK) == VISIBLE) {
-            if ((mViewFlags & KEEP_SCREEN_ON) == KEEP_SCREEN_ON) {
-                mAttachInfo.mKeepScreenOn = true;
-            }
-            mAttachInfo.mSystemUiVisibility |= mSystemUiVisibility;
-            if (mOnSystemUiVisibilityChangeListener != null) {
-                mAttachInfo.mHasSystemUiListeners = true;
-            }
+        //noinspection PointlessBitwiseExpression
+        if (((visibility | mViewFlags) & (VISIBILITY_MASK | KEEP_SCREEN_ON))
+                == (VISIBLE | KEEP_SCREEN_ON)) {
+            mAttachInfo.mKeepScreenOn = true;
         }
     }
 
     void needGlobalAttributesUpdate(boolean force) {
-        final AttachInfo ai = mAttachInfo;
+        AttachInfo ai = mAttachInfo;
         if (ai != null) {
-            if (force || ai.mKeepScreenOn || (ai.mSystemUiVisibility != 0)
-                    || ai.mHasSystemUiListeners) {
+            if (ai.mKeepScreenOn || force) {
                 ai.mRecomputeGlobalAttributes = true;
             }
         }
@@ -4878,7 +4738,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
         }
 
         if ((changed & KEEP_SCREEN_ON) != 0) {
-            if (mParent != null && mAttachInfo != null && !mAttachInfo.mRecomputeGlobalAttributes) {
+            if (mParent != null) {
                 mParent.recomputeViewAttributes(this);
             }
         }
@@ -6052,40 +5912,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      */
     protected int computeVerticalScrollExtent() {
         return getHeight();
-    }
-
-    /**
-     * Check if this view can be scrolled horizontally in a certain direction.
-     *	
-     * @param direction Negative to check scrolling left, positive to check scrolling right.
-     * @return true if this view can be scrolled in the specified direction, false otherwise.
-     */	
-    public boolean canScrollHorizontally(int direction) {
-        final int offset = computeHorizontalScrollOffset();
-        final int range = computeHorizontalScrollRange() - computeHorizontalScrollExtent();
-        if (range == 0) return false;
-        if (direction < 0) {
-            return offset > 0;
-        } else {
-            return offset < range - 1;
-        }
-    }
-
-    /**
-     * Check if this view can be scrolled vertically in a certain direction.
-     *
-     * @param direction Negative to check scrolling up, positive to check scrolling down.
-     * @return true if this view can be scrolled in the specified direction, false otherwise.
-     */
-    public boolean canScrollVertically(int direction) {
-        final int offset = computeVerticalScrollOffset();
-        final int range = computeVerticalScrollRange() - computeVerticalScrollExtent();
-        if (range == 0) return false;
-        if (direction < 0) {
-            return offset > 0;
-        } else {	
-            return offset < range - 1;
-        }	
     }
 
     /**
@@ -8912,52 +8738,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     }
 
     /**
-     * @param visibility  Bitwise-or of flags {@link #SYSTEM_UI_FLAG_LOW_PROFILE} or
-     * {@link #SYSTEM_UI_FLAG_HIDE_NAVIGATION}.
-     */
-    public void setSystemUiVisibility(int visibility) {
-        if (visibility != mSystemUiVisibility) {
-            mSystemUiVisibility = visibility;
-            if (mParent != null && mAttachInfo != null && !mAttachInfo.mRecomputeGlobalAttributes) {
-                mParent.recomputeViewAttributes(this);
-            }
-        }
-    }
-
-    /**
-     * @return  Bitwise-or of flags {@link #SYSTEM_UI_FLAG_LOW_PROFILE} or
-     * {@link #SYSTEM_UI_FLAG_HIDE_NAVIGATION}.
-     */
-    public int getSystemUiVisibility() {
-        return mSystemUiVisibility;
-    }
-
-    public void setOnSystemUiVisibilityChangeListener(OnSystemUiVisibilityChangeListener l) {
-        mOnSystemUiVisibilityChangeListener = l;
-        if (mParent != null && mAttachInfo != null && !mAttachInfo.mRecomputeGlobalAttributes) {
-            mParent.recomputeViewAttributes(this);
-        }
-    }
-
-    /**
-     * Dispatch callbacks to {@link #setOnSystemUiVisibilityChangeListener} down
-     * the view hierarchy.
-     */
-    public void dispatchSystemUiVisibilityChanged(int visibility) {
-        if (mOnSystemUiVisibilityChangeListener != null) {
-            mOnSystemUiVisibilityChangeListener.onSystemUiVisibilityChange(
-                    visibility & PUBLIC_STATUS_BAR_VISIBILITY_MASK);
-        }
-    }
-
-    void updateLocalSystemUiVisibility(int localValue, int localChanges) {
-        int val = (mSystemUiVisibility&~localChanges) | (localValue&localChanges);
-        if (val != mSystemUiVisibility) {
-            setSystemUiVisibility(val);
-        }
-    }
-
-    /**
      * This needs to be a better API (NOT ON VIEW) before it is exposed.  If
      * it is ever exposed at all.
      * @hide
@@ -9451,23 +9231,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
         void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo);
     }
 
-    /**
-     * Interface definition for a callback to be invoked when the status bar changes
-     * visibility.
-     *
-     * @see #setOnSystemUiVisibilityChangeListener
-     */
-    public interface OnSystemUiVisibilityChangeListener {
-        /**
-         * Called when the status bar changes visibility because of a call to
-         * {@link #setSystemUiVisibility}.
-         *
-         * @param visibility  Bitwise-or of flags {@link #SYSTEM_UI_FLAG_LOW_PROFILE} or
-         * {@link #SYSTEM_UI_FLAG_HIDE_NAVIGATION}.
-         */
-        public void onSystemUiVisibilityChange(int visibility);
-    }
-
     private final class UnsetPressedState implements Runnable {
         public void run() {
             setPressed(false);
@@ -9677,37 +9440,9 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
         boolean mRecomputeGlobalAttributes;
 
         /**
-         * Always report new attributes at next traversal.
-         */
-        boolean mForceReportNewAttributes;
-
-        /**
          * Set during a traveral if any views want to keep the screen on.
          */
         boolean mKeepScreenOn;
-
-        /**
-         * This view's request for the visibility of the status bar.
-         * @hide
-         */
-        @ViewDebug.ExportedProperty(flagMapping = {
-        @ViewDebug.FlagToString(mask = SYSTEM_UI_FLAG_LOW_PROFILE,
-                                equals = SYSTEM_UI_FLAG_LOW_PROFILE,
-                                name = "SYSTEM_UI_FLAG_LOW_PROFILE", outputIf = true),
-        @ViewDebug.FlagToString(mask = SYSTEM_UI_FLAG_HIDE_NAVIGATION,
-                                equals = SYSTEM_UI_FLAG_HIDE_NAVIGATION,
-                                name = "SYSTEM_UI_FLAG_HIDE_NAVIGATION", outputIf = true),
-        @ViewDebug.FlagToString(mask = PUBLIC_STATUS_BAR_VISIBILITY_MASK,
-                                equals = SYSTEM_UI_FLAG_VISIBLE,
-                                name = "SYSTEM_UI_FLAG_VISIBLE", outputIf = true)
-        })
-        int mSystemUiVisibility;
-
-        /**
-         * True if a view in this hierarchy has an OnSystemUiVisibilityChangeListener
-         * attached.
-         */
-        boolean mHasSystemUiListeners;
 
         /**
          * Set if the visibility of any views has changed.

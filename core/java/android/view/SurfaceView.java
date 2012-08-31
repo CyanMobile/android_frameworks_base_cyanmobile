@@ -251,7 +251,7 @@ public class SurfaceView extends View {
             try {
                 DisplayMetrics metrics = getResources().getDisplayMetrics();
                 mLayout.x = metrics.widthPixels * 3;
-                mSession.relayout(mWindow, mWindow.mSeq, mLayout, mWidth, mHeight, VISIBLE, false,
+                mSession.relayout(mWindow, mLayout, mWidth, mHeight, VISIBLE, false,
                         mWinFrame, mContentInsets, mVisibleInsets, mConfiguration, mSurface);
             } catch (RemoteException e) {
                 // Ignore
@@ -476,7 +476,7 @@ public class SurfaceView extends View {
                     mWindow = new MyWindow(this);
                     mLayout.type = mWindowType;
                     mLayout.gravity = Gravity.LEFT|Gravity.TOP;
-                    mSession.addWithoutInputChannel(mWindow, mWindow.mSeq, mLayout,
+                    mSession.addWithoutInputChannel(mWindow, mLayout,
                             mVisible ? VISIBLE : GONE, mContentInsets);
                 }
                 
@@ -497,7 +497,7 @@ public class SurfaceView extends View {
                     mDrawingStopped = !visible;
     
                     final int relayoutResult = mSession.relayout(
-                        mWindow, mWindow.mSeq, mLayout, mWidth, mHeight,
+                        mWindow, mLayout, mWidth, mHeight,
                             visible ? VISIBLE : GONE, false, mWinFrame, mContentInsets,
                             mVisibleInsets, mConfiguration, mSurface);
                     if ((relayoutResult&WindowManagerImpl.RELAYOUT_FIRST_TIME) != 0) {

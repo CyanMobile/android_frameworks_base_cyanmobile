@@ -30,7 +30,6 @@ import android.provider.Settings;
 import android.view.IWindowManager;
 import android.view.KeyEvent;
 import android.view.WindowManagerPolicy;
-import android.view.WindowManagerPolicy.WindowManagerFuncs;
 
 import com.android.internal.policy.impl.CmButtonTracker.OnLongPressListener;
 import com.android.internal.policy.impl.CmButtonTracker.OnPressListener;
@@ -130,11 +129,10 @@ public class CmPhoneWindowManager extends PhoneWindowManager implements OnPressL
 
     @Override
     public void init(Context context, IWindowManager windowManager,
-            WindowManagerFuncs windowManagerFuncs,
                 LocalPowerManager powerManager){
         mKeyguardMediator = new KeyguardViewMediator(context, this, powerManager);
 
-        super.init(context, windowManager, windowManagerFuncs, powerManager);
+        super.init(context, windowManager, powerManager);
 
         // set up the button trackers
         mVolDownTracker=new CmButtonTracker(KeyEvent.KEYCODE_VOLUME_DOWN);
@@ -157,7 +155,7 @@ public class CmPhoneWindowManager extends PhoneWindowManager implements OnPressL
     /** {@inheritDoc} */
     @Override
     public int interceptKeyBeforeQueueing(long whenNanos, int action, int flags,
-            int keyCode, int scanCode, int policyFlags, boolean isScreenOnFully) {
+            int keyCode, int scanCode, int policyFlags, boolean isScreenOn) {
         final boolean down = action == KeyEvent.ACTION_DOWN;
         final boolean isInjected = (policyFlags & WindowManagerPolicy.FLAG_INJECTED) != 0;
 
@@ -165,7 +163,7 @@ public class CmPhoneWindowManager extends PhoneWindowManager implements OnPressL
         // the same as if it were open and in front.
         // This will prevent any keys other than the power button from waking the screen
         // when the keyguard is hidden by another activity.
-        final boolean keyguardActive = (isScreenOnFully ?
+        final boolean keyguardActive = (isScreenOn ?
                                         mKeyguardMediator.isShowingAndNotHidden() :
                                         mKeyguardMediator.isShowing());
 
@@ -184,10 +182,10 @@ public class CmPhoneWindowManager extends PhoneWindowManager implements OnPressL
 
         // unhide button handling - when in fullscreen mode, and soft buttons are active,
         // this shows the statusbar including soft buttons again
-        if(isScreenOnFully && hasHandledUnhideButton(keyCode, down))
+        if(isScreenOn && hasHandledUnhideButton(keyCode, down))
             return ACTION_NOTHING;
 
-        return super.interceptKeyBeforeQueueing(whenNanos, action, flags, keyCode, scanCode, policyFlags, isScreenOnFully);
+        return super.interceptKeyBeforeQueueing(whenNanos, action, flags, keyCode, scanCode, policyFlags, isScreenOn);
 
         // cm71 nightlies: will be re-enabled to replace PhoneWindowManager's crappy volume handling
         /*        // update the volume Trackers
@@ -196,10 +194,10 @@ public class CmPhoneWindowManager extends PhoneWindowManager implements OnPressL
             mVolUpTracker.track(keyCode, down);
         }
 
-        if(keyguardActive || !isScreenOnFully)
-            return super.interceptKeyBeforeQueueing(whenNanos, action, flags, keyCode, scanCode, policyFlags, isScreenOnFully);
+        if(keyguardActive || !isScreenOn)
+            return super.interceptKeyBeforeQueueing(whenNanos, action, flags, keyCode, scanCode, policyFlags, isScreenOn);
 
-        return super.interceptKeyBeforeQueueing(whenNanos, action, flags, keyCode, scanCode, policyFlags, isScreenOnFully);*/
+        return super.interceptKeyBeforeQueueing(whenNanos, action, flags, keyCode, scanCode, policyFlags, isScreenOn);*/
     }
 
     private boolean hasHandledUnhideButton(int keyCode, boolean down){
@@ -243,11 +241,11 @@ public class CmPhoneWindowManager extends PhoneWindowManager implements OnPressL
 
     @Override
     public void onLongPress(int KeyCode) {
-        if(!isScreenOnFully() && mVolBtnMusicControls && isMusicActive()){
+        if(!isScreenOn() && mVolBtnMusicControls && isMusicActive()){
             handleVolumeKey(AudioManager.STREAM_MUSIC, KeyCode);
             return;
         }
-        if(!isScreenOnFully())
+        if(!isScreenOn())
             return;
         if(KeyCode==KeyEvent.KEYCODE_VOLUME_DOWN)
             handleVolumeActions(mLongVolMinusAction);
@@ -257,7 +255,7 @@ public class CmPhoneWindowManager extends PhoneWindowManager implements OnPressL
 
     @Override
     public void onPress(int KeyCode) {
-        if(isScreenOnFully())
+        if(isScreenOn())
             sendHwButtonEvent(KeyCode);
     }
 }
