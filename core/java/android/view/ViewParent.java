@@ -208,4 +208,10 @@ public interface ViewParent {
      */
     public boolean requestChildRectangleOnScreen(View child, Rect rectangle,
             boolean immediate);
+
+    /**
+     * Ask that a new dispatch of {@link View#fitSystemWindows(Rect)	
+     * View.fitSystemWindows(Rect)} be performed.
+     */
+    public void requestFitSystemWindows();
 }

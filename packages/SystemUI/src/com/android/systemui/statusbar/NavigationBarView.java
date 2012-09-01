@@ -121,6 +121,8 @@ public class NavigationBarView extends LinearLayout {
     private Bitmap mCustomSearchIcon;
     private Bitmap mCustomQuickIcon;
 
+    private boolean mHidden;
+    private boolean mVisible;
     Handler mHandler;
 
     class SettingsObserver extends ContentObserver {
@@ -956,11 +958,30 @@ public class NavigationBarView extends LinearLayout {
         updateNaviButtons();
     }
 
-    public void VisibilityChecks(boolean show) {
-        if (mShowNV) {
-            // Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, show ? 1 : 2);
+    public void setNaviVisible(boolean visible) {
+      if (mShowNV) {
+        if (visible) {
+           mNaviBackground.setVisibility(View.VISIBLE);
+        } else {
+           mNaviBackground.setVisibility(View.GONE);
+        }
+        mVisible = visible;
+        updateNaviButtons();
+      }
+    }
+
+    public void setHidden(final boolean hide) {
+        if (hide == mHidden) return;
+
+        mHidden = hide;
+      if (mShowNV) {
+        if (!hide) {
+           mSoftButtons.setVisibility(View.VISIBLE);
+        } else {
+           mSoftButtons.setVisibility(View.GONE);
         }
         updateNaviButtons();
+      }
     }
 
     public boolean onTouchEvent(final MotionEvent event){
@@ -1005,8 +1026,6 @@ public class NavigationBarView extends LinearLayout {
             return;
 
         // toggle visibility of buttons - at first, toggle all visible
-        mNaviBackground.setVisibility(View.VISIBLE);
-        mSoftButtons.setVisibility(View.VISIBLE);
         mHomeButton.setVisibility(View.VISIBLE);
         mMenuButton.setVisibility(View.VISIBLE);
         mBackButton.setVisibility(View.VISIBLE);
@@ -1015,23 +1034,28 @@ public class NavigationBarView extends LinearLayout {
         mVolDownButton.setVisibility(View.VISIBLE);
         mQuickButton.setVisibility(View.VISIBLE);
 
+        if (mVisible && mShowNV) {
+           mNaviBackground.setVisibility(View.VISIBLE);
+           mSoftButtons.setVisibility(View.VISIBLE);
+        }
+
         if(!mShowNV) {
            mNaviBackground.setVisibility(View.GONE);
-           mSoftButtons.setVisibility(View.GONE);
+           mVisible = true;
         }
 
         // now toggle off unneeded stuff
         if(mShowHome == 0)
-            mHomeButton.setVisibility(View.GONE);
+            mHomeButton.setVisibility(View.INVISIBLE);
         
         if(mShowMenu == 0)
-            mMenuButton.setVisibility(View.GONE);
+            mMenuButton.setVisibility(View.INVISIBLE);
         
         if(mShowBack == 0)
-            mBackButton.setVisibility(View.GONE);
+            mBackButton.setVisibility(View.INVISIBLE);
         
         if(mShowSearch == 0)
-            mSearchButton.setVisibility(View.GONE);
+            mSearchButton.setVisibility(View.INVISIBLE);
 
         if(!mShowVol) {
             mVolUpButton.setVisibility(View.GONE);

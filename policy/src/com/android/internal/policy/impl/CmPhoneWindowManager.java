@@ -30,6 +30,7 @@ import android.provider.Settings;
 import android.view.IWindowManager;
 import android.view.KeyEvent;
 import android.view.WindowManagerPolicy;
+import android.view.WindowManagerPolicy.WindowManagerFuncs;
 
 import com.android.internal.policy.impl.CmButtonTracker.OnLongPressListener;
 import com.android.internal.policy.impl.CmButtonTracker.OnPressListener;
@@ -129,10 +130,11 @@ public class CmPhoneWindowManager extends PhoneWindowManager implements OnPressL
 
     @Override
     public void init(Context context, IWindowManager windowManager,
+                WindowManagerFuncs windowManagerFuncs,
                 LocalPowerManager powerManager){
         mKeyguardMediator = new KeyguardViewMediator(context, this, powerManager);
 
-        super.init(context, windowManager, powerManager);
+        super.init(context, windowManager, windowManagerFuncs, powerManager);
 
         // set up the button trackers
         mVolDownTracker=new CmButtonTracker(KeyEvent.KEYCODE_VOLUME_DOWN);

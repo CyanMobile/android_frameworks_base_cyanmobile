@@ -66,9 +66,12 @@ public class StatusBarManagerService extends IStatusBarService.Stub
 
     // for disabling the status bar
     ArrayList<DisableRecord> mDisableRecords = new ArrayList<DisableRecord>();
+    IBinder mSysUiVisToken = new Binder();
     int mDisabled = 0;
 
     Object mLock = new Object();
+    // encompasses lights-out mode and other flags defined on View
+    int mSystemUiVisibility = 0;
     boolean mIMEVisible = false;
 
     private class DisableRecord implements IBinder.DeathRecipient {
@@ -151,25 +154,29 @@ public class StatusBarManagerService extends IStatusBarService.Stub
     public void disable(int what, IBinder token, String pkg) {
         enforceStatusBar();
 
+        synchronized (mLock) {
+            disableLocked(what, token, pkg);
+        }
+    }
+
+    private void disableLocked(int what, IBinder token, String pkg) {
         // It's important that the the callback and the call to mBar get done
         // in the same order when multiple threads are calling this function
         // so they are paired correctly.  The messages on the handler will be
         // handled in the order they were enqueued, but will be outside the lock.
-        synchronized (mDisableRecords) {
-            manageDisableListLocked(what, token, pkg);
-            final int net = gatherDisableActionsLocked();
-            if (net != mDisabled) {
-                mDisabled = net;
-                mHandler.post(new Runnable() {
-                        public void run() {
-                            mNotificationCallbacks.onSetDisabled(net);
-                        }
-                    });
-                if (mBar != null) {
-                    try {
-                        mBar.disable(net);
-                    } catch (RemoteException ex) {
+        manageDisableListLocked(what, token, pkg);
+        final int net = gatherDisableActionsLocked();
+        if (net != mDisabled) {
+            mDisabled = net;
+            mHandler.post(new Runnable() {
+                    public void run() {
+                        mNotificationCallbacks.onSetDisabled(net);
                     }
+                });
+            if (mBar != null) {
+                try {
+                    mBar.disable(net);
+                } catch (RemoteException ex) {
                 }
             }
         }
@@ -244,21 +251,40 @@ public class StatusBarManagerService extends IStatusBarService.Stub
         }
     }
 
-    private void enforceStatusBar() {
-        mContext.enforceCallingOrSelfPermission(android.Manifest.permission.STATUS_BAR,
-                "StatusBarManagerService");
+    /**
+     * This is used for the user-controlled version of lights-out mode.  Only call this from
+     * the status bar itself.
+     *
+     * We have two different functions here, because I think we're going to want to
+     * tweak the behavior when the user keeps turning lights-out mode off and the	
+     * app keeps trying to turn it on.  For now they can just fight it out.  Having
+     * these two separte inputs will allow us to keep that change local to here.  --joeo
+     */
+    public void setSystemUiVisibility(int vis, int mask) {
+        enforceStatusBarService();
+
+        synchronized (mLock) {
+            updateUiVisibilityLocked(vis, mask);
+            disableLocked(vis & StatusBarManager.DISABLE_MASK, mSysUiVisToken,
+                    "WindowManager.LayoutParams");
+        }	
     }
 
-    private void enforceExpandStatusBar() {
-        mContext.enforceCallingOrSelfPermission(android.Manifest.permission.EXPAND_STATUS_BAR,
-                "StatusBarManagerService");
+    private void updateUiVisibilityLocked(final int vis, final int mask) {
+        if (mSystemUiVisibility != vis) {
+            mSystemUiVisibility = vis;	
+            mHandler.post(new Runnable() {
+                    public void run() {
+                        if (mBar != null) {
+                            try {
+                                mBar.setSystemUiVisibility(vis, mask);
+                            } catch (RemoteException ex) {
+                            }
+                         }
+                    }
+                });
+        }
     }
-
-    private void enforceStatusBarService() {
-        mContext.enforceCallingOrSelfPermission(android.Manifest.permission.STATUS_BAR_SERVICE,
-                "StatusBarManagerService");
-    }
-
 
     public void setIMEVisible(final boolean visible) {
         enforceStatusBar();
@@ -283,12 +309,27 @@ public class StatusBarManagerService extends IStatusBarService.Stub
         }
     }
 
+    private void enforceStatusBar() {
+        mContext.enforceCallingOrSelfPermission(android.Manifest.permission.STATUS_BAR,
+                "StatusBarManagerService");
+    }
+
+    private void enforceExpandStatusBar() {
+        mContext.enforceCallingOrSelfPermission(android.Manifest.permission.EXPAND_STATUS_BAR,
+                "StatusBarManagerService");
+    }
+
+    private void enforceStatusBarService() {
+        mContext.enforceCallingOrSelfPermission(android.Manifest.permission.STATUS_BAR_SERVICE,
+                "StatusBarManagerService");
+    }
+
     // ================================================================================
     // Callbacks from the status bar service.
     // ================================================================================
     public void registerStatusBar(IStatusBar bar, StatusBarIconList iconList,
             List<IBinder> notificationKeys, List<StatusBarNotification> notifications,
-            boolean switches[]) {
+            int switches[]) {
         enforceStatusBarService();
 
         Slog.i(TAG, "registerStatusBar bar=" + bar);
@@ -303,7 +344,8 @@ public class StatusBarManagerService extends IStatusBarService.Stub
             }
         }
         synchronized (mLock) {
-            switches[0] = mIMEVisible;;
+            switches[0] = mSystemUiVisibility;
+            switches[1] = mIMEVisible ? 1 : 0;
         }
     }
 
@@ -401,37 +443,34 @@ public class StatusBarManagerService extends IStatusBarService.Stub
             Slog.d(TAG, "manageDisableList what=0x" + Integer.toHexString(what) + " pkg=" + pkg);
         }
         // update the list
-        synchronized (mDisableRecords) {
-            final int N = mDisableRecords.size();
-            DisableRecord tok = null;
-            int i;
-            for (i=0; i<N; i++) {
-                DisableRecord t = mDisableRecords.get(i);
-                if (t.token == token) {
-                    tok = t;
-                    break;
-                }
+        final int N = mDisableRecords.size();
+        DisableRecord tok = null;
+        int i;
+        for (i=0; i<N; i++) {
+            DisableRecord t = mDisableRecords.get(i);
+            if (t.token == token) {
+                tok = t;
+                break;
             }
-            if (what == 0 || !token.isBinderAlive()) {
-                if (tok != null) {
-                    mDisableRecords.remove(i);
-                    tok.token.unlinkToDeath(tok, 0);
-                }
-            } else {
-                if (tok == null) {
-                    tok = new DisableRecord();
-                    try {
-                        token.linkToDeath(tok, 0);
-                    }
-                    catch (RemoteException ex) {
-                        return; // give up
-                    }
-                    mDisableRecords.add(tok);
-                }
-                tok.what = what;
-                tok.token = token;
-                tok.pkg = pkg;
             }
+        if (what == 0 || !token.isBinderAlive()) {
+            if (tok != null) {
+                mDisableRecords.remove(i);
+                tok.token.unlinkToDeath(tok, 0);
+            }
+        } else {
+            if (tok == null) {
+                tok = new DisableRecord();
+                try {
+                    token.linkToDeath(tok, 0);
+                } catch (RemoteException ex) {
+                    return; // give up
+                }
+                mDisableRecords.add(tok);
+            }
+            tok.what = what;
+            tok.token = token;
+            tok.pkg = pkg;
         }
     }
 
@@ -472,7 +511,7 @@ public class StatusBarManagerService extends IStatusBarService.Stub
             }
         }
 
-        synchronized (mDisableRecords) {
+        synchronized (mLock) {
             final int N = mDisableRecords.size();
             pw.println("  mDisableRecords.size=" + N
                     + " mDisabled=0x" + Integer.toHexString(mDisabled));
@@ -506,3 +545,4 @@ public class StatusBarManagerService extends IStatusBarService.Stub
     };
 
 }
+

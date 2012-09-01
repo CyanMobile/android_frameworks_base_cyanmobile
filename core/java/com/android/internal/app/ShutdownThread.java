@@ -68,6 +68,7 @@ public final class ShutdownThread extends Thread {
     private static boolean mOfferRebootOptions;
     private static String mRebootReason;
     private static boolean mRebootHot = false;
+    private static boolean mRebootSafeMode = false;
 
     // Provides shutdown assurance in case the system_server is killed
     public static final String SHUTDOWN_ACTION_PROPERTY = "sys.shutdown.requested";
@@ -118,6 +119,8 @@ public final class ShutdownThread extends Thread {
                                 mReboot = true;
                                 if (mRebootReason != null && mRebootReason.equals("hot")) {
                                     mRebootHot = true;
+                                } else if (mRebootReason != null && mRebootReason.equals("safemodes")) {
+                                    mRebootSafeMode = true;
                                 }
                                 beginShutdownSequence(context);
                             }
@@ -219,6 +222,9 @@ public final class ShutdownThread extends Thread {
               if (mRebootHot) {
                 pd.setTitle("Hot reboot phone");
                 pd.setMessage("Restarting android framework\u2026");
+              } else if (mRebootSafeMode) {
+                pd.setTitle("Reboot phone into Safe mode");
+                pd.setMessage(context.getText(com.android.internal.R.string.reboot_progress));
               } else {
                 pd.setTitle(context.getText(com.android.internal.R.string.reboot_system));
                 pd.setMessage(context.getText(com.android.internal.R.string.reboot_progress));
@@ -480,8 +486,9 @@ public final class ShutdownThread extends Thread {
                     Log.e(TAG, "Hot reboot failed, will attempt normal reboot instead", e);
                     reason = null;
                 }
+            } else if (mRebootSafeMode) {
+                SystemProperties.set( "persist.sys.safe_mode","1");
             }
-
             // normal reboot
             try {
                 Power.reboot(reason);

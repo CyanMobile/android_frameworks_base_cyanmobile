@@ -41,9 +41,12 @@ import android.content.res.TypedArray;
 import android.database.ContentObserver;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
+import android.os.Binder;
+import android.os.Bundle;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.IRemoteCallback;
 import android.os.LocalPowerManager;
 import android.os.Looper;
 import android.os.PowerManager;
@@ -95,12 +98,17 @@ import static android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
 import static android.view.WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_MASK_ADJUST;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING;
 import static android.view.WindowManager.LayoutParams.LAST_APPLICATION_WINDOW;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_MEDIA;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_MEDIA_OVERLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_SUB_PANEL;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
+import static android.view.WindowManager.LayoutParams.TYPE_BOOT_PROGRESS;
+import static android.view.WindowManager.LayoutParams.TYPE_HIDDEN_NAV_CONSUMER;
+import static android.view.WindowManager.LayoutParams.TYPE_INPUT_METHOD;
+import static android.view.WindowManager.LayoutParams.TYPE_INPUT_METHOD_DIALOG;
 import static android.view.WindowManager.LayoutParams.TYPE_KEYGUARD;
 import static android.view.WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG;
 import static android.view.WindowManager.LayoutParams.TYPE_PHONE;
@@ -109,19 +117,19 @@ import static android.view.WindowManager.LayoutParams.TYPE_SEARCH_BAR;
 import static android.view.WindowManager.LayoutParams.TYPE_SECURE_SYSTEM_OVERLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_STATUS_BAR;
 import static android.view.WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL;
+import static android.view.WindowManager.LayoutParams.TYPE_STATUS_BAR_SUB_PANEL;
 import static android.view.WindowManager.LayoutParams.TYPE_SYSTEM_DIALOG;
 import static android.view.WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
 import static android.view.WindowManager.LayoutParams.TYPE_SYSTEM_ERROR;
-import static android.view.WindowManager.LayoutParams.TYPE_INPUT_METHOD;
-import static android.view.WindowManager.LayoutParams.TYPE_INPUT_METHOD_DIALOG;
 import static android.view.WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_TOAST;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 import static android.view.WindowManager.LayoutParams.TYPE_NAVIGATION_BAR;
 import static android.view.WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL;
-import static android.view.WindowManager.LayoutParams.TYPE_BOOT_PROGRESS;
 import android.view.WindowManagerImpl;
 import android.view.WindowManagerPolicy;
+import android.view.WindowManagerPolicy.WindowManagerFuncs;
+import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Toast;
@@ -152,33 +160,35 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static final int APPLICATION_LAYER = 2;
     static final int PHONE_LAYER = 3;
     static final int SEARCH_BAR_LAYER = 4;
-    static final int SYSTEM_DIALOG_LAYER = 5;
+    static final int STATUS_BAR_PANEL_LAYER = 5;
+    static final int SYSTEM_DIALOG_LAYER = 6;
     // toasts and the plugged-in battery thing
-    static final int TOAST_LAYER = 6;
-    static final int STATUS_BAR_LAYER = 7;
-    static final int STATUS_BAR_PANEL_LAYER = 8;
+    static final int TOAST_LAYER = 7;
+    static final int STATUS_BAR_LAYER = 8;
+    static final int STATUS_BAR_SUB_PANEL_LAYER = 9;
     // SIM errors and unlock.  Not sure if this really should be in a high layer.
-    static final int PRIORITY_PHONE_LAYER = 9;
+    static final int PRIORITY_PHONE_LAYER = 10;
     // like the ANR / app crashed dialogs
-    static final int SYSTEM_ALERT_LAYER = 10;
+    static final int SYSTEM_ALERT_LAYER = 11;
     // on-screen keyboards and other such input method user interfaces go here.
-    static final int INPUT_METHOD_LAYER = 11;
+    static final int INPUT_METHOD_LAYER = 12;
     // on-screen keyboards and other such input method user interfaces go here.
-    static final int INPUT_METHOD_DIALOG_LAYER = 12;
+    static final int INPUT_METHOD_DIALOG_LAYER = 13;
     // the navigation bar, if available, shows atop most things
-    static final int NAVIGATION_BAR_LAYER = 13;
+    static final int NAVIGATION_BAR_LAYER = 14;
     // some panels (e.g. search) need to show on top of the navigation bar
-    static final int NAVIGATION_BAR_PANEL_LAYER = 14;
+    static final int NAVIGATION_BAR_PANEL_LAYER = 15;
     // the keyguard; nothing on top of these can take focus, since they are
     // responsible for power management when displayed.
-    static final int KEYGUARD_LAYER = 15;
-    static final int KEYGUARD_DIALOG_LAYER = 16;
+    static final int KEYGUARD_LAYER = 16;
+    static final int KEYGUARD_DIALOG_LAYER = 17;
     // things in here CAN NOT take focus, but are shown on top of everything else.
-    static final int SYSTEM_OVERLAY_LAYER = 17;
+    static final int SYSTEM_OVERLAY_LAYER = 18;
     // system-level error dialogs
-    static final int SYSTEM_ERROR_LAYER = 18;
-    static final int SECURE_SYSTEM_OVERLAY_LAYER = 19;
-    static final int BOOT_PROGRESS_LAYER = 20;
+    static final int SYSTEM_ERROR_LAYER = 19;
+    static final int SECURE_SYSTEM_OVERLAY_LAYER = 20;
+    static final int BOOT_PROGRESS_LAYER = 21;
+    static final int HIDDEN_NAV_CONSUMER_LAYER = 22;
 
     static final int APPLICATION_MEDIA_SUBLAYER = -2;
     static final int APPLICATION_MEDIA_OVERLAY_SUBLAYER = -1;
@@ -193,16 +203,26 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static public final String SYSTEM_DIALOG_REASON_RECENT_APPS = "recentapps";
     static public final String SYSTEM_DIALOG_REASON_HOME_KEY = "homekey";
 
+    /**
+     * These are the system UI flags that, when changing, can cause the layout
+     * of the screen to change.
+     */
+    static final int SYSTEM_UI_CHANGING_LAYOUT =
+            View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN;
+
     // Useful scan codes.
     private static final int SW_LID = 0x00;
     private static final int BTN_MOUSE = 0x110;
 
     final Object mLock = new Object();
+    final Object mServiceAquireLock = new Object();
 
     Context mContext;
     Context mUiContext;
     IWindowManager mWindowManager;
+    WindowManagerFuncs mWindowManagerFuncs;
     LocalPowerManager mPowerManager;
+    IStatusBarService mStatusBarService;
     Vibrator mVibrator; // Vibrator for giving feedback of orientation changes
 
     // Vibrator pattern for haptic feedback of a long press.
@@ -237,6 +257,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     volatile boolean mPowerKeyHandled;
     RecentApplicationsDialog mRecentAppsDialog;
     Handler mHandler;
+    WindowState mLastInputMethodWindow = null;
+    WindowState mLastInputMethodTargetWindow = null;
 
     boolean mSystemReady;
     boolean mSystemBooted;
@@ -266,13 +288,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private boolean mShowDate;
     private boolean mShowStatBar;
     private boolean mNaviShow;
-    private boolean mShowNavi;
-    private boolean mShowNaviUp;
+    private boolean mNaviShowAll;
     int mPointerLocationMode = 0;
     int mBackKillTimeout;
 
     PointerLocationView mPointerLocationView = null;
     InputChannel mPointerLocationInputChannel;
+
+    // The last window we were told about in focusChanged.
+    WindowState mFocusedWindow;
 
     private final InputHandler mPointerLocationInputHandler = new BaseInputHandler() {
         @Override
@@ -287,11 +311,24 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     };
 
-    // The current size of the screen.
+    // The current size of the screen; really; (ir)regardless of whether the status
+    // bar can be hidden or not
     int mUnrestrictedScreenLeft, mUnrestrictedScreenTop;
     int mUnrestrictedScreenWidth, mUnrestrictedScreenHeight;
+    // The current size of the screen; these may be different than (0,0)-(dw,dh)
+    // if the status bar can't be hidden; in that case it effectively carves out
+    // that area of the display from all other windows.
     int mRestrictedScreenLeft, mRestrictedScreenTop;
     int mRestrictedScreenWidth, mRestrictedScreenHeight;
+    // During layout, the current screen borders accounting for any currently
+    // visible system UI elements.
+    int mSystemLeft, mSystemTop, mSystemRight, mSystemBottom;
+    // For applications requesting stable content insets, these are them.
+    int mStableLeft, mStableTop, mStableRight, mStableBottom;
+    // For applications requesting stable content insets but have also set the
+    // fullscreen window flag, these are the stable dimensions without the status bar.
+    int mStableFullscreenLeft, mStableFullscreenTop;
+    int mStableFullscreenRight, mStableFullscreenBottom;
     // During layout, the current screen borders with all outer decoration
     // (status bar, input method dock) accounted for.
     int mCurLeft, mCurTop, mCurRight, mCurBottom;
@@ -301,11 +338,25 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // the same as mCur*, but may be larger if the screen decor has supplied
     // content insets.
     int mContentLeft, mContentTop, mContentRight, mContentBottom;
-    // During layout, the current screen borders along with input method
+    // During layout, the current screen borders along which input method
     // windows are placed.
     int mDockLeft, mDockTop, mDockRight, mDockBottom;
     // During layout, the layer at which the doc window is placed.
     int mDockLayer;
+    // During layout, this is the layer of the status bar.
+    int mStatusBarLayer;
+    int mLastSystemUiFlags;
+    // Bits that we are in the process of clearing, so we want to prevent
+    // them from being set by applications until everything has been updated
+    // to have them clear.
+    int mResettingSystemUiFlags = 0;
+    // Bits that we are currently always keeping cleared.
+    int mForceClearedSystemUiFlags = 0;
+
+    int mLastSystemUiVisibility;
+    int mForceClearingStatusBarVisibility = 0;
+
+    FakeWindow mHideNavFakeWindow = null;
 
     static final Rect mTmpParentFrame = new Rect();
     static final Rect mTmpDisplayFrame = new Rect();
@@ -314,6 +365,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static final Rect mTmpNavigationFrame = new Rect();
 
     WindowState mTopFullscreenOpaqueWindowState;
+    boolean mTopIsFullscreen;
     boolean mForceStatusBar;
     boolean mHideLockScreen;
     boolean mDismissKeyguard;
@@ -410,6 +462,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.Secure.KILL_APP_LONGPRESS_BACK), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUSBAR_STATS_SIZE), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.STATUSBAR_NAVI_SIZE), false, this);
             updateSettings();
         }
 
@@ -443,6 +497,16 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
     MyOrientationListener mOrientationListener;
+
+    IStatusBarService getStatusBarService() {
+        synchronized (mServiceAquireLock) {
+            if (mStatusBarService == null) {
+                mStatusBarService = IStatusBarService.Stub.asInterface(
+                        ServiceManager.getService("statusbar"));
+            }
+            return mStatusBarService;
+        }
+    }
 
     boolean useSensorForOrientationLp(int appOrientation) {
         // The app says use the sensor.
@@ -825,6 +889,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     /** {@inheritDoc} */
     public void init(Context context, IWindowManager windowManager,
+            WindowManagerFuncs windowManagerFuncs,
             LocalPowerManager powerManager) {
 
         if ("0".equals(SystemProperties.get("ro.squadzone.build", "0")))
@@ -832,6 +897,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         mContext = context;
         mWindowManager = windowManager;
+        mWindowManagerFuncs = windowManagerFuncs;
         mPowerManager = powerManager;
         if(mKeyguardMediator==null)
             mKeyguardMediator = new KeyguardViewMediator(context, this, powerManager);
@@ -931,10 +997,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.SYSTEMUI_STATUSBAR_VISIBILITY, 0) == 1);
             mNaviShow = (Settings.System.getInt(resolver,
                     Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
-            mShowNavi = (Settings.System.getInt(resolver,
+            mNaviShowAll = (Settings.System.getInt(resolver,
                     Settings.System.NAVI_BUTTONS, 1) == 1);
-            mShowNaviUp = (Settings.System.getInt(resolver,
-                    Settings.System.NAVI_BUTTONS, 1) == 2);
             int accelerometerDefault = Settings.System.getInt(resolver,
                     Settings.System.ACCELEROMETER_ROTATION, DEFAULT_ACCELEROMETER_ROTATION);
             if (mAccelerometerDefault != accelerometerDefault) {
@@ -1130,9 +1194,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
         switch (type) {
         case TYPE_STATUS_BAR:
-            return ((mBottomBar && mShowDate) ? STATUS_BAR_PANEL_LAYER : STATUS_BAR_LAYER);
+            return STATUS_BAR_LAYER;
         case TYPE_STATUS_BAR_PANEL:
-            return ((mBottomBar && mShowDate) ? STATUS_BAR_LAYER : STATUS_BAR_PANEL_LAYER);
+            return ((mBottomBar && mShowDate) ? STATUS_BAR_PANEL_LAYER : STATUS_BAR_SUB_PANEL_LAYER);
+        case TYPE_STATUS_BAR_SUB_PANEL:
+            return STATUS_BAR_SUB_PANEL_LAYER;
         case TYPE_SYSTEM_DIALOG:
             return SYSTEM_DIALOG_LAYER;
         case TYPE_SEARCH_BAR:
@@ -1167,6 +1233,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             return NAVIGATION_BAR_PANEL_LAYER;
         case TYPE_BOOT_PROGRESS:
             return BOOT_PROGRESS_LAYER;
+        case TYPE_HIDDEN_NAV_CONSUMER:
+            return HIDDEN_NAV_CONSUMER_LAYER;
         }
         Log.e(TAG, "Unknown window type: " + type);
         return APPLICATION_LAYER;
@@ -1199,6 +1267,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     public boolean canBeForceHidden(WindowState win, WindowManager.LayoutParams attrs) {
         return attrs.type != WindowManager.LayoutParams.TYPE_STATUS_BAR
+                && attrs.type != WindowManager.LayoutParams.TYPE_NAVIGATION_BAR
                 && attrs.type != WindowManager.LayoutParams.TYPE_WALLPAPER;
     }
 
@@ -1351,6 +1420,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 mContext.enforceCallingOrSelfPermission(
                         android.Manifest.permission.STATUS_BAR_SERVICE,
                         "PhoneWindowManager");
+                if (mNavigationBar != null) {
+                    return WindowManagerImpl.ADD_MULTIPLE_SINGLETON;
+                }
                 mNavigationBar = win;
                 break;
             case TYPE_NAVIGATION_BAR_PANEL:
@@ -1359,6 +1431,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         "PhoneWindowManager");
                 break;
             case TYPE_STATUS_BAR_PANEL:
+                mContext.enforceCallingOrSelfPermission(
+                        android.Manifest.permission.STATUS_BAR_SERVICE,
+                        "PhoneWindowManager");
+                mStatusBarPanels.add(win);
+                break;
+            case TYPE_STATUS_BAR_SUB_PANEL:
                 mContext.enforceCallingOrSelfPermission(
                         android.Manifest.permission.STATUS_BAR_SERVICE,
                         "PhoneWindowManager");
@@ -1607,12 +1685,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 Intent shortcutIntent = mShortcutManager.getIntent(keyCode, metaState);
                 if (shortcutIntent != null) {
                     shortcutIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    mContext.startActivity(shortcutIntent);
-
-                    /*
-                     * We launched an app, so the up-event of the search key
-                     * should be consumed
-                     */
+                    try {
+                            mContext.startActivity(shortcutIntent);
+                        } catch (ActivityNotFoundException ex) {
+                            // woot!!
+                        }
                     mConsumeSearchKeyUp = true;
                     return true;
                 }
@@ -1720,17 +1797,122 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+    /**
+     * A delayed callback use to determine when it is okay to re-allow applications
+     * to use certain system UI flags.  This is used to prevent applications from
+     * spamming system UI changes that prevent the navigation bar from being shown.
+     */
+    final Runnable mAllowSystemUiDelay = new Runnable() {
+        @Override public void run() {
+        }
+    };
+
+    /**
+     * Input handler used while nav bar is hidden.  Captures any touch on the screen,
+     * to determine when the nav bar should be shown and prevent applications from
+     * receiving those touches.
+     */
+    final InputHandler mHideNavInputHandler = new BaseInputHandler() {
+        @Override
+        public void handleMotion(MotionEvent event, Runnable finishedCallback) {
+            try {
+                if ((event.getSource() & InputDevice.SOURCE_CLASS_POINTER) != 0) {
+                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                        // When the user taps down, we re-show the nav bar.
+                        boolean changed = false;
+                        synchronized (mLock) {
+                            // Any user activity always causes us to show the
+                            // navigation controls, if they had been hidden.
+                            // We also clear the low profile and only content
+                            // flags so that tapping on the screen will atomically
+                            // restore all currently hidden screen decorations.
+                            int newVal = mResettingSystemUiFlags |
+                                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                                    View.SYSTEM_UI_FLAG_LOW_PROFILE |
+                                    View.SYSTEM_UI_FLAG_FULLSCREEN;
+                            if (mResettingSystemUiFlags != newVal) {
+                                mResettingSystemUiFlags = newVal;
+                                changed = true;
+                            }
+                            // We don't allow the system's nav bar to be hidden
+                            // again for 1 second, to prevent applications from
+                            // spamming us and keeping it from being shown.
+                            newVal = mForceClearedSystemUiFlags |
+                                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+                            if (mForceClearedSystemUiFlags != newVal) {
+                                mForceClearedSystemUiFlags = newVal;
+                                changed = true;
+                                mHandler.postDelayed(new Runnable() {
+                                    @Override public void run() {
+                                        synchronized (mLock) {
+                                            // Clear flags.
+                                            mForceClearedSystemUiFlags &=
+                                                    ~View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+                                        }
+                                        mWindowManagerFuncs.reevaluateStatusBarVisibility();
+                                    }
+                                }, 1000);
+                            }
+                        }
+                        if (changed) {
+                            mWindowManagerFuncs.reevaluateStatusBarVisibility();
+                        }
+                    }
+                }
+            } finally {
+                finishedCallback.run();
+            }
+        }
+    };
+
+    @Override
+    public int adjustSystemUiVisibilityLw(int visibility) {
+        // Reset any bits in mForceClearingStatusBarVisibility that
+        // are now clear.
+        mResettingSystemUiFlags &= visibility;
+        // Clear any bits in the new visibility that are currently being
+        // force cleared, before reporting it.
+        return visibility & ~mResettingSystemUiFlags
+                & ~mForceClearedSystemUiFlags;
+    }
+
     public void getContentInsetHintLw(WindowManager.LayoutParams attrs, Rect contentInset) {
         final int fl = attrs.flags;
+        final int systemUiVisibility = (attrs.systemUiVisibility|attrs.subtreeSystemUiVisibility);
 
-        if ((fl & (FLAG_LAYOUT_IN_SCREEN | FLAG_FULLSCREEN | FLAG_LAYOUT_INSET_DECOR))
+        if ((fl & (FLAG_LAYOUT_IN_SCREEN | FLAG_LAYOUT_INSET_DECOR))
                 == (FLAG_LAYOUT_IN_SCREEN | FLAG_LAYOUT_INSET_DECOR)) {
-            contentInset.set(mCurLeft, mCurTop,
-                   (mRestrictedScreenLeft+mRestrictedScreenWidth) - mCurRight,
-                   (mRestrictedScreenTop+mRestrictedScreenHeight) - mCurBottom);
-        } else {
-            contentInset.setEmpty();
+            int availRight, availBottom;
+            if (!mNaviShow &&
+                    (systemUiVisibility & View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION) != 0) {
+                availRight = mUnrestrictedScreenLeft + mUnrestrictedScreenWidth;
+                availBottom = mUnrestrictedScreenTop + mUnrestrictedScreenHeight;
+            } else {
+                availRight = mRestrictedScreenLeft + mRestrictedScreenWidth;
+                availBottom = mRestrictedScreenTop + mRestrictedScreenHeight;
+            }
+            if ((systemUiVisibility & View.SYSTEM_UI_FLAG_LAYOUT_STABLE) != 0) {
+                if ((fl & FLAG_FULLSCREEN) != 0) {
+                    contentInset.set(mStableFullscreenLeft, mStableFullscreenTop,
+                            availRight - mStableFullscreenRight,
+                            availBottom - mStableFullscreenBottom);
+                } else {
+                    contentInset.set(mStableLeft, mStableTop,
+                            availRight - mStableRight, availBottom - mStableBottom);
+                }
+            } else if ((fl & FLAG_FULLSCREEN) != 0) {
+                contentInset.setEmpty();
+            } else if ((systemUiVisibility & (View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)) == 0) {
+                contentInset.set(mCurLeft, mCurTop,
+                        availRight - mCurRight, availBottom - mCurBottom);
+            } else {
+                contentInset.set(mCurLeft, mCurTop,
+                        availRight - mCurRight, availBottom - mCurBottom);
+            }
+            return;
         }
+        contentInset.setEmpty();
     }
 
     /** {@inheritDoc} */
@@ -1741,59 +1923,130 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mRestrictedScreenLeft = mRestrictedScreenTop = 0;
         mRestrictedScreenWidth = displayWidth;
         mRestrictedScreenHeight = displayHeight;
-        mDockTop = mContentTop = mCurTop = 0;
-        mDockRight = mContentRight = mCurRight = displayWidth;
-        mDockBottom = mContentBottom = mCurBottom = displayHeight;
+        mDockLeft = mContentLeft = mStableLeft = mStableFullscreenLeft
+                = mSystemLeft = mCurLeft = 0;
+        mDockTop = mContentTop = mStableTop = mStableFullscreenTop
+                = mSystemTop = mCurTop = 0;
+        mDockRight = mContentRight = mStableRight = mStableFullscreenRight
+                = mSystemRight = mCurRight = displayWidth;
+        mDockBottom = mContentBottom = mStableBottom = mStableFullscreenBottom
+                = mSystemBottom = mCurBottom = displayHeight;
         mDockLayer = 0x10000000;
+        mStatusBarLayer = -1;
 
-         // start with the current dock rect, which will be (0,0,displayWidth,displayHeight)
-         final Rect pf = mTmpParentFrame;
-         final Rect df = mTmpDisplayFrame;
-         final Rect vf = mTmpVisibleFrame;
-         pf.left = df.left = vf.left = 0;
-         pf.top = df.top = vf.top = 0;
-         pf.right = df.right = vf.right = displayWidth;
-         pf.bottom = df.bottom = vf.bottom = displayHeight;
+        // start with the current dock rect, which will be (0,0,displayWidth,displayHeight)
+        final Rect pf = mTmpParentFrame;
+        final Rect df = mTmpDisplayFrame;
+        final Rect vf = mTmpVisibleFrame;
+        pf.left = df.left = vf.left = mDockLeft;
+        pf.top = df.top = vf.top = mDockTop;
+        pf.right = df.right = vf.right = mDockRight;
+        pf.bottom = df.bottom = vf.bottom = mDockBottom;
+
+        final boolean navVisible = (mNaviShow && (mNavigationBar != null && mNavigationBar.isVisibleLw()) &&
+                ((mLastSystemUiFlags&SYSTEM_UI_CHANGING_LAYOUT) == 0));
+
+        // When the navigation bar isn't visible, we put up a fake
+        // input window to catch all touch events.  This way we can
+        // detect when the user presses anywhere to bring back the nav
+        // bar and ensure the application doesn't see the event.
+        if (navVisible) {
+            if (mHideNavFakeWindow != null) {
+                mHideNavFakeWindow.dismiss();
+                mHideNavFakeWindow = null;
+            }
+        } else if (mHideNavFakeWindow == null) {
+            mHideNavFakeWindow = mWindowManagerFuncs.addFakeWindow(
+                    mHandler.getLooper(), mHideNavInputHandler,
+                    "hidden nav", WindowManager.LayoutParams.TYPE_HIDDEN_NAV_CONSUMER,
+                    0, false, false, true);
+        }
+
+        if (mNavigationBar != null) {
+            // Force the navigation bar to its appropriate place and
+            // size.  We need to do this directly, instead of relying on
+            // it to bubble up from the nav bar, because this needs to
+            // change atomically with screen rotations.
+            int navSizeval = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUSBAR_NAVI_SIZE, 25);
+            int navSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                    navSizeval, mContext.getResources().getDisplayMetrics());
+            final int mNavigationBarHeight = navSizepx;
+            // It's a system nav bar or a portrait screen; nav bar goes on bottom.
+                int top = displayHeight - Math.round(mNavigationBarHeight);
+                mTmpNavigationFrame.set(0, top, displayWidth, displayHeight);
+                mStableBottom = mStableFullscreenBottom = mTmpNavigationFrame.top;
+                if (navVisible) {
+                    mNavigationBar.showLw(true);
+                    mDockBottom = mTmpNavigationFrame.top;
+                    mRestrictedScreenHeight = mDockBottom - mDockTop;
+                } else {
+                    mNavigationBar.hideLw(true);
+                }
+                if (navVisible) {
+                   // If the nav bar is currently requested to be visible,
+                   // and not in the process of animating on or off, then
+                   // we can tell the app that it is covered by it.
+                   mSystemBottom = mTmpNavigationFrame.top;
+                }
+            // Make sure the content and current rectangles are updated to
+            // account for the restrictions from the navigation bar.
+            mContentTop = mCurTop = mDockTop;
+            mContentBottom = mCurBottom = mDockBottom;
+            mContentLeft = mCurLeft = mDockLeft;
+            mContentRight = mCurRight = mDockRight;
+            mStatusBarLayer = mNavigationBar.getSurfaceLayer();
+            // And compute the final frame.
+            mNavigationBar.computeFrameLw(mTmpNavigationFrame, mTmpNavigationFrame,
+                    mTmpNavigationFrame, mTmpNavigationFrame);
+            if (DEBUG_LAYOUT) Log.i(TAG, "mNavigationBar frame: " + mTmpNavigationFrame);
+        }
 
         // decide where the status bar goes ahead of time
         if (mStatusBar != null) {
-            if (mNavigationBar != null) {
-                final boolean navVisible = (mNavigationBar.isVisibleLw() && mNaviShow && mShowNavi);
-                int navSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_NAVI_SIZE, 25);
-                int navSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                     navSizeval, mContext.getResources().getDisplayMetrics());
-                final int mNavigationBarHeight = navSizepx;
-                    mTmpNavigationFrame.set(0, displayHeight-mNavigationBarHeight,
-                            displayWidth, displayHeight);
-                    if (navVisible) {
-                        mDockBottom = mContentBottom = mCurBottom = mTmpNavigationFrame.top;
-                    } else {
-                        mTmpNavigationFrame.offset(0, mNavigationBarHeight);
-                    }
-                mNavigationBar.computeFrameLw(mTmpNavigationFrame, mTmpNavigationFrame,
-                                        mTmpNavigationFrame, mTmpNavigationFrame);
-            } else {
-                mDockBottom = mContentBottom = mCurBottom = displayHeight;
-            }
-            if (DEBUG_LAYOUT) Log.i(TAG, "mNavigationBar frame: " + mTmpNavigationFrame);
-            if(mBottomBar && !mNaviShow){
-                int statSizeval = Settings.System.getInt(mContext.getContentResolver(),
+            int statSizeval = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.STATUSBAR_STATS_SIZE, 25);
-                int statSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+            int statSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                      statSizeval, mContext.getResources().getDisplayMetrics());
-                final int statusbar_height = statSizepx;
+            final int statusbar_height = statSizepx;
+
+            // apply any navigation bar insets
+            pf.left = df.left = mUnrestrictedScreenLeft;
+            pf.top = df.top = mUnrestrictedScreenTop;
+            pf.right = df.right = mUnrestrictedScreenWidth - mUnrestrictedScreenLeft;
+            pf.bottom = df.bottom = mUnrestrictedScreenHeight - mUnrestrictedScreenTop;
+            vf.left = mStableLeft;
+            vf.top = mStableTop;
+            vf.right = mStableRight;
+            vf.bottom = mStableBottom;
+
+            mStatusBarLayer = mStatusBar.getSurfaceLayer();
+
+            if(mBottomBar && !mNaviShow){
                 //setting status bar's top, to bottom of the screen, minus status bar height
                 pf.top = df.top = vf.top = (displayHeight-statusbar_height);
             }
 
             mStatusBar.computeFrameLw(pf, df, vf, vf);
 
+            // For layout, the status bar is always at the top with our fixed height.
+            mStableTop = mUnrestrictedScreenTop + statusbar_height;
+
+            // If the status bar is hidden, we don't want to cause
+            // windows behind it to scroll.
             if (mStatusBar.isVisibleLw()) {
+                // Status bar may go away, so the screen area it occupies
+                // is available to apps but just covering them when the
+                // status bar is visible.
+                mDockTop = mUnrestrictedScreenTop + statusbar_height;
+                
+                mContentTop = mCurTop = mDockTop;
+                mContentBottom = mCurBottom = mDockBottom;
+                mContentLeft = mCurLeft = mDockLeft;
+                mContentRight = mCurRight = mDockRight;
+
                 final Rect r = mStatusBar.getFrameLw();
-                // If the status bar is hidden, we don't want to cause
-                // windows behind it to scroll.
-                if(mBottomBar && (!mNaviShow || !mShowNavi)) {
+                if(mBottomBar && !mNaviShow) {
                     //setting activites bottoms, to top of status bar
                     mDockBottom = mContentBottom = mCurBottom = r.top;
                 } else {
@@ -1803,10 +2056,27 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         + mDockBottom + " mContentBottom="
                         + mContentBottom + " mCurBottom=" + mCurBottom);
             }
+            if (mStatusBar.isVisibleLw()) {
+                // If the status bar is currently requested to be visible,
+                // and not in the process of animating on or off, then
+                // we can tell the app that it is covered by it.
+                mSystemTop = mUnrestrictedScreenTop + statusbar_height;
+            }
         }
     }
 
-    void setAttachedWindowFrames(WindowState win, int fl, int sim,
+    /** {@inheritDoc} */
+    public int getSystemDecorRectLw(Rect systemRect) {
+        systemRect.left = mSystemLeft;
+        systemRect.top = mSystemTop;
+        systemRect.right = mSystemRight;
+        systemRect.bottom = mSystemBottom;
+        if (mStatusBar != null) return mStatusBar.getSurfaceLayer();
+        if (mNavigationBar != null) return mNavigationBar.getSurfaceLayer();
+        return 0;
+    }
+
+    void setAttachedWindowFrames(WindowState win, int fl, int adjust,
             WindowState attached, boolean insetDecors, Rect pf, Rect df, Rect cf, Rect vf) {
         if (win.getSurfaceLayer() > mDockLayer && attached.getSurfaceLayer() < mDockLayer) {
             // Here's a special case: if this attached window is a panel that is
@@ -1827,7 +2097,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             // window is positioned within that content.  Otherwise we can use
             // the display frame and let the attached window take care of
             // positioning its content appropriately.
-            if ((sim & SOFT_INPUT_MASK_ADJUST) != SOFT_INPUT_ADJUST_RESIZE) {
+            if (adjust != SOFT_INPUT_ADJUST_RESIZE) {
                 cf.set(attached.getDisplayFrameLw());
             } else {
                 // If the window is resizing, then we want to base the content
@@ -1854,6 +2124,24 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 ? attached.getFrameLw() : df);
     }
 
+    private void applyStableConstraints(int sysui, int fl, Rect r) {
+        if ((sysui & View.SYSTEM_UI_FLAG_LAYOUT_STABLE) != 0) {
+            // If app is requesting a stable layout, don't let the
+            // content insets go below the stable values.
+            if ((fl & FLAG_FULLSCREEN) != 0) {
+                if (r.left < mStableFullscreenLeft) r.left = mStableFullscreenLeft;
+                if (r.top < mStableFullscreenTop) r.top = mStableFullscreenTop;
+                if (r.right > mStableFullscreenRight) r.right = mStableFullscreenRight;
+                if (r.bottom > mStableFullscreenBottom) r.bottom = mStableFullscreenBottom;
+            } else {
+                if (r.left < mStableLeft) r.left = mStableLeft;
+                if (r.top < mStableTop) r.top = mStableTop;
+                if (r.right > mStableRight) r.right = mStableRight;
+                if (r.bottom > mStableBottom) r.bottom = mStableBottom;
+            }
+        }
+    }
+
     /** {@inheritDoc} */
     public void layoutWindowLw(WindowState win, WindowManager.LayoutParams attrs,
             WindowState attached) {
@@ -1862,22 +2150,22 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             return;
         }
 
-        if (false) {
-            if ("com.google.android.youtube".equals(attrs.packageName)
-                    && attrs.type == WindowManager.LayoutParams.TYPE_APPLICATION_PANEL) {
-                Log.i(TAG, "GOTCHA!");
-            }
+        final boolean needsToOffsetInputMethodTarget =
+                (win == mLastInputMethodTargetWindow && mLastInputMethodWindow != null);
+        if (needsToOffsetInputMethodTarget) {
+            offsetInputMethodWindowLw(mLastInputMethodWindow);
         }
 
         final int fl = attrs.flags;
         final int sim = attrs.softInputMode;
+        final int sysUiFl = win.getSystemUiVisibility();
 
         final Rect pf = mTmpParentFrame;
         final Rect df = mTmpDisplayFrame;
         final Rect cf = mTmpContentFrame;
         final Rect vf = mTmpVisibleFrame;
         
-        final boolean hasNavBar = (mNaviShow && mShowNavi);
+        final boolean hasNavBar = (mNaviShow && (mNavigationBar != null && mNavigationBar.isVisibleLw()));
 
         if (attrs.type == TYPE_INPUT_METHOD) {
             pf.left = df.left = cf.left = vf.left = mDockLeft;
@@ -1888,6 +2176,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             attrs.gravity = Gravity.BOTTOM;
             mDockLayer = win.getSurfaceLayer();
         } else {
+            final int adjust = sim & SOFT_INPUT_MASK_ADJUST;
+
             if ((fl &
                     (FLAG_LAYOUT_IN_SCREEN | FLAG_FULLSCREEN | FLAG_LAYOUT_INSET_DECOR))
                     == (FLAG_LAYOUT_IN_SCREEN | FLAG_LAYOUT_INSET_DECOR)) {
@@ -1900,18 +2190,42 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     // frame is the same as the one we are attached to.
                     setAttachedWindowFrames(win, fl, sim, attached, true, pf, df, cf, vf);
                 } else {
-                    if (attrs.type == TYPE_STATUS_BAR_PANEL) {
+                    if (attrs.type == TYPE_STATUS_BAR_PANEL
+                            || attrs.type == TYPE_STATUS_BAR_SUB_PANEL) {
+                        // Status bar panels are the only windows who can go on top of
+                        // the status bar.  They are protected by the STATUS_BAR_SERVICE
+                        // permission, so they have the same privileges as the status
+                        // bar itself.
+                        //
+                        // However, they should still dodge the navigation bar if it exists.
+
+                        pf.left = df.left = hasNavBar ? mDockLeft : mUnrestrictedScreenLeft;
+                        pf.top = df.top = mUnrestrictedScreenTop;
+                        pf.right = df.right = hasNavBar
+                                            ? mRestrictedScreenLeft+mRestrictedScreenWidth
+                                            : mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
+                        pf.bottom = df.bottom = hasNavBar
+                                              ? mRestrictedScreenTop+mRestrictedScreenHeight
+                                              : mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
+                    } else if (!mNaviShow
+                            && (sysUiFl & View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION) != 0
+                            && attrs.type >= WindowManager.LayoutParams.FIRST_APPLICATION_WINDOW
+                            && attrs.type <= WindowManager.LayoutParams.LAST_SUB_WINDOW) {
+                        // Asking for layout as if the nav bar is hidden, lets the
+                        // application extend into the unrestricted screen area.  We
+                        // only do this for application windows to ensure no window that
+                        // can be above the nav bar can do this.
                         pf.left = df.left = mUnrestrictedScreenLeft;
                         pf.top = df.top = mUnrestrictedScreenTop;
                         pf.right = df.right = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
-                        pf.bottom = df.bottom = hasNavBar ? mDockBottom : mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
+                        pf.bottom = df.bottom = mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
                     } else {
                         pf.left = df.left = mRestrictedScreenLeft;
                         pf.top = df.top = mRestrictedScreenTop;
                         pf.right = df.right = mRestrictedScreenLeft+mRestrictedScreenWidth;
                         pf.bottom = df.bottom = mRestrictedScreenTop+mRestrictedScreenHeight;
                     }
-                    if ((sim & SOFT_INPUT_MASK_ADJUST) != SOFT_INPUT_ADJUST_RESIZE) {
+                    if (adjust != SOFT_INPUT_ADJUST_RESIZE) {
                         cf.left = mDockLeft;
                         cf.top = mDockTop;
                         cf.right = mDockRight;
@@ -1922,34 +2236,69 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         cf.right = mContentRight;
                         cf.bottom = mContentBottom;
                     }
-                    vf.left = mCurLeft;
-                    vf.top = mCurTop;
-                    vf.right = mCurRight;
-                    vf.bottom = mCurBottom;
+                    applyStableConstraints(sysUiFl, fl, cf);
+                    if (adjust != SOFT_INPUT_ADJUST_NOTHING) {
+                        vf.left = mCurLeft;
+                        vf.top = mCurTop;
+                        vf.right = mCurRight;
+                        vf.bottom = mCurBottom;
+                    } else {
+                        vf.set(cf);
+                    }
                 }
-            } else if ((fl & FLAG_LAYOUT_IN_SCREEN) != 0) {
+            } else if ((fl & FLAG_LAYOUT_IN_SCREEN) != 0 || (sysUiFl
+                    & (View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION)) != 0) {
                 // A window that has requested to fill the entire screen just
                 // gets everything, period.
-                if (attrs.type == TYPE_STATUS_BAR_PANEL) {
-                    pf.left = df.left = cf.left = mUnrestrictedScreenLeft;
+                if (attrs.type == TYPE_STATUS_BAR_PANEL
+                        || attrs.type == TYPE_STATUS_BAR_SUB_PANEL) {
+                    pf.left = df.left = cf.left = hasNavBar ? mDockLeft : mUnrestrictedScreenLeft;
                     pf.top = df.top = cf.top = mUnrestrictedScreenTop;
-                    pf.right = df.right = cf.right
-                            = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
-                    pf.bottom = df.bottom = cf.bottom
-                            = hasNavBar ? mDockBottom : mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
-                } else if (attrs.type == TYPE_NAVIGATION_BAR) {
+                    pf.right = df.right = cf.right = hasNavBar
+                                        ? mRestrictedScreenLeft+mRestrictedScreenWidth
+                                        : mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
+                    pf.bottom = df.bottom = cf.bottom = hasNavBar
+                                          ? mRestrictedScreenTop+mRestrictedScreenHeight
+                                          : mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
+                } else if (attrs.type == TYPE_NAVIGATION_BAR
+                        || attrs.type == TYPE_NAVIGATION_BAR_PANEL) {
                     // The navigation bar has Real Ultimate Power.
                     pf.left = df.left = mUnrestrictedScreenLeft;
                     pf.top = df.top = mUnrestrictedScreenTop;
                     pf.right = df.right = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
                     pf.bottom = df.bottom = mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
-                } else if (attrs.type == TYPE_SECURE_SYSTEM_OVERLAY
+                } else if ((attrs.type == TYPE_SECURE_SYSTEM_OVERLAY
+                                || attrs.type == TYPE_BOOT_PROGRESS)
                         && ((fl & FLAG_FULLSCREEN) != 0)) {
                     // Fullscreen secure system overlays get what they ask for.
                     pf.left = df.left = mUnrestrictedScreenLeft;
                     pf.top = df.top = mUnrestrictedScreenTop;
                     pf.right = df.right = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
                     pf.bottom = df.bottom = mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
+                } else if (attrs.type == TYPE_BOOT_PROGRESS) {
+                    // Boot progress screen always covers entire display.
+                    pf.left = df.left = cf.left = mUnrestrictedScreenLeft;
+                    pf.top = df.top = cf.top = mUnrestrictedScreenTop;
+                    pf.right = df.right = cf.right = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
+                    pf.bottom = df.bottom = cf.bottom
+                            = mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
+                } else if (!mNaviShow
+                        && (sysUiFl & View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION) != 0
+                        && attrs.type >= WindowManager.LayoutParams.FIRST_APPLICATION_WINDOW
+                        && attrs.type <= WindowManager.LayoutParams.LAST_SUB_WINDOW) {
+                    // Asking for layout as if the nav bar is hidden, lets the
+                    // application extend into the unrestricted screen area.  We
+                    // only do this for application windows to ensure no window that
+                    // can be above the nav bar can do this.
+                    // XXX This assumes that an app asking for this will also
+                    // ask for layout in only content.  We can't currently figure out
+                    // what the screen would be if only laying out to hide the nav bar.
+                    pf.left = df.left = cf.left = mUnrestrictedScreenLeft;
+                    pf.top = df.top = cf.top = mUnrestrictedScreenTop;
+                    pf.right = df.right = cf.right = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
+                    pf.bottom = df.bottom = cf.bottom
+                            = mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
                 } else {
                     pf.left = df.left = cf.left = mRestrictedScreenLeft;
                     pf.top = df.top = cf.top = mRestrictedScreenTop;
@@ -1957,36 +2306,57 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     pf.bottom = df.bottom = cf.bottom
                             = mRestrictedScreenTop+mRestrictedScreenHeight;
                 }
-                vf.left = mCurLeft;
-                vf.top = mCurTop;
-                vf.right = mCurRight;
-                vf.bottom = mCurBottom;
+                applyStableConstraints(sysUiFl, fl, cf);
+                if (adjust != SOFT_INPUT_ADJUST_NOTHING) {
+                    vf.left = mCurLeft;
+                    vf.top = mCurTop;
+                    vf.right = mCurRight;
+                    vf.bottom = mCurBottom;
+                } else {
+                    vf.set(cf);
+                }
             } else if (attached != null) {
                 // A child window should be placed inside of the same visible
                 // frame that its parent had.
-                setAttachedWindowFrames(win, fl, sim, attached, false, pf, df, cf, vf);
+                setAttachedWindowFrames(win, fl, adjust, attached, false, pf, df, cf, vf);
             } else {
                 // Otherwise, a normal window must be placed inside the content
                 // of all screen decorations.
-                pf.left = mContentLeft;
-                pf.top = mContentTop;
-                pf.right = mContentRight;
-                pf.bottom = mContentBottom;
-                if ((sim & SOFT_INPUT_MASK_ADJUST) != SOFT_INPUT_ADJUST_RESIZE) {
-                    df.left = cf.left = mDockLeft;
-                    df.top = cf.top = mDockTop;
-                    df.right = cf.right = mDockRight;
-                    df.bottom = cf.bottom = mDockBottom;
+                if (attrs.type == TYPE_STATUS_BAR_PANEL) {
+                    // Status bar panels are the only windows who can go on top of
+                    // the status bar.  They are protected by the STATUS_BAR_SERVICE
+                    // permission, so they have the same privileges as the status
+                    // bar itself.
+                    pf.left = df.left = cf.left = mRestrictedScreenLeft;
+                    pf.top = df.top = cf.top = mRestrictedScreenTop;
+                    pf.right = df.right = cf.right = mRestrictedScreenLeft+mRestrictedScreenWidth;
+                    pf.bottom = df.bottom = cf.bottom
+                            = mRestrictedScreenTop+mRestrictedScreenHeight;
                 } else {
-                    df.left = cf.left = mContentLeft;
-                    df.top = cf.top = mContentTop;
-                    df.right = cf.right = mContentRight;
-                    df.bottom = cf.bottom = mContentBottom;
-                }
-                vf.left = mCurLeft;
-                vf.top = mCurTop;
-                vf.right = mCurRight;
-                vf.bottom = mCurBottom;
+                    pf.left = mContentLeft;
+                    pf.top = mContentTop;
+                    pf.right = mContentRight;
+                    pf.bottom = mContentBottom;
+                  if (adjust != SOFT_INPUT_ADJUST_RESIZE) {
+                      df.left = cf.left = mDockLeft;
+                      df.top = cf.top = mDockTop;
+                      df.right = cf.right = mDockRight;
+                      df.bottom = cf.bottom = mDockBottom;
+                  } else {
+                      df.left = cf.left = mContentLeft;
+                      df.top = cf.top = mContentTop;
+                      df.right = cf.right = mContentRight;
+                      df.bottom = cf.bottom = mContentBottom;
+                  }
+                  if (adjust != SOFT_INPUT_ADJUST_NOTHING) {
+                      vf.left = mCurLeft;
+                      vf.top = mCurTop;
+                      vf.right = mCurRight;
+                      vf.bottom = mCurBottom;
+                  } else {
+                      vf.set(cf);
+                  }
+               }
             }
         }
 
@@ -2002,35 +2372,29 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 + " pf=" + pf.toShortString() + " df=" + df.toShortString()
                 + " cf=" + cf.toShortString() + " vf=" + vf.toShortString());
 
-        if (false) {
-            if ("com.google.android.youtube".equals(attrs.packageName)
-                    && attrs.type == WindowManager.LayoutParams.TYPE_APPLICATION_PANEL) {
-                if (true || localLOGV) Log.v(TAG, "Computing frame of " + win +
-                        ": sim=#" + Integer.toHexString(sim)
-                        + " pf=" + pf.toShortString() + " df=" + df.toShortString()
-                        + " cf=" + cf.toShortString() + " vf=" + vf.toShortString());
-            }
-        }
-
         win.computeFrameLw(pf, df, cf, vf);
 
         // Dock windows carve out the bottom of the screen, so normal windows
         // can't appear underneath them.
         if (attrs.type == TYPE_INPUT_METHOD && !win.getGivenInsetsPendingLw()) {
-            int top = win.getContentFrameLw().top;
-            top += win.getGivenContentInsetsLw().top;
-            if (mContentBottom > top) {
-                mContentBottom = top;
-            }
-            top = win.getVisibleFrameLw().top;
-            top += win.getGivenVisibleInsetsLw().top;
-            if (mCurBottom > top) {
-                mCurBottom = top;
-            }
-            if (DEBUG_LAYOUT) Log.v(TAG, "Input method: mDockBottom="
-                    + mDockBottom + " mContentBottom="
-                    + mContentBottom + " mCurBottom=" + mCurBottom);
+            offsetInputMethodWindowLw(win);
         }
+    }
+
+    private void offsetInputMethodWindowLw(WindowState win) {
+        int top = win.getContentFrameLw().top;
+        top += win.getGivenContentInsetsLw().top;
+        if (mContentBottom > top) {
+            mContentBottom = top;
+        }
+        top = win.getVisibleFrameLw().top;
+        top += win.getGivenVisibleInsetsLw().top;
+        if (mCurBottom > top) {
+            mCurBottom = top;
+        }
+        if (DEBUG_LAYOUT) Log.v(TAG, "Input method: mDockBottom="
+                + mDockBottom + " mContentBottom="
+                + mContentBottom + " mCurBottom=" + mCurBottom);
     }
 
     /** {@inheritDoc} */
@@ -2051,8 +2415,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     /** {@inheritDoc} */
     public void animatingWindowLw(WindowState win,
                                 WindowManager.LayoutParams attrs) {
+        if (DEBUG_LAYOUT) Slog.i(TAG, "Win " + win + ": isVisibleOrBehindKeyguardLw="
+                + win.isVisibleOrBehindKeyguardLw());
         if (mTopFullscreenOpaqueWindowState == null &&
-                win.isVisibleOrBehindKeyguardLw()) {
+                win.isVisibleOrBehindKeyguardLw() && !win.isGoneForLayoutLw()) {
             if ((attrs.flags & FLAG_FORCE_NOT_FULLSCREEN) != 0) {
                 mForceStatusBar = true;
             }
@@ -2082,53 +2448,68 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     public int finishAnimationLw() {
         int changes = 0;
 
-        boolean hiding = false;
+        boolean topIsFullscreen = false;
         if (mStatusBar != null) {
-            if (localLOGV) Log.i(TAG, "force=" + mForceStatusBar
+            if (DEBUG_LAYOUT) Log.i(TAG, "force=" + mForceStatusBar
                     + " top=" + mTopFullscreenOpaqueWindowState);
             if (mForceStatusBar) {
-                if (DEBUG_LAYOUT) Log.v(TAG, "Showing status bar");
+                if (DEBUG_LAYOUT) Log.v(TAG, "Showing status bar: forced");
                 if (mStatusBar.showLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
             } else if (mTopFullscreenOpaqueWindowState != null) {
-                //Log.i(TAG, "frame: " + mTopFullscreenOpaqueWindowState.getFrameLw()
-                //        + " shown frame: " + mTopFullscreenOpaqueWindowState.getShownFrameLw());
-                //Log.i(TAG, "attr: " + mTopFullscreenOpaqueWindowState.getAttrs());
-                WindowManager.LayoutParams lp =
-                    mTopFullscreenOpaqueWindowState.getAttrs();
-                boolean hideStatusBar =
-                    (lp.flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0;
-                if (hideStatusBar || mShowStatBar) {
-                    if (DEBUG_LAYOUT) Log.v(TAG, "Hiding status bar");
-                    if (mStatusBar.hideLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
-                    if (mNavigationBar != null && mNaviShow && mShowNavi) {
-                       Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, 2);
+                final WindowManager.LayoutParams lp = mTopFullscreenOpaqueWindowState.getAttrs();
+                if (localLOGV) {
+                    Log.d(TAG, "frame: " + mTopFullscreenOpaqueWindowState.getFrameLw()
+                            + " shown frame: " + mTopFullscreenOpaqueWindowState.getShownFrameLw());
+                    Log.d(TAG, "attr: " + mTopFullscreenOpaqueWindowState.getAttrs()
+                            + " lp.flags=0x" + Integer.toHexString(lp.flags));
+                }
+                topIsFullscreen = (lp.flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0
+                        || (mLastSystemUiFlags & View.SYSTEM_UI_FLAG_FULLSCREEN) != 0;
+                // The subtle difference between the window for mTopFullscreenOpaqueWindowState
+                // and mTopIsFullscreen is that that mTopIsFullscreen is set only if the window
+                // has the FLAG_FULLSCREEN set.  Not sure if there is another way that to be the
+                // case though.
+                if (topIsFullscreen || mShowStatBar) {
+                    if (DEBUG_LAYOUT) Log.v(TAG, "** HIDING status bar");
+                    if (mStatusBar.hideLw(true)) {
+                        changes |= FINISH_LAYOUT_REDO_LAYOUT;
+                            mHandler.post(new Runnable() { public void run() {
+                                try {
+                                   IStatusBarService statusbar = getStatusBarService();
+                                   if (statusbar != null) {
+                                       statusbar.collapse();
+                                   }
+                                } catch (RemoteException ex) {
+                                   // re-acquire status bar service next time it is needed.
+                                   mStatusBarService = null;
+                                }
+                            }});
                     }
-                    hiding = true;
+                   if (mNavigationBar != null) {
+                    if (mNaviShowAll) {
+                        mNavigationBar.hideLw(true);
+                    }
+                   }
                 } else {
-                    if (DEBUG_LAYOUT) Log.v(TAG, "Showing status bar");
-                    if (mStatusBar.showLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
-                    if (mNavigationBar != null && mNaviShow && mShowNaviUp) {
-                       Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, 1);
+                    if (DEBUG_LAYOUT) Log.v(TAG, "** SHOWING status bar: top is not fullscreen");
+                    if (mStatusBar.showLw(true)) {
+                        changes |= FINISH_LAYOUT_REDO_LAYOUT;
                     }
+                   if (mNavigationBar != null) {
+                    if (mNaviShowAll) {
+                        mNavigationBar.showLw(true);
+                    }
+                   }
                 }
             }
         }
 
-        if (changes != 0 && hiding) {
-            IStatusBarService sbs = IStatusBarService.Stub.asInterface(ServiceManager.getService("statusbar"));
-            if (sbs != null) {
-                try {
-                    // Make sure the window shade is hidden.
-                    sbs.collapse();
-                } catch (RemoteException e) {
-                }
-            }
-        }
+        mTopIsFullscreen = topIsFullscreen;
 
         // Hide the key guard if a visible window explicitly specifies that it wants to be displayed
         // when the screen is locked
         if (mKeyguard != null) {
-            if (localLOGV) Log.v(TAG, "finishLayoutLw::mHideKeyguard="+mHideLockScreen);
+            if (localLOGV) Log.v(TAG, "finishAnimationLw::mHideKeyguard="+mHideLockScreen);
             if (mDismissKeyguard && !mKeyguardMediator.isSecure()) {
                 if (mKeyguard.hideLw(true)) {
                     changes |= FINISH_LAYOUT_REDO_LAYOUT
@@ -2159,6 +2540,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
         }
 
+        if ((updateSystemUiVisibilityLw()&SYSTEM_UI_CHANGING_LAYOUT) != 0) {
+            // If the navigation bar has been hidden or shown, we need to do another
+            // layout pass to update that window.
+            changes |= FINISH_LAYOUT_REDO_LAYOUT;
+        }
+
         // update since mAllowLockscreenWhenOn might have changed
         updateLockScreenTimeout();
         return changes;
@@ -2170,26 +2557,17 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             // behind it.
             return false;
         }
-        if (mStatusBar != null && mStatusBar.isVisibleLw()) {
-            Rect rect = new Rect(mStatusBar.getShownFrameLw());
-            for (int i=mStatusBarPanels.size()-1; i>=0; i--) {
-                WindowState w = mStatusBarPanels.get(i);
-                if (w.isVisibleLw()) {
-                    rect.union(w.getShownFrameLw());
-                }
-            }
-            final int insetw = mRestrictedScreenWidth/10;
-            final int inseth = mRestrictedScreenHeight/10;
-            if (rect.contains(insetw, inseth, mRestrictedScreenWidth-insetw,
-                        mRestrictedScreenHeight-inseth)) {
-                // All of the status bar windows put together cover the
-                // screen, so the app can't be seen.  (Note this test doesn't
-                // work if the rects of these windows are at off offsets or
-                // sizes, causing gaps in the rect union we have computed.)
-                return false;
-            }
-        }
         return true;
+    }
+
+    public int focusChangedLw(WindowState lastFocus, WindowState newFocus) {
+        mFocusedWindow = newFocus;
+        if ((updateSystemUiVisibilityLw()&SYSTEM_UI_CHANGING_LAYOUT) != 0) {
+            // If the navigation bar has been hidden or shown, we need to do another
+            // layout pass to update that window.
+            return FINISH_LAYOUT_REDO_LAYOUT;
+        }
+        return 0;
     }
 
     /** {@inheritDoc} */
@@ -2897,11 +3275,24 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     public boolean detectSafeMode() {
         try {
+          if ("1".equals(SystemProperties.get("persist.sys.safe_mode", "0"))) {
+            mSafeMode = true;
+            performHapticFeedbackLw(null, mSafeMode
+                    ? HapticFeedbackConstants.SAFE_MODE_ENABLED
+                    : HapticFeedbackConstants.SAFE_MODE_DISABLED, true);
+            if (mSafeMode) {
+                Log.i(TAG, "SAFE MODE ENABLED (Force enable by user)");
+            } else {
+                Log.i(TAG, "SAFE MODE not enabled");
+            }
+          } else {
             int menuState = mWindowManager.getKeycodeState(KeyEvent.KEYCODE_MENU);
             int sState = mWindowManager.getKeycodeState(KeyEvent.KEYCODE_S);
             int dpadState = mWindowManager.getDPadKeycodeState(KeyEvent.KEYCODE_DPAD_CENTER);
             int trackballState = mWindowManager.getTrackballScancodeState(BTN_MOUSE);
-            mSafeMode = menuState > 0 || sState > 0 || dpadState > 0 || trackballState > 0;
+            int volumeDownState = mWindowManager.getKeycodeState(KeyEvent.KEYCODE_VOLUME_DOWN);
+            mSafeMode = menuState > 0 || sState > 0 || dpadState > 0 || trackballState > 0
+                    || volumeDownState > 0;
             performHapticFeedbackLw(null, mSafeMode
                     ? HapticFeedbackConstants.SAFE_MODE_ENABLED
                     : HapticFeedbackConstants.SAFE_MODE_DISABLED, true);
@@ -2911,6 +3302,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             } else {
                 Log.i(TAG, "SAFE MODE not enabled");
             }
+          }
             return mSafeMode;
         } catch (RemoteException e) {
             // Doom! (it's also local)
@@ -2934,7 +3326,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     public void systemReady() {
         // tell the keyguard
         mKeyguardMediator.onSystemReady();
-        android.os.SystemProperties.set("dev.bootcomplete", "1");
+        SystemProperties.set("dev.bootcomplete", "1");
+        SystemProperties.set("persist.sys.safe_mode", "0");
         synchronized (mLock) {
             updateOrientationListenerLp();
             mSystemReady = true;
@@ -2961,7 +3354,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             @Override public void run() {
                 if (mBootMsgDialog == null) {
                     mBootMsgDialog = new ProgressDialog(mContext);
-                    mBootMsgDialog.setTitle(R.string.android_upgrading_title);
+                    if ("1".equals(SystemProperties.get("persist.sys.booting.first", "0"))) {
+                      mBootMsgDialog.setTitle(R.string.android_booting_title);
+                    } else {
+                      mBootMsgDialog.setTitle(R.string.android_upgrading_title);
+                    }
                     mBootMsgDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
                     mBootMsgDialog.setIndeterminate(true);
                     mBootMsgDialog.getWindow().setType(
@@ -2973,7 +3370,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     mBootMsgDialog.setCancelable(false);
                     mBootMsgDialog.show();
                 }
-                mBootMsgDialog.setMessage(msg);
+                if ("1".equals(SystemProperties.get("persist.sys.booting.first", "0"))) {
+                    mBootMsgDialog.setMessage(mContext.getText(R.string.android_upgrading_complete));
+                } else {
+                    mBootMsgDialog.setMessage(msg);
+                }
             }
         });
     }
@@ -2984,6 +3385,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             @Override public void run() {
                 if (mBootMsgDialog != null) {
                     mBootMsgDialog.dismiss();
+                    SystemProperties.set("persist.sys.booting.first", "1");
                     mBootMsgDialog = null;
                 }
             }	
@@ -3220,6 +3622,36 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         return mScreenOn;
     }
 
+    private int updateSystemUiVisibilityLw() {
+        // If there is no window focused, there will be nobody to handle the events
+        // anyway, so just hang on in whatever state we're in until things settle down.
+        if (mFocusedWindow == null) {
+            return 0;
+        }
+        final int visibility = mFocusedWindow.getSystemUiVisibility()
+                & ~mResettingSystemUiFlags
+                & ~mForceClearedSystemUiFlags;
+        int diff = visibility ^ mLastSystemUiFlags;
+        if (diff == 0) {
+            return 0;
+        }
+        mLastSystemUiFlags = visibility;
+        mHandler.post(new Runnable() {
+                public void run() {
+                    try {
+                        IStatusBarService statusbar = getStatusBarService();
+                        if (statusbar != null) {
+                            statusbar.setSystemUiVisibility(visibility, 0xffffffff);
+                        }
+                    } catch (RemoteException e) {
+                        // re-acquire status bar service next time it is needed.
+                        mStatusBarService = null;
+                    }
+                }
+            });
+        return diff;
+    }
+
     /*
      * mtwebster - Added functions for allowing adjustable haptic feedback in
      * certain global areas of phone
@@ -3364,3 +3796,4 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
 }
+

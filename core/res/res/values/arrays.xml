@@ -115,6 +115,7 @@
         <item>@string/reboot_recovery</item>
         <item>@string/reboot_hotreboot</item>
         <item>@string/reboot_download</item>
+        <item>@string/reboot_safemode</item>
     </array>
 
     <!-- Do not translate. Defines the shutdown actions passed to the kernel.
@@ -124,6 +125,7 @@
         <item>recovery</item>
         <item>hot</item>
         <item>download</item>
+        <item>safemodes</item>
     </string-array>
 
     <!-- Defines the set of colors used for selecting a random

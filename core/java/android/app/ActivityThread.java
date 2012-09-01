@@ -340,6 +340,7 @@ public final class ActivityThread {
         IInstrumentationWatcher instrumentationWatcher;
         int debugMode;
         boolean restrictedBackupMode;
+        boolean persistent;
         Configuration config;
         boolean handlingProfiling;
         public String toString() {
@@ -545,7 +546,7 @@ public final class ActivityThread {
                 ApplicationInfo appInfo, List<ProviderInfo> providers,
                 ComponentName instrumentationName, String profileFile,
                 Bundle instrumentationArgs, IInstrumentationWatcher instrumentationWatcher,
-                int debugMode, boolean isRestrictedBackupMode, Configuration config,
+                int debugMode, boolean isRestrictedBackupMode, boolean persistent, Configuration config,
                 Map<String, IBinder> services) {
 
             if (services != null) {
@@ -563,6 +564,7 @@ public final class ActivityThread {
             data.instrumentationWatcher = instrumentationWatcher;
             data.debugMode = debugMode;
             data.restrictedBackupMode = isRestrictedBackupMode;
+            data.persistent = persistent;
             data.config = config;
             queueOrSendMessage(H.BIND_APPLICATION, data);
         }

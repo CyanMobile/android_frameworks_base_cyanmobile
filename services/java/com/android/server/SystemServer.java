@@ -220,7 +220,7 @@ class ServerThread extends Thread {
 
             // only initialize the power service after we have started the
             // lights service, content providers and the battery service.
-            power.init(context, lights, ActivityManagerService.getDefault(), battery);
+            power.init(context, lights, ActivityManagerService.self(), battery);
 
             Slog.i(TAG, "Alarm Manager");
             AlarmManagerService alarm = new AlarmManagerService(context);
@@ -235,8 +235,7 @@ class ServerThread extends Thread {
                     factoryTest != SystemServer.FACTORY_TEST_LOW_LEVEL);
             ServiceManager.addService(Context.WINDOW_SERVICE, wm);
 
-            ((ActivityManagerService)ServiceManager.getService("activity"))
-                    .setWindowManager(wm);
+            ActivityManagerService.self().setWindowManager(wm);
 
             // Skip Bluetooth if we have an emulator kernel
             // TODO: Use a more reliable check to see if this product should
@@ -306,6 +305,11 @@ class ServerThread extends Thread {
             } catch (Throwable e) {
                 reportWtf("starting Accessibility Manager", e);
             }
+        }
+
+        try {
+            ActivityManagerNative.getDefault().showBootMessage("DEXOPT!", true);
+        } catch (RemoteException e) {
         }
 
         try {
@@ -625,14 +629,11 @@ class ServerThread extends Thread {
         // we are in safe mode.
         final boolean safeMode = wm.detectSafeMode();
         if (safeMode) {
-            try {
-                ActivityManagerNative.getDefault().enterSafeMode();
-                // Post the safe mode state in the Zygote class
-                Zygote.systemInSafeMode = true;
-                // Disable the JIT for the system_server process
-                VMRuntime.getRuntime().disableJitCompilation();
-            } catch (RemoteException e) {
-            }
+            ActivityManagerService.self().enterSafeMode();
+            // Post the safe mode state in the Zygote class
+            Zygote.systemInSafeMode = true;
+            // Disable the JIT for the system_server process
+            VMRuntime.getRuntime().disableJitCompilation();
         } else {
             // Enable the JIT for the system_server process
             VMRuntime.getRuntime().startJitCompilation();
@@ -664,6 +665,10 @@ class ServerThread extends Thread {
             wm.systemReady();
         } catch (Throwable e) {
             reportWtf("making Window Manager Service ready", e);
+        }
+
+        if (safeMode) {
+            ActivityManagerService.self().showSafeModeOverlay();
         }
 
         power.systemReady();
@@ -702,8 +707,7 @@ class ServerThread extends Thread {
         // where third party code can really run (but before it has actually
         // started launching the initial applications), for us to complete our
         // initialization.
-        ((ActivityManagerService)ActivityManagerNative.getDefault())
-                .systemReady(new Runnable() {
+        ActivityManagerService.self().systemReady(new Runnable() {
             public void run() {
                 Slog.i(TAG, "Making services ready");
 
@@ -890,3 +894,4 @@ public class SystemServer
         thr.start();
     }
 }
+

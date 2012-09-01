@@ -75,6 +75,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.WeakHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * <p>
@@ -744,7 +745,12 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      */
     static final int FILTER_TOUCHES_WHEN_OBSCURED = 0x00000400;
 
-    // note flag value 0x00000800 is now available for next flags...
+    /**
+     * Set for framework elements that use FITS_SYSTEM_WINDOWS, to indicate
+     * that they are optional and should be skipped if the window has
+     * requested system UI flags that ignore those insets for layout.
+     */
+    static final int OPTIONAL_FITS_SYSTEM_WINDOWS = 0x00000800;
 
     /**
      * <p>This view doesn't show fading edges.</p>
@@ -962,6 +968,33 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      * Use with {@link #focusSearch}. Move focus down.
      */
     public static final int FOCUS_DOWN = 0x00000082;
+
+    /**
+     * Bits of {@link #getMeasuredWidthAndState()} and
+     * {@link #getMeasuredWidthAndState()} that provide the actual measured size.
+     */
+    public static final int MEASURED_SIZE_MASK = 0x00ffffff;
+
+    /**
+     * Bits of {@link #getMeasuredWidthAndState()} and
+     * {@link #getMeasuredWidthAndState()} that provide the additional state bits.
+     */
+    public static final int MEASURED_STATE_MASK = 0xff000000;
+
+    /**
+     * Bit shift of {@link #MEASURED_STATE_MASK} to get to the height bits
+     * for functions that combine both width and height into a single int,
+     * such as {@link #getMeasuredState()} and the childState argument of
+     * {@link #resolveSizeAndState(int, int, int)}.
+     */
+    public static final int MEASURED_HEIGHT_STATE_SHIFT = 16;
+
+    /**
+     * Bit of {@link #getMeasuredWidthAndState()} and
+     * {@link #getMeasuredWidthAndState()} that indicates the measured size
+     * is smaller that the space the view would like to have.
+     */
+    public static final int MEASURED_STATE_TOO_SMALL = 0x01000000;
 
     /**
      * Base View state sets
@@ -1580,6 +1613,217 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     public static final int OVER_SCROLL_NEVER = 2;
 
     /**
+     * View has requested the system UI (status bar) to be visible (the default).
+     *
+     * @see setSystemUiVisibility
+     */
+    public static final int SYSTEM_UI_FLAG_VISIBLE = 0;
+
+    /**
+     * View has requested the system UI to enter an unobtrusive "low profile" mode.
+     *
+     * This is for use in games, book readers, video players, or any other "immersive" application
+     * where the usual system chrome is deemed too distracting. 
+     *
+     * In low profile mode, the status bar and/or navigation icons may dim.
+     *
+     * @see #setSystemUiVisibility(int)
+     */
+    public static final int SYSTEM_UI_FLAG_LOW_PROFILE = 0x00000001;
+
+    /**
+     * View has requested that the system navigation be temporarily hidden.
+     *
+     * This is an even less obtrusive state than that called for by
+     * {@link #SYSTEM_UI_FLAG_LOW_PROFILE}; on devices that draw essential navigation controls
+     * (Home, Back, and the like) on screen, <code>SYSTEM_UI_FLAG_HIDE_NAVIGATION</code> will cause
+     * those to disappear. This is useful (in conjunction with the
+     * {@link android.view.WindowManager.LayoutParams#FLAG_FULLSCREEN FLAG_FULLSCREEN} and 
+     * {@link android.view.WindowManager.LayoutParams#FLAG_LAYOUT_IN_SCREEN FLAG_LAYOUT_IN_SCREEN}
+     * window flags) for displaying content using every last pixel on the display.
+     *
+     * There is a limitation: because navigation controls are so important, the least user
+     * interaction will cause them to reappear immediately.
+     *	
+     * @see setSystemUiVisibility
+     */
+    public static final int SYSTEM_UI_FLAG_HIDE_NAVIGATION = 0x00000002;
+
+    /**
+     * Flag for {@link #setSystemUiVisibility(int)}: View has requested to go
+     * into the normal fullscreen mode so that its content can take over the screen
+     * while still allowing the user to interact with the application.
+     *
+     * <p>This has the same visual effect as
+     * {@link android.view.WindowManager.LayoutParams#FLAG_FULLSCREEN
+     * WindowManager.LayoutParams.FLAG_FULLSCREEN},
+     * meaning that non-critical screen decorations (such as the status bar) will be
+     * hidden while the user is in the View's window, focusing the experience on
+     * that content.  Unlike the window flag, if you are using ActionBar in
+     * overlay mode with {@link Window#FEATURE_ACTION_BAR_OVERLAY
+     * Window.FEATURE_ACTION_BAR_OVERLAY}, then enabling this flag will also
+     * hide the action bar.
+     *
+     * <p>This approach to going fullscreen is best used over the window flag when
+     * it is a transient state -- that is, the application does this at certain
+     * points in its user interaction where it wants to allow the user to focus
+     * on content, but not as a continuous state.  For situations where the application
+     * would like to simply stay full screen the entire time (such as a game that
+     * wants to take over the screen), the
+     * {@link android.view.WindowManager.LayoutParams#FLAG_FULLSCREEN window flag}
+     * is usually a better approach.  The state set here will be removed by the system
+     * in various situations (such as the user moving to another application) like
+     * the other system UI states.
+     *
+     * <p>When using this flag, the application should provide some easy facility
+     * for the user to go out of it.  A common example would be in an e-book
+     * reader, where tapping on the screen brings back whatever screen and UI
+     * decorations that had been hidden while the user was immersed in reading
+     * the book.
+     *
+     * @see #setSystemUiVisibility(int)
+     */
+    public static final int SYSTEM_UI_FLAG_FULLSCREEN = 0x00000004;
+
+    /**
+     * Flag for {@link #setSystemUiVisibility(int)}: When using other layout
+     * flags, we would like a stable view of the content insets given to
+     * {@link #fitSystemWindows(Rect)}.  This means that the insets seen there
+     * will always represent the worst case that the application can expect
+     * as a continue state.  In practice this means with any of system bar,
+     * nav bar, and status bar shown, but not the space that would be needed
+     * for an input method.
+     *
+     * <p>If you are using ActionBar in
+     * overlay mode with {@link Window#FEATURE_ACTION_BAR_OVERLAY
+     * Window.FEATURE_ACTION_BAR_OVERLAY}, this flag will also impact the
+     * insets it adds to those given to the application.
+     */
+    public static final int SYSTEM_UI_FLAG_LAYOUT_STABLE = 0x00000100;
+
+    /**
+     * Flag for {@link #setSystemUiVisibility(int)}: View would like its window
+     * to be layed out as if it has requested
+     * {@link #SYSTEM_UI_FLAG_HIDE_NAVIGATION}, even if it currently hasn't.  This
+     * allows it to avoid artifacts when switching in and out of that mode, at
+     * the expense that some of its user interface may be covered by screen
+     * decorations when they are shown.  You can perform layout of your inner
+     * UI elements to account for the navagation system UI through the
+     * {@link #fitSystemWindows(Rect)} method.
+     */
+    public static final int SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION = 0x00000200;
+
+    /**
+     * Flag for {@link #setSystemUiVisibility(int)}: View would like its window
+     * to be layed out as if it has requested
+     * {@link #SYSTEM_UI_FLAG_FULLSCREEN}, even if it currently hasn't.  This
+     * allows it to avoid artifacts when switching in and out of that mode, at
+     * the expense that some of its user interface may be covered by screen
+     * decorations when they are shown.  You can perform layout of your inner
+     * UI elements to account for non-fullscreen system UI through the
+     * {@link #fitSystemWindows(Rect)} method.
+     */
+    public static final int SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN = 0x00000400;
+
+    /**
+     * @deprecated Use {@link #SYSTEM_UI_FLAG_LOW_PROFILE} instead.
+     */
+    public static final int STATUS_BAR_HIDDEN = SYSTEM_UI_FLAG_LOW_PROFILE;
+
+    /**
+     * @deprecated Use {@link #SYSTEM_UI_FLAG_VISIBLE} instead.
+     */
+    public static final int STATUS_BAR_VISIBLE = SYSTEM_UI_FLAG_VISIBLE;
+
+    /**
+     * @hide
+     *
+     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
+     * out of the public fields to keep the undefined bits out of the developer's way.
+     *
+     * Flag to make the status bar not expandable.  Unless you also
+     * set {@link #STATUS_BAR_DISABLE_NOTIFICATION_ICONS}, new notifications will continue to show.
+     */
+    public static final int STATUS_BAR_DISABLE_EXPAND = 0x00010000;
+
+    /**
+     * @hide
+     *
+     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
+     * out of the public fields to keep the undefined bits out of the developer's way.
+     *
+     * Flag to hide notification icons and scrolling ticker text.
+     */
+    public static final int STATUS_BAR_DISABLE_NOTIFICATION_ICONS = 0x00020000;
+
+    /**
+     * @hide
+     *
+     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
+     * out of the public fields to keep the undefined bits out of the developer's way.
+     *
+     * Flag to disable incoming notification alerts.  This will not block
+     * icons, but it will block sound, vibrating and other visual or aural notifications.
+     */
+    public static final int STATUS_BAR_DISABLE_NOTIFICATION_ALERTS = 0x00040000;
+
+    /**
+     * @hide
+     *
+     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
+     * out of the public fields to keep the undefined bits out of the developer's way.
+     *
+     * Flag to hide only the scrolling ticker.  Note that
+     * {@link #STATUS_BAR_DISABLE_NOTIFICATION_ICONS} implies
+     * {@link #STATUS_BAR_DISABLE_NOTIFICATION_TICKER}.
+     */
+    public static final int STATUS_BAR_DISABLE_NOTIFICATION_TICKER = 0x00080000;
+
+    /**
+     * @hide
+     *
+     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
+     * out of the public fields to keep the undefined bits out of the developer's way.
+     *
+     * Flag to hide only the navigation buttons.  Don't use this
+     * unless you're a special part of the system UI (i.e., setup wizard, keyguard).
+     */
+    public static final int STATUS_BAR_DISABLE_NAVIGATION = 0x00100000;
+
+    /**
+     * @hide
+     *
+     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
+     * out of the public fields to keep the undefined bits out of the developer's way.
+     *
+     * Flag to hide only the clock.  You might use this if your activity has
+     * its own clock making the status bar's clock redundant.
+     */
+    public static final int STATUS_BAR_DISABLE_CLOCK = 0x00200000;
+
+    /**
+     * @hide
+     */
+    public static final int PUBLIC_STATUS_BAR_VISIBILITY_MASK = 0x0000FFFF;
+
+    /**
+     * These are the system UI flags that can be cleared by events outside
+     * of an application.  Currently this is just the ability to tap on the
+     * screen while hiding the navigation bar to have it return.
+     * @hide
+     */
+    public static final int SYSTEM_UI_CLEARABLE_FLAGS =
+            SYSTEM_UI_FLAG_LOW_PROFILE | SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            | SYSTEM_UI_FLAG_FULLSCREEN;
+
+    /**
+     * Flags that can impact the layout in relation to system UI.
+     */
+    public static final int SYSTEM_UI_LAYOUT_FLAGS =
+            SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            | SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+
+    /**
      * Controls the over-scroll mode for this view.
      * See {@link #overScrollBy(int, int, int, int, int, int, int, int, boolean)},
      * {@link #OVER_SCROLL_ALWAYS}, {@link #OVER_SCROLL_IF_CONTENT_SCROLLS},
@@ -1639,6 +1883,12 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
         @ViewDebug.FlagToString(mask = DIRTY_MASK, equals = DIRTY, name = "DIRTY")
     })
     int mPrivateFlags;
+
+    /**
+     * This view's request for the visibility of the status bar.
+     * @hide
+     */
+    int mSystemUiVisibility;
 
     /**
      * Count of how many windows this view has been attached to.
@@ -1756,6 +2006,35 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     int mUserPaddingBottom;
 
     /**
+     * Cache the paddingLeft set by the user to append to the scrollbar's size.
+     *
+     * @hide
+     */
+    @ViewDebug.ExportedProperty(category = "padding")
+    protected int mUserPaddingLeft;
+
+    /**
+     * Cache if the user padding is relative.
+     *
+     */
+    @ViewDebug.ExportedProperty(category = "padding")
+    boolean mUserPaddingRelative;
+
+    /**
+     * Cache the paddingStart set by the user to append to the scrollbar's size.
+     *
+     */
+    @ViewDebug.ExportedProperty(category = "padding")
+    int mUserPaddingStart;
+
+    /**
+     * Cache the paddingEnd set by the user to append to the scrollbar's size.
+     *
+     */
+    @ViewDebug.ExportedProperty(category = "padding")
+    int mUserPaddingEnd;
+
+    /**
      * @hide
      */
     int mOldWidthMeasureSpec = Integer.MIN_VALUE;
@@ -1770,6 +2049,54 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
 
     private int mBackgroundResource;
     private boolean mBackgroundSizeChanged;
+
+    static class ListenerInfo {
+        /**
+         * Listener used to dispatch focus change events.
+         * This field should be made private, so it is hidden from the SDK.
+         * {@hide}
+         */
+        protected OnFocusChangeListener mOnFocusChangeListener;
+
+        /**
+         * Listeners for layout change events.
+         */
+        private ArrayList<OnLayoutChangeListener> mOnLayoutChangeListeners;
+
+        /**
+         * Listeners for attach events.
+         */
+        private CopyOnWriteArrayList<OnAttachStateChangeListener> mOnAttachStateChangeListeners;
+
+        /**
+         * Listener used to dispatch click events.
+         * This field should be made private, so it is hidden from the SDK.
+         * {@hide}
+         */
+        public OnClickListener mOnClickListener;
+
+        /**
+         * Listener used to dispatch long click events.
+         * This field should be made private, so it is hidden from the SDK.
+         * {@hide}
+         */
+        protected OnLongClickListener mOnLongClickListener;
+
+        /**
+         * Listener used to build the context menu.
+         * This field should be made private, so it is hidden from the SDK.
+         * {@hide}
+         */
+        protected OnCreateContextMenuListener mOnCreateContextMenuListener;
+
+        private OnKeyListener mOnKeyListener;
+
+        private OnTouchListener mOnTouchListener;
+
+        private OnSystemUiVisibilityChangeListener mOnSystemUiVisibilityChangeListener;
+    }
+
+    ListenerInfo mListenerInfo;
 
     /**
      * Listener used to dispatch focus change events.
@@ -1802,6 +2129,8 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     private OnKeyListener mOnKeyListener;
 
     private OnTouchListener mOnTouchListener;
+
+    private OnSystemUiVisibilityChangeListener mOnSystemUiVisibilityChangeListener;
 
     /**
      * The application environment this view lives in.
@@ -3098,23 +3427,103 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     }
 
     /**
-     * Apply the insets for system windows to this view, if the FITS_SYSTEM_WINDOWS flag
-     * is set
+     * Called by the view hierarchy when the content insets for a window have
+     * changed, to allow it to adjust its content to fit within those windows.
+     * The content insets tell you the space that the status bar, input method,
+     * and other system windows infringe on the application's window.
      *
-     * @param insets Insets for system windows
+     * <p>You do not normally need to deal with this function, since the default
+     * window decoration given to applications takes care of applying it to the
+     * content of the window.  If you use {@link #SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN}
+     * or {@link #SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION} this will not be the case,
+     * and your content can be placed under those system elements.  You can then
+     * use this method within your view hierarchy if you have parts of your UI
+     * which you would like to ensure are not being covered.
      *
-     * @return True if this view applied the insets, false otherwise
+     * <p>The default implementation of this method simply applies the content
+     * inset's to the view's padding.  This can be enabled through
+     * {@link #setFitsSystemWindows(boolean)}.  Alternatively, you can override
+     * the method and handle the insets however you would like.  Note that the
+     * insets provided by the framework are always relative to the far edges
+     * of the window, not accounting for the location of the called view within
+     * that window.  (In fact when this method is called you do not yet know
+     * where the layout will place the view, as it is done before layout happens.)
+     *
+     * <p>Note: unlike many View methods, there is no dispatch phase to this
+     * call.  If you are overriding it in a ViewGroup and want to allow the
+     * call to continue to your children, you must be sure to call the super
+     * implementation.
+     *
+     * @param insets Current content insets of the window.  Prior to
+     * {@link android.os.Build.VERSION_CODES#JELLY_BEAN} you must not modify
+     * the insets or else you and Android will be unhappy.
+     *
+     * @return Return true if this view applied the insets and it should not
+     * continue propagating further down the hierarchy, false otherwise.
      */
     protected boolean fitSystemWindows(Rect insets) {
         if ((mViewFlags & FITS_SYSTEM_WINDOWS) == FITS_SYSTEM_WINDOWS) {
-            mPaddingLeft = insets.left;
-            mPaddingTop = insets.top;
-            mPaddingRight = insets.right;
-            mPaddingBottom = insets.bottom;
-            requestLayout();
-            return true;
+            mUserPaddingStart = -1;
+            mUserPaddingEnd = -1;
+            mUserPaddingRelative = false;
+            if ((mViewFlags & OPTIONAL_FITS_SYSTEM_WINDOWS) == 0
+                    || mAttachInfo == null
+                    || (mAttachInfo.mSystemUiVisibility & SYSTEM_UI_LAYOUT_FLAGS) == 0) {
+                internalSetPadding(insets.left, insets.top, insets.right, insets.bottom);
+                return true;
+            } else {
+                internalSetPadding(0, 0, 0, 0);
+                return false;
+            }
         }
         return false;
+    }
+
+    /**
+     * Set whether or not this view should account for system screen decorations
+     * such as the status bar and inset its content. This allows this view to be
+     * positioned in absolute screen coordinates and remain visible to the user.
+     *
+     * <p>This should only be used by top-level window decor views.
+     *
+     * @param fitSystemWindows true to inset content for system screen decorations, false for
+     *                         default behavior.
+     *
+     * @attr ref android.R.styleable#View_fitsSystemWindows
+     */
+    public void setFitsSystemWindows(boolean fitSystemWindows) {
+        setFlags(fitSystemWindows ? FITS_SYSTEM_WINDOWS : 0, FITS_SYSTEM_WINDOWS);
+    }
+
+    /**
+     * Check for the FITS_SYSTEM_WINDOWS flag. If this method returns true, this view
+     * will account for system screen decorations such as the status bar and inset its
+     * content. This allows the view to be positioned in absolute screen coordinates
+     * and remain visible to the user.
+     *
+     * @return true if this view will adjust its content bounds for system screen decorations.
+     *
+     * @attr ref android.R.styleable#View_fitsSystemWindows
+     */
+    public boolean fitsSystemWindows() {
+        return (mViewFlags & FITS_SYSTEM_WINDOWS) == FITS_SYSTEM_WINDOWS;
+    }
+
+    /**
+     * Ask that a new dispatch of {@link #fitSystemWindows(Rect)} be performed.
+     */
+    public void requestFitSystemWindows() {
+        if (mParent != null) {
+            mParent.requestFitSystemWindows();
+        }
+    }
+
+    /**
+     * For use by PhoneWindow to make its own system window fitting optional.
+     * @hide
+     */
+    public void makeOptionalFitsSystemWindows() {
+        setFlags(OPTIONAL_FITS_SYSTEM_WINDOWS, OPTIONAL_FITS_SYSTEM_WINDOWS);
     }
 
     /**
@@ -4158,22 +4567,28 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      * Private function to aggregate all per-view attributes in to the view
      * root.
      */
-    void dispatchCollectViewAttributes(int visibility) {
-        performCollectViewAttributes(visibility);
+    void dispatchCollectViewAttributes(AttachInfo attachInfo, int visibility) {
+        performCollectViewAttributes(attachInfo, visibility);
     }
 
-    void performCollectViewAttributes(int visibility) {
-        //noinspection PointlessBitwiseExpression
-        if (((visibility | mViewFlags) & (VISIBILITY_MASK | KEEP_SCREEN_ON))
-                == (VISIBLE | KEEP_SCREEN_ON)) {
-            mAttachInfo.mKeepScreenOn = true;
+    void performCollectViewAttributes(AttachInfo attachInfo, int visibility) {
+        if ((visibility & VISIBILITY_MASK) == VISIBLE) {
+            if ((mViewFlags & KEEP_SCREEN_ON) == KEEP_SCREEN_ON) {
+                attachInfo.mKeepScreenOn = true;
+            }
+            attachInfo.mSystemUiVisibility |= mSystemUiVisibility;
+            ListenerInfo li = mListenerInfo;
+            if (li != null && li.mOnSystemUiVisibilityChangeListener != null) {
+                attachInfo.mHasSystemUiListeners = true;
+            }
         }
     }
 
     void needGlobalAttributesUpdate(boolean force) {
-        AttachInfo ai = mAttachInfo;
+        final AttachInfo ai = mAttachInfo;
         if (ai != null) {
-            if (ai.mKeepScreenOn || force) {
+            if (force || ai.mKeepScreenOn || (ai.mSystemUiVisibility != 0)
+                    || ai.mHasSystemUiListeners) {
                 ai.mRecomputeGlobalAttributes = true;
             }
         }
@@ -4738,7 +5153,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
         }
 
         if ((changed & KEEP_SCREEN_ON) != 0) {
-            if (mParent != null) {
+            if (mParent != null && mAttachInfo != null && !mAttachInfo.mRecomputeGlobalAttributes) {
                 mParent.recomputeViewAttributes(this);
             }
         }
@@ -4772,6 +5187,28 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
         if (ai != null) {
             ai.mViewScrollChanged = true;
         }
+    }
+
+    /**
+     * Interface definition for a callback to be invoked when the layout bounds of a view
+     * changes due to layout processing.
+     */
+    public interface OnLayoutChangeListener {
+        /**
+         * Called when the focus state of a view has changed.
+         *
+         * @param v The view whose state has changed.
+         * @param left The new value of the view's left property.
+         * @param top The new value of the view's top property.
+         * @param right The new value of the view's right property.
+         * @param bottom The new value of the view's bottom property.
+         * @param oldLeft The previous value of the view's left property.
+         * @param oldTop The previous value of the view's top property.
+         * @param oldRight The previous value of the view's right property.
+         * @param oldBottom The previous value of the view's bottom property.
+         */
+        void onLayoutChange(View v, int left, int top, int right, int bottom,
+            int oldLeft, int oldTop, int oldRight, int oldBottom);
     }
 
     /**
@@ -4871,6 +5308,19 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      * @return The measured width of this view.
      */
     public final int getMeasuredWidth() {
+        return mMeasuredWidth & MEASURED_SIZE_MASK;
+    }
+
+    /**
+     * Return the full width measurement information for this view as computed
+     * by the most recent call to {@link #measure(int, int)}.  This result is a bit mask
+     * as defined by {@link #MEASURED_SIZE_MASK} and {@link #MEASURED_STATE_TOO_SMALL}.
+     * This should be used during measurement and layout calculations only. Use
+     * {@link #getWidth()} to see how wide a view is after layout.
+     *
+     * @return The measured width of this view as a bit mask.
+     */
+    public final int getMeasuredWidthAndState() {
         return mMeasuredWidth;
     }
 
@@ -4882,7 +5332,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      * @return The measured height of this view.
      */
     public final int getMeasuredHeight() {
-        return mMeasuredHeight;
+        return mMeasuredHeight & MEASURED_SIZE_MASK;
     }
 
     /**
@@ -5915,6 +6365,40 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     }
 
     /**
+     * Check if this view can be scrolled horizontally in a certain direction.
+     *	
+     * @param direction Negative to check scrolling left, positive to check scrolling right.
+     * @return true if this view can be scrolled in the specified direction, false otherwise.
+     */	
+    public boolean canScrollHorizontally(int direction) {
+        final int offset = computeHorizontalScrollOffset();
+        final int range = computeHorizontalScrollRange() - computeHorizontalScrollExtent();
+        if (range == 0) return false;
+        if (direction < 0) {
+            return offset > 0;
+        } else {
+            return offset < range - 1;
+        }
+    }
+
+    /**
+     * Check if this view can be scrolled vertically in a certain direction.
+     *
+     * @param direction Negative to check scrolling up, positive to check scrolling down.
+     * @return true if this view can be scrolled in the specified direction, false otherwise.
+     */
+    public boolean canScrollVertically(int direction) {
+        final int offset = computeVerticalScrollOffset();
+        final int range = computeVerticalScrollRange() - computeVerticalScrollExtent();
+        if (range == 0) return false;
+        if (direction < 0) {
+            return offset > 0;
+        } else {	
+            return offset < range - 1;
+        }	
+    }
+
+    /**
      * <p>Request the drawing of the horizontal and the vertical scrollbar. The
      * scrollbars are painted only if they have been awakened first.</p>
      *
@@ -6190,7 +6674,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
             mAttachInfo.mScrollContainers.add(this);
             mPrivateFlags |= SCROLL_CONTAINER_ADDED;
         }
-        performCollectViewAttributes(visibility);
+        performCollectViewAttributes(mAttachInfo, visibility);
         onAttachedToWindow();
         int vis = info.mWindowVisibility;
         if (vis != GONE) {
@@ -7690,12 +8174,20 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      * @param bottom the bottom padding in pixels
      */
     public void setPadding(int left, int top, int right, int bottom) {
-        boolean changed = false;
+        mUserPaddingStart = -1;
+        mUserPaddingEnd = -1;
+        mUserPaddingRelative = false;
 
+        internalSetPadding(left, top, right, bottom);
+    }
+
+    private void internalSetPadding(int left, int top, int right, int bottom) {
+        mUserPaddingLeft = left;
         mUserPaddingRight = right;
         mUserPaddingBottom = bottom;
 
         final int viewFlags = mViewFlags;
+        boolean changed = false;
 
         // Common case is there are no scroll bars.
         if ((viewFlags & (SCROLLBARS_VERTICAL|SCROLLBARS_HORIZONTAL)) != 0) {
@@ -8738,6 +9230,81 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     }
 
     /**
+     * @param visibility  Bitwise-or of flags {@link #SYSTEM_UI_FLAG_LOW_PROFILE} or
+     * {@link #SYSTEM_UI_FLAG_HIDE_NAVIGATION}.
+     */
+    public void setSystemUiVisibility(int visibility) {
+        if (visibility != mSystemUiVisibility) {
+            mSystemUiVisibility = visibility;
+            if (mParent != null && mAttachInfo != null && !mAttachInfo.mRecomputeGlobalAttributes) {
+                mParent.recomputeViewAttributes(this);
+            }
+        }
+    }
+
+    /**
+     * @return  Bitwise-or of flags {@link #SYSTEM_UI_FLAG_LOW_PROFILE} or
+     * {@link #SYSTEM_UI_FLAG_HIDE_NAVIGATION}.
+     */
+    public int getSystemUiVisibility() {
+        return mSystemUiVisibility;
+    }
+
+    /**
+     * Returns the current system UI visibility that is currently set for
+     * the entire window.  This is the combination of the
+     * {@link #setSystemUiVisibility(int)} values supplied by all of the
+     * views in the window.
+     */
+    public int getWindowSystemUiVisibility() {
+        return mAttachInfo != null ? mAttachInfo.mSystemUiVisibility : 0;
+    }
+
+    /**
+     * Override to find out when the window's requested system UI visibility
+     * has changed, that is the value returned by {@link #getWindowSystemUiVisibility()}.
+     * This is different from the callbacks recieved through
+     * {@link #setOnSystemUiVisibilityChangeListener(OnSystemUiVisibilityChangeListener)}
+     * in that this is only telling you about the local request of the window,
+     * not the actual values applied by the system.
+     */
+    public void onWindowSystemUiVisibilityChanged(int visible) {
+    }
+
+    /**
+     * Dispatch callbacks to {@link #onWindowSystemUiVisibilityChanged(int)} down
+     * the view hierarchy.
+     */
+    public void dispatchWindowSystemUiVisiblityChanged(int visible) {
+        onWindowSystemUiVisibilityChanged(visible);
+    }
+
+    public void setOnSystemUiVisibilityChangeListener(OnSystemUiVisibilityChangeListener l) {
+        mOnSystemUiVisibilityChangeListener = l;
+        if (mParent != null && mAttachInfo != null && !mAttachInfo.mRecomputeGlobalAttributes) {
+            mParent.recomputeViewAttributes(this);
+        }
+    }
+
+    /**
+     * Dispatch callbacks to {@link #setOnSystemUiVisibilityChangeListener} down
+     * the view hierarchy.
+     */
+    public void dispatchSystemUiVisibilityChanged(int visibility) {
+        if (mOnSystemUiVisibilityChangeListener != null) {
+            mOnSystemUiVisibilityChangeListener.onSystemUiVisibilityChange(
+                    visibility & PUBLIC_STATUS_BAR_VISIBILITY_MASK);
+        }
+    }
+
+    void updateLocalSystemUiVisibility(int localValue, int localChanges) {
+        int val = (mSystemUiVisibility&~localChanges) | (localValue&localChanges);
+        if (val != mSystemUiVisibility) {
+            setSystemUiVisibility(val);
+        }
+    }
+
+    /**
      * This needs to be a better API (NOT ON VIEW) before it is exposed.  If
      * it is ever exposed at all.
      * @hide
@@ -9231,6 +9798,40 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
         void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo);
     }
 
+    /**
+     * Interface definition for a callback to be invoked when the status bar changes
+     * visibility.
+     *
+     * @see #setOnSystemUiVisibilityChangeListener
+     */
+    public interface OnSystemUiVisibilityChangeListener {
+        /**
+         * Called when the status bar changes visibility because of a call to
+         * {@link #setSystemUiVisibility}.
+         *
+         * @param visibility  Bitwise-or of flags {@link #SYSTEM_UI_FLAG_LOW_PROFILE} or
+         * {@link #SYSTEM_UI_FLAG_HIDE_NAVIGATION}.
+         */
+        public void onSystemUiVisibilityChange(int visibility);
+    }
+
+    /**
+     * Interface definition for a callback to be invoked when this view is attached
+     * or detached from its window.
+     */
+    public interface OnAttachStateChangeListener {
+        /**
+         * Called when the view is attached to a window.
+         * @param v The view that was attached
+         */
+        public void onViewAttachedToWindow(View v);
+        /**
+         * Called when the view is detached from a window.
+         * @param v The view that was detached
+         */
+        public void onViewDetachedFromWindow(View v);
+    }
+
     private final class UnsetPressedState implements Runnable {
         public void run() {
             setPressed(false);
@@ -9440,9 +10041,37 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
         boolean mRecomputeGlobalAttributes;
 
         /**
+         * Always report new attributes at next traversal.
+         */
+        boolean mForceReportNewAttributes;
+
+        /**
          * Set during a traveral if any views want to keep the screen on.
          */
         boolean mKeepScreenOn;
+
+        /**
+         * This view's request for the visibility of the status bar.
+         * @hide
+         */
+        @ViewDebug.ExportedProperty(flagMapping = {
+        @ViewDebug.FlagToString(mask = SYSTEM_UI_FLAG_LOW_PROFILE,
+                                equals = SYSTEM_UI_FLAG_LOW_PROFILE,
+                                name = "SYSTEM_UI_FLAG_LOW_PROFILE", outputIf = true),
+        @ViewDebug.FlagToString(mask = SYSTEM_UI_FLAG_HIDE_NAVIGATION,
+                                equals = SYSTEM_UI_FLAG_HIDE_NAVIGATION,
+                                name = "SYSTEM_UI_FLAG_HIDE_NAVIGATION", outputIf = true),
+        @ViewDebug.FlagToString(mask = PUBLIC_STATUS_BAR_VISIBILITY_MASK,
+                                equals = SYSTEM_UI_FLAG_VISIBLE,
+                                name = "SYSTEM_UI_FLAG_VISIBLE", outputIf = true)
+        })
+        int mSystemUiVisibility;
+
+        /**
+         * True if a view in this hierarchy has an OnSystemUiVisibilityChangeListener
+         * attached.
+         */
+        boolean mHasSystemUiListeners;
 
         /**
          * Set if the visibility of any views has changed.
@@ -9637,3 +10266,4 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
 
     }
 }
+

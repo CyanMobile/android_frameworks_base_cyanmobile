@@ -35,6 +35,7 @@ import android.util.Log;
 import android.util.EventLog;
 import android.util.Slog;
 import android.util.SparseArray;
+import android.util.TypedValue;
 import android.view.View.MeasureSpec;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
@@ -116,6 +117,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
     final TrackballAxis mTrackballAxisX = new TrackballAxis();
     final TrackballAxis mTrackballAxisY = new TrackballAxis();
 
+    final TypedValue mTmpValue = new TypedValue();
     final int[] mTmpLocation = new int[2];
 
     final InputMethodCallback mInputMethodCallback;
@@ -130,11 +132,17 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
 
     final W mWindow;
 
+    int mSeq;
+
     View mView;
     View mFocusedView;
     View mRealFocusedView;  // this is not set to null in touch mode
     int mViewVisibility;
     boolean mAppVisible = true;
+
+    // Set to true if the owner of this window is in the stopped state,
+    // so the window should no longer be active.
+    boolean mStopped = false;
 
     SurfaceHolder.Callback2 mSurfaceHolderCallback;
     BaseSurfaceHolder mSurfaceHolder;
@@ -161,6 +169,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
 
     boolean mTraversalScheduled;
     boolean mWillDrawSoon;
+    boolean mFitSystemWindowsRequested;
     boolean mLayoutRequested;
     boolean mFirst;
     boolean mReportNextDraw;
@@ -168,6 +177,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
     boolean mNewSurfaceNeeded;
     boolean mHasHadWindowFocus;
     boolean mLastWasImTarget;
+    int mLastSystemUiVisibility;
 
     boolean mWindowAttributesChanged = false;
 
@@ -188,6 +198,8 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
     final Rect mPendingContentInsets = new Rect();
     final ViewTreeObserver.InternalInsetsInfo mLastGivenInsets
             = new ViewTreeObserver.InternalInsetsInfo();
+
+    final Rect mFitSystemWindowsInsets = new Rect();
 
     final Configuration mLastConfiguration = new Configuration();
     final Configuration mPendingConfiguration = new Configuration();
@@ -238,7 +250,14 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
             return sWindowSession;
         }
     }
-    
+
+    static final class SystemUiVisibilityInfo {
+        int seq;
+        int globalVisibility;
+        int localValue;
+        int localChanges;
+    }
+
     public ViewRoot(Context context) {
         super();
 
@@ -495,7 +514,9 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                 requestLayout();
                 mInputChannel = new InputChannel();
                 try {
-                    res = sWindowSession.add(mWindow, mWindowAttributes,
+                    mAttachInfo.mRecomputeGlobalAttributes = true;
+                    collectViewAttributes();
+                    res = sWindowSession.add(mWindow, mSeq, mWindowAttributes,
                             getHostVisibility(), mAttachInfo.mContentInsets,
                             mInputChannel);
                 } catch (RemoteException e) {
@@ -626,6 +647,15 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
     /**
      * {@inheritDoc}
      */
+    public void requestFitSystemWindows() {
+        checkThread();
+        mFitSystemWindowsRequested = true;
+        scheduleTraversals();	
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public void requestLayout() {
         checkThread();
         mLayoutRequested = true;
@@ -658,6 +688,15 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
         mDirty.union(dirty);
         if (!mWillDrawSoon) {
             scheduleTraversals();
+        }
+    }
+
+    void setStopped(boolean stopped) {
+        if (mStopped != stopped) {
+            mStopped = stopped;
+            if (!stopped) {
+                scheduleTraversals();
+            }
         }
     }
 
@@ -700,6 +739,92 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
         return mAppVisible ? mView.getVisibility() : View.GONE;
     }
 
+    private boolean collectViewAttributes() {
+        final View.AttachInfo attachInfo = mAttachInfo;
+        if (attachInfo.mRecomputeGlobalAttributes) {
+            //Log.i(TAG, "Computing view hierarchy attributes!");
+            attachInfo.mRecomputeGlobalAttributes = false;
+            boolean oldScreenOn = attachInfo.mKeepScreenOn;
+            int oldVis = attachInfo.mSystemUiVisibility;
+            boolean oldHasSystemUiListeners = attachInfo.mHasSystemUiListeners;
+            attachInfo.mKeepScreenOn = false;
+            attachInfo.mSystemUiVisibility = 0;
+            attachInfo.mHasSystemUiListeners = false;
+            mView.dispatchCollectViewAttributes(attachInfo, 0);
+            if (attachInfo.mKeepScreenOn != oldScreenOn
+                    || attachInfo.mSystemUiVisibility != oldVis
+                    || attachInfo.mHasSystemUiListeners != oldHasSystemUiListeners) {
+                WindowManager.LayoutParams params = mWindowAttributes;
+                if (attachInfo.mKeepScreenOn) {
+                    params.flags |= WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
+                }
+                params.subtreeSystemUiVisibility = attachInfo.mSystemUiVisibility;
+                params.hasSystemUiListeners = attachInfo.mHasSystemUiListeners;
+                mView.dispatchWindowSystemUiVisiblityChanged(attachInfo.mSystemUiVisibility);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean measureHierarchy(final View host, final WindowManager.LayoutParams lp,
+            final Resources res, final int desiredWindowWidth, final int desiredWindowHeight) {
+        int childWidthMeasureSpec;
+        int childHeightMeasureSpec;
+        boolean windowSizeMayChange = false;
+
+        if (DEBUG_ORIENTATION || DEBUG_LAYOUT) Log.v(TAG,
+                "Measuring " + host + " in display " + desiredWindowWidth
+                + "x" + desiredWindowHeight + "...");
+
+        boolean goodMeasure = false;
+        if (lp.width == ViewGroup.LayoutParams.WRAP_CONTENT) {
+            // On large screens, we don't want to allow dialogs to just
+            // stretch to fill the entire width of the screen to display
+            // one line of text.  First try doing the layout at a smaller
+            // size to see if it will fit.
+            final DisplayMetrics packageMetrics = res.getDisplayMetrics();
+            res.getValue(com.android.internal.R.dimen.big_thumbnail_height, mTmpValue, true);
+            int baseSize = 0;
+            if (mTmpValue.type == TypedValue.TYPE_DIMENSION) {
+                baseSize = (int)mTmpValue.getDimension(packageMetrics);
+            }
+            if (baseSize != 0 && desiredWindowWidth > baseSize) {
+                childWidthMeasureSpec = getRootMeasureSpec(baseSize, lp.width);
+                childHeightMeasureSpec = getRootMeasureSpec(desiredWindowHeight, lp.height);
+                host.measure(childWidthMeasureSpec, childHeightMeasureSpec);
+                if ((host.getMeasuredWidthAndState()&View.MEASURED_STATE_TOO_SMALL) == 0) {
+                    goodMeasure = true;
+                } else {
+                    // Didn't fit in that size... try expanding a bit.
+                    baseSize = (baseSize+desiredWindowWidth)/2;
+                    childWidthMeasureSpec = getRootMeasureSpec(baseSize, lp.width);
+                    host.measure(childWidthMeasureSpec, childHeightMeasureSpec);
+                    if ((host.getMeasuredWidthAndState()&View.MEASURED_STATE_TOO_SMALL) == 0) {
+                        goodMeasure = true;
+                    }
+                }
+            }
+        }
+
+        if (!goodMeasure) {
+            childWidthMeasureSpec = getRootMeasureSpec(desiredWindowWidth, lp.width);
+            childHeightMeasureSpec = getRootMeasureSpec(desiredWindowHeight, lp.height);
+            host.measure(childWidthMeasureSpec, childHeightMeasureSpec);
+            if (mWidth != host.getMeasuredWidth() || mHeight != host.getMeasuredHeight()) {
+                windowSizeMayChange = true;
+            }
+        }
+
+        if (DBG) {
+            System.out.println("======================================");
+            System.out.println("performTraversals -- after measure");
+            host.debug();
+        }
+
+        return windowSizeMayChange;
+    }
+
     private void performTraversals() {
         // cache mView since it is used so much below...
         final View host = mView;
@@ -723,8 +848,6 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
 
         int desiredWindowWidth;
         int desiredWindowHeight;
-        int childWidthMeasureSpec;
-        int childHeightMeasureSpec;
 
         final View.AttachInfo attachInfo = mAttachInfo;
 
@@ -760,13 +883,15 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
             attachInfo.mHasWindowFocus = false;
             attachInfo.mWindowVisibility = viewVisibility;
             attachInfo.mRecomputeGlobalAttributes = false;
-            attachInfo.mKeepScreenOn = false;
             viewVisibilityChanged = false;
             mLastConfiguration.setTo(host.getResources().getConfiguration());
             if (!mAttached) {
+                mLastSystemUiVisibility = mAttachInfo.mSystemUiVisibility;
                 host.dispatchAttachedToWindow(attachInfo, 0);
                 mAttached = true;
             }
+            mFitSystemWindowsInsets.set(mAttachInfo.mContentInsets);
+            host.fitSystemWindows(mFitSystemWindowsInsets);
             //Log.i(TAG, "Screen on initialized: " + attachInfo.mKeepScreenOn);
 
         } else {
@@ -798,10 +923,13 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
 
         boolean insetsChanged = false;
 
-        if (mLayoutRequested) {
+        boolean layoutRequested = mLayoutRequested && !mStopped;
+        if (layoutRequested) {
             // Execute enqueued actions on every layout in case a view that was detached
             // enqueued an action after being detached
             getRunQueue().executeActions(attachInfo.mHandler);
+
+            final Resources res = mView.getContext().getResources();
 
             if (mFirst) {
                 host.fitSystemWindows(mAttachInfo.mContentInsets);
@@ -814,13 +942,9 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                     mAttachInfo.mContentInsets.set(mPendingContentInsets);
                     host.fitSystemWindows(mAttachInfo.mContentInsets);
                     insetsChanged = true;
-                    if (DEBUG_LAYOUT) Log.v(TAG, "Content insets changing to: "
-                            + mAttachInfo.mContentInsets);
                 }
                 if (!mAttachInfo.mVisibleInsets.equals(mPendingVisibleInsets)) {
                     mAttachInfo.mVisibleInsets.set(mPendingVisibleInsets);
-                    if (DEBUG_LAYOUT) Log.v(TAG, "Visible insets changing to: "
-                            + mAttachInfo.mVisibleInsets);
                 }
                 if (lp.width == ViewGroup.LayoutParams.WRAP_CONTENT
                         || lp.height == ViewGroup.LayoutParams.WRAP_CONTENT) {
@@ -833,32 +957,18 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                 }
             }
 
-            childWidthMeasureSpec = getRootMeasureSpec(desiredWindowWidth, lp.width);
-            childHeightMeasureSpec = getRootMeasureSpec(desiredWindowHeight, lp.height);
-
             // Ask host how big it wants to be
-            if (DEBUG_ORIENTATION || DEBUG_LAYOUT) Log.v(TAG,
-                    "Measuring " + host + " in display " + desiredWindowWidth
-                    + "x" + desiredWindowHeight + "...");
-            host.measure(childWidthMeasureSpec, childHeightMeasureSpec);
-
-            if (DBG) {
-                System.out.println("======================================");
-                System.out.println("performTraversals -- after measure");
-                host.debug();
-            }
+            windowResizesToFitContent |= measureHierarchy(host, lp, res,
+                    desiredWindowWidth, desiredWindowHeight);
         }
 
-        if (attachInfo.mRecomputeGlobalAttributes) {
-            //Log.i(TAG, "Computing screen on!");
-            attachInfo.mRecomputeGlobalAttributes = false;
-            boolean oldVal = attachInfo.mKeepScreenOn;
-            attachInfo.mKeepScreenOn = false;
-            host.dispatchCollectViewAttributes(0);
-            if (attachInfo.mKeepScreenOn != oldVal) {
-                params = lp;
-                //Log.i(TAG, "Keep screen on changed: " + attachInfo.mKeepScreenOn);
-            }
+        if (collectViewAttributes()) {
+            params = lp;
+        }
+
+        if (attachInfo.mForceReportNewAttributes) {
+            attachInfo.mForceReportNewAttributes = false;
+            params = lp;
         }
 
         if (mFirst || attachInfo.mViewVisibilityChanged) {
@@ -891,6 +1001,27 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
             if (!PixelFormat.formatHasAlpha(params.format)) {
                 params.format = PixelFormat.TRANSLUCENT;
             }
+        }
+
+        if (mFitSystemWindowsRequested) {
+            mFitSystemWindowsRequested = false;
+            mFitSystemWindowsInsets.set(mAttachInfo.mContentInsets);
+            host.fitSystemWindows(mFitSystemWindowsInsets);
+            if (mLayoutRequested) {
+                // Short-circuit catching a new layout request here, so
+                // we don't need to go through two layout passes when things
+                // change due to fitting system windows, which can happen a lot.
+                windowResizesToFitContent |= measureHierarchy(host, lp,
+                        mView.getContext().getResources(),
+                        desiredWindowWidth, desiredWindowHeight);
+            }
+        }
+
+        if (layoutRequested) {
+            // Clear this now, so that if anything requests a layout in the
+            // rest of this function we will catch it and re-run a full
+            // layout pass.
+            mLayoutRequested = false;
         }
 
         boolean windowShouldResize = mLayoutRequested && windowResizesToFitContent
@@ -938,22 +1069,11 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
             boolean visibleInsetsChanged;
             boolean hadSurface = mSurface.isValid();
             try {
-                int fl = 0;
-                if (params != null) {
-                    fl = params.flags;
-                    if (attachInfo.mKeepScreenOn) {
-                        params.flags |= WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
-                    }
-                }
                 if (DEBUG_LAYOUT) {
                     Log.i(TAG, "host=w:" + host.mMeasuredWidth + ", h:" +
                             host.mMeasuredHeight + ", params=" + params);
                 }
                 relayoutResult = relayoutWindow(params, viewVisibility, insetsPending);
-
-                if (params != null) {
-                    params.flags = fl;
-                }
 
                 if (DEBUG_LAYOUT) Log.v(TAG, "relayout: frame=" + frame.toShortString()
                         + " content=" + mPendingContentInsets.toShortString()
@@ -973,9 +1093,15 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                         mAttachInfo.mVisibleInsets);
                 if (contentInsetsChanged) {
                     mAttachInfo.mContentInsets.set(mPendingContentInsets);
-                    host.fitSystemWindows(mAttachInfo.mContentInsets);
                     if (DEBUG_LAYOUT) Log.v(TAG, "Content insets changing to: "
                             + mAttachInfo.mContentInsets);
+                }
+                if (contentInsetsChanged || mLastSystemUiVisibility !=
+                        mAttachInfo.mSystemUiVisibility || mFitSystemWindowsRequested) {
+                    mLastSystemUiVisibility = mAttachInfo.mSystemUiVisibility;
+                    mFitSystemWindowsRequested = false;
+                    mFitSystemWindowsInsets.set(mAttachInfo.mContentInsets);
+                    host.fitSystemWindows(mFitSystemWindowsInsets);
                 }
                 if (visibleInsetsChanged) {
                     mAttachInfo.mVisibleInsets.set(mPendingVisibleInsets);
@@ -1086,8 +1212,8 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                     (relayoutResult&WindowManagerImpl.RELAYOUT_IN_TOUCH_MODE) != 0);
             if (focusChangedDueToTouchMode || mWidth != host.mMeasuredWidth
                     || mHeight != host.mMeasuredHeight || contentInsetsChanged) {
-                childWidthMeasureSpec = getRootMeasureSpec(mWidth, lp.width);
-                childHeightMeasureSpec = getRootMeasureSpec(mHeight, lp.height);
+                int childWidthMeasureSpec = getRootMeasureSpec(mWidth, lp.width);
+                int childHeightMeasureSpec = getRootMeasureSpec(mHeight, lp.height);
 
                 if (DEBUG_LAYOUT) Log.v(TAG, "Ooops, something changed!  mWidth="
                         + mWidth + " measuredWidth=" + host.mMeasuredWidth
@@ -1125,11 +1251,11 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                     host.measure(childWidthMeasureSpec, childHeightMeasureSpec);
                 }
 
-                mLayoutRequested = true;
+                layoutRequested = true;
             }
         }
 
-        final boolean didLayout = mLayoutRequested;
+        final boolean didLayout = layoutRequested && !mStopped;
         boolean triggerGlobalLayoutListener = didLayout
                 || attachInfo.mRecomputeGlobalAttributes;
         if (didLayout) {
@@ -1872,6 +1998,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
     public final static int FINISH_INPUT_CONNECTION = 1012;
     public final static int CHECK_FOCUS = 1013;
     public final static int CLOSE_SYSTEM_DIALOGS = 1014;
+    public final static int DISPATCH_SYSTEM_UI_VISIBILITY = 1015;
 
     @Override
     public void handleMessage(Message msg) {
@@ -2057,6 +2184,9 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                 mView.onCloseSystemDialogs((String)msg.obj);
             }
         } break;
+        case DISPATCH_SYSTEM_UI_VISIBILITY: {	
+            handleDispatchSystemUiVisibilityChanged((SystemUiVisibilityInfo)msg.obj);
+        } break;
         }
     }
     
@@ -2080,7 +2210,27 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                     + "is finished but there is no input event actually in progress.");
         }
     }
-    
+
+    public void handleDispatchSystemUiVisibilityChanged(SystemUiVisibilityInfo args) {
+        if (mSeq != args.seq) {
+            // The sequence has changed, so we need to update our value and make
+            // sure to do a traversal afterward so the window manager is given our
+            // most recent data.
+            mSeq = args.seq;
+            mAttachInfo.mForceReportNewAttributes = true;	
+            scheduleTraversals();
+        }
+        if (mView == null) return;
+        if (args.localChanges != 0) {
+            if (mAttachInfo != null) {
+                mAttachInfo.mRecomputeGlobalAttributes = true;
+            }
+            mView.updateLocalSystemUiVisibility(args.localValue, args.localChanges);
+            scheduleTraversals();            
+        }
+        mView.dispatchSystemUiVisibilityChanged(args.globalVisibility);
+    }
+
     /**
      * Something in the current window tells us we need to change the touch mode.  For
      * example, we are not in touch mode, and the user touches the screen.
@@ -2674,7 +2824,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
         mPendingConfiguration.seq = 0;
         //Log.d(TAG, ">>>>>> CALLING relayout");
         int relayoutResult = sWindowSession.relayout(
-                mWindow, params,
+                mWindow, mSeq, params,
                 (int) (mView.mMeasuredWidth * appScale + 0.5f),
                 (int) (mView.mMeasuredHeight * appScale + 0.5f),
                 viewVisibility, insetsPending, mWinFrame,
@@ -2933,7 +3083,17 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
         msg.obj = reason;
         sendMessage(msg);
     }
-    
+
+    public void dispatchSystemUiVisibilityChanged(int seq, int globalVisibility,
+            int localValue, int localChanges) {
+        SystemUiVisibilityInfo args = new SystemUiVisibilityInfo();
+        args.seq = seq;
+        args.globalVisibility = globalVisibility;
+        args.localValue = localValue;
+        args.localChanges = localChanges;
+        sendMessage(obtainMessage(DISPATCH_SYSTEM_UI_VISIBILITY, args));
+    }
+
     /**
      * The window is getting focus so if there is anything focused/selected
      * send an {@link AccessibilityEvent} to announce that.
@@ -3143,6 +3303,16 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                     sWindowSession.wallpaperCommandComplete(asBinder(), null);
                 } catch (RemoteException e) {
                 }
+            }
+        }
+
+        @Override
+        public void dispatchSystemUiVisibilityChanged(int seq, int globalVisibility,
+                int localValue, int localChanges) {
+            final ViewRoot viewRoot = mViewRoot.get();
+            if (viewRoot != null) {
+                viewRoot.dispatchSystemUiVisibilityChanged(seq, globalVisibility,
+                        localValue, localChanges);
             }
         }
     }
@@ -3458,3 +3628,4 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
     // doesn't call glDeleteTextures
     private static native void nativeAbandonGlCaches();
 }
+

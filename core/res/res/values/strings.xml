@@ -309,6 +309,8 @@
     <string name="reboot_download">Download</string>
     <!-- Button to reboot the phone into hot reboot, within the Reboot Options dialog -->
     <string name="reboot_hotreboot">Hot reboot</string>
+    <!-- Button to reboot the phone into safe mode, within the Reboot Options dialog -->
+    <string name="reboot_safemode">Safe Mode</string>
 
     <!-- Shutdown Progress Dialog. This is shown if the user chooses to power off the phone. -->
     <string name="shutdown_progress">Shutting down\u2026</string>
@@ -2359,6 +2361,9 @@
     <!-- Long label for a button on a full-screen input method for the "Done" action. -->
     <string name="ime_action_done">Done</string>
 
+    <!-- [CHAR LIMIT=6] Long label for a button on a full-screen input method for the "Previous" action. -->
+    <string name="ime_action_previous">Prev</string>
+
     <!-- Long label for a button on a full-screen input method for an unknown action. -->
     <string name="ime_action_default">Execute</string>
 
@@ -2537,6 +2542,9 @@
 
     <!-- [CHAR LIMIT=40] Title of dialog that is shown when performing a system upgrade. -->
     <string name="android_upgrading_title">CyanMobile X is upgrading...</string>
+
+    <!-- [CHAR LIMIT=40] Title of dialog that is shown when performing a system upgrade. -->
+    <string name="android_booting_title">CyanMobile X is starting...</string>
 
     <!-- [CHAR LIMIT=NONE] Message shown in upgrading dialog for each .apk that is optimized. -->
     <string name="android_upgrading_apk">Optimizing application
