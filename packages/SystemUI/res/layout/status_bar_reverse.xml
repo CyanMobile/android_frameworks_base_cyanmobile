@@ -28,6 +28,7 @@
     android:background="@android:color/transparent"
     android:focusable="true"
     android:descendantFocusability="afterDescendants"
+    android:fitsSystemWindows="true"
     >
 
     <com.android.systemui.statusbar.batteries.CmBatteryStatusBar

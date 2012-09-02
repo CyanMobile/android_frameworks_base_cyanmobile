@@ -277,14 +277,14 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     // notfication color temp variables
     int mItemText = mWhiteColor;
-    int mItemTime = 0xFF33B5E5;
-    int mItemTitle = 0xFF33B5E5;
-    int mDateColor = 0xFF33B5E5;
+    int mItemTime = 0xFF38FF00;
+    int mItemTitle = 0xFF38FF00;
+    int mDateColor = 0xFF38FF00;
     int mButtonText = mBlackColor;
-    int mNotifyNone = 0xFF33B5E5;
-    int mNotifyTicker = 0xFF33B5E5;
-    int mNotifyLatest = 0xFF33B5E5;
-    int mNotifyOngoing = 0xFF33B5E5;
+    int mNotifyNone = 0xFF38FF00;
+    int mNotifyTicker = 0xFF38FF00;
+    int mNotifyLatest = 0xFF38FF00;
+    int mNotifyOngoing = 0xFF38FF00;
 
     // Tracking finger for opening/closing.
     int mEdgeBorder; // corresponds to R.dimen.status_bar_edge_ignore
@@ -456,7 +456,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             shouldTick = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_INTRUDER_ALERT, 1) == 1);
             mClockColor = (Settings.System.getInt(resolver,
-                    Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5));
+                    Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF38FF00));
             mStatusBarTab = (Settings.System.getInt(resolver,
                     Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4);
             mNaviShow = (Settings.System.getInt(resolver,
@@ -676,7 +676,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
 	// apply transparent status bar drawables
         int transStatusBar = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_STATUS_BAR, 0);
-        int statusBarColor = Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_COLOR, 0);
+        int statusBarColor = Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_COLOR, 0xFF38FF00);
         switch (transStatusBar) {
           case 0 : // theme, leave alone
             mStatusBarView.setBackgroundDrawable(getResources().getDrawable(R.drawable.statusbar_background));
@@ -706,7 +706,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
             // apply transparent navi bar drawables
             int transNaviBar = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_NAVI_BAR, 0);
-            int naviBarColor = Settings.System.getInt(getContentResolver(), Settings.System.NAVI_BAR_COLOR, 0);
+            int naviBarColor = Settings.System.getInt(getContentResolver(), Settings.System.NAVI_BAR_COLOR, 0xFF38FF00);
             switch (transNaviBar) {
                case 0 : // theme, leave alone
                  mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background));
@@ -898,7 +898,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         // apply transparent notification background drawables
         int transNotificationBackground = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_NOTIFICATION_BACKGROUND, 0);
-        int notificationBackgroundColor = Settings.System.getInt(getContentResolver(), Settings.System.NOTIFICATION_BACKGROUND_COLOR, 0);
+        int notificationBackgroundColor = Settings.System.getInt(getContentResolver(), Settings.System.NOTIFICATION_BACKGROUND_COLOR, 0xFF38FF00);
         switch (transNotificationBackground) {
               case 0 : // theme, leave alone
                   mNotificationBackgroundView.setBackgroundDrawable(getResources().getDrawable(R.drawable.shade_bg));

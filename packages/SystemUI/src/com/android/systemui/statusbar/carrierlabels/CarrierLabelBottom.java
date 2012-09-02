@@ -157,7 +157,7 @@ public class CarrierLabelBottom extends TextView {
         mAirplaneOn = (Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.AIRPLANE_MODE_ON, 0) == 1);
         mCarrierColor = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_CARRIERCOLOR, 0xFF33B5E5));
+                Settings.System.STATUS_BAR_CARRIERCOLOR, 0xFF38FF00));
         int mCarrierSizeval = Settings.System.getInt(resolver,
                 Settings.System.STATUSBAR_CARRIER_FONT_SIZE, 10);
         int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, mContext.getResources().getDisplayMetrics());

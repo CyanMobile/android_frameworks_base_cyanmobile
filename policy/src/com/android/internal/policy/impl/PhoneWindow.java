@@ -2353,7 +2353,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
             Drawable drawable = mBackgroundDrawable;
             if (mBackgroundResource != 0) {
                 int transBackgroundApp = Settings.System.getInt(getContext().getContentResolver(), Settings.System.TRANSPARENT_BACKGROUND_APP, 0);
-                int backgroundAppColor = Settings.System.getInt(getContext().getContentResolver(), Settings.System.BACKGROUND_APP_COLOR, 0xFF33B5E5);
+                int backgroundAppColor = Settings.System.getInt(getContext().getContentResolver(), Settings.System.BACKGROUND_APP_COLOR, 0xFF38FF00);
               switch (transBackgroundApp) {
                 case 0 : // theme, leave alone
                   drawable = getContext().getResources().getDrawable(mBackgroundResource);

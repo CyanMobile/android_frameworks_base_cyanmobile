@@ -242,7 +242,7 @@ public class PowerClock extends TextView {
         mAmPmStyle = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_AM_PM, 2));
         mClockColor = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5));
+                Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF38FF00));
 
         if ((mAmPmStyle != AM_PM_STYLE) || (mCColor != mClockColor)) {
             AM_PM_STYLE = mAmPmStyle;

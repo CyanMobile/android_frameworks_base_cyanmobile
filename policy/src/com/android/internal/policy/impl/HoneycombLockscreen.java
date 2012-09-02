@@ -193,10 +193,10 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
             Settings.System.LOCKSCREEN_ALWAYS_BATTERY, 0) == 1);
 
     private int mClockColor = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_LOCKSCREENCOLOR, 0xFF33B5E5)); // this value for color
+                Settings.System.STATUS_BAR_LOCKSCREENCOLOR, 0xFF38FF00)); // this value for color
 
     private int mCarrierColor = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_CARRIERCOLOR, 0xFF33B5E5)); // this value for color
+                Settings.System.STATUS_BAR_CARRIERCOLOR, 0xFF38FF00)); // this value for color
 
     private boolean mLockCalendarAlarm = (Settings.System.getInt(mContext.getContentResolver(),
             Settings.System.LOCKSCREEN_CALENDAR_ALARM, 0) == 1);

@@ -156,7 +156,7 @@ public class CmSignalTextExp extends TextView {
                 Settings.System.STATUS_BAR_CM_SIGNAL_TEXT, STYLE_HIDE);
 
         mClockColor = (Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5));
+                Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF38FF00));
 
         int mCarrierSizeval = Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.STATUSBAR_ICON_FONT_SIZE, 10);

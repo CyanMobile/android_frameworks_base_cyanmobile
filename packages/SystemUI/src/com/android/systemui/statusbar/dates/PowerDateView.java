@@ -137,7 +137,7 @@ public final class PowerDateView extends TextView {
 
 	int mCColor = mClockColor;
 	mClockColor = (Settings.System.getInt(resolver,
-                Settings.System.COLOR_DATE, 0xFF33B5E5));
+                Settings.System.COLOR_DATE, 0xFF38FF00));
         mShowDate = (Settings.System.getInt(resolver, Settings.System.STATUS_BAR_DATE, 0) != 1);
 
            if (mAttached) {

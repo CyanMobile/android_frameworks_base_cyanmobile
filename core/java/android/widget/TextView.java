@@ -895,7 +895,7 @@ public class TextView extends View implements ViewTreeObserver.OnPreDrawListener
 
         setTextColor((textColor != null && (Settings.System.getInt(resolver,
                 Settings.System.TEXT_GLOBALOFCOLOR, 0) != 1)) ? textColor : ColorStateList.valueOf(Settings.System.getInt(resolver,
-                Settings.System.TEXT_FULLOFCOLOR, 0xFF33B5E5)));
+                Settings.System.TEXT_FULLOFCOLOR, 0xFF38FF00)));
         setHintTextColor(textColorHint);
         setLinkTextColor(textColorLink);
         if (textColorHighlight != 0) {

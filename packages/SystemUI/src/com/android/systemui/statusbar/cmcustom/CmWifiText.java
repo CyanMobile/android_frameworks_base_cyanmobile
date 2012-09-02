@@ -128,7 +128,7 @@ public class CmWifiText extends TextView {
 
     private void updateSignalText() {
         mClockColor = (Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF33B5E5));
+                Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF38FF00));
 
         style = Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.STATUS_BAR_CM_WIFI_TEXT, STYLE_HIDE);

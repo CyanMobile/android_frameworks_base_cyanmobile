@@ -174,14 +174,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static final int INPUT_METHOD_LAYER = 12;
     // on-screen keyboards and other such input method user interfaces go here.
     static final int INPUT_METHOD_DIALOG_LAYER = 13;
-    // the navigation bar, if available, shows atop most things
-    static final int NAVIGATION_BAR_LAYER = 14;
-    // some panels (e.g. search) need to show on top of the navigation bar
-    static final int NAVIGATION_BAR_PANEL_LAYER = 15;
     // the keyguard; nothing on top of these can take focus, since they are
     // responsible for power management when displayed.
-    static final int KEYGUARD_LAYER = 16;
-    static final int KEYGUARD_DIALOG_LAYER = 17;
+    static final int KEYGUARD_LAYER = 14;
+    static final int KEYGUARD_DIALOG_LAYER = 15;
+    // the navigation bar, if available, shows atop most things
+    static final int NAVIGATION_BAR_LAYER = 16;
+    // some panels (e.g. search) need to show on top of the navigation bar
+    static final int NAVIGATION_BAR_PANEL_LAYER = 17;
     // things in here CAN NOT take focus, but are shown on top of everything else.
     static final int SYSTEM_OVERLAY_LAYER = 18;
     // system-level error dialogs
@@ -2049,9 +2049,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if(mBottomBar && !mNaviShow) {
                     //setting activites bottoms, to top of status bar
                     mDockBottom = mContentBottom = mCurBottom = r.top;
-                } else {
-                    mDockTop = mContentTop = mCurTop = r.bottom;
-                }
+                } //else {
+                //    mDockTop = mContentTop = mCurTop = r.bottom;
+                //}
                 if (DEBUG_LAYOUT) Log.v(TAG, "Status bar: mDockBottom="
                         + mDockBottom + " mContentBottom="
                         + mContentBottom + " mCurBottom=" + mCurBottom);
@@ -2283,7 +2283,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     pf.right = df.right = cf.right = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
                     pf.bottom = df.bottom = cf.bottom
                             = mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
-                } else if (!mNaviShow
+                } else if (mNaviShow
                         && (sysUiFl & View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION) != 0
                         && attrs.type >= WindowManager.LayoutParams.FIRST_APPLICATION_WINDOW
                         && attrs.type <= WindowManager.LayoutParams.LAST_SUB_WINDOW) {
@@ -2377,6 +2377,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         // Dock windows carve out the bottom of the screen, so normal windows
         // can't appear underneath them.
         if (attrs.type == TYPE_INPUT_METHOD && !win.getGivenInsetsPendingLw()) {
+            setLastInputMethodWindowLw(null, null);
             offsetInputMethodWindowLw(win);
         }
     }
@@ -2400,6 +2401,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     /** {@inheritDoc} */
     public int finishLayoutLw() {
         return 0;
+    }
+
+    @Override
+    public void setLastInputMethodWindowLw(WindowState ime, WindowState target) {
+        mLastInputMethodWindow = ime;
+        mLastInputMethodTargetWindow = target;
     }
 
     /** {@inheritDoc} */
