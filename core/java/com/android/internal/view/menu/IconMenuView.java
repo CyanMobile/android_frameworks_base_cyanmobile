@@ -484,7 +484,7 @@ public final class IconMenuView extends ViewGroup implements ItemInvoker, MenuVi
 
         // Position the children
         if (layoutNumRows > 0) {
-            positionChildren(getMeasuredWidth(), getMeasuredHeight());
+            positionChildren(mMeasuredWidth, mMeasuredHeight);
         }
     }
 

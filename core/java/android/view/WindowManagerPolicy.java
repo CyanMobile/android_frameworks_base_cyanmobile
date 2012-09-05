@@ -266,11 +266,6 @@ public interface WindowManagerPolicy {
         boolean isDisplayedLw();
 
         /**
-         * Is this window considered to be gone for purposes of layout?
-         */
-        boolean isGoneForLayoutLw();
-
-        /**
          * Returns true if this window has been shown on screen at some time in 
          * the past.  Must be called with the window manager lock held.
          */
@@ -668,13 +663,6 @@ public interface WindowManagerPolicy {
      */
     public void animatingWindowLw(WindowState win,
             WindowManager.LayoutParams attrs);
-
-    /**
-     * Set the last used input method window state. This state is used to make IME transition
-     * smooth.
-     * @hide	
-     */ 	
-    public void setLastInputMethodWindowLw(WindowState ime, WindowState target);
 
     /**
      * Called when animation of the windows is finished.  If in this function you do 

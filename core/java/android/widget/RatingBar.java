@@ -280,8 +280,7 @@ public class RatingBar extends AbsSeekBar {
             // TODO: Once ProgressBar's TODOs are gone, this can be done more
             // cleanly than mSampleTile
             final int width = mSampleTile.getWidth() * mNumStars;
-            setMeasuredDimension(resolveSizeAndState(width, widthMeasureSpec, 0),
-                    getMeasuredHeight());
+            setMeasuredDimension(resolveSize(width, widthMeasureSpec), mMeasuredHeight);
         }
     }
 

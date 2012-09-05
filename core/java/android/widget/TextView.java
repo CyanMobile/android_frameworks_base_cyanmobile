@@ -3196,16 +3196,6 @@ public class TextView extends View implements ViewTreeObserver.OnPreDrawListener
                 }
                 return;
 
-            } else if (actionCode == EditorInfo.IME_ACTION_PREVIOUS) {
-                View v = focusSearch(FOCUS_UP);
-                if (v != null) {
-                    if (!v.requestFocus(FOCUS_UP)) {
-                        throw new IllegalStateException("focus search returned a view " +
-                                "that wasn't able to take focus!");
-                    }
-                }
-                return;
-
             } else if (actionCode == EditorInfo.IME_ACTION_DONE) {
                 InputMethodManager imm = InputMethodManager.peekInstance();
                 if (imm != null) {
@@ -4625,15 +4615,9 @@ public class TextView extends View implements ViewTreeObserver.OnPreDrawListener
             } else {
                 outAttrs.imeOptions = EditorInfo.IME_NULL;
             }
-            if (focusSearch(FOCUS_DOWN) != null) {
-                outAttrs.imeOptions |= EditorInfo.IME_FLAG_NAVIGATE_NEXT;
-            }
-            if (focusSearch(FOCUS_UP) != null) {
-                outAttrs.imeOptions |= EditorInfo.IME_FLAG_NAVIGATE_PREVIOUS;
-            }
             if ((outAttrs.imeOptions&EditorInfo.IME_MASK_ACTION)
                     == EditorInfo.IME_ACTION_UNSPECIFIED) {
-                if ((outAttrs.imeOptions&EditorInfo.IME_FLAG_NAVIGATE_NEXT) != 0) {
+                if (focusSearch(FOCUS_DOWN) != null) {
                     // An action has not been set, but the enter key will move to
                     // the next focus, so set the action to that.
                     outAttrs.imeOptions |= EditorInfo.IME_ACTION_NEXT;

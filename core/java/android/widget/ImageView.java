@@ -702,8 +702,8 @@ public class ImageView extends View {
             w = Math.max(w, getSuggestedMinimumWidth());
             h = Math.max(h, getSuggestedMinimumHeight());
 
-            widthSize = resolveSizeAndState(w, widthMeasureSpec, 0);
-            heightSize = resolveSizeAndState(h, heightMeasureSpec, 0);
+            widthSize = resolveSize(w, widthMeasureSpec);
+            heightSize = resolveSize(h, heightMeasureSpec);
         }
 
         setMeasuredDimension(widthSize, heightSize);

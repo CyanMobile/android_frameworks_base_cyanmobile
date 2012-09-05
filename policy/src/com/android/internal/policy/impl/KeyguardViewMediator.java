@@ -680,13 +680,6 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                 return;
             }
 
-            // if the current profile has disabled us, don't show
-            if (!lockedOrMissing
-                   && mProfileManager.getActiveProfile().getScreenLockMode() == Profile.LockMode.DISABLE) {
-                if (DEBUG) Log.d(TAG, "doKeyguard: not showing because of profile override");
-                   return;
-            }
-
             // if another app is disabling us, don't show
             if (!mExternallyEnabled && !state.isPinLocked()) {
                 if (DEBUG) Log.d(TAG, "doKeyguard: not showing because externally disabled");
@@ -707,6 +700,13 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                 if (DEBUG)
                     Log.d(TAG, "doKeyguard: showing the applicable keyguard screen");
                 showLocked(handlerMessage);
+            }
+
+            // if the current profile has disabled us, don't show
+            if (!lockedOrMissing
+                   && mProfileManager.getActiveProfile().getScreenLockMode() == Profile.LockMode.DISABLE) {
+                if (DEBUG) Log.d(TAG, "doKeyguard: not showing because of profile override");
+                   return;
             }
         }
     }

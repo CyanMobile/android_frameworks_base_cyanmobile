@@ -745,12 +745,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      */
     static final int FILTER_TOUCHES_WHEN_OBSCURED = 0x00000400;
 
-    /**
-     * Set for framework elements that use FITS_SYSTEM_WINDOWS, to indicate
-     * that they are optional and should be skipped if the window has
-     * requested system UI flags that ignore those insets for layout.
-     */
-    static final int OPTIONAL_FITS_SYSTEM_WINDOWS = 0x00000800;
+    // note flag value 0x00000800 is now available for next flags...
 
     /**
      * <p>This view doesn't show fading edges.</p>
@@ -968,33 +963,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      * Use with {@link #focusSearch}. Move focus down.
      */
     public static final int FOCUS_DOWN = 0x00000082;
-
-    /**
-     * Bits of {@link #getMeasuredWidthAndState()} and
-     * {@link #getMeasuredWidthAndState()} that provide the actual measured size.
-     */
-    public static final int MEASURED_SIZE_MASK = 0x00ffffff;
-
-    /**
-     * Bits of {@link #getMeasuredWidthAndState()} and
-     * {@link #getMeasuredWidthAndState()} that provide the additional state bits.
-     */
-    public static final int MEASURED_STATE_MASK = 0xff000000;
-
-    /**
-     * Bit shift of {@link #MEASURED_STATE_MASK} to get to the height bits
-     * for functions that combine both width and height into a single int,
-     * such as {@link #getMeasuredState()} and the childState argument of
-     * {@link #resolveSizeAndState(int, int, int)}.
-     */
-    public static final int MEASURED_HEIGHT_STATE_SHIFT = 16;
-
-    /**
-     * Bit of {@link #getMeasuredWidthAndState()} and
-     * {@link #getMeasuredWidthAndState()} that indicates the measured size
-     * is smaller that the space the view would like to have.
-     */
-    public static final int MEASURED_STATE_TOO_SMALL = 0x01000000;
 
     /**
      * Base View state sets
@@ -1425,14 +1393,14 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      * {@hide}
      */
     @ViewDebug.ExportedProperty(category = "measurement")
-    /*package*/ int mMeasuredWidth;
+    protected int mMeasuredWidth;
 
     /**
      * Height as measured during measure pass.
      * {@hide}
      */
     @ViewDebug.ExportedProperty(category = "measurement")
-    /*package*/ int mMeasuredHeight;
+    protected int mMeasuredHeight;
 
     /**
      * The view's identifier.
@@ -1613,217 +1581,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     public static final int OVER_SCROLL_NEVER = 2;
 
     /**
-     * View has requested the system UI (status bar) to be visible (the default).
-     *
-     * @see setSystemUiVisibility
-     */
-    public static final int SYSTEM_UI_FLAG_VISIBLE = 0;
-
-    /**
-     * View has requested the system UI to enter an unobtrusive "low profile" mode.
-     *
-     * This is for use in games, book readers, video players, or any other "immersive" application
-     * where the usual system chrome is deemed too distracting. 
-     *
-     * In low profile mode, the status bar and/or navigation icons may dim.
-     *
-     * @see #setSystemUiVisibility(int)
-     */
-    public static final int SYSTEM_UI_FLAG_LOW_PROFILE = 0x00000001;
-
-    /**
-     * View has requested that the system navigation be temporarily hidden.
-     *
-     * This is an even less obtrusive state than that called for by
-     * {@link #SYSTEM_UI_FLAG_LOW_PROFILE}; on devices that draw essential navigation controls
-     * (Home, Back, and the like) on screen, <code>SYSTEM_UI_FLAG_HIDE_NAVIGATION</code> will cause
-     * those to disappear. This is useful (in conjunction with the
-     * {@link android.view.WindowManager.LayoutParams#FLAG_FULLSCREEN FLAG_FULLSCREEN} and 
-     * {@link android.view.WindowManager.LayoutParams#FLAG_LAYOUT_IN_SCREEN FLAG_LAYOUT_IN_SCREEN}
-     * window flags) for displaying content using every last pixel on the display.
-     *
-     * There is a limitation: because navigation controls are so important, the least user
-     * interaction will cause them to reappear immediately.
-     *	
-     * @see setSystemUiVisibility
-     */
-    public static final int SYSTEM_UI_FLAG_HIDE_NAVIGATION = 0x00000002;
-
-    /**
-     * Flag for {@link #setSystemUiVisibility(int)}: View has requested to go
-     * into the normal fullscreen mode so that its content can take over the screen
-     * while still allowing the user to interact with the application.
-     *
-     * <p>This has the same visual effect as
-     * {@link android.view.WindowManager.LayoutParams#FLAG_FULLSCREEN
-     * WindowManager.LayoutParams.FLAG_FULLSCREEN},
-     * meaning that non-critical screen decorations (such as the status bar) will be
-     * hidden while the user is in the View's window, focusing the experience on
-     * that content.  Unlike the window flag, if you are using ActionBar in
-     * overlay mode with {@link Window#FEATURE_ACTION_BAR_OVERLAY
-     * Window.FEATURE_ACTION_BAR_OVERLAY}, then enabling this flag will also
-     * hide the action bar.
-     *
-     * <p>This approach to going fullscreen is best used over the window flag when
-     * it is a transient state -- that is, the application does this at certain
-     * points in its user interaction where it wants to allow the user to focus
-     * on content, but not as a continuous state.  For situations where the application
-     * would like to simply stay full screen the entire time (such as a game that
-     * wants to take over the screen), the
-     * {@link android.view.WindowManager.LayoutParams#FLAG_FULLSCREEN window flag}
-     * is usually a better approach.  The state set here will be removed by the system
-     * in various situations (such as the user moving to another application) like
-     * the other system UI states.
-     *
-     * <p>When using this flag, the application should provide some easy facility
-     * for the user to go out of it.  A common example would be in an e-book
-     * reader, where tapping on the screen brings back whatever screen and UI
-     * decorations that had been hidden while the user was immersed in reading
-     * the book.
-     *
-     * @see #setSystemUiVisibility(int)
-     */
-    public static final int SYSTEM_UI_FLAG_FULLSCREEN = 0x00000004;
-
-    /**
-     * Flag for {@link #setSystemUiVisibility(int)}: When using other layout
-     * flags, we would like a stable view of the content insets given to
-     * {@link #fitSystemWindows(Rect)}.  This means that the insets seen there
-     * will always represent the worst case that the application can expect
-     * as a continue state.  In practice this means with any of system bar,
-     * nav bar, and status bar shown, but not the space that would be needed
-     * for an input method.
-     *
-     * <p>If you are using ActionBar in
-     * overlay mode with {@link Window#FEATURE_ACTION_BAR_OVERLAY
-     * Window.FEATURE_ACTION_BAR_OVERLAY}, this flag will also impact the
-     * insets it adds to those given to the application.
-     */
-    public static final int SYSTEM_UI_FLAG_LAYOUT_STABLE = 0x00000100;
-
-    /**
-     * Flag for {@link #setSystemUiVisibility(int)}: View would like its window
-     * to be layed out as if it has requested
-     * {@link #SYSTEM_UI_FLAG_HIDE_NAVIGATION}, even if it currently hasn't.  This
-     * allows it to avoid artifacts when switching in and out of that mode, at
-     * the expense that some of its user interface may be covered by screen
-     * decorations when they are shown.  You can perform layout of your inner
-     * UI elements to account for the navagation system UI through the
-     * {@link #fitSystemWindows(Rect)} method.
-     */
-    public static final int SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION = 0x00000200;
-
-    /**
-     * Flag for {@link #setSystemUiVisibility(int)}: View would like its window
-     * to be layed out as if it has requested
-     * {@link #SYSTEM_UI_FLAG_FULLSCREEN}, even if it currently hasn't.  This
-     * allows it to avoid artifacts when switching in and out of that mode, at
-     * the expense that some of its user interface may be covered by screen
-     * decorations when they are shown.  You can perform layout of your inner
-     * UI elements to account for non-fullscreen system UI through the
-     * {@link #fitSystemWindows(Rect)} method.
-     */
-    public static final int SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN = 0x00000400;
-
-    /**
-     * @deprecated Use {@link #SYSTEM_UI_FLAG_LOW_PROFILE} instead.
-     */
-    public static final int STATUS_BAR_HIDDEN = SYSTEM_UI_FLAG_LOW_PROFILE;
-
-    /**
-     * @deprecated Use {@link #SYSTEM_UI_FLAG_VISIBLE} instead.
-     */
-    public static final int STATUS_BAR_VISIBLE = SYSTEM_UI_FLAG_VISIBLE;
-
-    /**
-     * @hide
-     *
-     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
-     * out of the public fields to keep the undefined bits out of the developer's way.
-     *
-     * Flag to make the status bar not expandable.  Unless you also
-     * set {@link #STATUS_BAR_DISABLE_NOTIFICATION_ICONS}, new notifications will continue to show.
-     */
-    public static final int STATUS_BAR_DISABLE_EXPAND = 0x00010000;
-
-    /**
-     * @hide
-     *
-     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
-     * out of the public fields to keep the undefined bits out of the developer's way.
-     *
-     * Flag to hide notification icons and scrolling ticker text.
-     */
-    public static final int STATUS_BAR_DISABLE_NOTIFICATION_ICONS = 0x00020000;
-
-    /**
-     * @hide
-     *
-     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
-     * out of the public fields to keep the undefined bits out of the developer's way.
-     *
-     * Flag to disable incoming notification alerts.  This will not block
-     * icons, but it will block sound, vibrating and other visual or aural notifications.
-     */
-    public static final int STATUS_BAR_DISABLE_NOTIFICATION_ALERTS = 0x00040000;
-
-    /**
-     * @hide
-     *
-     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
-     * out of the public fields to keep the undefined bits out of the developer's way.
-     *
-     * Flag to hide only the scrolling ticker.  Note that
-     * {@link #STATUS_BAR_DISABLE_NOTIFICATION_ICONS} implies
-     * {@link #STATUS_BAR_DISABLE_NOTIFICATION_TICKER}.
-     */
-    public static final int STATUS_BAR_DISABLE_NOTIFICATION_TICKER = 0x00080000;
-
-    /**
-     * @hide
-     *
-     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
-     * out of the public fields to keep the undefined bits out of the developer's way.
-     *
-     * Flag to hide only the navigation buttons.  Don't use this
-     * unless you're a special part of the system UI (i.e., setup wizard, keyguard).
-     */
-    public static final int STATUS_BAR_DISABLE_NAVIGATION = 0x00100000;
-
-    /**
-     * @hide
-     *
-     * NOTE: This flag may only be used in subtreeSystemUiVisibility. It is masked
-     * out of the public fields to keep the undefined bits out of the developer's way.
-     *
-     * Flag to hide only the clock.  You might use this if your activity has
-     * its own clock making the status bar's clock redundant.
-     */
-    public static final int STATUS_BAR_DISABLE_CLOCK = 0x00200000;
-
-    /**
-     * @hide
-     */
-    public static final int PUBLIC_STATUS_BAR_VISIBILITY_MASK = 0x0000FFFF;
-
-    /**
-     * These are the system UI flags that can be cleared by events outside
-     * of an application.  Currently this is just the ability to tap on the
-     * screen while hiding the navigation bar to have it return.
-     * @hide
-     */
-    public static final int SYSTEM_UI_CLEARABLE_FLAGS =
-            SYSTEM_UI_FLAG_LOW_PROFILE | SYSTEM_UI_FLAG_HIDE_NAVIGATION
-            | SYSTEM_UI_FLAG_FULLSCREEN;
-
-    /**
-     * Flags that can impact the layout in relation to system UI.
-     */
-    public static final int SYSTEM_UI_LAYOUT_FLAGS =
-            SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-            | SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
-
-    /**
      * Controls the over-scroll mode for this view.
      * See {@link #overScrollBy(int, int, int, int, int, int, int, int, boolean)},
      * {@link #OVER_SCROLL_ALWAYS}, {@link #OVER_SCROLL_IF_CONTENT_SCROLLS},
@@ -1998,35 +1755,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      */
     @ViewDebug.ExportedProperty(category = "padding")
     int mUserPaddingBottom;
-
-    /**
-     * Cache the paddingLeft set by the user to append to the scrollbar's size.
-     *
-     * @hide
-     */
-    @ViewDebug.ExportedProperty(category = "padding")
-    protected int mUserPaddingLeft;
-
-    /**
-     * Cache if the user padding is relative.
-     *
-     */
-    @ViewDebug.ExportedProperty(category = "padding")
-    boolean mUserPaddingRelative;
-
-    /**
-     * Cache the paddingStart set by the user to append to the scrollbar's size.
-     *
-     */
-    @ViewDebug.ExportedProperty(category = "padding")
-    int mUserPaddingStart;
-
-    /**
-     * Cache the paddingEnd set by the user to append to the scrollbar's size.
-     *
-     */
-    @ViewDebug.ExportedProperty(category = "padding")
-    int mUserPaddingEnd;
 
     /**
      * @hide
@@ -5171,19 +4899,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      * @return The measured width of this view.
      */
     public final int getMeasuredWidth() {
-        return mMeasuredWidth & MEASURED_SIZE_MASK;
-    }
-
-    /**
-     * Return the full width measurement information for this view as computed
-     * by the most recent call to {@link #measure(int, int)}.  This result is a bit mask
-     * as defined by {@link #MEASURED_SIZE_MASK} and {@link #MEASURED_STATE_TOO_SMALL}.
-     * This should be used during measurement and layout calculations only. Use
-     * {@link #getWidth()} to see how wide a view is after layout.
-     *
-     * @return The measured width of this view as a bit mask.
-     */
-    public final int getMeasuredWidthAndState() {
         return mMeasuredWidth;
     }
 
@@ -5195,34 +4910,8 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      * @return The measured height of this view.
      */
     public final int getMeasuredHeight() {
-        return mMeasuredHeight & MEASURED_SIZE_MASK;
-    }
-
-    /**
-     * Return the full height measurement information for this view as computed
-     * by the most recent call to {@link #measure}.  This result is a bit mask
-     * as defined by {@link #MEASURED_SIZE_MASK} and {@link #MEASURED_STATE_TOO_SMALL}.
-     * This should be used during measurement and layout calculations only. Use
-     * {@link #getHeight()} to see how wide a view is after layout.
-     *
-     * @return The measured width of this view as a bit mask.
-     */
-     public final int getMeasuredHeightAndState() {	
         return mMeasuredHeight;
      }
-
-    /**
-     * Return only the state bits of {@link #getMeasuredWidthAndState()}
-     * and {@link #getMeasuredHeightAndState()}, combined into one integer.
-     * The width component is in the regular bits {@link #MEASURED_STATE_MASK}
-     * and the height component is at the shifted bits
-     * {@link #MEASURED_HEIGHT_STATE_SHIFT}>>{@link #MEASURED_STATE_MASK}.
-     */
-    public final int getMeasuredState() {
-        return (mMeasuredWidth&MEASURED_STATE_MASK)
-                | ((mMeasuredHeight>>MEASURED_HEIGHT_STATE_SHIFT)
-                        & (MEASURED_STATE_MASK>>MEASURED_HEIGHT_STATE_SHIFT));
-    }
 
     /**
      * Top position of this view relative to its parent.
@@ -6251,40 +5940,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      */
     protected int computeVerticalScrollExtent() {
         return getHeight();
-    }
-
-    /**
-     * Check if this view can be scrolled horizontally in a certain direction.
-     *	
-     * @param direction Negative to check scrolling left, positive to check scrolling right.
-     * @return true if this view can be scrolled in the specified direction, false otherwise.
-     */	
-    public boolean canScrollHorizontally(int direction) {
-        final int offset = computeHorizontalScrollOffset();
-        final int range = computeHorizontalScrollRange() - computeHorizontalScrollExtent();
-        if (range == 0) return false;
-        if (direction < 0) {
-            return offset > 0;
-        } else {
-            return offset < range - 1;
-        }
-    }
-
-    /**
-     * Check if this view can be scrolled vertically in a certain direction.
-     *
-     * @param direction Negative to check scrolling up, positive to check scrolling down.
-     * @return true if this view can be scrolled in the specified direction, false otherwise.
-     */
-    public boolean canScrollVertically(int direction) {
-        final int offset = computeVerticalScrollOffset();
-        final int range = computeVerticalScrollRange() - computeVerticalScrollExtent();
-        if (range == 0) return false;
-        if (direction < 0) {
-            return offset > 0;
-        } else {	
-            return offset < range - 1;
-        }	
     }
 
     /**
@@ -8805,26 +8460,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     }
 
     /**
-     * Merge two states as returned by {@link #getMeasuredState()}.
-     * @param curState The current state as returned from a view or the result
-     * of combining multiple views.
-     * @param newState The new view state to combine.
-     * @return Returns a new integer reflecting the combination of the two
-     * states.
-     */
-    public static int combineMeasuredStates(int curState, int newState) {
-        return curState | newState;
-    }
-	
-    /**
-     * Version of {@link #resolveSizeAndState(int, int, int)}
-     * returning only the {@link #MEASURED_SIZE_MASK} bits of the result.	
-     */
-    public static int resolveSize(int size, int measureSpec) {
-        return resolveSizeAndState(size, measureSpec, 0) & MEASURED_SIZE_MASK;
-    }
-
-    /**
      * Utility to reconcile a desired size and state, with constraints imposed
      * by a MeasureSpec.  Will take the desired size, unless a different size
      * is imposed by the constraints.  The returned value is a compound integer,
@@ -8836,7 +8471,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      * @param measureSpec Constraints imposed by the parent
      * @return The size this view should be.
      */
-    public static int resolveSizeAndState(int size, int measureSpec, int childMeasuredState) {
+    public static int resolveSize(int size, int measureSpec) {
         int result = size;
         int specMode = MeasureSpec.getMode(measureSpec);
         int specSize =  MeasureSpec.getSize(measureSpec);
@@ -8845,17 +8480,13 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
             result = size;
             break;
         case MeasureSpec.AT_MOST:
-            if (specSize < size) {
-                result = specSize | MEASURED_STATE_TOO_SMALL;
-            } else {
-                result = size;
-            }
+            result = Math.min(size, specSize);
             break;
         case MeasureSpec.EXACTLY:
             result = specSize;
             break;
         }
-        return result | (childMeasuredState&MEASURED_STATE_MASK);
+        return result;
     }
 
     /**

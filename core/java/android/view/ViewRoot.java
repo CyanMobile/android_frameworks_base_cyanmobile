@@ -888,7 +888,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
         }
 
         boolean windowShouldResize = mLayoutRequested && windowResizesToFitContent
-            && ((mWidth != host.getMeasuredWidth() || mHeight != host.getMeasuredHeight())
+            && ((mWidth != host.mMeasuredWidth || mHeight != host.mMeasuredHeight)
                 || (lp.width == ViewGroup.LayoutParams.WRAP_CONTENT &&
                         frame.width() < desiredWindowWidth && frame.width() != mWidth)
                 || (lp.height == ViewGroup.LayoutParams.WRAP_CONTENT &&
@@ -941,7 +941,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                 }
                 if (DEBUG_LAYOUT) {
                     Log.i(TAG, "host=w:" + host.getMeasuredWidth() + ", h:" +
-                            host.getMeasuredHeight() + ", params=" + params);
+                            host.mMeasuredHeight + ", params=" + params);
                 }
                 relayoutResult = relayoutWindow(params, viewVisibility, insetsPending);
 
@@ -1016,10 +1016,8 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
             // !!FIXME!! This next section handles the case where we did not get the
             // window size we asked for. We should avoid this by getting a maximum size from
             // the window session beforehand.
-            if (mWidth != frame.width() || mHeight != frame.height()) {
-                mWidth = frame.width();
-                mHeight = frame.height();
-            }
+            mWidth = frame.width();
+            mHeight = frame.height();
 
             if (mSurfaceHolder != null) {
                 // The app owns the surface; tell it about what is going on.
@@ -1080,15 +1078,15 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
 
             boolean focusChangedDueToTouchMode = ensureTouchModeLocally(
                     (relayoutResult&WindowManagerImpl.RELAYOUT_IN_TOUCH_MODE) != 0);
-            if (focusChangedDueToTouchMode || mWidth != host.getMeasuredWidth()
-                    || mHeight != host.getMeasuredHeight() || contentInsetsChanged) {
+            if (focusChangedDueToTouchMode || mWidth != host.mMeasuredWidth
+                   || mHeight != host.mMeasuredHeight || contentInsetsChanged) {
                 childWidthMeasureSpec = getRootMeasureSpec(mWidth, lp.width);
                 childHeightMeasureSpec = getRootMeasureSpec(mHeight, lp.height);
 
                 if (DEBUG_LAYOUT) Log.v(TAG, "Ooops, something changed!  mWidth="
-                        + mWidth + " measuredWidth=" + host.getMeasuredWidth()
+                        + mWidth + " measuredWidth=" + host.mMeasuredWidth
                         + " mHeight=" + mHeight
-                        + " measuredHeight" + host.getMeasuredHeight()
+                        + " measuredHeight" + host.mMeasuredHeight
                         + " coveredInsetsChanged=" + contentInsetsChanged);
 
                  // Ask host how big it wants to be
@@ -1097,8 +1095,8 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                 // Implementation of weights from WindowManager.LayoutParams
                 // We just grow the dimensions as needed and re-measure if
                 // needs be
-                int width = host.getMeasuredWidth();
-                int height = host.getMeasuredHeight();
+                int width = host.mMeasuredWidth;
+                int height = host.mMeasuredHeight;
                 boolean measureAgain = false;
 
                 if (lp.horizontalWeight > 0.0f) {
@@ -1133,12 +1131,12 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
             mScrollMayChange = true;
             if (DEBUG_ORIENTATION || DEBUG_LAYOUT) Log.v(
                 TAG, "Laying out " + host + " to (" +
-                host.getMeasuredWidth() + ", " + host.getMeasuredHeight() + ")");
+                host.mMeasuredWidth + ", " + host.mMeasuredHeight + ")");
             long startTime = 0L;
             if (Config.DEBUG && ViewDebug.profileLayout) {
                 startTime = SystemClock.elapsedRealtime();
             }
-            host.layout(0, 0, host.getMeasuredWidth(), host.getMeasuredHeight());
+            host.layout(0, 0, host.mMeasuredWidth, host.mMeasuredHeight);
 
             if (Config.DEBUG && ViewDebug.consistencyCheckEnabled) {
                 if (!host.dispatchConsistencyCheck(ViewDebug.CONSISTENCY_LAYOUT)) {
@@ -2673,8 +2671,8 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
         //Log.d(TAG, ">>>>>> CALLING relayout");
         int relayoutResult = sWindowSession.relayout(
                 mWindow, params,
-                (int) (mView.getMeasuredWidth() * appScale + 0.5f),
-                (int) (mView.getMeasuredHeight() * appScale + 0.5f),
+                (int) (mView.mMeasuredWidth * appScale + 0.5f),
+                (int) (mView.mMeasuredHeight * appScale + 0.5f),
                 viewVisibility, insetsPending, mWinFrame,
                 mPendingContentInsets, mPendingVisibleInsets,
                 mPendingConfiguration, mSurface);

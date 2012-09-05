@@ -81,10 +81,6 @@ public final class BridgeWindow implements IWindow {
         // pass for now.
     }
 
-    public void doneAnimating() {
-        // TODO Auto-generated method stub
-     }
-
     public IBinder asBinder() {
         // pass for now.
         return null;

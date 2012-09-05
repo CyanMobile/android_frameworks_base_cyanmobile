@@ -246,12 +246,11 @@ public abstract class ApplicationThreadNative extends Binder
             IInstrumentationWatcher testWatcher = IInstrumentationWatcher.Stub.asInterface(binder);
             int testMode = data.readInt();
             boolean restrictedBackupMode = (data.readInt() != 0);
-            boolean persistent = (data.readInt() != 0);
             Configuration config = Configuration.CREATOR.createFromParcel(data);
             HashMap<String, IBinder> services = data.readHashMap(null);
             bindApplication(packageName, info,
                             providers, testName, profileName,
-                            testArgs, testWatcher, testMode, restrictedBackupMode, persistent,
+                            testArgs, testWatcher, testMode, restrictedBackupMode,
                             config, services);
             return true;
         }
@@ -651,7 +650,7 @@ class ApplicationThreadProxy implements IApplicationThread {
     public final void bindApplication(String packageName, ApplicationInfo info,
             List<ProviderInfo> providers, ComponentName testName,
             String profileName, Bundle testArgs, IInstrumentationWatcher testWatcher, int debugMode,
-            boolean restrictedBackupMode, boolean persistent, Configuration config,
+            boolean restrictedBackupMode, Configuration config,
             Map<String, IBinder> services) throws RemoteException {
         Parcel data = Parcel.obtain();
         data.writeInterfaceToken(IApplicationThread.descriptor);
@@ -669,7 +668,6 @@ class ApplicationThreadProxy implements IApplicationThread {
         data.writeStrongInterface(testWatcher);
         data.writeInt(debugMode);
         data.writeInt(restrictedBackupMode ? 1 : 0);
-        data.writeInt(persistent ? 1 : 0);
         config.writeToParcel(data, 0);
         data.writeMap(services);
         mRemote.transact(BIND_APPLICATION_TRANSACTION, data, null,

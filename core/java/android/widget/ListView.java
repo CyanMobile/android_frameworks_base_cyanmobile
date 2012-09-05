@@ -1095,7 +1095,6 @@ public class ListView extends AbsListView {
 
         int childWidth = 0;
         int childHeight = 0;
-        int childState = 0;
 
         mItemCount = mAdapter == null ? 0 : mAdapter.getCount();
         if (mItemCount > 0 && (widthMode == MeasureSpec.UNSPECIFIED ||
@@ -1106,7 +1105,6 @@ public class ListView extends AbsListView {
 
             childWidth = child.getMeasuredWidth();
             childHeight = child.getMeasuredHeight();
-            childState = combineMeasuredStates(childState, child.getMeasuredState());
 
             if (recycleOnMeasure() && mRecycler.shouldRecycleViewType(
                     ((LayoutParams) child.getLayoutParams()).viewType)) {
@@ -1117,8 +1115,6 @@ public class ListView extends AbsListView {
         if (widthMode == MeasureSpec.UNSPECIFIED) {
             widthSize = mListPadding.left + mListPadding.right + childWidth +
                     getVerticalScrollbarWidth();
-        } else {
-            widthSize |= (childState&MEASURED_STATE_MASK);
         }
 
         if (heightMode == MeasureSpec.UNSPECIFIED) {
@@ -1131,7 +1127,7 @@ public class ListView extends AbsListView {
             heightSize = measureHeightOfChildren(widthMeasureSpec, 0, NO_POSITION, heightSize, -1);
         }
 
-        setMeasuredDimension(widthSize , heightSize);
+        setMeasuredDimension(widthSize, heightSize);
         mWidthMeasureSpec = widthMeasureSpec;        
     }
 

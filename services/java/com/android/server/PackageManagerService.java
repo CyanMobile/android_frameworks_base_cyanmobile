@@ -716,7 +716,6 @@ class PackageManagerService extends IPackageManager.Stub {
                         Runtime.getRuntime().gc();
                     }
                     if (msg.obj != null) {
-                        @SuppressWarnings("unchecked")
                         Set<SdInstallArgs> args = (Set<SdInstallArgs>) msg.obj;
                         if (DEBUG_SD_INSTALL) Log.i(TAG, "Unloading all containers");
                         // Unload containers

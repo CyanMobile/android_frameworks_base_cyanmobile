@@ -767,12 +767,6 @@ public interface WindowManager extends ViewManager {
          */
         public static final int SOFT_INPUT_ADJUST_PAN = 0x20;
 
-        /** Adjustment option for {@link #softInputMode}: set to have a window
-         * not adjust for a shown input method.  The window will not be resized,
-         * and it will not be panned to make its focus visible.
-         */
-        public static final int SOFT_INPUT_ADJUST_NOTHING = 0x30;
-
         /**
          * Bit for {@link #softInputMode}: set when the user has navigated
          * forward to the window.  This is normally set automatically for

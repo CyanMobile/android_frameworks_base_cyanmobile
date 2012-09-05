@@ -305,15 +305,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // that area of the display from all other windows.
     int mRestrictedScreenLeft, mRestrictedScreenTop;
     int mRestrictedScreenWidth, mRestrictedScreenHeight;
-    // During layout, the current screen borders accounting for any currently
-    // visible system UI elements.
-    int mSystemLeft, mSystemTop, mSystemRight, mSystemBottom;
-    // For applications requesting stable content insets, these are them.
-    int mStableLeft, mStableTop, mStableRight, mStableBottom;
-    // For applications requesting stable content insets but have also set the
-    // fullscreen window flag, these are the stable dimensions without the status bar.
-    int mStableFullscreenLeft, mStableFullscreenTop;
-    int mStableFullscreenRight, mStableFullscreenBottom;
     // During layout, the current screen borders with all outer decoration
     // (status bar, input method dock) accounted for.
     int mCurLeft, mCurTop, mCurRight, mCurBottom;
@@ -1101,7 +1092,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 // These types of windows can't receive input events.
                 attrs.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                         | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
-                attrs.flags &= ~WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
                 break;
         }
     }
@@ -1853,7 +1843,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
-    void setAttachedWindowFrames(WindowState win, int fl, int adjust,
+    void setAttachedWindowFrames(WindowState win, int fl, int sim,
             WindowState attached, boolean insetDecors, Rect pf, Rect df, Rect cf, Rect vf) {
         if (win.getSurfaceLayer() > mDockLayer && attached.getSurfaceLayer() < mDockLayer) {
             // Here's a special case: if this attached window is a panel that is
@@ -1874,7 +1864,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             // window is positioned within that content.  Otherwise we can use
             // the display frame and let the attached window take care of
             // positioning its content appropriately.
-            if (adjust != SOFT_INPUT_ADJUST_RESIZE) {
+            if ((sim & SOFT_INPUT_MASK_ADJUST) != SOFT_INPUT_ADJUST_RESIZE) {
                 cf.set(attached.getDisplayFrameLw());
             } else {
                 // If the window is resizing, then we want to base the content
@@ -1909,12 +1899,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             return;
         }
 
-        final boolean needsToOffsetInputMethodTarget =
-                (win == mLastInputMethodTargetWindow && mLastInputMethodWindow != null);
-        if (needsToOffsetInputMethodTarget) {
-            offsetInputMethodWindowLw(mLastInputMethodWindow);
-        }
-
         final int fl = attrs.flags;
         final int sim = attrs.softInputMode;
 
@@ -1934,8 +1918,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             attrs.gravity = Gravity.BOTTOM;
             mDockLayer = win.getSurfaceLayer();
         } else {
-            final int adjust = sim & SOFT_INPUT_MASK_ADJUST;
-
             if ((fl &
                     (FLAG_LAYOUT_IN_SCREEN | FLAG_FULLSCREEN | FLAG_LAYOUT_INSET_DECOR))
                     == (FLAG_LAYOUT_IN_SCREEN | FLAG_LAYOUT_INSET_DECOR)) {
@@ -1959,7 +1941,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         pf.right = df.right = mRestrictedScreenLeft+mRestrictedScreenWidth;
                         pf.bottom = df.bottom = mRestrictedScreenTop+mRestrictedScreenHeight;
                     }
-                    if (adjust != SOFT_INPUT_ADJUST_RESIZE) {
+                    if ((sim & SOFT_INPUT_MASK_ADJUST) != SOFT_INPUT_ADJUST_RESIZE) {
                         cf.left = mDockLeft;
                         cf.top = mDockTop;
                         cf.right = mDockRight;
@@ -1970,14 +1952,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         cf.right = mContentRight;
                         cf.bottom = mContentBottom;
                     }
-                    if (adjust != SOFT_INPUT_ADJUST_NOTHING) {
-                        vf.left = mCurLeft;
-                        vf.top = mCurTop;
-                        vf.right = mCurRight;
-                        vf.bottom = mCurBottom;
-                    } else {
-                        vf.set(cf);
-                    }
+                    vf.left = mCurLeft;
+                    vf.top = mCurTop;
+                    vf.right = mCurRight;
+                    vf.bottom = mCurBottom;
                 }
             } else if ((fl & FLAG_LAYOUT_IN_SCREEN) != 0) {
                 // A window that has requested to fill the entire screen just
@@ -1989,19 +1967,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
                     pf.bottom = df.bottom = cf.bottom
                             = hasNavBar ? mDockBottom : mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
-                } else if (attrs.type == TYPE_NAVIGATION_BAR) {
-                    // The navigation bar has Real Ultimate Power.
-                    pf.left = df.left = mUnrestrictedScreenLeft;
-                    pf.top = df.top = mUnrestrictedScreenTop;
-                    pf.right = df.right = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
-                    pf.bottom = df.bottom = mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
-                } else if (attrs.type == TYPE_SECURE_SYSTEM_OVERLAY
-                        && ((fl & FLAG_FULLSCREEN) != 0)) {
-                    // Fullscreen secure system overlays get what they ask for.
-                    pf.left = df.left = mUnrestrictedScreenLeft;
-                    pf.top = df.top = mUnrestrictedScreenTop;
-                    pf.right = df.right = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
-                    pf.bottom = df.bottom = mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
                 } else {
                     pf.left = df.left = cf.left = mRestrictedScreenLeft;
                     pf.top = df.top = cf.top = mRestrictedScreenTop;
@@ -2009,44 +1974,36 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     pf.bottom = df.bottom = cf.bottom
                             = mRestrictedScreenTop+mRestrictedScreenHeight;
                 }
-                if (adjust != SOFT_INPUT_ADJUST_NOTHING) {
-                    vf.left = mCurLeft;
-                    vf.top = mCurTop;
-                    vf.right = mCurRight;
-                    vf.bottom = mCurBottom;
-                } else {
-                    vf.set(cf);
-                }
+                vf.left = mCurLeft;
+                vf.top = mCurTop;
+                vf.right = mCurRight;
+                vf.bottom = mCurBottom;
             } else if (attached != null) {
                 // A child window should be placed inside of the same visible
                 // frame that its parent had.
-                setAttachedWindowFrames(win, fl, adjust, attached, false, pf, df, cf, vf);
+                setAttachedWindowFrames(win, fl, sim, attached, false, pf, df, cf, vf);
             } else {
                 // Otherwise, a normal window must be placed inside the content
                 // of all screen decorations.
-                    pf.left = mContentLeft;
-                    pf.top = mContentTop;
-                    pf.right = mContentRight;
-                    pf.bottom = mContentBottom;
-                  if (adjust != SOFT_INPUT_ADJUST_RESIZE) {
-                      df.left = cf.left = mDockLeft;
-                      df.top = cf.top = mDockTop;
-                      df.right = cf.right = mDockRight;
-                      df.bottom = cf.bottom = mDockBottom;
-                  } else {
-                      df.left = cf.left = mContentLeft;
-                      df.top = cf.top = mContentTop;
-                      df.right = cf.right = mContentRight;
-                      df.bottom = cf.bottom = mContentBottom;
-                  }
-                  if (adjust != SOFT_INPUT_ADJUST_NOTHING) {
-                      vf.left = mCurLeft;
-                      vf.top = mCurTop;
-                      vf.right = mCurRight;
-                      vf.bottom = mCurBottom;
-                  } else {
-                      vf.set(cf);
-                  }
+                pf.left = mContentLeft;
+                pf.top = mContentTop;
+                pf.right = mContentRight;
+                pf.bottom = mContentBottom;
+                if ((sim & SOFT_INPUT_MASK_ADJUST) != SOFT_INPUT_ADJUST_RESIZE) {
+                    df.left = cf.left = mDockLeft;
+                    df.top = cf.top = mDockTop;
+                    df.right = cf.right = mDockRight;
+                    df.bottom = cf.bottom = mDockBottom;
+                } else {
+                    df.left = cf.left = mContentLeft;
+                    df.top = cf.top = mContentTop;
+                    df.right = cf.right = mContentRight;
+                    df.bottom = cf.bottom = mContentBottom;
+                }
+                vf.left = mCurLeft;
+                vf.top = mCurTop;
+                vf.right = mCurRight;
+                vf.bottom = mCurBottom;
             }
         }
 
@@ -2067,36 +2024,25 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         // Dock windows carve out the bottom of the screen, so normal windows
         // can't appear underneath them.
         if (attrs.type == TYPE_INPUT_METHOD && !win.getGivenInsetsPendingLw()) {
-            setLastInputMethodWindowLw(null, null);
-            offsetInputMethodWindowLw(win);
+            int top = win.getContentFrameLw().top;
+            top += win.getGivenContentInsetsLw().top;
+            if (mContentBottom > top) {
+                mContentBottom = top;
+            }
+            top = win.getVisibleFrameLw().top;
+            top += win.getGivenVisibleInsetsLw().top;
+            if (mCurBottom > top) {
+                mCurBottom = top;
+            }
+            if (DEBUG_LAYOUT) Log.v(TAG, "Input method: mDockBottom="
+                    + mDockBottom + " mContentBottom="
+                    + mContentBottom + " mCurBottom=" + mCurBottom);
         }
-    }
-
-    private void offsetInputMethodWindowLw(WindowState win) {
-        int top = win.getContentFrameLw().top;
-        top += win.getGivenContentInsetsLw().top;
-        if (mContentBottom > top) {
-            mContentBottom = top;
-        }
-        top = win.getVisibleFrameLw().top;
-        top += win.getGivenVisibleInsetsLw().top;
-        if (mCurBottom > top) {
-            mCurBottom = top;
-        }
-        if (DEBUG_LAYOUT) Log.v(TAG, "Input method: mDockBottom="
-                + mDockBottom + " mContentBottom="
-                + mContentBottom + " mCurBottom=" + mCurBottom);
     }
 
     /** {@inheritDoc} */
     public int finishLayoutLw() {
         return 0;
-    }
-
-    @Override
-    public void setLastInputMethodWindowLw(WindowState ime, WindowState target) {
-        mLastInputMethodWindow = ime;
-        mLastInputMethodTargetWindow = target;
     }
 
     /** {@inheritDoc} */
@@ -2115,7 +2061,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         if (DEBUG_LAYOUT) Slog.i(TAG, "Win " + win + ": isVisibleOrBehindKeyguardLw="
                 + win.isVisibleOrBehindKeyguardLw());
         if (mTopFullscreenOpaqueWindowState == null &&
-                win.isVisibleOrBehindKeyguardLw() && !win.isGoneForLayoutLw()) {
+                win.isVisibleOrBehindKeyguardLw()) {
             if ((attrs.flags & FLAG_FORCE_NOT_FULLSCREEN) != 0) {
                 mForceStatusBar = true;
             }
@@ -2146,7 +2092,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         int changes = 0;
 
         boolean hiding = false;
-        boolean topIsFullscreen = false;
         if (mStatusBar != null) {
             if (DEBUG_LAYOUT) Log.i(TAG, "force=" + mForceStatusBar
                     + " top=" + mTopFullscreenOpaqueWindowState);
@@ -2155,7 +2100,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if (mStatusBar.showLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
             } else if (mTopFullscreenOpaqueWindowState != null) {
                 WindowManager.LayoutParams lp = mTopFullscreenOpaqueWindowState.getAttrs();
-                topIsFullscreen = (lp.flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0;
+                boolean topIsFullscreen = (lp.flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0;
                 // The subtle difference between the window for mTopFullscreenOpaqueWindowState
                 // and topIsFullscreen is set only if the window
                 // has the FLAG_FULLSCREEN set.  Not sure if there is another way that to be the
@@ -2164,13 +2109,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     if (DEBUG_LAYOUT) Log.v(TAG, "** HIDING status bar");
                     if (mStatusBar.hideLw(true)) {
                         changes |= FINISH_LAYOUT_REDO_LAYOUT;
-                        hiding = true;
                     }
                    if (mNavigationBar != null) {
                     if (mNaviShowAll) {
                         mNavigationBar.hideLw(true);
                     }
                    }
+                   hiding = true;
                 } else {
                     if (DEBUG_LAYOUT) Log.v(TAG, "** SHOWING status bar: top is not fullscreen");
                     if (mStatusBar.showLw(true)) {
