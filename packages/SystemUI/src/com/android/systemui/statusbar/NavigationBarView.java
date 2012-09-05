@@ -186,7 +186,6 @@ public class NavigationBarView extends LinearLayout {
         mHandler=new Handler();
 
         mNaviAdd = findViewById(R.id.navibarAdd);
-        mNaviAdd.setBackgroundColor(0x00000000);
 
         mNaviBackground = findViewById(R.id.navibarBackground);
         mSoftButtons = (ViewGroup)findViewById(R.id.navbuttons);

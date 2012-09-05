@@ -485,12 +485,12 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
     /**
      * Let's us know the screen was turned on.
      */
-    public void onScreenTurnedOn(KeyguardViewManager.ShowListener showListener) {
+    public void onScreenTurnedOn() {
         synchronized (this) {
             mScreenOn = true;
             mDelayedShowingSequence++;
             if (DEBUG) Log.d(TAG, "onScreenTurnedOn, seq = " + mDelayedShowingSequence);
-            notifyScreenOnLocked(showListener);
+            notifyScreenOnLocked();
         }
     }
 
@@ -744,10 +744,9 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
      * @see #onScreenTurnedOn()
      * @see #handleNotifyScreenOn
      */
-    private void notifyScreenOnLocked(KeyguardViewManager.ShowListener showListener) {
+    private void notifyScreenOnLocked() {
         if (DEBUG) Log.d(TAG, "notifyScreenOnLocked");
-        Message msg = mHandler.obtainMessage(NOTIFY_SCREEN_ON, showListener);
-        mHandler.sendMessage(msg);
+        mHandler.sendEmptyMessage(NOTIFY_SCREEN_ON);
     }
 
     /**
@@ -801,7 +800,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
             case ABSENT:
                 // only force lock screen in case of missing sim if user hasn't
                 // gone through setup wizard
-                synchronized (this) {
+                  if (!mUpdateMonitor.isDeviceProvisioned()) {
                     if (!isShowing()) {
                         if (DEBUG) Log.d(TAG, "INTENT_VALUE_ICC_ABSENT and keygaurd isn't showing, we need "
                              + "to show the keyguard since the device isn't provisioned yet.");
@@ -809,11 +808,10 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                     } else {
                         resetStateLocked();
                     }
-                }
+                  }
                 break;
             case PIN_REQUIRED:
             case PUK_REQUIRED:
-                synchronized (this) {
                   if (!isShowing()) {
                     if (DEBUG) Log.d(TAG, "INTENT_VALUE_ICC_LOCKED and keygaurd isn't showing, we need "
                             + "to show the keyguard so the user can enter their sim pin");
@@ -821,14 +819,11 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                   } else {
                     resetStateLocked();
                   }
-                }
                 break;
             case READY:
-                synchronized (this) {
                   if (isShowing()) {
                     resetStateLocked();
                   }
-                }
                 break;
         }
     }
@@ -1055,7 +1050,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                     handleNotifyScreenOff();
                     return;
                 case NOTIFY_SCREEN_ON:
-                    handleNotifyScreenOn((KeyguardViewManager.ShowListener)msg.obj);
+                    handleNotifyScreenOn();
                     return;
                 case WAKE_WHEN_READY:
                     handleWakeWhenReady(msg.arg1);
@@ -1336,13 +1331,13 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
      * Handle message sent by {@link #notifyScreenOnLocked()}
      * @see #NOTIFY_SCREEN_ON
      */
-    private void handleNotifyScreenOn(KeyguardViewManager.ShowListener showListener) {
+    private void handleNotifyScreenOn() {
         synchronized (KeyguardViewMediator.this) {
             if (DEBUG) Log.d(TAG, "handleNotifyScreenOn");
             Message msg = mHandler.obtainMessage(TIMEOUT, mWakelockSequence, 0);
             mHandler.removeMessages(TIMEOUT);
             mHandler.sendMessageDelayed(msg, AWAKE_INTERVAL_DEFAULT_KEYBOARD_OPEN_MS);
-            mKeyguardViewManager.onScreenTurnedOn(showListener);
+            mKeyguardViewManager.onScreenTurnedOn();
         }
     }
     private BroadcastReceiver mMusicReceiver = new BroadcastReceiver() {

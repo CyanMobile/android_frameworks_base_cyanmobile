@@ -30,7 +30,6 @@ oneway interface IStatusBar
     void disable(int state);
     void animateExpand();
     void animateCollapse();
-    void setSystemUiVisibility(int vis, int mask);
     void setIMEVisible(boolean visible);
 }
 

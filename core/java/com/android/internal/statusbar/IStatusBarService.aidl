@@ -30,7 +30,6 @@ interface IStatusBarService
     void setIcon(String slot, String iconPackage, int iconId, int iconLevel);
     void setIconVisibility(String slot, boolean visible);
     void removeIcon(String slot);
-    void setSystemUiVisibility(int vis, int mask);
     void setIMEVisible(boolean visible);
 
     // ---- Methods below are for use by the status bar policy services ----

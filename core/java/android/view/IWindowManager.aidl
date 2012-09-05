@@ -21,7 +21,6 @@ import com.android.internal.view.IInputContext;
 import com.android.internal.view.IInputMethodClient;
 
 import android.content.res.Configuration;
-import android.os.IRemoteCallback;
 import android.view.IApplicationToken;
 import android.view.IOnKeyguardExitResult;
 import android.view.IRotationWatcher;
@@ -162,14 +161,4 @@ interface IWindowManager
      * Lock the device immediately.
      */
     void lockNow();
-
-    /**
-     * Called by the status bar to notify Views of changes to System UI visiblity.
-     */
-    void statusBarVisibilityChanged(int visibility);
-
-    /**
-     * Block until all windows the window manager knows about have been drawn.
-     */
-    void waitForWindowDrawn(IBinder token, in IRemoteCallback callback);
 }

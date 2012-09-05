@@ -683,19 +683,6 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
     }
 
     /**
-     * @hide
-     */
-    @Override
-    public void makeOptionalFitsSystemWindows() {
-        super.makeOptionalFitsSystemWindows();
-        final int count = mChildrenCount;
-        final View[] children = mChildren;
-        for (int i = 0; i < count; i++) {
-            children[i].makeOptionalFitsSystemWindows();
-        }
-    }
-
-    /**
      * {@inheritDoc}
      */
     @Override
@@ -751,60 +738,19 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
      * {@inheritDoc}
      */
     public void recomputeViewAttributes(View child) {
-        if (mAttachInfo != null && !mAttachInfo.mRecomputeGlobalAttributes) {
-            ViewParent parent = mParent;
-            if (parent != null) parent.recomputeViewAttributes(this);
-        }
+        ViewParent parent = mParent;
+        if (parent != null) parent.recomputeViewAttributes(this);
     }
 
     @Override
-    public void dispatchWindowSystemUiVisiblityChanged(int visible) {
-        super.dispatchWindowSystemUiVisiblityChanged(visible);
+    void dispatchCollectViewAttributes(int visibility) {
+        visibility |= mViewFlags&VISIBILITY_MASK;
+        super.dispatchCollectViewAttributes(visibility);
 
         final int count = mChildrenCount;
         final View[] children = mChildren;
-        for (int i=0; i <count; i++) {
-            final View child = children[i];
-            child.dispatchWindowSystemUiVisiblityChanged(visible);
-        }
-    }
-
-    @Override
-    public void dispatchSystemUiVisibilityChanged(int visible) {
-        super.dispatchSystemUiVisibilityChanged(visible);
-
-        final int count = mChildrenCount;
-        final View[] children = mChildren;	
-        for (int i=0; i <count; i++) {
-            final View child = children[i];
-            child.dispatchSystemUiVisibilityChanged(visible);
-        }
-    }
-
-    @Override
-    boolean updateLocalSystemUiVisibility(int localValue, int localChanges) {
-        boolean changed = super.updateLocalSystemUiVisibility(localValue, localChanges);
-
-        final int count = mChildrenCount;
-        final View[] children = mChildren;
-        for (int i=0; i <count; i++) {
-            final View child = children[i];
-            changed |= child.updateLocalSystemUiVisibility(localValue, localChanges);
-        }
-        return changed;
-    }
-
-    @Override
-    void dispatchCollectViewAttributes(AttachInfo attachInfo, int visibility) {
-        if ((visibility & VISIBILITY_MASK) == VISIBLE) {
-            super.dispatchCollectViewAttributes(attachInfo, visibility);
-            final int count = mChildrenCount;
-            final View[] children = mChildren;
-            for (int i = 0; i < count; i++) {
-                final View child = children[i];
-                child.dispatchCollectViewAttributes(attachInfo,
-                        visibility | (child.mViewFlags&VISIBILITY_MASK));
-            }
+        for (int i = 0; i < count; i++) {
+            children[i].dispatchCollectViewAttributes(visibility);
         }
     }
 
@@ -1175,12 +1121,11 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
     @Override
     void dispatchAttachedToWindow(AttachInfo info, int visibility) {
         super.dispatchAttachedToWindow(info, visibility);
+        visibility |= mViewFlags & VISIBILITY_MASK;
         final int count = mChildrenCount;
         final View[] children = mChildren;
         for (int i = 0; i < count; i++) {
-            final View child = children[i];
-            child.dispatchAttachedToWindow(info,
-                    visibility | (child.mViewFlags&VISIBILITY_MASK));
+            children[i].dispatchAttachedToWindow(info, visibility);
         }
     }
 

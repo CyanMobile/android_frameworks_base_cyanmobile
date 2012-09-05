@@ -56,10 +56,6 @@ public class KeyguardViewManager implements KeyguardWindowController {
 
     private boolean mScreenOn = false;
 
-    public interface ShowListener {
-        void onShown(IBinder windowToken);
-    };
-
     /**
      * @param context Used to create views.
      * @param viewManager Keyguard will be attached to this.
@@ -207,31 +203,11 @@ public class KeyguardViewManager implements KeyguardWindowController {
         }
     }
 
-    public synchronized void onScreenTurnedOn(
-            final KeyguardViewManager.ShowListener showListener) {
+    public synchronized void onScreenTurnedOn() {
         if (DEBUG) Log.d(TAG, "onScreenTurnedOn()");
         mScreenOn = true;
         if (mKeyguardView != null) {
             mKeyguardView.onScreenTurnedOn();
-            // Caller should wait for this window to be shown before turning
-            // on the screen.
-            if (mKeyguardHost.getVisibility() == View.VISIBLE) {
-                // Keyguard may be in the process of being shown, but not yet
-                // updated with the window manager...  give it a chance to do so.
-                mKeyguardHost.post(new Runnable() {
-                    @Override public void run() {
-                        if (mKeyguardHost.getVisibility() == View.VISIBLE) {
-                            showListener.onShown(mKeyguardHost.getWindowToken());
-                        } else {
-                            showListener.onShown(null);
-                        }
-                    }
-                });
-            } else {
-                showListener.onShown(null);
-            }
-        } else {
-            showListener.onShown(null);
         }
     }
 

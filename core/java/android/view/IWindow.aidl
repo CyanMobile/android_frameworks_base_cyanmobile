@@ -64,14 +64,4 @@ oneway interface IWindow {
     
     void dispatchWallpaperCommand(String action, int x, int y,
             int z, in Bundle extras, boolean sync);
-
-    void dispatchSystemUiVisibilityChanged(int seq, int globalVisibility,
-            int localValue, int localChanges);
-
-    /**
-     * If the window manager returned RELAYOUT_RES_ANIMATING
-     * from relayout(), this method will be called when the animation
-     * is done.	
-     */ 	
-    void doneAnimating();
 }
