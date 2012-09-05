@@ -78,9 +78,9 @@ interface IWindowSession {
      */
     int relayout(IWindow window, int seq, in WindowManager.LayoutParams attrs,
             int requestedWidth, int requestedHeight, int viewVisibility,
-            boolean insetsPending, out Rect outFrame, out Rect outContentInsets,
-            out Rect outVisibleInsets, out Configuration outConfig,
-            out Surface outSurface);
+            boolean insetsPending, out Rect outFrame,
+            out Rect outContentInsets, out Rect outVisibleInsets,
+            out Configuration outConfig, out Surface outSurface);
 
     /**
      * Give the window manager a hint of the part of the window that is

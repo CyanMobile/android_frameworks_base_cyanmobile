@@ -272,6 +272,12 @@ public interface WindowManagerPolicy {
         boolean isDisplayedLw();
 
         /**
+         * Return true if this window (or a window it is attached to, but not
+         * considering its app token) is currently animating.
+         */
+        public boolean isAnimatingLw();
+
+        /**
          * Is this window considered to be gone for purposes of layout?
          */
         boolean isGoneForLayoutLw();
@@ -279,8 +285,6 @@ public interface WindowManagerPolicy {
         /**
          * Returns true if this window has been shown on screen at some time in 
          * the past.  Must be called with the window manager lock held.
-         * 
-         * @return boolean
          */
         public boolean hasDrawnLw();
 
@@ -771,15 +775,24 @@ public interface WindowManagerPolicy {
      */
     public void screenTurnedOff(int why);
 
+    public interface ScreenOnListener {
+        void onScreenOn();
+    };
+
     /**
      * Called after the screen turns on.
      */
-    public void screenTurnedOn();
+    public void screenTurningOn(ScreenOnListener screenOnListener);
 
     /**
      * Return whether the screen is about to turn on or is currently on.
      */
-    public boolean isScreenOn();
+    public boolean isScreenOnEarly();
+
+    /**
+     * Return whether the screen is fully turned on.
+     */
+    public boolean isScreenOnFully();
 
     /**
      * Tell the policy that the lid switch has changed state.

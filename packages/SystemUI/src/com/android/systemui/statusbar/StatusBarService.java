@@ -276,7 +276,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     int mWhiteColor = 0xFFFFFFFF;
 
     // notfication color temp variables
-    int mItemText = mWhiteColor;
+    int mItemText = mBlackColor;
     int mItemTime = 0xFF38FF00;
     int mItemTitle = 0xFF38FF00;
     int mDateColor = 0xFF38FF00;
@@ -1311,14 +1311,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             ((Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.SHOW_NAVI_BUTTONS, 1) == 1) && (Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.NAVI_BUTTONS, 1) == 1));
-        int naviSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_NAVI_SIZE, 25);
-        int naviSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, naviSizeval, res.getDisplayMetrics());
-        final int size = naviSizepx;
+        final int size = getNavBarSize();
 
 	int mPixelFormat = PixelFormat.TRANSLUCENT;
         if (Settings.System.getInt(mContext.getContentResolver(), Settings.System.TRANSPARENT_NAVI_BAR, 0) != 0) {
-          // transparent statusbar enabled?
+          // transparent navbar enabled?
           mPixelFormat = PixelFormat.TRANSLUCENT;
         }
 
@@ -1337,17 +1334,29 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         lp.setTitle("NavigationBar");
         lp.gravity = Gravity.BOTTOM | Gravity.FILL_HORIZONTAL;
-        lp.windowAnimations = com.android.internal.R.style.Animation_NaviBar;
+        lp.windowAnimations = 0;
 
         return lp;
     }
 
+    private int getNavBarSize() {
+        int navSizeval = Settings.System.getInt(mContext.getContentResolver(),
+             Settings.System.STATUSBAR_NAVI_SIZE, 25);
+        int navSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                 navSizeval, mContext.getResources().getDisplayMetrics());
+        return navSizepx;
+    }
+
+    private int getStatBarSize() {
+        int statSizeval = Settings.System.getInt(mContext.getContentResolver(),
+             Settings.System.STATUSBAR_STATS_SIZE, 25);
+        int statSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                 statSizeval, mContext.getResources().getDisplayMetrics());
+        return statSizepx;
+    }
+
     private void addIntruderView() {
-        Resources res = mContext.getResources();
-        int heightSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_STATS_SIZE, 25);
-        int heightSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, heightSizeval, res.getDisplayMetrics());
-        final int height = heightSizepx;
+        final int height = getStatBarSize();
 
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -1368,11 +1377,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     protected void addStatusBarView() {
-        Resources res = mContext.getResources();
-        int heightSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_STATS_SIZE, 25);
-        int heightSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, heightSizeval, res.getDisplayMetrics());
-        final int height = heightSizepx;
+        final int height = getStatBarSize();
 
         final View view = mStatusBarContainer;
 
@@ -1974,8 +1979,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 updateExpandedViewPos(EXPANDED_FULL_OPEN);
                 performExpand();
             }
-            else if ((!mBottomBar && mAnimY < mStatusBarView.getHeight())
-                    || (mBottomBar && mAnimY > (mDisplay.getHeight()-(mShowDate ? mStatusBarView.getHeight() : 0)))) {
+            else if ((!mBottomBar && mAnimY < getStatBarSize())
+                    || (mBottomBar && mAnimY > (mDisplay.getHeight()-(mShowDate ? getStatBarSize() : 0)))) {
                 if (SPEW) Slog.d(TAG, "Animation completed to collapsed state.");
                 mAnimating = false;
                 if(mBottomBar)
@@ -2015,10 +2020,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     void doRevealAnimation() {
-        int h = mCloseView.getHeight() + (mShowDate ? mStatusBarView.getHeight() : 0);
+        int h = mCloseView.getHeight() + (mShowDate ? getStatBarSize() : 0);
 
         if(mBottomBar)
-            h = mDisplay.getHeight() - (mShowDate ? mStatusBarView.getHeight() : 0);
+            h = mDisplay.getHeight() - (mShowDate ? getStatBarSize() : 0);
         if (mAnimatingReveal && mAnimating &&
                 ((mBottomBar && mAnimY > h) || (!mBottomBar && mAnimY < h))) {
             incrementAnim();
@@ -2040,7 +2045,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         if (opening) {
             mAnimAccel = 40000.0f;
             mAnimVel = 200;
-            mAnimY = mBottomBar ? mDisplay.getHeight() : (mShowDate ? mStatusBarView.getHeight() : mDisplay.getHeight());
+            mAnimY = mBottomBar ? mDisplay.getHeight() : (mShowDate ? getStatBarSize() : mDisplay.getHeight());
             updateExpandedViewPos((int)mAnimY);
             mAnimating = true;
             mAnimatingReveal = true;
@@ -2170,7 +2175,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             return false;
         }
 
-        final int statusBarSize = mStatusBarView.getHeight();
+        final int statusBarSize = getStatBarSize();
         final int hitSize = statusBarSize*2;
         final int y = (int)event.getRawY();
         final int x = (int)event.getRawX();
@@ -2517,11 +2522,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         /// ---------- Tracking View --------------
         pixelFormat = PixelFormat.TRANSLUCENT;
-//        bg = mTrackingView.getBackground();
-//        if (bg != null) {
-//            pixelFormat = bg.getOpacity();
-//        }
-
         lp = new WindowManager.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -2530,7 +2530,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                 | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM,
                 pixelFormat);
-//        lp.token = mStatusBarView.getWindowToken();
         lp.gravity = Gravity.TOP | Gravity.FILL_HORIZONTAL;
         lp.setTitle("TrackingView");
         lp.y = mTrackingPosition;
@@ -2547,14 +2546,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         WindowManager.LayoutParams lp;
         int pixelFormat;
         Drawable bg;
-        Resources res = mContext.getResources();
-        int expheightSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_NAVI_SIZE, 25);
-        int expheightSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, expheightSizeval, res.getDisplayMetrics());
+        int expheightSizepx = getNavBarSize();
         /// ---------- Expanded View --------------
         pixelFormat = PixelFormat.TRANSLUCENT;
 
-        final int disph = mBottomBar ? mDisplay.getHeight() : (mDisplay.getHeight()-mNavigationBarView.getHeight());
+        final int disph = mBottomBar ? mDisplay.getHeight() : (mDisplay.getHeight()-expheightSizepx);
         lp = mExpandedDialog.getWindow().getAttributes();
         lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
         lp.height = mBottomBar ? getExpandedHeight() : (getExpandedHeight()-expheightSizepx);
@@ -2668,8 +2664,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     + " mTrackingPosition=" + mTrackingPosition);
         }
 
-        int h = mBottomBar ? 0 : (mShowDate ? mStatusBarView.getHeight() : 0);
-        int disph = mBottomBar ? mDisplay.getHeight() : (mDisplay.getHeight()-mNavigationBarView.getHeight());
+        int h = mBottomBar ? 0 : (mShowDate ? getStatBarSize() : 0);
+        int disph = mBottomBar ? mDisplay.getHeight() : (mDisplay.getHeight()-getNavBarSize());
 
         // If the expanded view is not visible, make sure they're still off screen.
         // Maybe the view was resized.
@@ -2724,7 +2720,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 else
                     mExpandedParams.y = pos + mTrackingView.getHeight()
                         - (mTrackingParams.height-closePos) - contentsBottom;
-                int max = mBottomBar ? (mDisplay.getHeight()-mNavigationBarView.getHeight()) : h;
+                int max = mBottomBar ? (mDisplay.getHeight()-getNavBarSize()) : h;
                 if (mExpandedParams.y > max) {
                     mExpandedParams.y = max;
                 }
@@ -2760,14 +2756,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     int getExpandedHeight() {
-        return (mDisplay.getHeight()-(mShowDate ? mStatusBarView.getHeight() : 0)-mCloseView.getHeight());
+        return (mDisplay.getHeight()-(mShowDate ? getStatBarSize() : 0)-mCloseView.getHeight());
     }
 
     void updateExpandedHeight() {
-        Resources res = mContext.getResources();
-        int mexpheightSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_NAVI_SIZE, 25);
-        int mexpheightSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mexpheightSizeval, res.getDisplayMetrics());
+        int mexpheightSizepx = getNavBarSize();
         if (mExpandedView != null) {
             mExpandedParams.height = mBottomBar ? getExpandedHeight() : (getExpandedHeight()-mexpheightSizepx);
             mExpandedDialog.getWindow().setAttributes(mExpandedParams);

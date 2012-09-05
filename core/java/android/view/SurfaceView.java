@@ -101,6 +101,7 @@ public class SurfaceView extends View {
     MyWindow mWindow;
     final Rect mVisibleInsets = new Rect();
     final Rect mWinFrame = new Rect();
+    final Rect mSystemInsets = new Rect();
     final Rect mContentInsets = new Rect();
     final Configuration mConfiguration = new Configuration();
     
@@ -217,7 +218,17 @@ public class SurfaceView extends View {
     public void setVisibility(int visibility) {
         super.setVisibility(visibility);
         mViewVisibility = visibility == VISIBLE;
-        mRequestedVisible = mWindowVisibility && mViewVisibility;
+        boolean newRequestedVisible = mWindowVisibility && mViewVisibility;
+        if (newRequestedVisible != mRequestedVisible) {
+            // our base class (View) invalidates the layout only when
+            // we go from/to the GONE state. However, SurfaceView needs
+            // to request a re-layout when the visibility changes at all.
+            // This is needed because the transparent region is computed
+            // as part of the layout phase, and it changes (obviously) when
+            // the visibility changes.
+            requestLayout();
+        }
+        mRequestedVisible = newRequestedVisible;
         updateWindow(false, false);
     }
 
@@ -285,8 +296,12 @@ public class SurfaceView extends View {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int width = getDefaultSize(mRequestedWidth, widthMeasureSpec);
-        int height = getDefaultSize(mRequestedHeight, heightMeasureSpec);
+        int width = mRequestedWidth >= 0
+                ? resolveSizeAndState(mRequestedWidth, widthMeasureSpec, 0)
+                : getDefaultSize(0, widthMeasureSpec);
+        int height = mRequestedHeight >= 0
+                ? resolveSizeAndState(mRequestedHeight, heightMeasureSpec, 0)
+                : getDefaultSize(0, heightMeasureSpec);
         setMeasuredDimension(width, height);
     }
     
@@ -616,7 +631,7 @@ public class SurfaceView extends View {
             mSurfaceView = new WeakReference<SurfaceView>(surfaceView);
         }
 
-        public void resized(int w, int h, Rect coveredInsets,
+        public void resized(int w, int h, Rect contentInsets,
                 Rect visibleInsets, boolean reportDraw, Configuration newConfig) {
             SurfaceView surfaceView = mSurfaceView.get();
             if (surfaceView != null) {

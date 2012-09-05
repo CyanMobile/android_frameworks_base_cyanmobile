@@ -61,7 +61,12 @@ public class WindowManagerImpl implements WindowManager {
      * so the client must call drawingFinished() when done
      */
     public static final int RELAYOUT_FIRST_TIME = 0x2;
-    
+    /**
+     * The window manager is currently animating.  It will call
+     * IWindow.doneAnimating() when done.	
+     */	
+    public static final int RELAYOUT_RES_ANIMATING = 0x4;
+
     public static final int ADD_FLAG_APP_VISIBLE = 0x2;
     public static final int ADD_FLAG_IN_TOUCH_MODE = RELAYOUT_IN_TOUCH_MODE;
     

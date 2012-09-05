@@ -1425,14 +1425,14 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      * {@hide}
      */
     @ViewDebug.ExportedProperty(category = "measurement")
-    protected int mMeasuredWidth;
+    /*package*/ int mMeasuredWidth;
 
     /**
      * Height as measured during measure pass.
      * {@hide}
      */
     @ViewDebug.ExportedProperty(category = "measurement")
-    protected int mMeasuredHeight;
+    /*package*/ int mMeasuredHeight;
 
     /**
      * The view's identifier.
@@ -3505,7 +3505,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      *
      * @attr ref android.R.styleable#View_fitsSystemWindows
      */
-    public boolean fitsSystemWindows() {
+    public boolean getFitsSystemWindows() {
         return (mViewFlags & FITS_SYSTEM_WINDOWS) == FITS_SYSTEM_WINDOWS;
     }
 
@@ -5333,6 +5333,32 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      */
     public final int getMeasuredHeight() {
         return mMeasuredHeight & MEASURED_SIZE_MASK;
+    }
+
+    /**
+     * Return the full height measurement information for this view as computed
+     * by the most recent call to {@link #measure}.  This result is a bit mask
+     * as defined by {@link #MEASURED_SIZE_MASK} and {@link #MEASURED_STATE_TOO_SMALL}.
+     * This should be used during measurement and layout calculations only. Use
+     * {@link #getHeight()} to see how wide a view is after layout.
+     *
+     * @return The measured width of this view as a bit mask.
+     */
+     public final int getMeasuredHeightAndState() {	
+        return mMeasuredHeight;
+     }
+
+    /**
+     * Return only the state bits of {@link #getMeasuredWidthAndState()}
+     * and {@link #getMeasuredHeightAndState()}, combined into one integer.
+     * The width component is in the regular bits {@link #MEASURED_STATE_MASK}
+     * and the height component is at the shifted bits
+     * {@link #MEASURED_HEIGHT_STATE_SHIFT}>>{@link #MEASURED_STATE_MASK}.
+     */
+    public final int getMeasuredState() {
+        return (mMeasuredWidth&MEASURED_STATE_MASK)
+                | ((mMeasuredHeight>>MEASURED_HEIGHT_STATE_SHIFT)
+                        & (MEASURED_STATE_MASK>>MEASURED_HEIGHT_STATE_SHIFT));
     }
 
     /**
@@ -8924,14 +8950,38 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     }
 
     /**
-     * Utility to reconcile a desired size with constraints imposed by a MeasureSpec.
-     * Will take the desired size, unless a different size is imposed by the constraints.
+     * Merge two states as returned by {@link #getMeasuredState()}.
+     * @param curState The current state as returned from a view or the result
+     * of combining multiple views.
+     * @param newState The new view state to combine.
+     * @return Returns a new integer reflecting the combination of the two
+     * states.
+     */
+    public static int combineMeasuredStates(int curState, int newState) {
+        return curState | newState;
+    }
+	
+    /**
+     * Version of {@link #resolveSizeAndState(int, int, int)}
+     * returning only the {@link #MEASURED_SIZE_MASK} bits of the result.	
+     */
+    public static int resolveSize(int size, int measureSpec) {
+        return resolveSizeAndState(size, measureSpec, 0) & MEASURED_SIZE_MASK;
+    }
+
+    /**
+     * Utility to reconcile a desired size and state, with constraints imposed
+     * by a MeasureSpec.  Will take the desired size, unless a different size
+     * is imposed by the constraints.  The returned value is a compound integer,
+     * with the resolved size in the {@link #MEASURED_SIZE_MASK} bits and
+     * optionally the bit {@link #MEASURED_STATE_TOO_SMALL} set if the resulting
+     * size is smaller than the size the view wants to be.
      *
      * @param size How big the view wants to be
      * @param measureSpec Constraints imposed by the parent
      * @return The size this view should be.
      */
-    public static int resolveSize(int size, int measureSpec) {
+    public static int resolveSizeAndState(int size, int measureSpec, int childMeasuredState) {
         int result = size;
         int specMode = MeasureSpec.getMode(measureSpec);
         int specSize =  MeasureSpec.getSize(measureSpec);
@@ -8940,13 +8990,17 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
             result = size;
             break;
         case MeasureSpec.AT_MOST:
-            result = Math.min(size, specSize);
+            if (specSize < size) {
+                result = specSize | MEASURED_STATE_TOO_SMALL;
+            } else {
+                result = size;
+            }
             break;
         case MeasureSpec.EXACTLY:
             result = specSize;
             break;
         }
-        return result;
+        return result | (childMeasuredState&MEASURED_STATE_MASK);
     }
 
     /**
@@ -9297,10 +9351,24 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
         }
     }
 
-    void updateLocalSystemUiVisibility(int localValue, int localChanges) {
+    boolean updateLocalSystemUiVisibility(int localValue, int localChanges) {
         int val = (mSystemUiVisibility&~localChanges) | (localValue&localChanges);
         if (val != mSystemUiVisibility) {
             setSystemUiVisibility(val);
+            return true;
+        }
+        return false;
+    }
+
+    /** @hide */
+    public void setDisabledSystemUiVisibility(int flags) {
+        if (mAttachInfo != null) {
+            if (mAttachInfo.mDisabledSystemUiVisibility != flags) {
+                mAttachInfo.mDisabledSystemUiVisibility = flags;
+                if (mParent != null) {
+                    mParent.recomputeViewAttributes(this);
+                }
+            }
         }
     }
 
@@ -10065,7 +10133,18 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
                                 equals = SYSTEM_UI_FLAG_VISIBLE,
                                 name = "SYSTEM_UI_FLAG_VISIBLE", outputIf = true)
         })
+
         int mSystemUiVisibility;
+
+        /**
+         * Hack to force certain system UI visibility flags to be cleared.
+         */
+        int mDisabledSystemUiVisibility;
+
+        /**
+         * Last global system UI visibility reported by the window manager.
+         */
+        int mGlobalSystemUiVisibility;
 
         /**
          * True if a view in this hierarchy has an OnSystemUiVisibilityChangeListener

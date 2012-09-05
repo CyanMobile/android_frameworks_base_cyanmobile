@@ -275,7 +275,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     boolean mDeskDockEnablesAccelerometer;
     int mLidKeyboardAccessibility;
     int mLidNavigationAccessibility;
-    boolean mScreenOn = false;
+    boolean mScreenOnEarly = false;
+    boolean mScreenOnFully = false;
     int mScreenOffReason;
     boolean mOrientationSensorEnabled = false;
     int mCurrentAppOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
@@ -587,11 +588,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
         //Could have been invoked due to screen turning on or off or
         //change of the currently visible window's orientation
-        if (localLOGV) Log.v(TAG, "Screen status="+mScreenOn+
+        if (localLOGV) Log.v(TAG, "Screen status="+mScreenOnEarly+
                 ", current orientation="+mCurrentAppOrientation+
                 ", SensorEnabled="+mOrientationSensorEnabled);
         boolean disable = true;
-        if (mScreenOn) {
+        if (mScreenOnEarly) {
             if (needSensorRunningLp()) {
                 disable = false;
                 //enable listener if not already enabled
@@ -788,7 +789,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
      */
     Runnable mHsetHookLongPress = new Runnable() {
         public void run() {
-            if (mScreenOn) return;
+            if (mScreenOnEarly) return;
             mHsetRepeats++;
             long eventtime = SystemClock.uptimeMillis();
             Intent downIntent = new Intent(Intent.ACTION_MEDIA_BUTTON, null);
@@ -1983,7 +1984,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 } else {
                     mNavigationBar.hideLw(true);
                 }
-                if (navVisible) {
+                if (navVisible && !mNavigationBar.isAnimatingLw()) {
                    // If the nav bar is currently requested to be visible,
                    // and not in the process of animating on or off, then
                    // we can tell the app that it is covered by it.
@@ -2056,7 +2057,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         + mDockBottom + " mContentBottom="
                         + mContentBottom + " mCurBottom=" + mCurBottom);
             }
-            if (mStatusBar.isVisibleLw()) {
+            if (mStatusBar.isVisibleLw() && !mStatusBar.isAnimatingLw()) {
                 // If the status bar is currently requested to be visible,
                 // and not in the process of animating on or off, then
                 // we can tell the app that it is covered by it.
@@ -2199,11 +2200,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         //
                         // However, they should still dodge the navigation bar if it exists.
 
-                        pf.left = df.left = hasNavBar ? mDockLeft : mUnrestrictedScreenLeft;
+                        pf.left = df.left = mUnrestrictedScreenLeft;
                         pf.top = df.top = mUnrestrictedScreenTop;
-                        pf.right = df.right = hasNavBar
-                                            ? mRestrictedScreenLeft+mRestrictedScreenWidth
-                                            : mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
+                        pf.right = df.right = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
                         pf.bottom = df.bottom = hasNavBar
                                               ? mRestrictedScreenTop+mRestrictedScreenHeight
                                               : mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
@@ -3079,32 +3078,48 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     /** {@inheritDoc} */
     public void screenTurnedOff(int why) {
         EventLog.writeEvent(70000, 0);
+        synchronized (mLock) {
+            mScreenOnEarly = false;
+            mScreenOnFully = false;
+        }
         mKeyguardMediator.onScreenTurnedOff(why);
         synchronized (mLock) {
-            mScreenOn = false;
             mScreenOffReason = why;
             updateOrientationListenerLp();
             updateLockScreenTimeout();
         }
-        try {
-            mWindowManager.waitForAllDrawn();
-        } catch (RemoteException e) {
-        }
-        // Wait for one frame to give surface flinger time to do its
-        // compositing.  Yes this is a hack, but I am really not up right now for
-        // implementing some mechanism to block until SF is done. :p
-        try {
-            Thread.sleep(20);
-        } catch (InterruptedException e) {
-        }
     }
 
     /** {@inheritDoc} */
-    public void screenTurnedOn() {
+    public void screenTurningOn(final ScreenOnListener screenOnListener) {
         EventLog.writeEvent(70000, 1);
-        mKeyguardMediator.onScreenTurnedOn();
+        //Slog.i(TAG, "Screen turning on...");
+        mKeyguardMediator.onScreenTurnedOn(new KeyguardViewManager.ShowListener() {
+            @Override public void onShown(IBinder windowToken) {
+                if (windowToken != null) {
+                    try {
+                        mWindowManager.waitForWindowDrawn(windowToken, new IRemoteCallback.Stub() {
+                            @Override public void sendResult(Bundle data) {
+                                Slog.i(TAG, "Lock screen displayed!");
+                                screenOnListener.onScreenOn();
+                                synchronized (mLock) {
+                                    mScreenOnFully = true;
+                                }
+                            }
+                        });
+                    } catch (RemoteException e) {
+                    }
+                } else {
+                    Slog.i(TAG, "No lock screen!");
+                    screenOnListener.onScreenOn();
+                    synchronized (mLock) {
+                        mScreenOnFully = true;
+                    }
+                }
+            }
+        });
         synchronized (mLock) {
-            mScreenOn = true;
+            mScreenOnEarly = true;
             // since the screen turned on, assume we don't enable play-pause again
             // unless they turn it off and music is still playing.  this is done to
             // prevent the camera button from starting playback if playback wasn't
@@ -3116,8 +3131,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     /** {@inheritDoc} */
-    public boolean isScreenOn() {
-        return mScreenOn;
+    public boolean isScreenOnEarly() {
+        return mScreenOnEarly;
+    }
+
+    /** {@inheritDoc} */
+    public boolean isScreenOnFully() {
+        return mScreenOnFully;
     }
 
     /** {@inheritDoc} */
@@ -3428,7 +3448,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     private void updateLockScreenTimeout() {
         synchronized (mScreenLockTimeout) {
-            boolean enable = (mAllowLockscreenWhenOn && mScreenOn && mKeyguardMediator.isSecure());
+            boolean enable = (mAllowLockscreenWhenOn && mScreenOnEarly && mKeyguardMediator.isSecure());
             if (mLockScreenTimerActive != enable) {
                 if (enable) {
                     if (localLOGV) Log.v(TAG, "setting lockscreen timer");
@@ -3626,7 +3646,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     public boolean allowKeyRepeat() {
         // disable key repeat when screen is off
-        return mScreenOn;
+        return mScreenOnEarly;
     }
 
     private int updateSystemUiVisibilityLw() {

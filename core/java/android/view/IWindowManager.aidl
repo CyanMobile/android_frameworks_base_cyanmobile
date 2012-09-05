@@ -21,6 +21,7 @@ import com.android.internal.view.IInputContext;
 import com.android.internal.view.IInputMethodClient;
 
 import android.content.res.Configuration;
+import android.os.IRemoteCallback;
 import android.view.IApplicationToken;
 import android.view.IOnKeyguardExitResult;
 import android.view.IRotationWatcher;
@@ -170,5 +171,5 @@ interface IWindowManager
     /**
      * Block until all windows the window manager knows about have been drawn.
      */
-    void waitForAllDrawn();
+    void waitForWindowDrawn(IBinder token, in IRemoteCallback callback);
 }

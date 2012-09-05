@@ -328,8 +328,7 @@ public final class Rect implements Parcelable {
                // check for empty first
         return this.left < this.right && this.top < this.bottom
                // now check for containment
-                && this.left <= left && this.top <= top
-                && this.right >= right && this.bottom >= bottom;
+                && this.left <= left && this.top <= top && this.right >= right && this.bottom >= bottom;
     }
 
     /**
@@ -344,8 +343,7 @@ public final class Rect implements Parcelable {
                // check for empty first
         return this.left < this.right && this.top < this.bottom
                // now check for containment
-               && left <= r.left && top <= r.top
-               && right >= r.right && bottom >= r.bottom;
+               && left <= r.left && top <= r.top && right >= r.right && bottom >= r.bottom;
     }
 
     /**
@@ -367,20 +365,11 @@ public final class Rect implements Parcelable {
      *              return false and do not change this rectangle.
      */
     public boolean intersect(int left, int top, int right, int bottom) {
-        if (this.left < right && left < this.right
-                && this.top < bottom && top < this.bottom) {
-            if (this.left < left) {
-                this.left = left;
-            }
-            if (this.top < top) {
-                this.top = top;
-            }
-            if (this.right > right) {
-                this.right = right;
-            }
-            if (this.bottom > bottom) {
-                this.bottom = bottom;
-            }
+        if (this.left < right && left < this.right && this.top < bottom && top < this.bottom) {
+            if (this.left < left) this.left = left;
+            if (this.top < top) this.top = top;
+            if (this.right > right) this.right = right;
+            if (this.bottom > bottom) this.bottom = bottom;
             return true;
         }
         return false;
@@ -414,8 +403,7 @@ public final class Rect implements Parcelable {
      *              false and do not change this rectangle.
      */
     public boolean setIntersect(Rect a, Rect b) {
-        if (a.left < b.right && b.left < a.right
-                && a.top < b.bottom && b.top < a.bottom) {
+        if (a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom) {
             left = Math.max(a.left, b.left);
             top = Math.max(a.top, b.top);
             right = Math.min(a.right, b.right);
@@ -440,8 +428,7 @@ public final class Rect implements Parcelable {
      *              no event is this rectangle modified.
      */
     public boolean intersects(int left, int top, int right, int bottom) {
-        return this.left < right && left < this.right
-               && this.top < bottom && top < this.bottom;
+        return this.left < right && left < this.right && this.top < bottom && top < this.bottom;
     }
 
     /**
@@ -455,8 +442,7 @@ public final class Rect implements Parcelable {
      *              either of the rectangles modified.
      */
     public static boolean intersects(Rect a, Rect b) {
-        return a.left < b.right && b.left < a.right
-               && a.top < b.bottom && b.top < a.bottom;
+        return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
     }
 
     /**
@@ -472,14 +458,10 @@ public final class Rect implements Parcelable {
     public void union(int left, int top, int right, int bottom) {
         if ((left < right) && (top < bottom)) {
             if ((this.left < this.right) && (this.top < this.bottom)) {
-                if (this.left > left)
-                    this.left = left;
-                if (this.top > top)
-                    this.top = top;
-                if (this.right < right)
-                    this.right = right;
-                if (this.bottom < bottom)
-                    this.bottom = bottom;
+                if (this.left > left) this.left = left;
+                if (this.top > top) this.top = top;
+                if (this.right < right) this.right = right;
+                if (this.bottom < bottom) this.bottom = bottom;
             } else {
                 this.left = left;
                 this.top = top;

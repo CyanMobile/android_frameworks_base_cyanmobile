@@ -243,11 +243,11 @@ public class CmPhoneWindowManager extends PhoneWindowManager implements OnPressL
 
     @Override
     public void onLongPress(int KeyCode) {
-        if(!isScreenOn() && mVolBtnMusicControls && isMusicActive()){
+        if(!isScreenOnEarly() && mVolBtnMusicControls && isMusicActive()){
             handleVolumeKey(AudioManager.STREAM_MUSIC, KeyCode);
             return;
         }
-        if(!isScreenOn())
+        if(!isScreenOnEarly())
             return;
         if(KeyCode==KeyEvent.KEYCODE_VOLUME_DOWN)
             handleVolumeActions(mLongVolMinusAction);
@@ -257,7 +257,7 @@ public class CmPhoneWindowManager extends PhoneWindowManager implements OnPressL
 
     @Override
     public void onPress(int KeyCode) {
-        if(isScreenOn())
+        if(isScreenOnEarly())
             sendHwButtonEvent(KeyCode);
     }
 }
