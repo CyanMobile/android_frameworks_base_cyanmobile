@@ -790,10 +790,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 	    mMusicToggleButton = (ImageView)mExpandedView.findViewById(R.id.music_toggle_button);
         mMusicToggleButton.setOnClickListener(mMusicToggleButtonListener);
         mCenterClockex = (LinearLayout)mExpandedView.findViewById(R.id.centerClockex);
-        mCenterIconex = (SignalClusterView)mExpandedView.findViewById(R.id.centerIconex);
+        /*mCenterIconex = (SignalClusterView)mExpandedView.findViewById(R.id.centerIconex);*/
         mSettingsIconButton = (ImageView)mExpandedView.findViewById(R.id.settingIcon);
         mSettingsIconButton.setOnClickListener(mSettingsIconButtonListener);
-        mStatusIconsExp = (LinearLayout)mExpandedView.findViewById(R.id.expstatusIcons);
+        /*mStatusIconsExp = (LinearLayout)mExpandedView.findViewById(R.id.expstatusIcons);*/
 
         mExpandedView.setVisibility(View.GONE);
         mOngoingTitle.setVisibility(View.GONE);
