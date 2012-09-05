@@ -6657,6 +6657,7 @@ public class WebView extends AbsoluteLayout
                 if (measuredHeight > heightSize) {
                     measuredHeight = heightSize;
                     mHeightCanMeasure = false;
+                    measuredHeight |= MEASURED_STATE_TOO_SMALL;
                 }
             }
         } else {
@@ -6670,6 +6671,9 @@ public class WebView extends AbsoluteLayout
             mWidthCanMeasure = true;
             measuredWidth = contentWidth;
         } else {
+            if (measuredWidth < contentWidth) {
+                measuredWidth |= MEASURED_STATE_TOO_SMALL;
+            }
             mWidthCanMeasure = false;
         }
 

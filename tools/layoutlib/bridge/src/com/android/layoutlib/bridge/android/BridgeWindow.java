@@ -58,8 +58,8 @@ public final class BridgeWindow implements IWindow {
         // pass for now.
     }
 
-    public void resized(int arg0, int arg1, Rect arg2, Rect arg3,
-            boolean arg4, Configuration arg5) throws RemoteException {
+    public void resized(int arg0, int arg1, Rect argBlah, Rect arg2, Rect arg3, boolean arg4, Configuration arg5)
+            throws RemoteException {
         // pass for now.
     }
 
@@ -79,6 +79,15 @@ public final class BridgeWindow implements IWindow {
 
     public void closeSystemDialogs(String reason) {
         // pass for now.
+    }
+
+    public void dispatchSystemUiVisibilityChanged(int seq, int globalUi,
+            int localValue, int localChanges) {
+        // pass for now.
+    }
+
+    public void waitForAllDrawn() {
+        // TODO Auto-generated method stub
     }
 
     public IBinder asBinder() {

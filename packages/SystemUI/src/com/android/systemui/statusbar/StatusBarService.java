@@ -175,6 +175,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     // last theme that was applied in order to detect theme change (as opposed
     // to some other configuration change).
     CustomTheme mCurrentTheme;
+    IWindowManager mWindowManager;
 
     // icons
     LinearLayout mIcons;
@@ -305,6 +306,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     // for disabling the status bar
     int mDisabled = 0;
+
+    // tracking calls to View.setSystemUiVisibility()
+    int mSystemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE;
 
     // tracking for the last visible power widget id so hide toggle works properly
     int mLastPowerToggle = 1;
@@ -456,8 +460,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mStatusBarTab = (Settings.System.getInt(resolver,
                     Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4);
             mNaviShow = (Settings.System.getInt(resolver,
-                    Settings.System.SHOW_NAVI_BUTTONS, 1) == 1) || (Settings.System.getInt(resolver,
-                    Settings.System.SHOW_NAVI_BUTTONS, 1) == 2);
+                    Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
             autoBrightness = Settings.System.getInt(
                     resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, 0) ==
                     Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
@@ -507,6 +510,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     public void onCreate() {
         // First set up our views and stuff.
         mDisplay = ((WindowManager)getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        mWindowManager = IWindowManager.Stub.asInterface(
+                ServiceManager.getService(Context.WINDOW_SERVICE));
         CustomTheme currentTheme = getResources().getConfiguration().customTheme;
         if (currentTheme != null) {
             mCurrentTheme = (CustomTheme)currentTheme.clone();
@@ -541,7 +546,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             // If the system process isn't there we're doomed anyway.
         }
 
-        setIMEVisible(switches[0] != 0);
+        setSystemUiVisibility(switches[0], 0xffffffff);
+        setIMEVisible(switches[1] != 0);
 
         // Set up the initial icon state
         int N = iconList.size();
@@ -656,6 +662,15 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mNavigationBarView = (NavigationBarView)View.inflate(context, R.layout.navigation_bar, null);
         mNaviBarContainer = (FrameLayout)mNavigationBarView.findViewById(R.id.navibarBackground);
+        mStatusBarView.setOnSystemUiVisibilityChangeListener(
+                    new View.OnSystemUiVisibilityChangeListener() {
+                        @Override
+                        public void onSystemUiVisibilityChange(int visibility) {
+                            Slog.d(TAG, "systemUi: " + visibility);
+                            boolean hide = (0 != (visibility & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION));
+                            mNavigationBarView.setHidden(hide);
+                        }
+                    });
 
         mBackLogoLayout = (BackLogo)mStatusBarView.findViewById(R.id.backlogo);
 
@@ -690,33 +705,25 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
 
             // apply transparent navi bar drawables
-       int transNaviBar = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_NAVI_BAR, 0);
-       int naviBarColor = Settings.System.getInt(getContentResolver(), Settings.System.NAVI_BAR_COLOR, 0xFF38FF00);
-       switch (transNaviBar) {
-          case 0 : // theme, leave alone
-            mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background));
-            break;
-          case 1 : // based on ROM
-            mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background_black));
-            break;
-          case 2 : // semi transparent
-            mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background_semi));
-            break;
-          case 3 : // gradient
-            mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background_gradient));
-            break;
-          case 4 : // transparent
-            break;
-          case 5 : // user defined argb hex color
-            mNaviBarContainer.setBackgroundColor(naviBarColor);
-            break;
-          case 6 : // BackLogo
-            Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/navb_background"));
-            Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
-            Drawable bgrImage = new BitmapDrawable(bitmapImage);
-            mNaviBarContainer.setBackgroundDrawable(bgrImage);
-            break;
-        }
+            int transNaviBar = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_NAVI_BAR, 0);
+            int naviBarColor = Settings.System.getInt(getContentResolver(), Settings.System.NAVI_BAR_COLOR, 0xFF38FF00);
+            switch (transNaviBar) {
+               case 0 : // theme, leave alone
+                 mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background));
+                 break;
+               case 1 : // based on ROM
+                 mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background_black));
+                 break;
+               case 2 : // user defined argb hex color
+                 mNaviBarContainer.setBackgroundColor(naviBarColor);
+                 break;
+               case 3 : // BackLogo
+                 Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/navb_background"));
+                 Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
+                 Drawable bgrImage = new BitmapDrawable(bitmapImage);
+                 mNaviBarContainer.setBackgroundDrawable(bgrImage);
+                 break;
+            }
 
         // figure out which pixel-format to use for the status bar.
         mPixelFormat = PixelFormat.TRANSLUCENT;
@@ -780,7 +787,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mBottomScrollView = (ScrollView)mExpandedView.findViewById(R.id.bottomScroll);
         mNotificationLinearLayout = (LinearLayout)mExpandedView.findViewById(R.id.notificationLinearLayout);
         mBottomNotificationLinearLayout = (LinearLayout)mExpandedView.findViewById(R.id.bottomNotificationLinearLayout);
-        mMusicToggleButton = (ImageView)mExpandedView.findViewById(R.id.music_toggle_button);
+	    mMusicToggleButton = (ImageView)mExpandedView.findViewById(R.id.music_toggle_button);
         mMusicToggleButton.setOnClickListener(mMusicToggleButtonListener);
         mCenterClockex = (LinearLayout)mExpandedView.findViewById(R.id.centerClockex);
         mCenterIconex = (SignalClusterView)mExpandedView.findViewById(R.id.centerIconex);
@@ -1302,7 +1309,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         Resources res = mContext.getResources();
         final boolean sideways = 
             ((Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.SHOW_NAVI_BUTTONS, 1) == 1) && mNaviShow);
+                    Settings.System.SHOW_NAVI_BUTTONS, 1) == 1) && (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.NAVI_BUTTONS, 1) == 1));
         final int size = getNavBarSize();
 
 	int mPixelFormat = PixelFormat.TRANSLUCENT;
@@ -1320,6 +1328,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                     | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
                     | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                    | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                     | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
                 mPixelFormat);
 
@@ -2269,6 +2278,41 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         }
         return false;
+    }
+
+    @Override // CommandQueue
+    public void setSystemUiVisibility(int vis, int mask) {
+        final int oldVal = mSystemUiVisibility;
+        final int newVal = (oldVal&~mask) | (vis&mask);
+        final int diff = newVal ^ oldVal;
+
+        if (diff != 0) {
+            mSystemUiVisibility = newVal;
+                if (0 != (diff & View.SYSTEM_UI_FLAG_LOW_PROFILE)) {
+                final boolean lightsOut = (0 != (vis & View.SYSTEM_UI_FLAG_LOW_PROFILE));
+                if (lightsOut) {
+                    animateCollapse();
+                }
+                if (mNavigationBarView != null) {
+                    mNavigationBarView.setHidden(lightsOut);
+                }
+            }
+        }
+    }
+
+    public void setLightsOn(boolean on) {
+        if (on) {
+            setSystemUiVisibility(0, View.SYSTEM_UI_FLAG_LOW_PROFILE);
+        } else {
+            setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE, View.SYSTEM_UI_FLAG_LOW_PROFILE);
+        }
+    }
+
+    private void notifyUiVisibilityChanged() {
+        try {
+            mWindowManager.statusBarVisibilityChanged(mSystemUiVisibility);
+        } catch (RemoteException ex) {
+        }	
     }
 
     private class Launcher implements View.OnClickListener {

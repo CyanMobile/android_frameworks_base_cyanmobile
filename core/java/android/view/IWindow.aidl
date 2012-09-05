@@ -44,7 +44,7 @@ oneway interface IWindow {
      */
     void executeCommand(String command, String parameters, in ParcelFileDescriptor descriptor);
 
-    void resized(int w, int h, in Rect contentInsets,
+    void resized(int w, int h, in Rect systemInsets, in Rect contentInsets,
             in Rect visibleInsets, boolean reportDraw, in Configuration newConfig);
     void dispatchAppVisibility(boolean visible);
     void dispatchGetNewSurface();
@@ -64,4 +64,14 @@ oneway interface IWindow {
     
     void dispatchWallpaperCommand(String action, int x, int y,
             int z, in Bundle extras, boolean sync);
+
+    void dispatchSystemUiVisibilityChanged(int seq, int globalVisibility,
+            int localValue, int localChanges);
+
+    /**
+     * If the window manager returned RELAYOUT_RES_ANIMATING
+     * from relayout(), this method will be called when the animation
+     * is done.	
+     */ 	
+    void doneAnimating();
 }

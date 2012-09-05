@@ -133,7 +133,7 @@ public interface WindowManagerPolicy {
          * are visible.
          */
         public void computeFrameLw(Rect parentFrame, Rect displayFrame,
-                Rect contentFrame, Rect visibleFrame);
+                Rect systemFrame, Rect contentFrame, Rect visibleFrame);
 
         /**
          * Retrieve the current frame of the window that has been assigned by
@@ -159,6 +159,14 @@ public interface WindowManagerPolicy {
          * @return Rect The rectangle holding the display frame.
          */
         public Rect getDisplayFrameLw();
+
+        /**
+         * Retrieve the frame of the system elements that last covered the window.
+         * Must be called with the window manager lock held.
+         *
+         * @return Rect The rectangle holding the system frame.
+         */
+        public Rect getSystemFrameLw();
 
         /**
          * Retrieve the frame of the content area that this window was last
@@ -220,6 +228,12 @@ public interface WindowManagerPolicy {
         public WindowManager.LayoutParams getAttrs();
 
         /**
+         * Retrieve the current system UI visibility flags associated with
+         * this window.
+         */
+        public int getSystemUiVisibility();
+
+        /**
          * Get the layer at which this window's surface will be Z-ordered.
          */
         public int getSurfaceLayer();
@@ -266,6 +280,17 @@ public interface WindowManagerPolicy {
         boolean isDisplayedLw();
 
         /**
+         * Return true if this window (or a window it is attached to, but not
+         * considering its app token) is currently animating.
+         */
+        public boolean isAnimatingLw();
+
+        /**
+         * Is this window considered to be gone for purposes of layout?
+         */
+        boolean isGoneForLayoutLw();
+
+        /**
          * Returns true if this window has been shown on screen at some time in 
          * the past.  Must be called with the window manager lock held.
          */
@@ -287,6 +312,36 @@ public interface WindowManagerPolicy {
          * Returns true if {@link #hideLw} was last called for the window.
          */
         public boolean showLw(boolean doAnimation);
+    }
+
+    /**
+     * Representation of a "fake window" that the policy has added to the
+     * window manager to consume events.
+     */
+    public interface FakeWindow {
+        /**
+         * Remove the fake window from the window manager.
+         */
+        void dismiss();
+    }
+
+    /**
+     * Interface for calling back in to the window manager that is private
+     * between it and the policy.
+     */	
+    public interface WindowManagerFuncs {
+        /**
+         * Ask the window manager to re-evaluate the system UI flags.
+         */
+        public void reevaluateStatusBarVisibility();
+
+        /**
+         * Add a fake window to the window manager.  This window sits
+         * at the top of the other windows and consumes events.
+         */
+        public FakeWindow addFakeWindow(Looper looper, InputHandler inputHandler,
+                String name, int windowType, int layoutParamsFlags, boolean canReceiveKeys,
+                boolean hasFocus, boolean touchFullscreen);
     }
 
     /**
@@ -380,6 +435,7 @@ public interface WindowManagerPolicy {
      * @param powerManager 
      */
     public void init(Context context, IWindowManager windowManager,
+            WindowManagerFuncs windowManagerFuncs,
             LocalPowerManager powerManager);
 
     /**
@@ -602,6 +658,21 @@ public interface WindowManagerPolicy {
     public void beginLayoutLw(int displayWidth, int displayHeight);
 
     /**
+     * Return the rectangle of the screen currently covered by system decorations.
+     * This will be called immediately after {@link #layoutWindowLw}.  It can	
+     * fill in the rectangle to indicate any part of the screen that it knows
+     * for sure is covered by system decor such as the status bar.  The rectangle	
+     * is initially set to the actual size of the screen, indicating nothing is
+     * covered.	
+     *
+     * @param systemRect The rectangle of the screen that is not covered by
+     * system decoration.	
+     * @return Returns the layer above which the system rectangle should	
+     * not be applied.	
+     */	
+    public int getSystemDecorRectLw(Rect systemRect);
+
+    /**
      * Called for each window attached to the window manager as layout is
      * proceeding.  The implementation of this function must take care of
      * setting the window's frame, either here or in finishLayout().
@@ -665,6 +736,13 @@ public interface WindowManagerPolicy {
             WindowManager.LayoutParams attrs);
 
     /**
+     * Set the last used input method window state. This state is used to make IME transition
+     * smooth.
+     * @hide	
+     */ 	
+    public void setLastInputMethodWindowLw(WindowState ime, WindowState target);
+
+    /**
      * Called when animation of the windows is finished.  If in this function you do 
      * something that may have modified the animation state of another window, 
      * be sure to return true in order to perform another animation frame. 
@@ -683,6 +761,19 @@ public interface WindowManagerPolicy {
      */
     public boolean allowAppAnimationsLw();
 
+    /**
+     * A new window has been focused.
+     */
+    public int focusChangedLw(WindowState lastFocus, WindowState newFocus);
+
+    /**
+     * Called when a new system UI visibility is being reported, allowing
+     * the policy to adjust what is actually reported.
+     * @param visibility The raw visiblity reported by the status bar.
+     * @return The new desired visibility.
+     */
+    public int adjustSystemUiVisibilityLw(int visibility);
+
 
     /**
      * Called after the screen turns off.
@@ -692,15 +783,24 @@ public interface WindowManagerPolicy {
      */
     public void screenTurnedOff(int why);
 
+    public interface ScreenOnListener {
+        void onScreenOn();
+    };
+
     /**
      * Called after the screen turns on.
      */
-    public void screenTurnedOn();
+    public void screenTurningOn(ScreenOnListener screenOnListener);
 
     /**
      * Return whether the screen is about to turn on or is currently on.
      */
-    public boolean isScreenOn();
+    public boolean isScreenOnEarly();
+
+    /**
+     * Return whether the screen is fully turned on.
+     */
+    public boolean isScreenOnFully();
 
     /**
      * Tell the policy that the lid switch has changed state.
@@ -767,6 +867,12 @@ public interface WindowManagerPolicy {
      * Called when the system is mostly done booting.
      */
     public void systemReady();
+
+    /**
+     * Called when the system is done booting to the point where the	
+     * user can start interacting with it.
+     */
+    public void systemBooted();
 
     /**
      * Show boot time message to the user.

@@ -90,6 +90,8 @@ class PowerManagerService extends IPowerManager.Stub
     private static final String TAGF = "LightFilter";
     static final String PARTIAL_NAME = "PowerManagerService";
 
+    static final boolean DEBUG_SCREEN_ON = false;
+
     private static final boolean LOG_PARTIAL_WL = false;
 
     // Indicates whether touch-down cycles should be logged as part of the
@@ -176,6 +178,9 @@ class PowerManagerService extends IPowerManager.Stub
     private int mStayOnConditions = 0;
     private final int[] mBroadcastQueue = new int[] { -1, -1, -1 };
     private final int[] mBroadcastWhy = new int[3];
+    private boolean mPreparingForScreenOn = false;
+    private boolean mSkippedScreenOn = false;
+    private boolean mInitialized = false;
     private int mPartialCount = 0;
     private int mPowerState;
     // mScreenOffReason can be WindowManagerPolicy.OFF_BECAUSE_OF_USER,
@@ -629,6 +634,10 @@ class PowerManagerService extends IPowerManager.Stub
         nativeInit();
         synchronized (mLocks) {
             updateNativePowerStateLocked();
+            // We make sure to start out with the screen on due to user activity.
+            // (They did just boot their device, after all.)
+            forceUserActivityLocked();
+            mInitialized = true;
         }
     }
 
@@ -939,6 +948,14 @@ class PowerManagerService extends IPowerManager.Stub
                 if ((wl.flags & PowerManager.ACQUIRE_CAUSES_WAKEUP) != 0) {
                     int oldWakeLockState = mWakeLockState;
                     mWakeLockState = mLocks.reactivateScreenLocksLocked();
+
+                    // Disable proximity sensor if if user presses power key while we are in the
+                    // "waiting for proximity sensor to go negative" state.
+                    if ((mWakeLockState & SCREEN_ON_BIT) != 0
+                            && mProximitySensorActive && mProximityWakeLockCount == 0) {
+                        mProximitySensorActive = false;
+                    }
+
                     if (mSpew) {
                         Slog.d(TAG, "wakeup here mUserState=0x" + Integer.toHexString(mUserState)
                                 + " mWakeLockState=0x"
@@ -1196,7 +1213,9 @@ class PowerManagerService extends IPowerManager.Stub
             pw.println("  mNextTimeout=" + mNextTimeout + " now=" + now
                     + " " + ((mNextTimeout-now)/1000) + "s from now");
             pw.println("  mDimScreen=" + mDimScreen
-                    + " mStayOnConditions=" + mStayOnConditions);
+                    + " mStayOnConditions=" + mStayOnConditions
+                    + " mPreparingForScreenOn=" + mPreparingForScreenOn
+                    + " mSkippedScreenOn=" + mSkippedScreenOn);
             pw.println("  mScreenOffReason=" + mScreenOffReason
                     + " mUserState=" + mUserState);
             pw.println("  mBroadcastQueue={" + mBroadcastQueue[0] + ',' + mBroadcastQueue[1]
@@ -1385,8 +1404,23 @@ class PowerManagerService extends IPowerManager.Stub
         }
     }
 
-    private void sendNotificationLocked(boolean on, int why)
-    {
+    private void sendNotificationLocked(boolean on, int why) {
+        if (!mInitialized) {
+            // No notifications sent until first initialization is done.
+            // This is so that when we are moving from our initial state
+            // which looks like the screen was off to it being on, we do not
+            // go through the process of waiting for the higher-level user
+            // space to be ready before turning up the display brightness.
+            // (And also do not send needless broadcasts about the screen.)
+            return;
+        }
+
+        if (DEBUG_SCREEN_ON) {
+            RuntimeException here = new RuntimeException("here");
+            here.fillInStackTrace();
+            Slog.i(TAG, "sendNotificationLocked: " + on, here);
+        }
+
         if (!on) {
             mStillNeedSleepNotification = false;
         }
@@ -1415,7 +1449,9 @@ class PowerManagerService extends IPowerManager.Stub
             mBroadcastQueue[0] = on ? 1 : 0;
             mBroadcastQueue[1] = -1;
             mBroadcastQueue[2] = -1;
+            EventLog.writeEvent(EventLogTags.POWER_SCREEN_BROADCAST_STOP, 1, mBroadcastWakeLock.mCount);
             mBroadcastWakeLock.release();
+            EventLog.writeEvent(EventLogTags.POWER_SCREEN_BROADCAST_STOP, 1, mBroadcastWakeLock.mCount);
             mBroadcastWakeLock.release();
             index = 0;
         }
@@ -1429,6 +1465,12 @@ class PowerManagerService extends IPowerManager.Stub
             mBroadcastWakeLock.release();
         }
 
+        // The broadcast queue has changed; make sure the screen is on if it
+        // is now possible for it to be.
+        if (mSkippedScreenOn) {
+            updateLightsLocked(mPowerState, SCREEN_ON_BIT);
+        }
+
         // Now send the message.
         if (index >= 0) {
             // Acquire the broadcast wake lock before changing the power
@@ -1440,6 +1482,21 @@ class PowerManagerService extends IPowerManager.Stub
             mHandler.post(mNotificationTask);
         }
     }
+
+    private WindowManagerPolicy.ScreenOnListener mScreenOnListener =
+            new WindowManagerPolicy.ScreenOnListener() {
+                @Override public void onScreenOn() {
+                    synchronized (mLocks) {
+                        if (mPreparingForScreenOn) {
+                            mPreparingForScreenOn = false;
+                            updateLightsLocked(mPowerState, SCREEN_ON_BIT);
+                            EventLog.writeEvent(EventLogTags.POWER_SCREEN_BROADCAST_STOP,
+                                    4, mBroadcastWakeLock.mCount);
+                            mBroadcastWakeLock.release();
+                        }
+                    }
+                }
+    };
 
     private Runnable mNotificationTask = new Runnable()
     {
@@ -1457,11 +1514,17 @@ class PowerManagerService extends IPowerManager.Stub
                         mBroadcastWhy[i] = mBroadcastWhy[i+1];
                     }
                     policy = getPolicyLocked();
+                    if (value == 1 && !mPreparingForScreenOn) {
+                        mPreparingForScreenOn = true;
+                        mBroadcastWakeLock.acquire();
+                        EventLog.writeEvent(EventLogTags.POWER_SCREEN_BROADCAST_SEND,
+                                mBroadcastWakeLock.mCount);
+                    }
                 }
                 if (value == 1) {
                     mScreenOnStart = SystemClock.uptimeMillis();
 
-                    policy.screenTurnedOn();
+                    policy.screenTurningOn(mScreenOnListener);
                     try {
                         ActivityManagerNative.getDefault().wakingUp();
                     } catch (RemoteException e) {
@@ -1499,6 +1562,7 @@ class PowerManagerService extends IPowerManager.Stub
                         synchronized (mLocks) {
                             EventLog.writeEvent(EventLogTags.POWER_SCREEN_BROADCAST_STOP, 3,
                                     mBroadcastWakeLock.mCount);
+                            updateLightsLocked(mPowerState, SCREEN_ON_BIT);
                             mBroadcastWakeLock.release();
                         }
                     }
@@ -1691,6 +1755,11 @@ class PowerManagerService extends IPowerManager.Stub
         };
 
     private int setScreenStateLocked(boolean on) {
+        if (DEBUG_SCREEN_ON) {
+            RuntimeException e = new RuntimeException("here");
+            e.fillInStackTrace();
+            Slog.i(TAG, "Set screen state: " + on, e);
+        }
         int err = Power.setScreenState(on);
         if (err == 0) {
             mLastScreenOnTime = (on ? SystemClock.elapsedRealtime() : 0);
@@ -1750,7 +1819,7 @@ class PowerManagerService extends IPowerManager.Stub
             } else {
                 newState &= ~BATTERY_LOW_BIT;
             }
-            if (newState == mPowerState) {
+            if (newState == mPowerState && mInitialized) {
                 return;
             }
 
@@ -1776,10 +1845,7 @@ class PowerManagerService extends IPowerManager.Stub
                          + " newBatteryLow=" + ((newState & BATTERY_LOW_BIT) != 0));
             }
 
-            if (mPowerState != newState) {
-                updateLightsLocked(newState, 0);
-                mPowerState = (mPowerState & ~LIGHTS_MASK) | (newState & LIGHTS_MASK);
-            }
+            final boolean stateChanged = mPowerState != newState;
 
             if (oldScreenOn != newScreenOn) {
                 if (newScreenOn) {
@@ -1831,10 +1897,24 @@ class PowerManagerService extends IPowerManager.Stub
                     EventLog.writeEvent(EventLogTags.POWER_SCREEN_STATE, 1, reason,
                             mTotalTouchDownTime, mTouchCycles);
                     if (err == 0) {
-                        mPowerState |= SCREEN_ON_BIT;
                         sendNotificationLocked(true, -1);
+                        // Update the lights *after* taking care of turning the
+                        // screen on, so we do this after our notifications are
+                        // enqueued and thus will delay turning on the screen light
+                        // until the windows are correctly displayed.
+                        if (stateChanged) {
+                            updateLightsLocked(newState, 0);
+                        }
+                        mPowerState |= SCREEN_ON_BIT;
                     }
+
                 } else {
+                    // Update the lights *before* taking care of turning the
+                    // screen off, so we can initiate any animations that are desired.
+                    if (stateChanged) {
+                        updateLightsLocked(newState, 0);
+                    }
+
                     // cancel light sensor task
                     mHandler.removeCallbacks(mAutoBrightnessTask);
                     lightFilterStop();
@@ -1856,8 +1936,13 @@ class PowerManagerService extends IPowerManager.Stub
                         mLastTouchDown = 0;
                     }
                 }
+            } else if (stateChanged) {
+                // Screen on/off didn't change, but lights may have.
+                updateLightsLocked(newState, 0);
             }
-            
+
+            mPowerState = (mPowerState & ~LIGHTS_MASK) | (newState & LIGHTS_MASK);
+
             updateNativePowerStateLocked();
         }
     }
@@ -1888,8 +1973,43 @@ class PowerManagerService extends IPowerManager.Stub
                 mBatteryService.getBatteryLevel() <= Power.LOW_BATTERY_THRESHOLD);
     }
 
+    private boolean shouldDeferScreenOnLocked() {
+        if (mPreparingForScreenOn) {
+            // Currently waiting for confirmation from the policy that it
+            // is okay to turn on the screen.  Don't allow the screen to go
+            // on until that is done.
+            if (DEBUG_SCREEN_ON) Slog.i(TAG,
+                    "updateLights: delaying screen on due to mPreparingForScreenOn");
+            return true;
+        } else {
+            // If there is a screen-on command in the notification queue, we
+            // can't turn the screen on until it has been processed (and we
+           // have set mPreparingForScreenOn) or it has been dropped.	
+            for (int i=0; i<mBroadcastQueue.length; i++) {
+                if (mBroadcastQueue[i] == 1) {
+                    if (DEBUG_SCREEN_ON) Slog.i(TAG,
+                            "updateLights: delaying screen on due to notification queue");
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private void updateLightsLocked(int newState, int forceState) {
         final int oldState = mPowerState;
+
+        // If the screen is not currently on, we will want to delay actually
+        // turning the lights on if we are still getting the UI put up.
+        if ((oldState&SCREEN_ON_BIT) == 0 || mSkippedScreenOn) {
+            // Don't turn screen on until we know we are really ready to.
+            // This is to avoid letting the screen go on before things like the
+            // lock screen have been displayed.
+            if ((mSkippedScreenOn=shouldDeferScreenOnLocked())) {
+                newState &= ~(SCREEN_ON_BIT|SCREEN_BRIGHT_BIT);
+            }
+        }
+
         if ((newState & SCREEN_ON_BIT) != 0) {
             // Only turn on the buttons or keyboard if the screen is also on.
             // We should never see the buttons on but not the screen.
@@ -1997,6 +2117,13 @@ class PowerManagerService extends IPowerManager.Stub
             }
             mScreenBrightness.setTargetLocked(brightness, steps,
                     INITIAL_SCREEN_BRIGHTNESS, nominalCurrentValue);
+            if (DEBUG_SCREEN_ON) {
+                RuntimeException e = new RuntimeException("here");
+                e.fillInStackTrace();
+                Slog.i(TAG, "Setting screen brightness: " + brightness, e);
+                mScreenBrightness.setTargetLocked(brightness, steps,
+                        INITIAL_SCREEN_BRIGHTNESS, nominalCurrentValue);
+            }
         }
 
         if (mSpew) {
@@ -3124,7 +3251,7 @@ class PowerManagerService extends IPowerManager.Stub
         }
     }
 
-    void setPolicy(WindowManagerPolicy p) {
+    public void setPolicy(WindowManagerPolicy p) {
         synchronized (mLocks) {
             mPolicy = p;
             mLocks.notifyAll();

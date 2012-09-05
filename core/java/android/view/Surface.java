@@ -399,6 +399,8 @@ public class Surface implements Parcelable {
 
     public native   void setFlags(int flags, int mask);
 
+    public native   void setActiveRect(Rect activeRect);
+
     @Override
     public String toString() {
         return "Surface(name=" + mName + ", identity=" + getIdentity() + ")";

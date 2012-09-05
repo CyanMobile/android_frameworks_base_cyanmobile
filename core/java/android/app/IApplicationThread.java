@@ -81,7 +81,7 @@ public interface IApplicationThread extends IInterface {
     void bindApplication(String packageName, ApplicationInfo info, List<ProviderInfo> providers,
             ComponentName testName, String profileName, Bundle testArguments, 
             IInstrumentationWatcher testWatcher, int debugMode, boolean restrictedBackupMode,
-            Configuration config, Map<String, IBinder> services) throws RemoteException;
+            boolean persistent, Configuration config, Map<String, IBinder> services) throws RemoteException;
     void scheduleExit() throws RemoteException;
     void scheduleSuicide() throws RemoteException;
     void requestThumbnail(IBinder token) throws RemoteException;

@@ -767,6 +767,12 @@ public interface WindowManager extends ViewManager {
          */
         public static final int SOFT_INPUT_ADJUST_PAN = 0x20;
 
+        /** Adjustment option for {@link #softInputMode}: set to have a window
+         * not adjust for a shown input method.  The window will not be resized,
+         * and it will not be panned to make its focus visible.
+         */
+        public static final int SOFT_INPUT_ADJUST_NOTHING = 0x30;
+
         /**
          * Bit for {@link #softInputMode}: set when the user has navigated
          * forward to the window.  This is normally set automatically for
@@ -894,6 +900,29 @@ public interface WindowManager extends ViewManager {
          * will be used.
          */
         public int screenOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+        
+        /**
+         * Control the visibility of the status bar.
+         * @see View#STATUS_BAR_VISIBLE
+         * @see View#STATUS_BAR_HIDDEN
+         */ 	
+        public int systemUiVisibility;
+
+        /**
+         * @hide
+         * The ui visibility as requested by the views in this hierarchy.
+         * the combined value should be systemUiVisibility | subtreeSystemUiVisibility.
+         */
+        public int subtreeSystemUiVisibility;
+
+        /**
+         * Get callbacks about the system ui visibility changing.
+         * 
+         * TODO: Maybe there should be a bitfield of optional callbacks that we need.
+         *
+         * @hide	
+         */	
+        public boolean hasSystemUiListeners;
 
         public LayoutParams() {
             super(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
@@ -975,6 +1004,9 @@ public interface WindowManager extends ViewManager {
             out.writeString(packageName);
             TextUtils.writeToParcel(mTitle, out, parcelableFlags);
             out.writeInt(screenOrientation);
+            out.writeInt(systemUiVisibility);
+            out.writeInt(subtreeSystemUiVisibility);
+            out.writeInt(hasSystemUiListeners ? 1 : 0);
         }
         
         public static final Parcelable.Creator<LayoutParams> CREATOR
@@ -1011,6 +1043,9 @@ public interface WindowManager extends ViewManager {
             packageName = in.readString();
             mTitle = TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in);
             screenOrientation = in.readInt();
+            systemUiVisibility = in.readInt();
+            subtreeSystemUiVisibility = in.readInt();
+            hasSystemUiListeners = in.readInt() != 0;
         }
     
         @SuppressWarnings({"PointlessBitwiseExpression"})
@@ -1028,6 +1063,10 @@ public interface WindowManager extends ViewManager {
         public static final int SCREEN_BRIGHTNESS_CHANGED = 1<<11;
         /** {@hide} */
         public static final int BUTTON_BRIGHTNESS_CHANGED = 1<<12;
+        /** {@hide} */
+        public static final int SYSTEM_UI_VISIBILITY_CHANGED = 1<<13;
+        /** {@hide} */
+        public static final int SYSTEM_UI_LISTENER_CHANGED = 1<<14;
 
         // internal buffer to backup/restore parameters under compatibility mode.
         private int[] mCompatibilityParamsBackup = null;
@@ -1129,6 +1168,17 @@ public interface WindowManager extends ViewManager {
                 screenOrientation = o.screenOrientation;
                 changes |= SCREEN_ORIENTATION_CHANGED;
             }
+            if (systemUiVisibility != o.systemUiVisibility
+                    || subtreeSystemUiVisibility != o.subtreeSystemUiVisibility) {
+                systemUiVisibility = o.systemUiVisibility;
+                subtreeSystemUiVisibility = o.subtreeSystemUiVisibility;
+                changes |= SYSTEM_UI_VISIBILITY_CHANGED;
+            }
+
+            if (hasSystemUiListeners != o.hasSystemUiListeners) {
+                hasSystemUiListeners = o.hasSystemUiListeners;
+                changes |= SYSTEM_UI_LISTENER_CHANGED;
+            }
             return changes;
         }
     
@@ -1180,6 +1230,18 @@ public interface WindowManager extends ViewManager {
             }
             if ((flags & FLAG_COMPATIBLE_WINDOW) != 0) {
                 sb.append(" compatible=true");
+            }
+            if (systemUiVisibility != 0) {
+                sb.append(" sysui=0x");
+                sb.append(Integer.toHexString(systemUiVisibility));
+            }
+            if (subtreeSystemUiVisibility != 0) {
+                sb.append(" vsysui=0x");
+                sb.append(Integer.toHexString(subtreeSystemUiVisibility));
+            }
+            if (hasSystemUiListeners) {
+                sb.append(" sysuil=");
+                sb.append(hasSystemUiListeners);
             }
             sb.append('}');
             return sb.toString();

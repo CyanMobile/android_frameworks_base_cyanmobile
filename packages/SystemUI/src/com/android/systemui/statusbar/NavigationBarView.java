@@ -158,8 +158,7 @@ public class NavigationBarView extends LinearLayout {
             mNVShow = (Settings.System.getInt(resolver,
                     Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
             mShowNV = (Settings.System.getInt(resolver,
-                    Settings.System.NAVI_BUTTONS, 1) == 1) || (Settings.System.getInt(resolver,
-                    Settings.System.NAVI_BUTTONS, 1) == 2);
+                    Settings.System.NAVI_BUTTONS, 1) == 1);
             mShowHome = Settings.System.getInt(resolver,
                     Settings.System.NAVI_BUTTON_SHOW_HOME, 1);
             mShowMenu = Settings.System.getInt(resolver,
@@ -187,6 +186,7 @@ public class NavigationBarView extends LinearLayout {
         mHandler=new Handler();
 
         mNaviAdd = findViewById(R.id.navibarAdd);
+        mNaviAdd.setBackgroundColor(0x00000000);
 
         mNaviBackground = findViewById(R.id.navibarBackground);
         mSoftButtons = (ViewGroup)findViewById(R.id.navbuttons);
