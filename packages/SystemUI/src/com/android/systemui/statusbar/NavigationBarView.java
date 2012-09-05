@@ -158,7 +158,8 @@ public class NavigationBarView extends LinearLayout {
             mNVShow = (Settings.System.getInt(resolver,
                     Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
             mShowNV = (Settings.System.getInt(resolver,
-                    Settings.System.NAVI_BUTTONS, 1) == 1);
+                    Settings.System.NAVI_BUTTONS, 1) == 1) || (Settings.System.getInt(resolver,
+                    Settings.System.NAVI_BUTTONS, 1) == 2);
             mShowHome = Settings.System.getInt(resolver,
                     Settings.System.NAVI_BUTTON_SHOW_HOME, 1);
             mShowMenu = Settings.System.getInt(resolver,

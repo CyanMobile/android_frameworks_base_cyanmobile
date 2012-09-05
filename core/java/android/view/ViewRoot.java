@@ -656,8 +656,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                 dirty.inset(-1, -1);
             }
         }
-        mDirty.union(dirty);gion	
-        localDirty.intersect(0, 0, mWidth, mHeight);
+        mDirty.union(dirty);
         if (!mWillDrawSoon) {
             scheduleTraversals();
         }
@@ -669,7 +668,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
 
     public ViewParent invalidateChildInParent(final int[] location, final Rect dirty) {
         invalidateChild(null, dirty);
-        return null;	
+        return null;
     }
 
     public boolean getChildVisibleRect(View child, Rect r, android.graphics.Point offset) {
@@ -836,10 +835,12 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
 
             // Ask host how big it wants to be
             host.measure(childWidthMeasureSpec, childHeightMeasureSpec);
-        }
 
-        if (collectViewAttributes()) {
-            params = lp;
+            if (DBG) {
+                System.out.println("======================================");
+                System.out.println("performTraversals -- after measure");
+                host.debug();
+            }
         }
 
         if (attachInfo.mRecomputeGlobalAttributes) {
@@ -959,6 +960,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                     updateConfiguration(mPendingConfiguration, !mFirst);
                     mPendingConfiguration.seq = 0;
                 }
+                
                 contentInsetsChanged = !mPendingContentInsets.equals(
                         mAttachInfo.mContentInsets);
                 visibleInsetsChanged = !mPendingVisibleInsets.equals(
@@ -2076,7 +2078,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                     + "is finished but there is no input event actually in progress.");
         }
     }
-
+    
     /**
      * Something in the current window tells us we need to change the touch mode.  For
      * example, we are not in touch mode, and the user touches the screen.
@@ -2127,10 +2129,8 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                 // be when the window is first being added, and mFocused isn't
                 // set yet.
                 final View focused = mView.findFocus();
-                if (focused != null) {
-                    if (focused.isFocusableInTouchMode()) {
-                        return true;
-                    }
+                if (focused != null && !focused.isFocusableInTouchMode()) {
+
                     final ViewGroup ancestorToTakeFocus =
                             findAncestorToTakeFocusInTouchMode(focused);
                     if (ancestorToTakeFocus != null) {
@@ -2930,7 +2930,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
         msg.obj = reason;
         sendMessage(msg);
     }
-
+    
     /**
      * The window is getting focus so if there is anything focused/selected
      * send an {@link AccessibilityEvent} to announce that.
@@ -3455,4 +3455,3 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
     // doesn't call glDeleteTextures
     private static native void nativeAbandonGlCaches();
 }
-

@@ -1790,7 +1790,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         pf.right = df.right = vf.right = displayWidth;
         pf.bottom = df.bottom = vf.bottom = displayHeight;
 
-        final boolean navVisible = (mNaviShow && (mNavigationBar != null && mNavigationBar.isVisibleLw());
+        final boolean navVisible = (mNaviShow && (mNavigationBar != null && mNavigationBar.isVisibleLw()));
 
         if (mNavigationBar != null) {
             // Force the navigation bar to its appropriate place and
@@ -1803,7 +1803,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     navSizeval, mContext.getResources().getDisplayMetrics());
             final int mNavigationBarHeight = navSizepx;
             // It's a system nav bar or a portrait screen; nav bar goes on bottom.
-                int top = displayHeight - Math.round(mNavigationBarHeight);
+                int top = displayHeight - mNavigationBarHeight;
                 mTmpNavigationFrame.set(0, top, displayWidth, displayHeight);
                 mStableBottom = mStableFullscreenBottom = mTmpNavigationFrame.top;
                 if (navVisible) {
@@ -2047,7 +2047,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                   } else {
                       vf.set(cf);
                   }
-               }
             }
         }
 
@@ -2771,7 +2770,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     /** {@inheritDoc} */
-    public void screenTurningOn() {
+    public void screenTurnedOn() {
         EventLog.writeEvent(70000, 1);
         mKeyguardMediator.onScreenTurnedOn();
         synchronized (mLock) {

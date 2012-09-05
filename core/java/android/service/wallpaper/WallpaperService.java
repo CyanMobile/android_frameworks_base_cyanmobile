@@ -514,7 +514,7 @@ public abstract class WallpaperService extends Service {
                         mLayout.windowAnimations =
                                 com.android.internal.R.style.Animation_Wallpaper;
                         mInputChannel = new InputChannel();
-                        if (mSession.add(mWindow, mWindow.mSeq, mLayout, View.VISIBLE, mContentInsets,
+                        if (mSession.add(mWindow, mLayout, View.VISIBLE, mContentInsets,
                                 mInputChannel) < 0) {
                             Log.w(TAG, "Failed to add window while updating wallpaper surface.");
                             return;
@@ -529,7 +529,7 @@ public abstract class WallpaperService extends Service {
                     mDrawingAllowed = true;
 
                     final int relayoutResult = mSession.relayout(
-                        mWindow, mWindow.mSeq, mLayout, mWidth, mHeight,
+                        mWindow, mLayout, mWidth, mHeight,
                             View.VISIBLE, false, mWinFrame, mContentInsets,
                             mVisibleInsets, mConfiguration, mSurfaceHolder.mSurface);
 

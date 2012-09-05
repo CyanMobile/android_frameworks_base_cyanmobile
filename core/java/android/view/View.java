@@ -8064,7 +8064,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      */
     public void setPadding(int left, int top, int right, int bottom) {
         boolean changed = false;
-        mUserPaddingLeft = left;
+
         mUserPaddingRight = right;
         mUserPaddingBottom = bottom;
 
@@ -9844,6 +9844,11 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
          * Set during a traveral if any views want to keep the screen on.
          */
         boolean mKeepScreenOn;
+
+        /**
+         * Set if the visibility of any views has changed.
+         */
+        boolean mViewVisibilityChanged;
 
         /**
          * Set to true if a view has been scrolled.

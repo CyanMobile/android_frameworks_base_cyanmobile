@@ -456,7 +456,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mStatusBarTab = (Settings.System.getInt(resolver,
                     Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4);
             mNaviShow = (Settings.System.getInt(resolver,
-                    Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
+                    Settings.System.SHOW_NAVI_BUTTONS, 1) == 1) || (Settings.System.getInt(resolver,
+                    Settings.System.SHOW_NAVI_BUTTONS, 1) == 2);
             autoBrightness = Settings.System.getInt(
                     resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, 0) ==
                     Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
@@ -1301,8 +1302,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         Resources res = mContext.getResources();
         final boolean sideways = 
             ((Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.SHOW_NAVI_BUTTONS, 1) == 1) && (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.NAVI_BUTTONS, 1) == 1));
+                    Settings.System.SHOW_NAVI_BUTTONS, 1) == 1) && mNaviShow);
         final int size = getNavBarSize();
 
 	int mPixelFormat = PixelFormat.TRANSLUCENT;
