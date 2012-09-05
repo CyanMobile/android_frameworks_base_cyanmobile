@@ -406,7 +406,6 @@ public class WindowManagerService extends IWindowManager.Stub
     boolean mSafeMode;
     boolean mDisplayEnabled = false;
     boolean mSystemBooted = false;
-    boolean mForceDisplayEnabled = false;
     boolean mShowingBootMessages = false;
     int mInitialDisplayWidth = 0;
     int mInitialDisplayHeight = 0;
@@ -2101,7 +2100,7 @@ public class WindowManagerService extends IWindowManager.Stub
         // If the display is frozen, just remove immediately, since the
         // animation wouldn't be seen.
         if (win.mSurface != null && !mDisplayFrozen && mDisplayEnabled
-                && mPolicy.isScreenOnFully()) {
+                && mPolicy.isScreenOn()) {
             // If we are not currently running the exit animation, we
             // need to see about starting one.
             if (wasVisible=win.isWinVisibleLw()) {
@@ -2431,7 +2430,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 if (displayed) {
                     if (win.mSurface != null && !win.mDrawPending
                             && !win.mCommitDrawPending && !mDisplayFrozen
-                            && mDisplayEnabled && mPolicy.isScreenOnFully()) {
+                            && mDisplayEnabled && mPolicy.isScreenOn()) {
                         applyEnterAnimationLocked(win);
                     }
                     if ((win.mAttrs.flags
@@ -2701,7 +2700,7 @@ public class WindowManagerService extends IWindowManager.Stub
         // frozen, there is no reason to animate and it can cause strange
         // artifacts when we unfreeze the display if some different animation
         // is running.
-        if (!mDisplayFrozen && mDisplayEnabled && mPolicy.isScreenOnFully()) {
+        if (!mDisplayFrozen && mDisplayEnabled && mPolicy.isScreenOn()) {
             int anim = mPolicy.selectAnimationLw(win, transit);
             int attr = -1;
             Animation a = null;
@@ -2787,7 +2786,7 @@ public class WindowManagerService extends IWindowManager.Stub
         // frozen, there is no reason to animate and it can cause strange
         // artifacts when we unfreeze the display if some different animation
         // is running.
-        if (!mDisplayFrozen && mDisplayEnabled && mPolicy.isScreenOnFully()) {
+        if (!mDisplayFrozen && mDisplayEnabled && mPolicy.isScreenOn()) {
             Animation a;
             if (lp != null && (lp.flags & FLAG_COMPATIBLE_WINDOW) != 0) {
                 a = new FadeInOutAnimation(enter);
@@ -3335,7 +3334,7 @@ public class WindowManagerService extends IWindowManager.Stub
             if (DEBUG_APP_TRANSITIONS) Slog.v(
                     TAG, "Prepare app transition: transit=" + transit
                     + " mNextAppTransition=" + mNextAppTransition);
-            if (!mDisplayFrozen && mDisplayEnabled && mPolicy.isScreenOnFully()) {
+            if (!mDisplayFrozen && mDisplayEnabled && mPolicy.isScreenOn()) {
                 if (mNextAppTransition == WindowManagerPolicy.TRANSIT_UNSET
                         || mNextAppTransition == WindowManagerPolicy.TRANSIT_NONE) {
                     mNextAppTransition = transit;
@@ -3416,7 +3415,7 @@ public class WindowManagerService extends IWindowManager.Stub
             // If the display is frozen, we won't do anything until the
             // actual window is displayed so there is no reason to put in
             // the starting window.
-            if (mDisplayFrozen || !mDisplayEnabled || !mPolicy.isScreenOnFully()) {
+            if (mDisplayFrozen || !mDisplayEnabled || !mPolicy.isScreenOn()) {
                 return;
             }
 
@@ -3701,7 +3700,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
             // If we are preparing an app transition, then delay changing
             // the visibility of this token until we execute that transition.
-            if (!mDisplayFrozen && mDisplayEnabled && mPolicy.isScreenOnFully()
+            if (!mDisplayFrozen && mDisplayEnabled && mPolicy.isScreenOn()
                     && mNextAppTransition != WindowManagerPolicy.TRANSIT_UNSET) {
                 // Already in requested state, don't do anything more.
                 if (wtoken.hiddenRequested != visible) {
@@ -3829,7 +3828,7 @@ public class WindowManagerService extends IWindowManager.Stub
         }
 
         synchronized(mWindowMap) {
-            if (configChanges == 0 && !mDisplayFrozen && mPolicy.isScreenOnFully()) {
+            if (configChanges == 0 && !mDisplayFrozen && mPolicy.isScreenOn()) {
                 if (DEBUG_ORIENTATION) Slog.v(TAG, "Skipping set freeze of " + token);
                 return;
             }
@@ -4502,13 +4501,7 @@ public class WindowManagerService extends IWindowManager.Stub
             }
             mSystemBooted = true;
             hideBootMessagesLocked();
-            // If the screen still doesn't come up after 30 seconds, give
-            // up and turn it on.
-            Message msg = mH.obtainMessage(H.BOOT_TIMEOUT);
-            mH.sendMessageDelayed(msg, 30*1000);
         }
-
-        mPolicy.systemBooted();
 
         performEnableScreen();
     }
@@ -4523,17 +4516,6 @@ public class WindowManagerService extends IWindowManager.Stub
         mH.sendMessage(mH.obtainMessage(H.ENABLE_SCREEN));
     }
 
-    public void performBootTimeout() {
-        synchronized(mWindowMap) {
-            if (mDisplayEnabled) {
-                return;
-            }
-            Slog.w(TAG, "***** BOOT TIMEOUT: forcing display enabled");
-            mForceDisplayEnabled = true;
-        }
-        performEnableScreen();
-    }
-
     public void performEnableScreen() {
         synchronized(mWindowMap) {
             if (mDisplayEnabled) {
@@ -4543,42 +4525,13 @@ public class WindowManagerService extends IWindowManager.Stub
                 return;
             }
 
-            if (!mForceDisplayEnabled) {
-                // Don't enable the screen until all existing windows
-                // have been drawn.
-                boolean haveBootMsg = false;
-                boolean haveApp = false;
-                boolean haveWallpaper = false;
-                boolean haveKeyguard = false;
-                final int N = mWindows.size();
-                for (int i=0; i<N; i++) {
-                    WindowState w = mWindows.get(i);
-                    if (w.isVisibleLw() && !w.mObscured && !w.isDrawnLw()) {
-                        return;
-                    }
-                    if (w.isDrawnLw()) {
-                        if (w.mAttrs.type == WindowManager.LayoutParams.TYPE_BOOT_PROGRESS) {
-                            haveBootMsg = true;
-                        } else if (w.mAttrs.type == WindowManager.LayoutParams.TYPE_APPLICATION) {
-                            haveApp = true;
-                        } else if (w.mAttrs.type == WindowManager.LayoutParams.TYPE_WALLPAPER) {
-                            haveWallpaper = true;
-                        } else if (w.mAttrs.type == WindowManager.LayoutParams.TYPE_KEYGUARD) {
-                            haveKeyguard = true;
-                        }
-                    }
-                }
-
-                // If we are turning on the screen to show the boot message,
-                // don't do it until the boot message is actually displayed.
-                if (!mSystemBooted && !haveBootMsg) {
-                    return;
-                }
-
-                // If we are turning on the screen after the boot is completed
-                // normally, don't do so until we have the application and
-                // wallpaper.
-                if (mSystemBooted && ((!haveApp && !haveKeyguard) || !haveWallpaper)) {
+            // Don't enable the screen until all existing windows
+            // have been drawn.
+            final int N = mWindows.size();
+            for (int i=0; i<N; i++) {
+                WindowState w = mWindows.get(i);
+                if (w.isVisibleLw() && !w.mObscured
+                        && (w.mOrientationChanging || !w.isDrawnLw())) {
                     return;
                 }
             }
@@ -4712,7 +4665,7 @@ public class WindowManagerService extends IWindowManager.Stub
             Slog.i(TAG, "Setting rotation to " + rotation + ", animFlags=" + animFlags);
             mInputManager.setDisplayOrientation(0, rotation);
             if (mDisplayEnabled) {
-                if (CUSTOM_SCREEN_ROTATION && mPolicy.isScreenOnFully()) {
+                if (CUSTOM_SCREEN_ROTATION && mPolicy.isScreenOn()) {
                     Surface.freezeDisplay(0);
                     if (!inTransaction) {
                         if (SHOW_TRANSACTIONS) Slog.i(TAG,
@@ -6815,7 +6768,7 @@ public class WindowManagerService extends IWindowManager.Stub
         // This must be called while inside a transaction.  Returns true if
         // there is more animation to run.
         boolean stepAnimationLocked(long currentTime, int dw, int dh) {
-            if (!mDisplayFrozen && mPolicy.isScreenOnFully()) {
+            if (!mDisplayFrozen && mPolicy.isScreenOn()) {
                 // We will run animations as long as the display isn't frozen.
 
                 if (!mDrawPending && !mCommitDrawPending && mAnimation != null) {
@@ -7127,18 +7080,11 @@ public class WindowManagerService extends IWindowManager.Stub
          * mPolicyVisibility.  Ungh.
          */
         public boolean isVisibleOrBehindKeyguardLw() {
-            if (mRootToken.waitingToShow &&
-                mNextAppTransition != WindowManagerPolicy.TRANSIT_UNSET) {
-                return false;
-            }
             final AppWindowToken atoken = mAppToken;
-            final boolean animating = atoken != null
-                ? (atoken.animation != null) : false;
-            return mSurface != null && !mDestroying && !mExiting
+            return mSurface != null && !mAttachedHidden
                     && (atoken == null ? mPolicyVisibility : !atoken.hiddenRequested)
-                    && ((!mAttachedHidden && mViewVisibility == View.VISIBLE
-                                && !mRootToken.hidden)
-                        || mAnimation != null || animating);
+                    && (mOrientationChanging || (!mDrawPending && !mCommitDrawPending))
+                    && !mExiting && !mDestroying;
         }
 
         /**
@@ -7297,9 +7243,6 @@ public class WindowManagerService extends IWindowManager.Stub
         }
 
         boolean isFullscreen(int screenWidth, int screenHeight) {
-            if ((mAttrs.flags & FLAG_FULLSCREEN) != 0) {
-                return true;
-            }
             return mFrame.left <= 0 && mFrame.top <= 0 &&
                     mFrame.right >= screenWidth && mFrame.bottom >= screenHeight;
         }
@@ -7370,7 +7313,7 @@ public class WindowManagerService extends IWindowManager.Stub
             if (doAnimation) {
                 if (DEBUG_VISIBILITY) Slog.v(TAG, "doAnimation: mPolicyVisibility="
                         + mPolicyVisibility + " mAnimation=" + mAnimation);
-                if (mDisplayFrozen || !mPolicy.isScreenOnFully()) {
+                if (mDisplayFrozen || !mPolicy.isScreenOn()) {
                     doAnimation = false;
                 } else if (mPolicyVisibility && mAnimation == null) {
                     // Check for the case where we are currently visible and
@@ -7396,7 +7339,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
         boolean hideLw(boolean doAnimation, boolean requestAnim) {
             if (doAnimation) {
-                if (mDisplayFrozen || !mPolicy.isScreenOnFully()) {
+                if (mDisplayFrozen || !mPolicy.isScreenOn()) {
                     doAnimation = false;
                 }
             }
@@ -7823,7 +7766,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
         // This must be called while inside a transaction.
         boolean stepAnimationLocked(long currentTime, int dw, int dh) {
-            if (!mDisplayFrozen && mPolicy.isScreenOnFully()) {
+            if (!mDisplayFrozen && mPolicy.isScreenOn()) {
                 // We will run animations as long as the display isn't frozen.
 
                 if (animation == sDummyAnimation) {
@@ -8789,7 +8732,7 @@ public class WindowManagerService extends IWindowManager.Stub
         // If the screen is currently frozen, then keep
         // it frozen until this window draws at its new
         // orientation.
-        if (mDisplayFrozen || !mPolicy.isScreenOnFully()) {
+        if (mDisplayFrozen) {
             if (DEBUG_ORIENTATION) Slog.v(TAG,
                     "Resizing while display frozen: " + w);
             w.mOrientationChanging = true;
@@ -9850,7 +9793,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
             if (mDimAnimator != null && mDimAnimator.mDimShown) {
                 animating |= mDimAnimator.updateSurface(dimming, currentTime,
-                        mDisplayFrozen || !mDisplayEnabled || !mPolicy.isScreenOnFully());
+                        mDisplayFrozen || !mDisplayEnabled || !mPolicy.isScreenOn());
             }
 
             if (!blurring && mBlurShown) {
@@ -10050,51 +9993,9 @@ public class WindowManagerService extends IWindowManager.Stub
             mTurnOnScreen = false;
         }
 
-        if (orientationChangeComplete && !needRelayout) {
-            checkDrawnWindowsLocked();
-        }
-
         // Check to see if we are now in a state where the screen should
         // be enabled, because the window obscured flags have changed.
         enableScreenIfNeededLocked();
-    }
-
-    void checkDrawnWindowsLocked() {
-        if (mWaitingForDrawn.size() > 0) {
-            for (int j=mWaitingForDrawn.size()-1; j>=0; j--) {
-                Pair<WindowState, IRemoteCallback> pair = mWaitingForDrawn.get(j);
-                WindowState win = pair.first;
-                if (win.mRemoved || !win.isVisibleLw()) {
-                    try {
-                        pair.second.sendResult(null);
-                    } catch (RemoteException e) {
-                    }
-                    mWaitingForDrawn.remove(pair);
-                    mH.removeMessages(H.WAITING_FOR_DRAWN_TIMEOUT, pair);
-                } else if (win.mSurfaceShown) {
-                    try {
-                        pair.second.sendResult(null);
-                    } catch (RemoteException e) {
-                    }
-                }
-                mWaitingForDrawn.remove(pair);
-                mH.removeMessages(H.WAITING_FOR_DRAWN_TIMEOUT, pair);
-            }	
-        }
-    }
-
-    public void waitForWindowDrawn(IBinder token, IRemoteCallback callback) {
-        synchronized (mWindowMap) {
-            WindowState win = windowForClientLocked(null, token, true);
-            if (win != null) {
-                Pair<WindowState, IRemoteCallback> pair =
-                        new Pair<WindowState, IRemoteCallback>(win, callback);
-                Message m = mH.obtainMessage(H.WAITING_FOR_DRAWN_TIMEOUT, pair);
-                mH.sendMessageDelayed(m, 2000);
-                mWaitingForDrawn.add(pair);
-                checkDrawnWindowsLocked();
-            }
-        }
     }
 
     /**
@@ -10402,7 +10303,7 @@ public class WindowManagerService extends IWindowManager.Stub
             mScreenRotationAnimation.kill();
             mScreenRotationAnimation = null;
         }
-        if (CUSTOM_SCREEN_ROTATION && mPolicy.isScreenOnFully()) {
+        if (CUSTOM_SCREEN_ROTATION && mPolicy.isScreenOn()) {
             if (mScreenRotationAnimation == null) {
                 mScreenRotationAnimation = new ScreenRotationAnimation(mContext,
                         mDisplay, mFxSession, inTransaction);

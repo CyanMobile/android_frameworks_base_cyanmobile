@@ -3063,6 +3063,10 @@ class PackageManagerService extends IPackageManager.Stub {
             return null;
         }
         mScanningPath = scanFile;
+        if (pkg == null) {
+            mLastScanError = PackageManager.INSTALL_PARSE_FAILED_BAD_PACKAGE_NAME;
+            return null;
+        }
 
         if ((parseFlags&PackageParser.PARSE_IS_SYSTEM) != 0) {
             pkg.applicationInfo.flags |= ApplicationInfo.FLAG_SYSTEM;

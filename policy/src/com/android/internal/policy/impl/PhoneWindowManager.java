@@ -250,7 +250,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     WindowState mLastInputMethodTargetWindow = null;
 
     boolean mSystemReady;
-    boolean mSystemBooted;
     boolean mLidOpen;
     int mUiMode = Configuration.UI_MODE_TYPE_NORMAL;
     int mDockMode = Intent.EXTRA_DOCK_STATE_UNDOCKED;
@@ -1791,8 +1790,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         pf.right = df.right = vf.right = displayWidth;
         pf.bottom = df.bottom = vf.bottom = displayHeight;
 
-        final boolean navVisible = (mNaviShow && (mNavigationBar != null && mNavigationBar.isVisibleLw()) &&
-                ((mLastSystemUiFlags&SYSTEM_UI_CHANGING_LAYOUT) == 0));
+        final boolean navVisible = (mNaviShow && (mNavigationBar != null && mNavigationBar.isVisibleLw());
 
         if (mNavigationBar != null) {
             // Force the navigation bar to its appropriate place and
@@ -1972,7 +1970,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         cf.right = mContentRight;
                         cf.bottom = mContentBottom;
                     }
-                    applyStableConstraints(sysUiFl, fl, cf);
                     if (adjust != SOFT_INPUT_ADJUST_NOTHING) {
                         vf.left = mCurLeft;
                         vf.top = mCurTop;
@@ -2012,7 +2009,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     pf.bottom = df.bottom = cf.bottom
                             = mRestrictedScreenTop+mRestrictedScreenHeight;
                 }
-                applyStableConstraints(sysUiFl, fl, cf);
                 if (adjust != SOFT_INPUT_ADJUST_NOTHING) {
                     vf.left = mCurLeft;
                     vf.top = mCurTop;
@@ -2159,15 +2155,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if (DEBUG_LAYOUT) Log.v(TAG, "Showing status bar: forced");
                 if (mStatusBar.showLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
             } else if (mTopFullscreenOpaqueWindowState != null) {
-                final WindowManager.LayoutParams lp = mTopFullscreenOpaqueWindowState.getAttrs();
-                if (localLOGV) {
-                    Log.d(TAG, "frame: " + mTopFullscreenOpaqueWindowState.getFrameLw()
-                            + " shown frame: " + mTopFullscreenOpaqueWindowState.getShownFrameLw());
-                    Log.d(TAG, "attr: " + mTopFullscreenOpaqueWindowState.getAttrs()
-                            + " lp.flags=0x" + Integer.toHexString(lp.flags));
-                }
-                topIsFullscreen = (lp.flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0
-                        || (mLastSystemUiFlags & View.SYSTEM_UI_FLAG_FULLSCREEN) != 0;
+                WindowManager.LayoutParams lp = mTopFullscreenOpaqueWindowState.getAttrs();
+                topIsFullscreen = (lp.flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0;
                 // The subtle difference between the window for mTopFullscreenOpaqueWindowState
                 // and topIsFullscreen is set only if the window
                 // has the FLAG_FULLSCREEN set.  Not sure if there is another way that to be the
@@ -2406,11 +2395,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         final boolean keyguardActive = (isScreenOn ?
                                         mKeyguardMediator.isShowingAndNotHidden() :
                                         mKeyguardMediator.isShowing());
-
-        if (!mSystemBooted) {
-            // If we have not yet booted, don't let key events do anything.
-            return 0;
-        }
 
         if (false) {
             Log.d(TAG, "interceptKeyTq keycode=" + keyCode
@@ -3030,13 +3014,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     updateSettings();
                 }
             });
-        }
-    }
-
-    /** {@inheritDoc} */
-    public void systemBooted() {
-        synchronized (mLock) {
-            mSystemBooted = true;
         }
     }
 

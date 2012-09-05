@@ -540,7 +540,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             // If the system process isn't there we're doomed anyway.
         }
 
-        setIMEVisible(switches[1] != 0);
+        setIMEVisible(switches[0] != 0);
 
         // Set up the initial icon state
         int N = iconList.size();

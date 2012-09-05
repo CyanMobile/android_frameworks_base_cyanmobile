@@ -660,6 +660,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
      * Enable the keyguard if the settings are appropriate.
      */
     private void doKeyguard(int handlerMessage) {
+        synchronized (this) {
             // override lockscreen if selected in tablet tweaks
             int defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_DISABLE_LOCKSCREEN) ? 1 : 0);
             boolean disableLockscreen=(Settings.System.getInt(mContext.getContentResolver(),
@@ -677,6 +678,13 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                 if (DEBUG) Log.d(TAG, "doKeyguard: not showing because device isn't provisioned"
                         + " and the sim is not locked or missing");
                 return;
+            }
+
+            // if the current profile has disabled us, don't show
+            if (!lockedOrMissing
+                   && mProfileManager.getActiveProfile().getScreenLockMode() == Profile.LockMode.DISABLE) {
+                if (DEBUG) Log.d(TAG, "doKeyguard: not showing because of profile override");
+                   return;
             }
 
             // if another app is disabling us, don't show
@@ -700,13 +708,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                     Log.d(TAG, "doKeyguard: showing the applicable keyguard screen");
                 showLocked(handlerMessage);
             }
-
-            // if the current profile has disabled us, don't show
-            if (!lockedOrMissing
-                   && mProfileManager.getActiveProfile().getScreenLockMode() == Profile.LockMode.DISABLE) {
-                if (DEBUG) Log.d(TAG, "doKeyguard: not showing because of profile override");
-                   return;
-            }
+        }
     }
 
     /**
@@ -877,7 +879,6 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                     // regardless if the unlock screen is to be shown (any
                     // pending events for unlocks are canceled if the lock
                     // screen keyguard has been discharged by the user).
-                    synchronized (KeyguardViewMediator.this) {
                       if (mDelayedShowingSequence == sequence || handlerMessage == SHOW_SECURITY) {
                         // Don't play lockscreen SFX if the screen went off due
                         // to timeout.
@@ -885,10 +886,8 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
 
                         doKeyguard(handlerMessage);
                       }
-                    }
                 }
             } else if (TelephonyManager.ACTION_PHONE_STATE_CHANGED.equals(action)) {
-                synchronized (KeyguardViewMediator.this) {
                   mPhoneState = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
 
                   if (TelephonyManager.EXTRA_STATE_IDLE.equals(mPhoneState)  // call ending
@@ -903,7 +902,6 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                             + "keyguard is showing");
                     doKeyguard(SHOW_SECURITY);
                   }
-                }
             }
         }
     };
@@ -1068,9 +1066,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                     handleSetHidden(msg.arg1 != 0);
                     break;
                 case KEYGUARD_TIMEOUT:
-                    synchronized (KeyguardViewMediator.this) {
                        doKeyguard(SHOW_SECURITY);
-                    }
                     break;
                 case SHOW_SLIDE:
                     handleShow(SHOW_SLIDE);

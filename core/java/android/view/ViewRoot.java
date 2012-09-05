@@ -801,7 +801,6 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
         boolean insetsChanged = false;
 
         if (mLayoutRequested) {
-
             // Execute enqueued actions on every layout in case a view that was detached
             // enqueued an action after being detached
             getRunQueue().executeActions(attachInfo.mHandler);

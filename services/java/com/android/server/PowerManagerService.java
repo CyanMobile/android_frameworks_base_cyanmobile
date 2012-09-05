@@ -176,7 +176,6 @@ class PowerManagerService extends IPowerManager.Stub
     private int mStayOnConditions = 0;
     private final int[] mBroadcastQueue = new int[] { -1, -1, -1 };
     private final int[] mBroadcastWhy = new int[3];
-    private boolean mPreparingForScreenOn = false;
     private int mPartialCount = 0;
     private int mPowerState;
     // mScreenOffReason can be WindowManagerPolicy.OFF_BECAUSE_OF_USER,
@@ -1416,9 +1415,7 @@ class PowerManagerService extends IPowerManager.Stub
             mBroadcastQueue[0] = on ? 1 : 0;
             mBroadcastQueue[1] = -1;
             mBroadcastQueue[2] = -1;
-            EventLog.writeEvent(EventLogTags.POWER_SCREEN_BROADCAST_STOP, 1, mBroadcastWakeLock.mCount);
             mBroadcastWakeLock.release();
-            EventLog.writeEvent(EventLogTags.POWER_SCREEN_BROADCAST_STOP, 1, mBroadcastWakeLock.mCount);
             mBroadcastWakeLock.release();
             index = 0;
         }
@@ -1432,10 +1429,6 @@ class PowerManagerService extends IPowerManager.Stub
             mBroadcastWakeLock.release();
         }
 
-        // The broadcast queue has changed; make sure the screen is on if it
-        // is now possible for it to be.
-        updateNativePowerStateLocked();
-
         // Now send the message.
         if (index >= 0) {
             // Acquire the broadcast wake lock before changing the power
@@ -1447,21 +1440,6 @@ class PowerManagerService extends IPowerManager.Stub
             mHandler.post(mNotificationTask);
         }
     }
-
-    private WindowManagerPolicy.ScreenOnListener mScreenOnListener =
-            new WindowManagerPolicy.ScreenOnListener() {
-                @Override public void onScreenOn() {
-                    synchronized (mLocks) {
-                        if (mPreparingForScreenOn) {
-                            mPreparingForScreenOn = false;
-                            updateNativePowerStateLocked();
-                            EventLog.writeEvent(EventLogTags.POWER_SCREEN_BROADCAST_STOP,
-                                    4, mBroadcastWakeLock.mCount);
-                            mBroadcastWakeLock.release();
-                        }
-                    }
-                }
-    };
 
     private Runnable mNotificationTask = new Runnable()
     {
@@ -1479,17 +1457,11 @@ class PowerManagerService extends IPowerManager.Stub
                         mBroadcastWhy[i] = mBroadcastWhy[i+1];
                     }
                     policy = getPolicyLocked();
-                    if (value == 1 && !mPreparingForScreenOn) {
-                        mPreparingForScreenOn = true;
-                        mBroadcastWakeLock.acquire();
-                        EventLog.writeEvent(EventLogTags.POWER_SCREEN_BROADCAST_SEND,
-                                mBroadcastWakeLock.mCount);
-                    }
                 }
                 if (value == 1) {
                     mScreenOnStart = SystemClock.uptimeMillis();
 
-                    policy.screenTurningOn(mScreenOnListener);
+                    policy.screenTurnedOn();
                     try {
                         ActivityManagerNative.getDefault().wakingUp();
                     } catch (RemoteException e) {
@@ -1527,7 +1499,6 @@ class PowerManagerService extends IPowerManager.Stub
                         synchronized (mLocks) {
                             EventLog.writeEvent(EventLogTags.POWER_SCREEN_BROADCAST_STOP, 3,
                                     mBroadcastWakeLock.mCount);
-                            updateNativePowerStateLocked();
                             mBroadcastWakeLock.release();
                         }
                     }
@@ -1892,23 +1863,6 @@ class PowerManagerService extends IPowerManager.Stub
     }
     
     private void updateNativePowerStateLocked() {
-        if ((mPowerState & SCREEN_ON_BIT) != 0) {
-            // Don't turn screen on if we are currently reporting a screen off.
-            // This is to avoid letting the screen go on before things like the
-            // lock screen have been displayed due to it going off.
-            if (mPreparingForScreenOn) {
-                // Currently broadcasting that the screen is off.  Don't
-                // allow screen to go on until that is done.
-                return;
-            }
-
-            for (int i=0; i<mBroadcastQueue.length; i++) {
-                if (mBroadcastQueue[i] == 1) {
-                    // A screen off is currently enqueued.
-                    return;
-                }
-            }
-        }
         nativeSetPowerState(
                 (mPowerState & SCREEN_ON_BIT) != 0,
                 (mPowerState & SCREEN_BRIGHT) == SCREEN_BRIGHT);
