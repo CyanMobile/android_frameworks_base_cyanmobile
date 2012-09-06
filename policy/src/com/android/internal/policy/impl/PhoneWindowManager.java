@@ -1272,6 +1272,30 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         return STATUS_BAR_LAYER;
     }
 
+    public int getNonDecorDisplayWidth(int fullWidth) {
+        return fullWidth;
+    }
+
+    public int getNonDecorDisplayHeight(int fullHeight) {
+        return fullHeight - ((mNaviShow && mNaviShowAll) ? getNavSize() : 0);
+    }
+
+    private int getNavSize() {
+        int navSizeval = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUSBAR_NAVI_SIZE, 25);
+        int navSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                navSizeval, mContext.getResources().getDisplayMetrics());
+        return navSizepx;
+    }
+
+    private int getStatSize() {
+        int statSizeval = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUSBAR_STATS_SIZE, 25);
+        int statSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                     statSizeval, mContext.getResources().getDisplayMetrics());
+        return statSizepx;
+    }
+
     public boolean doesForceHide(WindowState win, WindowManager.LayoutParams attrs) {
         return attrs.type == WindowManager.LayoutParams.TYPE_KEYGUARD;
     }
@@ -1695,12 +1719,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             if (down && repeatCount == 0 && !keyguardOn) {
                 Intent shortcutIntent = mShortcutManager.getIntent(keyCode, metaState);
                 if (shortcutIntent != null) {
-                    shortcutIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    shortcutIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                               | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
                     try {
-                            mContext.startActivity(shortcutIntent);
-                        } catch (ActivityNotFoundException ex) {
+                        mContext.startActivity(shortcutIntent);
+                    } catch (ActivityNotFoundException ex) {
                             // woot!!
-                        }
+                    }
                     mConsumeSearchKeyUp = true;
                     return true;
                 }
@@ -1978,18 +2003,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             // size.  We need to do this directly, instead of relying on
             // it to bubble up from the nav bar, because this needs to
             // change atomically with screen rotations.
-            int navSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_NAVI_SIZE, 25);
-            int navSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                    navSizeval, mContext.getResources().getDisplayMetrics());
-            final int mNavigationBarHeight = navSizepx;
+            final int mNavigationBarHeight = getNavSize();
             // It's a system nav bar or a portrait screen; nav bar goes on bottom.
-                int top = displayHeight - Math.round(mNavigationBarHeight);
+                int top = displayHeight - mNavigationBarHeight;
                 mTmpNavigationFrame.set(0, top, displayWidth, displayHeight);
                 mStableBottom = mStableFullscreenBottom = mTmpNavigationFrame.top;
                 if (navVisible) {
                     mNavigationBar.showLw(true);
                     mDockBottom = mTmpNavigationFrame.top;
+                    mRestrictedScreenHeight = mDockBottom - mDockTop;
                 } else {
                     mNavigationBar.hideLw(true);
                 }
@@ -2014,11 +2036,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         // decide where the status bar goes ahead of time
         if (mStatusBar != null) {
-            int statSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_STATS_SIZE, 25);
-            int statSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                     statSizeval, mContext.getResources().getDisplayMetrics());
-            final int statusbar_height = statSizepx;
+            final int statusbar_height = getStatSize();
 
             // apply any navigation bar insets
             pf.left = df.left = mUnrestrictedScreenLeft;
@@ -2227,7 +2245,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         pf.left = df.left = mUnrestrictedScreenLeft;
                         pf.top = df.top = mUnrestrictedScreenTop;
                         pf.right = df.right = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
-                        pf.bottom = df.bottom = mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
+                        pf.bottom = df.bottom = hasNavBar
+                                              ? mRestrictedScreenTop+mRestrictedScreenHeight
+                                              : mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
                     } else {
                         pf.left = df.left = mRestrictedScreenLeft;
                         pf.top = df.top = mRestrictedScreenTop;

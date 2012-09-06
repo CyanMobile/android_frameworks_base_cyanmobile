@@ -501,7 +501,19 @@ public interface WindowManagerPolicy {
      * allowed to be in.
      */
     public int getMaxWallpaperLayer();
-    
+
+    /**
+     * Return the display width available after excluding the window
+     * decor.
+     */
+    public int getNonDecorDisplayWidth(int fullWidth);
+
+    /**
+     * Return the display height available after excluding the screen
+     * decor.
+     */
+    public int getNonDecorDisplayHeight(int fullHeight);
+
     /**
      * Return whether the given window should forcibly hide everything
      * behind it.  Typically returns true for the keyguard.
