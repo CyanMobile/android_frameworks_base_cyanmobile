@@ -1211,7 +1211,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         case TYPE_STATUS_BAR_SUB_PANEL:
             return STATUS_BAR_SUB_PANEL_LAYER;
         case TYPE_SYSTEM_DIALOG:
-            return SYSTEM_DIALOG_LAYER;
+            return (mNaviShowAll ? NAVIGATION_BAR_PANEL_LAYER : SYSTEM_DIALOG_LAYER);
         case TYPE_SEARCH_BAR:
             return SEARCH_BAR_LAYER;
         case TYPE_PHONE:
@@ -1256,13 +1256,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         switch (type) {
         case TYPE_APPLICATION_PANEL:
         case TYPE_APPLICATION_ATTACHED_DIALOG:
-            return APPLICATION_PANEL_SUBLAYER;
+            return (mNaviShowAll ? SYSTEM_OVERLAY_LAYER : APPLICATION_PANEL_SUBLAYER);
         case TYPE_APPLICATION_MEDIA:
             return APPLICATION_MEDIA_SUBLAYER;
         case TYPE_APPLICATION_MEDIA_OVERLAY:
             return APPLICATION_MEDIA_OVERLAY_SUBLAYER;
         case TYPE_APPLICATION_SUB_PANEL:
-            return APPLICATION_SUB_PANEL_SUBLAYER;
+            return (mNaviShowAll ? SYSTEM_OVERLAY_LAYER : APPLICATION_SUB_PANEL_SUBLAYER);
         }
         Log.e(TAG, "Unknown sub-window type: " + type);
         return 0;
