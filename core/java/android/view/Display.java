@@ -79,6 +79,12 @@ public class Display
      */
     native public int getHeight();
 
+    /** @hide special for when we are faking the screen size. */
+    native public int getRealWidth();
+	
+    /** @hide special for when we are faking the screen size. */
+    native public int getRealHeight();
+
     /**
      * Returns the rotation of the screen from its "natural" orientation.
      * The returned value may be {@link Surface#ROTATION_0 Surface.ROTATION_0}

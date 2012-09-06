@@ -1256,13 +1256,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         switch (type) {
         case TYPE_APPLICATION_PANEL:
         case TYPE_APPLICATION_ATTACHED_DIALOG:
-            return (mNaviShowAll ? SYSTEM_OVERLAY_LAYER : APPLICATION_PANEL_SUBLAYER);
+            return APPLICATION_PANEL_SUBLAYER;
         case TYPE_APPLICATION_MEDIA:
             return APPLICATION_MEDIA_SUBLAYER;
         case TYPE_APPLICATION_MEDIA_OVERLAY:
             return APPLICATION_MEDIA_OVERLAY_SUBLAYER;
         case TYPE_APPLICATION_SUB_PANEL:
-            return (mNaviShowAll ? SYSTEM_OVERLAY_LAYER : APPLICATION_SUB_PANEL_SUBLAYER);
+            return APPLICATION_SUB_PANEL_SUBLAYER;
         }
         Log.e(TAG, "Unknown sub-window type: " + type);
         return 0;
@@ -2245,9 +2245,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         pf.left = df.left = mUnrestrictedScreenLeft;
                         pf.top = df.top = mUnrestrictedScreenTop;
                         pf.right = df.right = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
-                        pf.bottom = df.bottom = hasNavBar
-                                              ? mRestrictedScreenTop+mRestrictedScreenHeight
-                                              : mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
+                        pf.bottom = df.bottom = mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
                     } else {
                         pf.left = df.left = mRestrictedScreenLeft;
                         pf.top = df.top = mRestrictedScreenTop;
@@ -2284,9 +2282,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         || attrs.type == TYPE_STATUS_BAR_SUB_PANEL) {
                     pf.left = df.left = cf.left = mUnrestrictedScreenLeft;
                     pf.top = df.top = cf.top = mUnrestrictedScreenTop;
-                    pf.right = df.right = cf.right = hasNavBar
-                                        ? mRestrictedScreenLeft+mRestrictedScreenWidth
-                                        : mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
+                    pf.right = df.right = cf.right = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
                     pf.bottom = df.bottom = cf.bottom = hasNavBar
                                           ? mRestrictedScreenTop+mRestrictedScreenHeight
                                           : mUnrestrictedScreenTop+mUnrestrictedScreenHeight;

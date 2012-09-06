@@ -65,11 +65,13 @@ import android.content.res.CompatibilityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.graphics.Typeface;
@@ -211,10 +213,6 @@ public class WindowManagerService extends IWindowManager.Stub
      */
     static final int DEFAULT_FADE_IN_OUT_DURATION = 400;
 
-    /** Adjustment to time to perform a dim, to make it more dramatic.
-     */
-    static final int DIM_DURATION_MULTIPLIER = 6;
-
     /**
      * If true, the window manager will do its own custom freezing and general
      * management of the screen during rotation.
@@ -338,18 +336,6 @@ public class WindowManagerService extends IWindowManager.Stub
      * and now need to have the policy remove their windows.
      */
     final ArrayList<AppWindowToken> mFinishedStarting = new ArrayList<AppWindowToken>();
-
-    /**
-     * This was the app token that was used to retrieve the last enter
-     * animation.  It will be used for the next exit animation.
-     */
-    AppWindowToken mLastEnterAnimToken;
-
-    /**
-     * These were the layout params used to retrieve the last enter animation.
-     * They will be used for the next exit animation.
-     */
-    LayoutParams mLastEnterAnimParams;
 
     /**
      * Z-ordered (bottom-most first) list of all Window objects.
@@ -512,6 +498,7 @@ public class WindowManagerService extends IWindowManager.Stub
     // If non-null, we are in the middle of animating from one wallpaper target
     // to another, and this is the higher one in Z-order.
     WindowState mUpperWallpaperTarget = null;
+    WindowState mWindowDetachedWallpaper = null;
     int mWallpaperAnimLayerAdjustment;
     float mLastWallpaperX = -1;
     float mLastWallpaperY = -1;
@@ -1397,6 +1384,7 @@ public class WindowManagerService extends IWindowManager.Stub
         int foundI = 0;
         WindowState topCurW = null;
         int topCurI = 0;
+        int windowDetachedI = -1;
         int i = N;
         while (i > 0) {
             i--;
@@ -1409,13 +1397,12 @@ public class WindowManagerService extends IWindowManager.Stub
                 continue;
             }
             topCurW = null;
-            if (w.mAppToken != null) {
+            if (w != mWindowDetachedWallpaper && w.mAppToken != null) {
                 // If this window's app token is hidden and not animating,
                 // it is of no interest to us.
                 if (w.mAppToken.hidden && w.mAppToken.animation == null) {
                     if (DEBUG_WALLPAPER) Slog.v(TAG,
-                            "Skipping hidden or animating token: " + w);
-                    topCurW = null;
+                            "Skipping not hidden or animating token: " + w);
                     continue;
                 }
             }
@@ -1440,7 +1427,16 @@ public class WindowManagerService extends IWindowManager.Stub
                     continue;
                 }
                 break;
+            } else if (w == mWindowDetachedWallpaper) {
+                windowDetachedI = i;
             }
+        }
+
+        if (foundW == null && windowDetachedI >= 0) {
+            if (DEBUG_WALLPAPER) Slog.v(TAG,
+                    "Found animating detached wallpaper activity: #" + i + "=" + w);
+            foundW = w;
+            foundI = windowDetachedI;
         }
 
         if (mNextAppTransition != WindowManagerPolicy.TRANSIT_UNSET) {
@@ -1893,9 +1889,9 @@ public class WindowManagerService extends IWindowManager.Stub
             if (mDisplay == null) {
                 WindowManager wm = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
                 mDisplay = wm.getDefaultDisplay();
-                mInitialDisplayWidth = mPolicy.getNonDecorDisplayWidth(mDisplay.getWidth());
-                mInitialDisplayHeight = mPolicy.getNonDecorDisplayHeight(mDisplay.getHeight());
-                mInputManager.setDisplaySize(0, mDisplay.getWidth(), mDisplay.getHeight());
+                mInitialDisplayWidth = mDisplay.getWidth();
+                mInitialDisplayHeight = mDisplay.getHeight();
+                mInputManager.setDisplaySize(0, mDisplay.getRealWidth(), mDisplay.getRealWidth());
                 reportNewConfig = true;
             }
 
@@ -2476,7 +2472,10 @@ public class WindowManagerService extends IWindowManager.Stub
                 displayed = !win.isVisibleLw();
                 if (win.mExiting) {
                     win.mExiting = false;
-                    win.mAnimation = null;
+                    if (win.mAnimation != null) {
+                        win.mAnimation.cancel();
+                        win.mAnimation = null;
+                    }
                 }
                 if (win.mDestroying) {
                     win.mDestroying = false;
@@ -3386,7 +3385,7 @@ public class WindowManagerService extends IWindowManager.Stub
         }
     }
 
-    public void prepareAppTransition(int transit) {
+    public void prepareAppTransition(int transit, boolean alwaysKeepCurrent) {
         if (!checkCallingPermission(android.Manifest.permission.MANAGE_APP_TOKENS,
                 "prepareAppTransition()")) {
             throw new SecurityException("Requires MANAGE_APP_TOKENS permission");
@@ -3400,14 +3399,16 @@ public class WindowManagerService extends IWindowManager.Stub
                 if (mNextAppTransition == WindowManagerPolicy.TRANSIT_UNSET
                         || mNextAppTransition == WindowManagerPolicy.TRANSIT_NONE) {
                     mNextAppTransition = transit;
-                } else if (transit == WindowManagerPolicy.TRANSIT_TASK_OPEN
-                        && mNextAppTransition == WindowManagerPolicy.TRANSIT_TASK_CLOSE) {
-                    // Opening a new task always supersedes a close for the anim.
-                    mNextAppTransition = transit;
-                } else if (transit == WindowManagerPolicy.TRANSIT_ACTIVITY_OPEN
-                        && mNextAppTransition == WindowManagerPolicy.TRANSIT_ACTIVITY_CLOSE) {
-                    // Opening a new activity always supersedes a close for the anim.
-                    mNextAppTransition = transit;
+                } else if (!alwaysKeepCurrent) {
+                    if (transit == WindowManagerPolicy.TRANSIT_TASK_OPEN
+                            && mNextAppTransition == WindowManagerPolicy.TRANSIT_TASK_CLOSE) {
+                        // Opening a new task always supersedes a close for the anim.
+                        mNextAppTransition = transit;
+                    } else if (transit == WindowManagerPolicy.TRANSIT_ACTIVITY_OPEN
+                            && mNextAppTransition == WindowManagerPolicy.TRANSIT_ACTIVITY_CLOSE) {
+                        // Opening a new activity always supersedes a close for the anim.
+                        mNextAppTransition = transit;
+                    }
                 }
                 mAppTransitionReady = false;
                 mAppTransitionTimeout = false;
@@ -3970,10 +3971,6 @@ public class WindowManagerService extends IWindowManager.Stub
                 if (DEBUG_ADD_REMOVE || DEBUG_TOKEN_MOVEMENT) Slog.v(TAG,
                         "removeAppToken: " + wtoken);
                 mAppTokens.remove(wtoken);
-                if (mLastEnterAnimToken == wtoken) {
-                    mLastEnterAnimToken = null;
-                    mLastEnterAnimParams = null;
-                }
                 wtoken.removed = true;
                 if (wtoken.startingData != null) {
                     startingToken = wtoken;
@@ -6260,6 +6257,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final Rect mLastSystemDecorRect = new Rect();
 
         // Current transformation being applied.
+        boolean mHaveMatrix;
         float mDsDx=1, mDtDx=0, mDsDy=0, mDtDy=1;
         float mLastDsDx=1, mLastDtDx=0, mLastDsDy=0, mLastDtDy=1;
         float mHScale=1, mVScale=1;
@@ -6276,6 +6274,7 @@ public class WindowManagerService extends IWindowManager.Stub
         final Rect mDisplayFrame = new Rect();
         final Rect mSystemFrame = new Rect();
         final Rect mContentFrame = new Rect();
+        final Rect mParentFrame = new Rect();
         final Rect mVisibleFrame = new Rect();
 
         boolean mContentChanged;
@@ -6498,8 +6497,12 @@ public class WindowManagerService extends IWindowManager.Stub
             final Rect system = mSystemFrame;
             system.set(sf);
 
+            if (!mParentFrame.equals(pf)) {
+                mParentFrame.set(pf);
+                mContentChanged = true;
+            }
+
             final Rect content = mContentFrame;
-            mContentChanged |= !content.equals(cf);
             content.set(cf);
 
             final Rect visible = mVisibleFrame;
@@ -6690,6 +6693,7 @@ public class WindowManagerService extends IWindowManager.Stub
             if (mAnimation != null) {
                 mAnimating = true;
                 mLocalAnimating = false;
+                mAnimation.cancel();
                 mAnimation = null;
             }
         }
@@ -6958,6 +6962,7 @@ public class WindowManagerService extends IWindowManager.Stub
                         // starting window, so there is no need for it to also
                         // be doing its own stuff.
                         if (mAnimation != null) {
+                            mAnimation.cancel();
                             mAnimation = null;
                             // Make sure we clean up the animation.
                             mAnimating = true;
@@ -7004,7 +7009,12 @@ public class WindowManagerService extends IWindowManager.Stub
                     if (DEBUG_ANIM) Slog.v(
                         TAG, "Finished animation in " + this +
                         " @ " + currentTime);
-                    mAnimation = null;
+
+                    if (mAnimation != null) {
+                        mAnimation.cancel();
+                        mAnimation = null;
+                    }
+
                     //WindowManagerService.this.dump();
                 }
                 mHasLocalTransformation = false;
@@ -7033,6 +7043,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 // clear it and make sure we run the cleanup code.
                 mAnimating = true;
                 mLocalAnimating = true;
+                mAnimation.cancel();
                 mAnimation = null;
             }
 
@@ -7047,7 +7058,10 @@ public class WindowManagerService extends IWindowManager.Stub
 
             mAnimating = false;
             mLocalAnimating = false;
-            mAnimation = null;
+            if (mAnimation != null) {
+                mAnimation.cancel();
+                mAnimation = null;
+            }
             mAnimLayer = mLayer;
             if (mIsImWindow) {
                 mAnimLayer += mInputMethodAnimLayerAdjustment;
@@ -7217,6 +7231,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 // since it is already included in the transformation.
                 //Slog.i(TAG, "Transform: " + matrix);
 
+                mHaveMatrix = true;
                 tmpMatrix.getValues(tmpFloats);
                 mDsDx = tmpFloats[Matrix.MSCALE_X];
                 mDtDx = tmpFloats[Matrix.MSKEW_Y];
@@ -7268,6 +7283,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 mShownFrame.offset(mXOffset, mYOffset);
             }
             mShownAlpha = mAlpha;
+            mHaveMatrix = false;
             mDsDx = mGlobalScale;
             mDtDx = 0;
             mDsDy = 0;
@@ -7447,6 +7463,19 @@ public class WindowManagerService extends IWindowManager.Stub
                     && mSurface != null && mAnimation == null
                     && (mAppToken == null || mAppToken.animation == null)
                     && !mDrawPending && !mCommitDrawPending;
+        }
+ 
+        /**
+         * Return whether this window is wanting to have a translation
+         * animation applied to it for an in-progress move.  (Only makes
+         * sense to call from performLayoutAndPlaceSurfacesLockedInner().)
+         */
+        boolean shouldAnimateMove() {
+            return mContentChanged && !mExiting && !mLastHidden && !mDisplayFrozen
+                    && (mFrame.top != mLastFrame.top
+                            || mFrame.left != mLastFrame.left)
+                    && (mAttachedWindow == null || !mAttachedWindow.shouldAnimateMove())
+                    && mPolicy.isScreenOnFully();
         }
 
         void evalNeedsBackgroundFiller(int screenWidth, int screenHeight) {
@@ -7689,6 +7718,8 @@ public class WindowManagerService extends IWindowManager.Stub
                     pw.println();
             pw.print(prefix); pw.print("mContainingFrame=");
                     mContainingFrame.printShortString(pw);
+                    pw.print(" mParentFrame=");
+                    mParentFrame.printShortString(pw);
                     pw.print(" mDisplayFrame=");
                     mDisplayFrame.printShortString(pw);
                     pw.println();
@@ -7700,11 +7731,6 @@ public class WindowManagerService extends IWindowManager.Stub
                     pw.print(" mVisibleInsets="); mVisibleInsets.printShortString(pw);
                     pw.print(" last="); mLastVisibleInsets.printShortString(pw);
                     pw.println();
-            if (mShownAlpha != 1 || mAlpha != 1 || mLastAlpha != 1) {
-                pw.print(prefix); pw.print("mShownAlpha="); pw.print(mShownAlpha);
-                        pw.print(" mAlpha="); pw.print(mAlpha);
-                        pw.print(" mLastAlpha="); pw.println(mLastAlpha);
-            }
             if (mAnimating || mLocalAnimating || mAnimationIsEntrance
                     || mAnimation != null) {
                 pw.print(prefix); pw.print("mAnimating="); pw.print(mAnimating);
@@ -7718,6 +7744,17 @@ public class WindowManagerService extends IWindowManager.Stub
                         pw.print(" hasLocal="); pw.print(mHasLocalTransformation);
                         pw.print(" "); mTransformation.printShortString(pw);
                         pw.println();
+            }
+            if (mShownAlpha != 1 || mAlpha != 1 || mLastAlpha != 1) {
+                pw.print(prefix); pw.print("mShownAlpha="); pw.print(mShownAlpha);
+                        pw.print(" mAlpha="); pw.print(mAlpha);
+                        pw.print(" mLastAlpha="); pw.println(mLastAlpha);
+            }
+            if (mHaveMatrix) {
+                pw.print(prefix); pw.print("mDsDx="); pw.print(mDsDx);
+                        pw.print(" mDtDx="); pw.print(mDtDx);
+                        pw.print(" mDsDy="); pw.print(mDsDy);
+                        pw.print(" mDtDy="); pw.println(mDtDy);
             }
             pw.print(prefix); pw.print("mDrawPending="); pw.print(mDrawPending);
                     pw.print(" mCommitDrawPending="); pw.print(mCommitDrawPending);
@@ -8184,13 +8221,13 @@ public class WindowManagerService extends IWindowManager.Stub
                 pw.print(prefix); pw.print("animating="); pw.print(animating);
                         pw.print(" animation="); pw.println(animation);
             }
+            if (hasTransformation) {
+                pw.print(prefix); pw.print("XForm: ");
+                        transformation.printShortString(pw);
+                        pw.println();
+            }
             if (animLayerAdjustment != 0) {
                 pw.print(prefix); pw.print("animLayerAdjustment="); pw.println(animLayerAdjustment);
-            }
-            if (hasTransformation) {
-                pw.print(prefix); pw.print("hasTransformation="); pw.print(hasTransformation);
-                        pw.print(" transformation="); transformation.printShortString(pw);
-                        pw.println();
             }
             if (startingData != null || removed || firstWindowDrawn) {
                 pw.print(prefix); pw.print("startingData="); pw.print(startingData);
@@ -8793,6 +8830,12 @@ public class WindowManagerService extends IWindowManager.Stub
         int curLayer = 0;
         int i;
 
+        if (DEBUG_LAYERS) {
+            RuntimeException here = new RuntimeException("here");
+            here.fillInStackTrace();
+            Log.v(TAG, "Assigning layers", here);
+        }
+
         for (i=0; i<N; i++) {
             WindowState w = mWindows.get(i);
             if (w.mBaseLayer == curBaseLayer || w.mIsImWindow
@@ -9185,6 +9228,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 boolean tokenMayBeDrawn = false;
                 boolean wallpaperMayChange = false;
                 boolean forceHiding = false;
+                WindowState windowDetachedWallpaper = null;
 
                 mPolicy.beginAnimationLw(dw, dh);
 
@@ -9206,19 +9250,54 @@ public class WindowManagerService extends IWindowManager.Stub
                             }
                         }
 
-                        boolean wasAnimating = w.mAnimating;
+                        final boolean wasAnimating = w.mAnimating;
+
+                        int animDw = dw;
+                        int animDh = dh;
+
+                        // If the window has moved due to its containing
+                        // content frame changing, then we'd like to animate
+                        // it.  The checks here are ordered by what is least
+                        // likely to be true first.
+                        if (w.shouldAnimateMove()) {
+                            // Frame has moved, containing content frame
+                            // has also moved, and we're not currently animating...
+                            // let's do something.
+                            Animation a = AnimationUtils.loadAnimation(mContext,
+                                    com.android.internal.R.anim.window_move_from_decor);
+                            w.setAnimation(a);
+                            animDw = w.mLastFrame.left - w.mFrame.left;
+                            animDh = w.mLastFrame.top - w.mFrame.top;
+                        }
+
+                        // Execute animation.
+                        final boolean nowAnimating = w.stepAnimationLocked(currentTime,
+                                animDw, animDh);
+                        // If this window is animating, make a note that we have
+                        // an animating window and take care of a request to run
+                        // a detached wallpaper animation.
+                        if (nowAnimating) {
+                            if (w.mAnimation != null && w.mAnimation.getDetachWallpaper()) {
+                                windowDetachedWallpaper = w;
+                            }
                         if (w.stepAnimationLocked(currentTime, dw, dh)) {
                             animating = true;
-                            //w.dump("  ");
+                        }
+                        // If this window's app token is running a detached wallpaper
+                        // animation, make a note so we can ensure the wallpaper is
+                        // displayed behind it.
+                        if (w.mAppToken != null && w.mAppToken.animation != null
+                                && w.mAppToken.animation.getDetachWallpaper()) {
+                            windowDetachedWallpaper = w;
                         }
                         if (wasAnimating && !w.mAnimating && mWallpaperTarget == w) {
                             wallpaperMayChange = true;
                         }
 
                         if (mPolicy.doesForceHide(w, attrs)) {
-                            if (!wasAnimating && animating) {
+                            if (!wasAnimating && nowAnimating) {
                                 if (DEBUG_VISIBILITY) Slog.v(TAG,
-                                        "Animation done that could impact force hide: "
+                                        "Animation started that could impact force hide: "
                                         + w);
                                 wallpaperForceHidingChanged = true;
                                 mFocusMayChange = true;
@@ -9644,6 +9723,14 @@ public class WindowManagerService extends IWindowManager.Stub
                     }
                 }
 
+                if (mWindowDetachedWallpaper != windowDetachedWallpaper) {
+                    if (DEBUG_WALLPAPER) Slog.v(TAG,
+                            "Detached wallpaper changed from " + mWindowDetachedWallpaper
+                            + windowDetachedWallpaper);
+                    mWindowDetachedWallpaper = windowDetachedWallpaper;
+                    wallpaperMayChange = true;
+                }
+
                 if (wallpaperMayChange) {
                     if (DEBUG_WALLPAPER) Slog.v(TAG,
                             "Wallpaper may change!  Adjusting");
@@ -9964,6 +10051,11 @@ public class WindowManagerService extends IWindowManager.Stub
                     w.mOrientationChanging = false;
                 }
 
+                if (w.mContentChanged) {
+                    //Slog.i(TAG, "Window " + this + " clearing mContentChanged - done placing");
+                    w.mContentChanged = false;
+                }
+
                 final boolean canBeSeen = w.isDisplayedLw();
 
                 if (someoneLosingFocus && w == mCurrentFocus && canBeSeen) {
@@ -10041,7 +10133,8 @@ public class WindowManagerService extends IWindowManager.Stub
                                     mDimAnimator = new DimAnimator(mFxSession);
                                 }
                                 mDimAnimator.show(dw, dh);
-                                mDimAnimator.updateParameters(w, currentTime);
+                                mDimAnimator.updateParameters(mContext.getResources(),
+                                             w, currentTime);
                             }
                         }
                         if ((attrFlags&FLAG_BLUR_BEHIND) != 0) {
@@ -10236,10 +10329,6 @@ public class WindowManagerService extends IWindowManager.Stub
                         "performLayout: App token exiting now removed" + token);
                 mAppTokens.remove(token);
                 mExitingAppTokens.remove(i);
-                if (mLastEnterAnimToken == token) {
-                    mLastEnterAnimToken = null;
-                    mLastEnterAnimParams = null;
-                }
             }
         }
 
@@ -10756,7 +10845,7 @@ public class WindowManagerService extends IWindowManager.Stub
         return val;
     }
 
-    class Watermark {
+    static class Watermark {
         final String[] mTokens;
         final String mText;
         final Paint mTextPaint;
@@ -10772,9 +10861,9 @@ public class WindowManagerService extends IWindowManager.Stub
         int mLastDH;
         boolean mDrawNeeded;
 
-        Watermark(SurfaceSession session, String[] tokens) {
+        Watermark(Display display, SurfaceSession session, String[] tokens) {
             final DisplayMetrics dm = new DisplayMetrics();
-            mDisplay.getMetrics(dm);
+            display.getMetrics(dm);
 
             if (false) {
                 Log.i(TAG, "*********************** WATERMARK");
@@ -10868,6 +10957,8 @@ public class WindowManagerService extends IWindowManager.Stub
                 } catch (OutOfResourcesException e) {
                 }
                 if (c != null) {
+                    c.drawColor(0, PorterDuff.Mode.CLEAR);
+
                     int deltaX = mDeltaX;
                     int deltaY = mDeltaY;
 
@@ -10910,7 +11001,7 @@ public class WindowManagerService extends IWindowManager.Stub
             if (line != null) {
                 String[] toks = line.split("%");
                 if (toks != null && toks.length > 0) {
-                    mWatermark = new Watermark(mFxSession, toks);
+                    mWatermark = new Watermark(mDisplay, mFxSession, toks);
                 }
             }
         } catch (FileNotFoundException e) {
@@ -11167,6 +11258,9 @@ public class WindowManagerService extends IWindowManager.Stub
                 pw.print("  mLowerWallpaperTarget="); pw.println(mLowerWallpaperTarget);
                 pw.print("  mUpperWallpaperTarget="); pw.println(mUpperWallpaperTarget);
             }
+            if (mWindowDetachedWallpaper != null) {
+                pw.print("  mWindowDetachedWallpaper="); pw.println(mWindowDetachedWallpaper);
+            }
             pw.print("  mCurConfiguration="); pw.println(this.mCurConfiguration);
             pw.print("  mInTouchMode="); pw.print(mInTouchMode);
                     pw.print(" mLayoutSeq="); pw.println(mLayoutSeq);
@@ -11210,10 +11304,6 @@ public class WindowManagerService extends IWindowManager.Stub
             }
             pw.print("  mStartingIconInTransition="); pw.print(mStartingIconInTransition);
                     pw.print(", mSkipAppTransitionAnimation="); pw.println(mSkipAppTransitionAnimation);
-            if (mLastEnterAnimToken != null || mLastEnterAnimToken != null) {
-                pw.print("  mLastEnterAnimToken="); pw.print(mLastEnterAnimToken);
-                        pw.print(", mLastEnterAnimParams="); pw.println(mLastEnterAnimParams);
-            }
             if (mOpeningApps.size() > 0) {
                 pw.print("  mOpeningApps="); pw.println(mOpeningApps);
             }
@@ -11295,7 +11385,7 @@ public class WindowManagerService extends IWindowManager.Stub
          * Set's the dim surface's layer and update dim parameters that will be used in
          * {@link updateSurface} after all windows are examined.
          */
-        void updateParameters(WindowState w, long currentTime) {
+        void updateParameters(Resources res, WindowState w, long currentTime) {
             mDimSurface.setLayer(w.mAnimLayer-1);
 
             final float target = w.mExiting ? 0 : w.mAttrs.dimAmount;
@@ -11309,11 +11399,15 @@ public class WindowManagerService extends IWindowManager.Stub
                         ? w.mAnimation.computeDurationHint()
                         : DEFAULT_DIM_DURATION;
                 if (target > mDimTargetAlpha) {
-                    // This is happening behind the activity UI,
-                    // so we can make it run a little longer to
-                    // give a stronger impression without disrupting
-                    // the user.
-                    duration *= DIM_DURATION_MULTIPLIER;
+                    TypedValue tv = new TypedValue();
+                    res.getValue(com.android.internal.R.fraction.config_dimBehindFadeDuration,
+                            tv, true);
+                    if (tv.type == TypedValue.TYPE_FRACTION) {
+                        duration = (long)tv.getFraction((float)duration, (float)duration);
+                    } else if (tv.type >= TypedValue.TYPE_FIRST_INT
+                            && tv.type <= TypedValue.TYPE_LAST_INT) {
+                        duration = tv.data;
+                    }
                 }
                 if (duration < 1) {
                     // Don't divide by zero

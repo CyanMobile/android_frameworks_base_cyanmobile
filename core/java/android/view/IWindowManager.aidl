@@ -74,7 +74,7 @@ interface IWindowManager
     void setAppOrientation(IApplicationToken token, int requestedOrientation);
     int getAppOrientation(IApplicationToken token);
     void setFocusedApp(IBinder token, boolean moveFocusNow);
-    void prepareAppTransition(int transit);
+    void prepareAppTransition(int transit, boolean alwaysKeepCurrent);
     int getPendingAppTransition();
     void overridePendingAppTransition(String packageName, int enterAnim, int exitAnim);
     void executeAppTransition();

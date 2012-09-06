@@ -17,6 +17,8 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include <cutils/properties.h>
+
 #include <surfaceflinger/SurfaceComposerClient.h>
 #include <ui/PixelFormat.h>
 #include <ui/DisplayInfo.h>
@@ -24,6 +26,7 @@
 #include "jni.h"
 #include <android_runtime/AndroidRuntime.h>
 #include <utils/misc.h>
+#include <utils/Log.h>
 
 // ----------------------------------------------------------------------------
 
@@ -40,6 +43,11 @@ struct offsets_t {
     jfieldID ydpi;
 };
 static offsets_t offsets;
+
+static int gShortSize = -1;
+static int gLongSize = -1;
+static int gOldSize = -1;
+static int gNewSize = -1;
 
 static void doThrow(JNIEnv* env, const char* exc, const char* msg = NULL)
 {
@@ -69,10 +77,34 @@ static jint android_view_Display_getWidth(
         JNIEnv* env, jobject clazz)
 {
     DisplayID dpy = env->GetIntField(clazz, offsets.display);
-    return SurfaceComposerClient::getDisplayWidth(dpy);
+    jint w = SurfaceComposerClient::getDisplayWidth(dpy);
+    if (gShortSize > 0) {
+        jint h = SurfaceComposerClient::getDisplayHeight(dpy);
+        return w < h ? gShortSize : gLongSize;
+    }
+    return w == gOldSize ? gNewSize : w;
 }
 
 static jint android_view_Display_getHeight(
+        JNIEnv* env, jobject clazz)
+{
+    DisplayID dpy = env->GetIntField(clazz, offsets.display);
+    int h = SurfaceComposerClient::getDisplayHeight(dpy);
+    if (gShortSize > 0) {
+        jint w = SurfaceComposerClient::getDisplayWidth(dpy);
+        return h < w ? gShortSize : gLongSize;
+    }
+    return h == gOldSize ? gNewSize : h;
+}
+
+static jint android_view_Display_getRealWidth(
+        JNIEnv* env, jobject clazz)
+{
+    DisplayID dpy = env->GetIntField(clazz, offsets.display);
+    return SurfaceComposerClient::getDisplayWidth(dpy);
+}
+
+static jint android_view_Display_getRealHeight(
         JNIEnv* env, jobject clazz)
 {
     DisplayID dpy = env->GetIntField(clazz, offsets.display);
@@ -109,6 +141,10 @@ static JNINativeMethod gMethods[] = {
             (void*)android_view_Display_getWidth },
     {   "getHeight", "()I",
             (void*)android_view_Display_getHeight },
+     {   "getRealWidth", "()I",
+            (void*)android_view_Display_getRealWidth },
+    {   "getRealHeight", "()I",
+            (void*)android_view_Display_getRealHeight },
     {   "getOrientation", "()I",
             (void*)android_view_Display_getOrientation }
 };
@@ -125,6 +161,24 @@ void nativeClassInit(JNIEnv* env, jclass clazz)
 
 int register_android_view_Display(JNIEnv* env)
 {
+    char buf[PROPERTY_VALUE_MAX];
+    int len = property_get("persist.sys.screensizehack", buf, "");
+    if (len > 0) {
+        int temp1, temp2;
+        if (sscanf(buf, "%dx%d", &temp1, &temp2) == 2) {
+            if (temp1 < temp2) {
+                gShortSize = temp1;
+                gLongSize = temp2;
+            } else {
+                gShortSize = temp2;
+                gLongSize = temp1;
+            }
+        } else if (sscanf(buf, "%d=%d", &temp1, &temp2) == 2) {
+            gOldSize = temp1;
+            gNewSize = temp2;
+        }
+    }
+
     return AndroidRuntime::registerNativeMethods(env,
             kClassPathName, gMethods, NELEM(gMethods));
 }

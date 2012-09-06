@@ -170,6 +170,10 @@
 
         <!-- The preferred list item height. -->
         <attr name="listPreferredItemHeight" format="dimension" />
+        <!-- The preferred TextAppearance for the primary text of list items. -->
+        <attr name="textAppearanceListItem" format="reference" />
+        <!-- The preferred TextAppearance for the primary text of small list items. -->
+        <attr name="textAppearanceListItemSmall" format="reference" />
         <!-- The drawable for the list divider. -->
         <!-- The list item height for search results. @hide -->
         <attr name="searchResultListItemHeight" format="dimension" />

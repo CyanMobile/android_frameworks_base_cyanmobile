@@ -28,7 +28,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="?android:attr/listPreferredItemHeight"
-    android:textAppearance="?android:attr/textAppearanceLarge"
+    android:textAppearance="?android:attr/textAppearanceListItemSmall"
     android:textColor="@android:color/primary_text_light_disable_only"
     android:gravity="center_vertical"
     android:paddingLeft="14dip"

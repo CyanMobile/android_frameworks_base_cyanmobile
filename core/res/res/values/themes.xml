@@ -62,7 +62,8 @@
         <item name="textAppearanceSmallInverse">@android:style/TextAppearance.Small.Inverse</item>
         <item name="textAppearanceSearchResultTitle">@android:style/TextAppearance.SearchResult.Title</item>
         <item name="textAppearanceSearchResultSubtitle">@android:style/TextAppearance.SearchResult.Subtitle</item>
-        
+        <item name="textAppearanceListItem">?android:attr/textAppearanceLarge</item>
+        <item name="textAppearanceListItemSmall">?android:attr/textAppearanceLarge</item>
         <item name="textAppearanceButton">@android:style/TextAppearance.Widget.Button</item>
         
         <item name="candidatesTextStyleSpans">@android:string/candidates_style</item>
@@ -255,7 +256,7 @@
         <item name="listViewStyle">@android:style/Widget.ListView.White</item>
         <item name="listDivider">@drawable/divider_horizontal_bright</item>
         <item name="listSeparatorTextViewStyle">@android:style/Widget.TextView.ListSeparator.White</item>
-        
+        <item name="textAppearanceListItemSmall">?android:attr/textAppearanceMedium</item>
         <item name="progressBarStyle">@android:style/Widget.ProgressBar.Inverse</item>
 		<item name="progressBarStyleSmall">@android:style/Widget.ProgressBar.Small.Inverse</item>
 		<item name="progressBarStyleLarge">@android:style/Widget.ProgressBar.Large.Inverse</item>
@@ -423,6 +424,7 @@
         <item name="textAppearanceLargeInverse">@android:style/TextAppearance.Large.Inverse</item>
         <item name="textAppearanceMediumInverse">@android:style/TextAppearance.Medium.Inverse</item>
         <item name="textAppearanceSmallInverse">@android:style/TextAppearance.Small.Inverse</item>
+        <item name="textAppearanceListItemSmall">?android:attr/textAppearanceMedium</item>
     </style>
 
     <!-- Default theme for alert dialog windows, which is used by the

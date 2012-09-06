@@ -86,6 +86,10 @@ public final class BridgeWindow implements IWindow {
         // pass for now.
     }
 
+    public void doneAnimating() {
+        // TODO Auto-generated method stub
+    }
+
     public void waitForAllDrawn() {
         // TODO Auto-generated method stub
     }
