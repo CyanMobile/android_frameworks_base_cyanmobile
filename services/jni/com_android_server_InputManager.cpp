@@ -38,6 +38,10 @@
 #include "../../core/jni/android_view_MotionEvent.h"
 #include "../../core/jni/android_view_InputChannel.h"
 #include "com_android_server_PowerManagerService.h"
+#include "com_android_server_InputApplication.h"
+#include "com_android_server_InputApplicationHandle.h"
+#include "com_android_server_InputWindow.h"
+#include "com_android_server_InputWindowHandle.h"
 
 namespace android {
 
@@ -81,44 +85,6 @@ static struct {
 
 static struct {
     jclass clazz;
-
-    jfieldID inputChannel;
-    jfieldID name;
-    jfieldID layoutParamsFlags;
-    jfieldID layoutParamsType;
-    jfieldID dispatchingTimeoutNanos;
-    jfieldID frameLeft;
-    jfieldID frameTop;
-    jfieldID frameRight;
-    jfieldID frameBottom;
-    jfieldID visibleFrameLeft;
-    jfieldID visibleFrameTop;
-    jfieldID visibleFrameRight;
-    jfieldID visibleFrameBottom;
-    jfieldID touchableAreaLeft;
-    jfieldID touchableAreaTop;
-    jfieldID touchableAreaRight;
-    jfieldID touchableAreaBottom;
-    jfieldID visible;
-    jfieldID canReceiveKeys;
-    jfieldID hasFocus;
-    jfieldID hasWallpaper;
-    jfieldID paused;
-    jfieldID layer;
-    jfieldID ownerPid;
-    jfieldID ownerUid;
-} gInputWindowClassInfo;
-
-static struct {
-    jclass clazz;
-
-    jfieldID name;
-    jfieldID dispatchingTimeoutNanos;
-    jfieldID token;
-} gInputApplicationClassInfo;
-
-static struct {
-    jclass clazz;
 } gKeyEventClassInfo;
 
 static struct {
@@ -152,7 +118,27 @@ static inline nsecs_t now() {
     return systemTime(SYSTEM_TIME_MONOTONIC);
 }
 
-// ----------------------------------------------------------------------------
+// --- Global functions ---
+static jobject getInputApplicationHandleObjLocalRef(JNIEnv* env,
+        const sp<InputApplicationHandle>& inputApplicationHandle) {
+    if (inputApplicationHandle == NULL) {	
+        return NULL;
+    }
+
+    return static_cast<NativeInputApplicationHandle*>(inputApplicationHandle.get())->
+            getInputApplicationHandleObjLocalRef(env);
+}
+
+static jobject getInputWindowHandleObjLocalRef(JNIEnv* env,
+       const sp<InputWindowHandle>& inputWindowHandle) {
+    if (inputWindowHandle == NULL) {
+        return NULL;	
+    }
+    return static_cast<NativeInputWindowHandle*>(inputWindowHandle.get())->
+            getInputWindowHandleObjLocalRef(env);
+}
+
+// --- NativeInputManager ---
 
 class NativeInputManager : public virtual RefBase,
     public virtual InputReaderPolicyInterface,
@@ -171,7 +157,7 @@ public:
     void setDisplayOrientation(int32_t displayId, int32_t orientation);
 
     status_t registerInputChannel(JNIEnv* env, const sp<InputChannel>& inputChannel,
-            jweak inputChannelObjWeak, bool monitor);
+            const sp<InputWindowHandle>& inputWindowHandle, bool monitor);
     status_t unregisterInputChannel(JNIEnv* env, const sp<InputChannel>& inputChannel);
 
     void setInputWindows(JNIEnv* env, jobjectArray windowObjArray);
@@ -197,8 +183,8 @@ public:
             uint32_t policyFlags);
     virtual void notifyConfigurationChanged(nsecs_t when);
     virtual nsecs_t notifyANR(const sp<InputApplicationHandle>& inputApplicationHandle,
-            const sp<InputChannel>& inputChannel);
-    virtual void notifyInputChannelBroken(const sp<InputChannel>& inputChannel);
+            const sp<InputWindowHandle>& inputWindowHandle);
+    virtual void notifyInputChannelBroken(const sp<InputWindowHandle>& inputWindowHandle);
     virtual nsecs_t getKeyRepeatTimeout();
     virtual nsecs_t getKeyRepeatDelay();
     virtual int32_t getMaxEventsPerSecond();
@@ -209,28 +195,14 @@ public:
     virtual void interceptNavigationButtonBeforeQueueing(nsecs_t when,
             int32_t deviceId, int32_t action, int32_t& flags,
             uint32_t& policyFlags);
-    virtual bool interceptKeyBeforeDispatching(const sp<InputChannel>& inputChannel,
+    virtual bool interceptKeyBeforeDispatching(const sp<InputWindowHandle>& inputWindowHandle,
             const KeyEvent* keyEvent, uint32_t policyFlags);
+    virtual bool dispatchUnhandledKey(const sp<InputWindowHandle>& inputWindowHandle,
     virtual void pokeUserActivity(nsecs_t eventTime, int32_t eventType);
     virtual bool checkInjectEventsPermissionNonReentrant(
             int32_t injectorPid, int32_t injectorUid);
 
 private:
-    class ApplicationToken : public InputApplicationHandle {
-        jweak mTokenObjWeak;
-
-    public:
-        ApplicationToken(jweak tokenObjWeak) :
-            mTokenObjWeak(tokenObjWeak) { }
-
-        virtual ~ApplicationToken() {
-            JNIEnv* env = NativeInputManager::jniEnv();
-            env->DeleteWeakGlobalRef(mTokenObjWeak);
-        }
-
-        inline jweak getTokenObj() { return mTokenObjWeak; }
-    };
-
     sp<InputManager> mInputManager;
 
     jobject mCallbacksObj;
@@ -254,11 +226,6 @@ private:
 
     // Weak references to all currently registered input channels by connection pointer.
     Mutex mInputChannelRegistryLock;
-    KeyedVector<InputChannel*, jweak> mInputChannelObjWeakTable;
-
-    jobject getInputChannelObjLocal(JNIEnv* env, const sp<InputChannel>& inputChannel);
-
-    static bool populateWindow(JNIEnv* env, jobject windowObj, InputWindow& outWindow);
 
     static bool checkAndClearExceptionFromCallback(JNIEnv* env, const char* methodName);
 
@@ -323,86 +290,15 @@ void NativeInputManager::setDisplayOrientation(int32_t displayId, int32_t orient
 }
 
 status_t NativeInputManager::registerInputChannel(JNIEnv* env,
-        const sp<InputChannel>& inputChannel, jobject inputChannelObj, bool monitor) {
-    jweak inputChannelObjWeak = env->NewWeakGlobalRef(inputChannelObj);
-    if (! inputChannelObjWeak) {
-        LOGE("Could not create weak reference for input channel.");
-        LOGE_EX(env);
-        return NO_MEMORY;
-    }
-
-    status_t status;
-    {
-        AutoMutex _l(mInputChannelRegistryLock);
-
-        ssize_t index = mInputChannelObjWeakTable.indexOfKey(inputChannel.get());
-        if (index >= 0) {
-            LOGE("Input channel object '%s' has already been registered",
-                    inputChannel->getName().string());
-            status = INVALID_OPERATION;
-            goto DeleteWeakRef;
-        }
-
-        mInputChannelObjWeakTable.add(inputChannel.get(), inputChannelObjWeak);
-    }
-
-    status = mInputManager->getDispatcher()->registerInputChannel(inputChannel, monitor);
-    if (! status) {
-        // Success.
-        return OK;
-    }
-
-    // Failed!
-    {
-        AutoMutex _l(mInputChannelRegistryLock);
-        mInputChannelObjWeakTable.removeItem(inputChannel.get());
-    }
-
-DeleteWeakRef:
-    env->DeleteWeakGlobalRef(inputChannelObjWeak);
-    return status;
+        const sp<InputChannel>& inputChannel,
+        const sp<InputWindowHandle>& inputWindowHandle, bool monitor) {
+    return mInputManager->getDispatcher()->registerInputChannel(
+            inputChannel, inputWindowHandle, monitor);
 }
 
 status_t NativeInputManager::unregisterInputChannel(JNIEnv* env,
         const sp<InputChannel>& inputChannel) {
-    jweak inputChannelObjWeak;
-    {
-        AutoMutex _l(mInputChannelRegistryLock);
-
-        ssize_t index = mInputChannelObjWeakTable.indexOfKey(inputChannel.get());
-        if (index < 0) {
-            LOGE("Input channel object '%s' is not currently registered",
-                    inputChannel->getName().string());
-            return INVALID_OPERATION;
-        }
-
-        inputChannelObjWeak = mInputChannelObjWeakTable.valueAt(index);
-        mInputChannelObjWeakTable.removeItemsAt(index);
-    }
-
-    env->DeleteWeakGlobalRef(inputChannelObjWeak);
-
     return mInputManager->getDispatcher()->unregisterInputChannel(inputChannel);
-}
-
-jobject NativeInputManager::getInputChannelObjLocal(JNIEnv* env,
-        const sp<InputChannel>& inputChannel) {
-    InputChannel* inputChannelPtr = inputChannel.get();
-    if (! inputChannelPtr) {
-        return NULL;
-    }
-
-    {
-        AutoMutex _l(mInputChannelRegistryLock);
-
-        ssize_t index = mInputChannelObjWeakTable.indexOfKey(inputChannelPtr);
-        if (index < 0) {
-            return NULL;
-        }
-
-        jweak inputChannelObjWeak = mInputChannelObjWeakTable.valueAt(index);
-        return env->NewLocalRef(inputChannelObjWeak);
-    }
 }
 
 bool NativeInputManager::getDisplayInfo(int32_t displayId,
@@ -604,50 +500,46 @@ void NativeInputManager::notifyConfigurationChanged(nsecs_t when) {
 }
 
 nsecs_t NativeInputManager::notifyANR(const sp<InputApplicationHandle>& inputApplicationHandle,
-        const sp<InputChannel>& inputChannel) {
+        const sp<InputWindowHandle>& inputWindowHandle) {
 #if DEBUG_INPUT_DISPATCHER_POLICY
     LOGD("notifyANR");
 #endif
 
     JNIEnv* env = jniEnv();
 
-    jobject tokenObjLocal;
-    if (inputApplicationHandle.get()) {
-        ApplicationToken* token = static_cast<ApplicationToken*>(inputApplicationHandle.get());
-        jweak tokenObjWeak = token->getTokenObj();
-        tokenObjLocal = env->NewLocalRef(tokenObjWeak);
-    } else {
-        tokenObjLocal = NULL;
-    }
+    jobject inputApplicationHandleObj =
+            getInputApplicationHandleObjLocalRef(env, inputApplicationHandle);
+    jobject inputWindowHandleObj =
+            getInputWindowHandleObjLocalRef(env, inputWindowHandle);
 
-    jobject inputChannelObjLocal = getInputChannelObjLocal(env, inputChannel);
     jlong newTimeout = env->CallLongMethod(mCallbacksObj,
-                gCallbacksClassInfo.notifyANR, tokenObjLocal, inputChannelObjLocal);
+                gCallbacksClassInfo.notifyANR, inputApplicationHandleObj, inputWindowHandleObj);
     if (checkAndClearExceptionFromCallback(env, "notifyANR")) {
         newTimeout = 0; // abort dispatch
     } else {
         assert(newTimeout >= 0);
     }
 
-    env->DeleteLocalRef(tokenObjLocal);
-    env->DeleteLocalRef(inputChannelObjLocal);
+    env->DeleteLocalRef(inputWindowHandleObj);
+    env->DeleteLocalRef(inputApplicationHandleObj);
     return newTimeout;
 }
 
-void NativeInputManager::notifyInputChannelBroken(const sp<InputChannel>& inputChannel) {
+void NativeInputManager::notifyInputChannelBroken(const sp<InputWindowHandle>& inputWindowHandle) {
 #if DEBUG_INPUT_DISPATCHER_POLICY
-    LOGD("notifyInputChannelBroken - inputChannel='%s'", inputChannel->getName().string());
+    LOGD("notifyInputChannelBroken");
 #endif
 
     JNIEnv* env = jniEnv();
 
-    jobject inputChannelObjLocal = getInputChannelObjLocal(env, inputChannel);
-    if (inputChannelObjLocal) {
+    jobject inputWindowHandleObj =
+            getInputWindowHandleObjLocalRef(env, inputWindowHandle);
+    if (inputWindowHandleObj) {
         env->CallVoidMethod(mCallbacksObj, gCallbacksClassInfo.notifyInputChannelBroken,
-                inputChannelObjLocal);
+                inputWindowHandleObj);
         checkAndClearExceptionFromCallback(env, "notifyInputChannelBroken");
 
-        env->DeleteLocalRef(inputChannelObjLocal);
+        env->DeleteLocalRef(inputWindowHandleObj);
     }
 }
 
@@ -685,159 +577,33 @@ void NativeInputManager::setInputWindows(JNIEnv* env, jobjectArray windowObjArra
 
     jsize length = env->GetArrayLength(windowObjArray);
     for (jsize i = 0; i < length; i++) {
-        jobject inputTargetObj = env->GetObjectArrayElement(windowObjArray, i);
-        if (! inputTargetObj) {
+        jobject windowObj = env->GetObjectArrayElement(windowObjArray, i);
+        if (! windowObj) {
             break; // found null element indicating end of used portion of the array
         }
 
         windows.push();
         InputWindow& window = windows.editTop();
-        bool valid = populateWindow(env, inputTargetObj, window);
-        if (! valid) {
+        android_server_InputWindow_toNative(env, windowObj, &window);
+        if (window.inputChannel == NULL) {
             windows.pop();
         }
 
-        env->DeleteLocalRef(inputTargetObj);
+        env->DeleteLocalRef(windowObj);
     }
 
     mInputManager->getDispatcher()->setInputWindows(windows);
 }
 
-bool NativeInputManager::populateWindow(JNIEnv* env, jobject windowObj,
-        InputWindow& outWindow) {
-    bool valid = false;
-
-    jobject inputChannelObj = env->GetObjectField(windowObj,
-            gInputWindowClassInfo.inputChannel);
-    if (inputChannelObj) {
-        sp<InputChannel> inputChannel =
-                android_view_InputChannel_getInputChannel(env, inputChannelObj);
-        if (inputChannel != NULL) {
-            jstring name = jstring(env->GetObjectField(windowObj,
-                    gInputWindowClassInfo.name));
-            jint layoutParamsFlags = env->GetIntField(windowObj,
-                    gInputWindowClassInfo.layoutParamsFlags);
-            jint layoutParamsType = env->GetIntField(windowObj,
-                    gInputWindowClassInfo.layoutParamsType);
-            jlong dispatchingTimeoutNanos = env->GetLongField(windowObj,
-                    gInputWindowClassInfo.dispatchingTimeoutNanos);
-            jint frameLeft = env->GetIntField(windowObj,
-                    gInputWindowClassInfo.frameLeft);
-            jint frameTop = env->GetIntField(windowObj,
-                    gInputWindowClassInfo.frameTop);
-            jint frameRight = env->GetIntField(windowObj,
-                    gInputWindowClassInfo.frameRight);
-            jint frameBottom = env->GetIntField(windowObj,
-                    gInputWindowClassInfo.frameBottom);
-            jint visibleFrameLeft = env->GetIntField(windowObj,
-                    gInputWindowClassInfo.visibleFrameLeft);
-            jint visibleFrameTop = env->GetIntField(windowObj,
-                    gInputWindowClassInfo.visibleFrameTop);
-            jint visibleFrameRight = env->GetIntField(windowObj,
-                    gInputWindowClassInfo.visibleFrameRight);
-            jint visibleFrameBottom = env->GetIntField(windowObj,
-                    gInputWindowClassInfo.visibleFrameBottom);
-            jint touchableAreaLeft = env->GetIntField(windowObj,
-                    gInputWindowClassInfo.touchableAreaLeft);
-            jint touchableAreaTop = env->GetIntField(windowObj,
-                    gInputWindowClassInfo.touchableAreaTop);
-            jint touchableAreaRight = env->GetIntField(windowObj,
-                    gInputWindowClassInfo.touchableAreaRight);
-            jint touchableAreaBottom = env->GetIntField(windowObj,
-                    gInputWindowClassInfo.touchableAreaBottom);
-            jboolean visible = env->GetBooleanField(windowObj,
-                    gInputWindowClassInfo.visible);
-            jboolean canReceiveKeys = env->GetBooleanField(windowObj,
-                    gInputWindowClassInfo.canReceiveKeys);
-            jboolean hasFocus = env->GetBooleanField(windowObj,
-                    gInputWindowClassInfo.hasFocus);
-            jboolean hasWallpaper = env->GetBooleanField(windowObj,
-                    gInputWindowClassInfo.hasWallpaper);
-            jboolean paused = env->GetBooleanField(windowObj,
-                    gInputWindowClassInfo.paused);
-            jint layer = env->GetIntField(windowObj,
-                    gInputWindowClassInfo.layer);
-            jint ownerPid = env->GetIntField(windowObj,
-                    gInputWindowClassInfo.ownerPid);
-            jint ownerUid = env->GetIntField(windowObj,
-                    gInputWindowClassInfo.ownerUid);
-
-            const char* nameStr = env->GetStringUTFChars(name, NULL);
-
-            outWindow.inputChannel = inputChannel;
-            outWindow.name.setTo(nameStr);
-            outWindow.layoutParamsFlags = layoutParamsFlags;
-            outWindow.layoutParamsType = layoutParamsType;
-            outWindow.dispatchingTimeout = dispatchingTimeoutNanos;
-            outWindow.frameLeft = frameLeft;
-            outWindow.frameTop = frameTop;
-            outWindow.frameRight = frameRight;
-            outWindow.frameBottom = frameBottom;
-            outWindow.visibleFrameLeft = visibleFrameLeft;
-            outWindow.visibleFrameTop = visibleFrameTop;
-            outWindow.visibleFrameRight = visibleFrameRight;
-            outWindow.visibleFrameBottom = visibleFrameBottom;
-            outWindow.touchableAreaLeft = touchableAreaLeft;
-            outWindow.touchableAreaTop = touchableAreaTop;
-            outWindow.touchableAreaRight = touchableAreaRight;
-            outWindow.touchableAreaBottom = touchableAreaBottom;
-            outWindow.visible = visible;
-            outWindow.canReceiveKeys = canReceiveKeys;
-            outWindow.hasFocus = hasFocus;
-            outWindow.hasWallpaper = hasWallpaper;
-            outWindow.paused = paused;
-            outWindow.layer = layer;
-            outWindow.ownerPid = ownerPid;
-            outWindow.ownerUid = ownerUid;
-
-            env->ReleaseStringUTFChars(name, nameStr);
-            valid = true;
-        } else {
-            LOGW("Dropping input target because its input channel is not initialized.");
-        }
-
-        env->DeleteLocalRef(inputChannelObj);
-    } else {
-        LOGW("Dropping input target because the input channel object was null.");
-    }
-    return valid;
-}
-
 void NativeInputManager::setFocusedApplication(JNIEnv* env, jobject applicationObj) {
     if (applicationObj) {
-        jstring nameObj = jstring(env->GetObjectField(applicationObj,
-                gInputApplicationClassInfo.name));
-        jlong dispatchingTimeoutNanos = env->GetLongField(applicationObj,
-                gInputApplicationClassInfo.dispatchingTimeoutNanos);
-        jobject tokenObj = env->GetObjectField(applicationObj,
-                gInputApplicationClassInfo.token);
-        jweak tokenObjWeak = env->NewWeakGlobalRef(tokenObj);
-        if (! tokenObjWeak) {
-            LOGE("Could not create weak reference for application token.");
-            LOGE_EX(env);
-            env->ExceptionClear();
-        }
-        env->DeleteLocalRef(tokenObj);
-
-        String8 name;
-        if (nameObj) {
-            const char* nameStr = env->GetStringUTFChars(nameObj, NULL);
-            name.setTo(nameStr);
-            env->ReleaseStringUTFChars(nameObj, nameStr);
-            env->DeleteLocalRef(nameObj);
-        } else {
-            LOGE("InputApplication.name should not be null.");
-            name.setTo("unknown");
-        }
-
         InputApplication application;
-        application.name = name;
-        application.dispatchingTimeout = dispatchingTimeoutNanos;
-        application.handle = new ApplicationToken(tokenObjWeak);
-        mInputManager->getDispatcher()->setFocusedApplication(& application);
-    } else {
-        mInputManager->getDispatcher()->setFocusedApplication(NULL);
+        android_server_InputApplication_toNative(env, applicationObj, &application);
+        if (application.inputApplicationHandle != NULL) {
+            mInputManager->getDispatcher()->setFocusedApplication(&application);
+        }
     }
+    mInputManager->getDispatcher()->setFocusedApplication(NULL);
 }
 
 void NativeInputManager::setInputDispatchMode(bool enabled, bool frozen) {
@@ -954,7 +720,8 @@ void NativeInputManager::interceptNavigationButtonBeforeQueueing(nsecs_t when,
     }
 }
 
-bool NativeInputManager::interceptKeyBeforeDispatching(const sp<InputChannel>& inputChannel,
+bool NativeInputManager::interceptKeyBeforeDispatching(
+        const sp<InputWindowHandle>& inputWindowHandle,
         const KeyEvent* keyEvent, uint32_t policyFlags) {
     // Policy:
     // - Ignore untrusted events and pass them along.
@@ -963,16 +730,16 @@ bool NativeInputManager::interceptKeyBeforeDispatching(const sp<InputChannel>& i
     if (policyFlags & POLICY_FLAG_TRUSTED) {
         JNIEnv* env = jniEnv();
 
-        // Note: inputChannel may be null.
-        jobject inputChannelObj = getInputChannelObjLocal(env, inputChannel);
+        // Note: inputWindowHandle may be null.
+        jobject inputWindowHandleObj = getInputWindowHandleObjLocalRef(env, inputWindowHandle);
         jboolean consumed = env->CallBooleanMethod(mCallbacksObj,
                 gCallbacksClassInfo.interceptKeyBeforeDispatching,
-                inputChannelObj, keyEvent->getAction(), keyEvent->getFlags(),
+                inputWindowHandleObj, keyEvent->getAction(), keyEvent->getFlags(),
                 keyEvent->getKeyCode(), keyEvent->getScanCode(), keyEvent->getMetaState(),
                 keyEvent->getRepeatCount(), policyFlags);
         bool error = checkAndClearExceptionFromCallback(env, "interceptKeyBeforeDispatching");
 
-        env->DeleteLocalRef(inputChannelObj);
+        env->DeleteLocalRef(inputWindowHandleObj);
         return consumed && ! error;
     } else {
         return false;
@@ -1117,7 +884,7 @@ static void android_server_InputManager_handleInputChannelDisposed(JNIEnv* env,
 }
 
 static void android_server_InputManager_nativeRegisterInputChannel(JNIEnv* env, jclass clazz,
-        jobject inputChannelObj, jboolean monitor) {
+        jobject inputChannelObj, jobject inputWindowHandleObj, jboolean monitor) {
     if (checkInputManagerUnitialized(env)) {
         return;
     }
@@ -1129,9 +896,11 @@ static void android_server_InputManager_nativeRegisterInputChannel(JNIEnv* env, 
         return;
     }
 
+    sp<InputWindowHandle> inputWindowHandle =
+            android_server_InputWindowHandle_getHandle(env, inputWindowHandleObj);
 
     status_t status = gNativeInputManager->registerInputChannel(
-            env, inputChannel, inputChannelObj, monitor);
+            env, inputChannel, inputWindowHandle, monitor);
     if (status) {
         jniThrowRuntimeException(env, "Failed to register input channel.  "
                 "Check logs for details.");
@@ -1322,7 +1091,8 @@ static JNINativeMethod gInputManagerMethods[] = {
             (void*) android_server_InputManager_nativeGetSwitchState },
     { "nativeHasKeys", "(II[I[Z)Z",
             (void*) android_server_InputManager_nativeHasKeys },
-    { "nativeRegisterInputChannel", "(Landroid/view/InputChannel;Z)V",
+    { "nativeRegisterInputChannel",
+            "(Landroid/view/InputChannel;Lcom/android/server/InputWindowHandle;Z)V",
             (void*) android_server_InputManager_nativeRegisterInputChannel },
     { "nativeUnregisterInputChannel", "(Landroid/view/InputChannel;)V",
             (void*) android_server_InputManager_nativeUnregisterInputChannel },
@@ -1373,16 +1143,20 @@ int register_android_server_InputManager(JNIEnv* env) {
             "notifyLidSwitchChanged", "(JZ)V");
 
     GET_METHOD_ID(gCallbacksClassInfo.notifyInputChannelBroken, gCallbacksClassInfo.clazz,
-            "notifyInputChannelBroken", "(Landroid/view/InputChannel;)V");
+            "notifyInputChannelBroken", "(Lcom/android/server/InputWindowHandle;)V");
 
     GET_METHOD_ID(gCallbacksClassInfo.notifyANR, gCallbacksClassInfo.clazz,
-            "notifyANR", "(Ljava/lang/Object;Landroid/view/InputChannel;)J");
+            "notifyANR",
+            "(Lcom/android/server/InputApplicationHandle;Lcom/android/server/InputWindowHandle;)J");
 
     GET_METHOD_ID(gCallbacksClassInfo.interceptKeyBeforeQueueing, gCallbacksClassInfo.clazz,
             "interceptKeyBeforeQueueing", "(JIIIIIZ)I");
 
     GET_METHOD_ID(gCallbacksClassInfo.interceptKeyBeforeDispatching, gCallbacksClassInfo.clazz,
-            "interceptKeyBeforeDispatching", "(Landroid/view/InputChannel;IIIIIII)Z");
+            "interceptKeyBeforeDispatching", "(Lcom/android/server/InputWindowHandle;Landroid/view/KeyEvent;I)Z");
+
+    GET_METHOD_ID(gCallbacksClassInfo.dispatchUnhandledKey, gCallbacksClassInfo.clazz,
+             "dispatchUnhandledKey", "(Lcom/android/server/InputWindowHandle;Landroid/view/KeyEvent;I)Landroid/view/KeyEvent;");
 
     GET_METHOD_ID(gCallbacksClassInfo.checkInjectEventsPermission, gCallbacksClassInfo.clazz,
             "checkInjectEventsPermission", "(II)Z");
@@ -1440,99 +1214,6 @@ int register_android_server_InputManager(JNIEnv* env) {
 
     GET_FIELD_ID(gInputDeviceCalibrationClassInfo.values, gInputDeviceCalibrationClassInfo.clazz,
             "values", "[Ljava/lang/String;");
-
-    // InputWindow
-
-    FIND_CLASS(gInputWindowClassInfo.clazz, "com/android/server/InputWindow");
-
-    GET_FIELD_ID(gInputWindowClassInfo.inputChannel, gInputWindowClassInfo.clazz,
-            "inputChannel", "Landroid/view/InputChannel;");
-
-    GET_FIELD_ID(gInputWindowClassInfo.name, gInputWindowClassInfo.clazz,
-            "name", "Ljava/lang/String;");
-
-    GET_FIELD_ID(gInputWindowClassInfo.layoutParamsFlags, gInputWindowClassInfo.clazz,
-            "layoutParamsFlags", "I");
-
-    GET_FIELD_ID(gInputWindowClassInfo.layoutParamsType, gInputWindowClassInfo.clazz,
-            "layoutParamsType", "I");
-
-    GET_FIELD_ID(gInputWindowClassInfo.dispatchingTimeoutNanos, gInputWindowClassInfo.clazz,
-            "dispatchingTimeoutNanos", "J");
-
-    GET_FIELD_ID(gInputWindowClassInfo.frameLeft, gInputWindowClassInfo.clazz,
-            "frameLeft", "I");
-
-    GET_FIELD_ID(gInputWindowClassInfo.frameTop, gInputWindowClassInfo.clazz,
-            "frameTop", "I");
-
-    GET_FIELD_ID(gInputWindowClassInfo.frameRight, gInputWindowClassInfo.clazz,
-            "frameRight", "I");
-
-    GET_FIELD_ID(gInputWindowClassInfo.frameBottom, gInputWindowClassInfo.clazz,
-            "frameBottom", "I");
-
-    GET_FIELD_ID(gInputWindowClassInfo.visibleFrameLeft, gInputWindowClassInfo.clazz,
-            "visibleFrameLeft", "I");
-
-    GET_FIELD_ID(gInputWindowClassInfo.visibleFrameTop, gInputWindowClassInfo.clazz,
-            "visibleFrameTop", "I");
-
-    GET_FIELD_ID(gInputWindowClassInfo.visibleFrameRight, gInputWindowClassInfo.clazz,
-            "visibleFrameRight", "I");
-
-    GET_FIELD_ID(gInputWindowClassInfo.visibleFrameBottom, gInputWindowClassInfo.clazz,
-            "visibleFrameBottom", "I");
-
-    GET_FIELD_ID(gInputWindowClassInfo.touchableAreaLeft, gInputWindowClassInfo.clazz,
-            "touchableAreaLeft", "I");
-
-    GET_FIELD_ID(gInputWindowClassInfo.touchableAreaTop, gInputWindowClassInfo.clazz,
-            "touchableAreaTop", "I");
-
-    GET_FIELD_ID(gInputWindowClassInfo.touchableAreaRight, gInputWindowClassInfo.clazz,
-            "touchableAreaRight", "I");
-
-    GET_FIELD_ID(gInputWindowClassInfo.touchableAreaBottom, gInputWindowClassInfo.clazz,
-            "touchableAreaBottom", "I");
-
-    GET_FIELD_ID(gInputWindowClassInfo.visible, gInputWindowClassInfo.clazz,
-            "visible", "Z");
-
-    GET_FIELD_ID(gInputWindowClassInfo.canReceiveKeys, gInputWindowClassInfo.clazz,
-            "canReceiveKeys", "Z");
-
-    GET_FIELD_ID(gInputWindowClassInfo.hasFocus, gInputWindowClassInfo.clazz,
-            "hasFocus", "Z");
-
-    GET_FIELD_ID(gInputWindowClassInfo.hasWallpaper, gInputWindowClassInfo.clazz,
-            "hasWallpaper", "Z");
-
-    GET_FIELD_ID(gInputWindowClassInfo.paused, gInputWindowClassInfo.clazz,
-            "paused", "Z");
-
-    GET_FIELD_ID(gInputWindowClassInfo.layer, gInputWindowClassInfo.clazz,
-            "layer", "I");
-
-    GET_FIELD_ID(gInputWindowClassInfo.ownerPid, gInputWindowClassInfo.clazz,
-            "ownerPid", "I");
-
-    GET_FIELD_ID(gInputWindowClassInfo.ownerUid, gInputWindowClassInfo.clazz,
-            "ownerUid", "I");
-
-    // InputApplication
-
-    FIND_CLASS(gInputApplicationClassInfo.clazz, "com/android/server/InputApplication");
-
-    GET_FIELD_ID(gInputApplicationClassInfo.name, gInputApplicationClassInfo.clazz,
-            "name", "Ljava/lang/String;");
-
-    GET_FIELD_ID(gInputApplicationClassInfo.dispatchingTimeoutNanos,
-            gInputApplicationClassInfo.clazz,
-            "dispatchingTimeoutNanos", "J");
-
-    GET_FIELD_ID(gInputApplicationClassInfo.token, gInputApplicationClassInfo.clazz,
-            "token", "Ljava/lang/Object;");
 
     // KeyEvent
 

@@ -480,7 +480,6 @@ public class WindowManagerService extends IWindowManager.Stub
     // This just indicates the window the input method is on top of, not
     // necessarily the window its input is going to.
     WindowState mInputMethodTarget = null;
-    WindowState mUpcomingInputMethodTarget = null;
     boolean mInputMethodTargetWaitingAnim;
     int mInputMethodAnimLayerAdjustment;
 
@@ -1018,7 +1017,20 @@ public class WindowManagerService extends IWindowManager.Stub
             }
         }
 
-        mUpcomingInputMethodTarget = w;
+        // Now, a special case -- if the last target's window is in the
+        // process of exiting, and is above the new target, keep on the
+        // last target to avoid flicker.  Consider for example a Dialog with
+        // the IME shown: when the Dialog is dismissed, we want to keep
+        // the IME above it until it is completely gone so it doesn't drop
+        // behind the dialog or its full-screen scrim.
+        if (mInputMethodTarget != null && w != null
+                && mInputMethodTarget.isDisplayedLw()
+                && mInputMethodTarget.mExiting) {
+            if (mInputMethodTarget.mAnimLayer > w.mAnimLayer) {
+                w = mInputMethodTarget;
+                i = localmWindows.indexOf(w);
+            }
+        }
 
         if (DEBUG_INPUT_METHOD) Slog.v(TAG, "Desired input method target="
                 + w + " willMove=" + willMove);
@@ -5384,13 +5396,12 @@ public class WindowManagerService extends IWindowManager.Stub
          * 
          * Called by the InputManager.
          */
-        public void notifyInputChannelBroken(InputChannel inputChannel) {
+        public void notifyInputChannelBroken(InputWindowHandle inputWindowHandle) {
+            if (inputWindowHandle == null) {
+                return;
+            }
             synchronized (mWindowMap) {
-                WindowState windowState = getWindowStateForInputChannelLocked(inputChannel);
-                if (windowState == null) {
-                    return; // irrelevant
-                }
-                
+                WindowState windowState = (WindowState) inputWindowHandle.windowState;
                 Slog.i(TAG, "WINDOW DIED " + windowState);
                 removeWindowLocked(windowState.mSession, windowState);
             }
@@ -5401,11 +5412,12 @@ public class WindowManagerService extends IWindowManager.Stub
          * 
          * Called by the InputManager.
          */
-        public long notifyANR(Object token, InputChannel inputChannel) {
+        public long notifyANR(InputApplicationHandle inputApplicationHandle,
+                InputWindowHandle inputWindowHandle) {
             AppWindowToken appWindowToken = null;
-            if (inputChannel != null) {
+            if (inputWindowHandle != null) {
                 synchronized (mWindowMap) {
-                    WindowState windowState = getWindowStateForInputChannelLocked(inputChannel);
+                    WindowState windowState = (WindowState) inputWindowHandle.windowState;
                     if (windowState != null) {
                         Slog.i(TAG, "Input event dispatching timed out sending to "
                                 + windowState.mAttrs.getTitle());
@@ -5414,8 +5426,8 @@ public class WindowManagerService extends IWindowManager.Stub
                 }
             }
             
-            if (appWindowToken == null && token != null) {
-                appWindowToken = (AppWindowToken) token;
+            if (appWindowToken == null && inputApplicationHandle != null) {
+                appWindowToken = inputApplicationHandle.appWindowToken;
                 Slog.i(TAG, "Input event dispatching timed out sending to application "
                         + appWindowToken.stringName);
             }
@@ -5434,24 +5446,6 @@ public class WindowManagerService extends IWindowManager.Stub
                 }
             }
             return 0; // abort dispatching
-        }
-        
-        private WindowState getWindowStateForInputChannel(InputChannel inputChannel) {
-            synchronized (mWindowMap) {
-                return getWindowStateForInputChannelLocked(inputChannel);
-            }
-        }
-        
-        private WindowState getWindowStateForInputChannelLocked(InputChannel inputChannel) {
-            int windowCount = mWindows.size();
-            for (int i = 0; i < windowCount; i++) {
-                WindowState windowState = mWindows.get(i);
-                if (windowState.mInputChannel == inputChannel) {
-                    return windowState;
-                }
-            }
-            
-            return null;
         }
         
         /* Updates the cached window information provided to the input dispatcher. */
@@ -5480,6 +5474,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 
                 // Add a window to our list of input windows.
                 final InputWindow inputWindow = mTempInputWindows.add();
+                inputWindow.inputWindowHandle = child.mInputWindowHandle;
                 inputWindow.inputChannel = child.mInputChannel;
                 inputWindow.name = child.toString();
                 inputWindow.layoutParamsFlags = flags;
@@ -5583,14 +5578,24 @@ public class WindowManagerService extends IWindowManager.Stub
         
         /* Provides an opportunity for the window manager policy to process a key before
          * ordinary dispatch. */
-        public boolean interceptKeyBeforeDispatching(InputChannel focus,
+        public boolean interceptKeyBeforeDispatching(InputWindowHandle focus,
                 int action, int flags, int keyCode, int scanCode, int metaState, int repeatCount,
                 int policyFlags) {
-            WindowState windowState = getWindowStateForInputChannel(focus);
+            WindowState windowState = (WindowState) focus.windowState;
             return mPolicy.interceptKeyBeforeDispatching(windowState, action, flags,
                     keyCode, scanCode, metaState, repeatCount, policyFlags);
         }
-        
+
+        /* Provides an opportunity for the window manager policy to process a key before
+         * ordinary dispatch. */
+        public boolean dispatchUnhandledKey(InputWindowHandle focus,
+                int action, int flags, int keyCode, int scanCode, int metaState, int repeatCount,
+                int policyFlags) {
+            WindowState windowState = (WindowState) focus.windowState;
+            return mPolicy.dispatchUnhandledKey(windowState, action, flags,
+                    keyCode, scanCode, metaState, repeatCount, policyFlags);
+        }
+
         /* Called when the current input focus changes.
          * Layer assignment is assumed to be complete by the time this is called.
          */
@@ -5617,12 +5622,14 @@ public class WindowManagerService extends IWindowManager.Stub
             if (newApp == null) {
                 mInputManager.setFocusedApplication(null);
             } else {
+                mTempInputApplication.inputApplicationHandle = newApp.mInputApplicationHandle;
                 mTempInputApplication.name = newApp.toString();
                 mTempInputApplication.dispatchingTimeoutNanos =
                         newApp.inputDispatchingTimeoutNanos;
-                mTempInputApplication.token = newApp;
                 
                 mInputManager.setFocusedApplication(mTempInputApplication);
+
+                mTempInputApplication.recycle();
             }
         }
         
@@ -6360,7 +6367,8 @@ public class WindowManagerService extends IWindowManager.Stub
         int mSurfaceLayer;
         float mSurfaceAlpha;
         
-        // Input channel
+        // Input channel and input window handle used by the input dispatcher.
+        InputWindowHandle mInputWindowHandle;
         InputChannel mInputChannel;
         
         // Used to improve performance of toString()
@@ -6457,6 +6465,8 @@ public class WindowManagerService extends IWindowManager.Stub
             mLayer = 0;
             mAnimLayer = 0;
             mLastLayer = 0;
+            mInputWindowHandle = new InputWindowHandle(
+                    mAppToken != null ? mAppToken.mInputApplicationHandle : null, this);
         }
 
         void attach() {
@@ -7949,11 +7959,15 @@ public class WindowManagerService extends IWindowManager.Stub
         boolean startingMoved;
         boolean firstWindowDrawn;
 
+        // Input application handle used by the input dispatcher.
+        InputApplicationHandle mInputApplicationHandle;
+
         AppWindowToken(IApplicationToken _token) {
             super(_token.asBinder(),
                     WindowManager.LayoutParams.TYPE_APPLICATION, true);
             appWindowToken = this;
             appToken = _token;
+            mInputApplicationHandle = new InputApplicationHandle(this);
         }
 
         public void setAnimation(Animation anim) {
