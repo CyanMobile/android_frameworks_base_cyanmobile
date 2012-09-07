@@ -5581,7 +5581,7 @@ public class WindowManagerService extends IWindowManager.Stub
         public boolean interceptKeyBeforeDispatching(InputWindowHandle focus,
                 int action, int flags, int keyCode, int scanCode, int metaState, int repeatCount,
                 int policyFlags) {
-            WindowState windowState = (WindowState) focus.windowState;
+            WindowState windowState = focus != null ? (WindowState) focus.windowState : null;
             return mPolicy.interceptKeyBeforeDispatching(windowState, action, flags,
                     keyCode, scanCode, metaState, repeatCount, policyFlags);
         }
@@ -5591,7 +5591,7 @@ public class WindowManagerService extends IWindowManager.Stub
         public boolean dispatchUnhandledKey(InputWindowHandle focus,
                 int action, int flags, int keyCode, int scanCode, int metaState, int repeatCount,
                 int policyFlags) {
-            WindowState windowState = (WindowState) focus.windowState;
+            WindowState windowState = focus != null ? (WindowState) focus.windowState : null;
             return mPolicy.dispatchUnhandledKey(windowState, action, flags,
                     keyCode, scanCode, metaState, repeatCount, policyFlags);
         }
@@ -5752,6 +5752,7 @@ public class WindowManagerService extends IWindowManager.Stub
         int metaState = ev.getMetaState();
         int deviceId = ev.getDeviceId();
         int scancode = ev.getScanCode();
+        int flags = ev.getFlags();
         int source = ev.getSource();
         
         if (source == InputDevice.SOURCE_UNKNOWN) {
@@ -5762,7 +5763,7 @@ public class WindowManagerService extends IWindowManager.Stub
         if (downTime == 0) downTime = eventTime;
 
         KeyEvent newEvent = new KeyEvent(downTime, eventTime, action, code, repeatCount, metaState,
-                deviceId, scancode, KeyEvent.FLAG_FROM_SYSTEM, source);
+                deviceId, scancode, flags | KeyEvent.FLAG_FROM_SYSTEM, source);
 
         final int pid = Binder.getCallingPid();
         final int uid = Binder.getCallingUid();
@@ -8901,27 +8902,31 @@ public class WindowManagerService extends IWindowManager.Stub
             return;
         }
 
+        mInLayout = true;
         boolean recoveringMemory = false;
-        if (mForceRemoves != null) {
-            recoveringMemory = true;
-            // Wait a little bit for things to settle down, and off we go.
-            for (int i=0; i<mForceRemoves.size(); i++) {
-                WindowState ws = mForceRemoves.get(i);
-                Slog.i(TAG, "Force removing: " + ws);
-                removeWindowInnerLocked(ws.mSession, ws);
-            }
-            mForceRemoves = null;
-            Slog.w(TAG, "Due to memory failure, waiting a bit for next layout");
-            Object tmp = new Object();
-            synchronized (tmp) {
-                try {
-                    tmp.wait(250);
-                } catch (InterruptedException e) {
+        try {
+            if (mForceRemoves != null) {
+               recoveringMemory = true;
+                // Wait a little it for things to settle down, and off we go.
+                for (int i=0; i<mForceRemoves.size(); i++) {
+                    WindowState ws = mForceRemoves.get(i);
+                    Slog.i(TAG, "Force removing: " + ws);
+                    removeWindowInnerLocked(ws.mSession, ws);
+                }
+                mForceRemoves = null;
+                Slog.w(TAG, "Due to memory failure, waiting a bit for next layout");
+                Object tmp = new Object();
+                synchronized (tmp) {
+                    try {
+                        tmp.wait(250);
+                    } catch (InterruptedException e) {
+                    }
                 }
             }
+            } catch (RuntimeException e) {
+            Slog.e(TAG, "Unhandled exception while force removing for memory", e);
         }
 
-        mInLayout = true;
         try {
             performLayoutAndPlaceSurfacesLockedInner(recoveringMemory);
 
@@ -11330,8 +11335,12 @@ public class WindowManagerService extends IWindowManager.Stub
             if (mToBottomApps.size() > 0) {
                 pw.print("  mToBottomApps="); pw.println(mToBottomApps);
             }
-            pw.print("  DisplayWidth="); pw.print(mDisplay.getWidth());
-                    pw.print(" DisplayHeight="); pw.println(mDisplay.getHeight());
+            if (mDisplay != null) {
+                pw.print("  DisplayWidth="); pw.print(mDisplay.getWidth());
+                        pw.print(" DisplayHeight="); pw.println(mDisplay.getHeight());
+            } else {
+                pw.println("  NO DISPLAY");
+            }
         }
     }
 

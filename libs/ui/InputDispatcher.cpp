@@ -1855,22 +1855,20 @@ void InputDispatcher::startDispatchCycleLocked(nsecs_t currentTime,
 }
 
 void InputDispatcher::finishDispatchCycleLocked(nsecs_t currentTime,
-        const sp<Connection>& connection) {
+        const sp<Connection>& connection, bool handled) {
 #if DEBUG_DISPATCH_CYCLE
     LOGD("channel '%s' ~ finishDispatchCycle - %01.1fms since event, "
-            "%01.1fms since dispatch",
+            "%01.1fms since dispatch, handled=%s",
             connection->getInputChannelName(),
             connection->getEventLatencyMillis(currentTime),
-            connection->getDispatchLatencyMillis(currentTime));
+            connection->getDispatchLatencyMillis(currentTime)),
+            toString(handled));
 #endif
 
     if (connection->status == Connection::STATUS_BROKEN
             || connection->status == Connection::STATUS_ZOMBIE) {
         return;
     }
-
-    // Notify other system components.
-    onDispatchCycleFinishedLocked(currentTime, connection);
 
     // Reset the publisher since the event has been consumed.
     // We do this now so that the publisher can release some of its internal resources
@@ -1883,7 +1881,7 @@ void InputDispatcher::finishDispatchCycleLocked(nsecs_t currentTime,
         return;
     }
 
-    startNextDispatchCycleLocked(currentTime, connection);
+    onDispatchCycleFinishedLocked(currentTime, connection, handled);
 }
 
 void InputDispatcher::startNextDispatchCycleLocked(nsecs_t currentTime,
@@ -1983,7 +1981,8 @@ int InputDispatcher::handleReceiveCallback(int receiveFd, int events, void* data
             return 1;
         }
 
-        status_t status = connection->inputPublisher.receiveFinishedSignal();
+        bool handled = false;
+        status_t status = connection->inputPublisher.receiveFinishedSignal(handled);
         if (status) {
             LOGE("channel '%s' ~ Failed to receive finished signal.  status=%d",
                     connection->getInputChannelName(), status);
@@ -1992,7 +1991,7 @@ int InputDispatcher::handleReceiveCallback(int receiveFd, int events, void* data
             return 0; // remove the callback
         }
 
-        d->finishDispatchCycleLocked(currentTime, connection);
+        d->finishDispatchCycleLocked(currentTime, connection, handled);
         d->runCommandsLockedInterruptible();
         return 1;
     } // release lock
@@ -2960,7 +2959,11 @@ void InputDispatcher::onDispatchCycleStartedLocked(
 }
 
 void InputDispatcher::onDispatchCycleFinishedLocked(
-        nsecs_t currentTime, const sp<Connection>& connection) {
+        nsecs_t currentTime, const sp<Connection>& connection, bool handled) {
+    CommandEntry* commandEntry = postCommandLocked(
+            & InputDispatcher::doDispatchCycleFinishedLockedInterruptible);
+    commandEntry->connection = connection;
+    commandEntry->handled = handled;
 }
 
 void InputDispatcher::onDispatchCycleBrokenLocked(
@@ -3032,9 +3035,7 @@ void InputDispatcher::doNotifyANRLockedInterruptible(
 void InputDispatcher::doInterceptKeyBeforeDispatchingLockedInterruptible(
         CommandEntry* commandEntry) {
     KeyEntry* entry = commandEntry->keyEntry;
-    mReusableKeyEvent.initialize(entry->deviceId, entry->source, entry->action, entry->flags,
-            entry->keyCode, entry->scanCode, entry->metaState, entry->repeatCount,
-            entry->downTime, entry->eventTime);
+    initializeKeyEvent(&mReusableKeyEvent, entry);
 
     mLock.unlock();
 
@@ -3123,6 +3124,12 @@ void InputDispatcher::doPokeUserActivityLockedInterruptible(CommandEntry* comman
     mPolicy->pokeUserActivity(commandEntry->eventTime, commandEntry->userActivityEventType);
 
     mLock.lock();
+}
+
+void InputDispatcher::initializeKeyEvent(KeyEvent* event, const KeyEntry* entry) {
+    event->initialize(entry->deviceId, entry->source, entry->action, entry->flags,
+            entry->keyCode, entry->scanCode, entry->metaState, entry->repeatCount,
+            entry->downTime, entry->eventTime);
 }
 
 void InputDispatcher::updateDispatchStatisticsLocked(nsecs_t currentTime, const EventEntry* entry,

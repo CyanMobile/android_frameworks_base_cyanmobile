@@ -16,7 +16,6 @@
 //#define LOG_NDEBUG 0
 
 #include <ui/EventHub.h>
-#include <ui/KeycodeLabels.h>
 #include <hardware_legacy/power.h>
 
 #include <cutils/properties.h>
@@ -33,7 +32,7 @@
 #include <errno.h>
 #include <assert.h>
 
-#include "KeyLayoutMap.h"
+#include <ui/KeyLayoutMap.h>
 
 #include <string.h>
 #include <stdint.h>
@@ -97,7 +96,7 @@ static inline const char* toString(bool value) {
 
 EventHub::device_t::device_t(int32_t _id, const char* _path, const char* name, uint32_t _bustype)
     : id(_id), path(_path), name(name), classes(0)
-    , keyBitmask(NULL), layoutMap(new KeyLayoutMap()), fd(-1), bustype(_bustype), next(NULL) {
+    , keyBitmask(NULL), layoutMap(NULL), fd(-1), bustype(_bustype), next(NULL) {
     bluetooth = (_bustype == BUS_BLUETOOTH);
     usb = (_bustype == BUS_USB);
 }
@@ -223,8 +222,11 @@ int32_t EventHub::getKeyCodeState(int32_t deviceId, int32_t keyCode) const {
 }
 
 int32_t EventHub::getKeyCodeStateLocked(device_t* device, int32_t keyCode) const {
+    if (!device->layoutMap) {
+        return AKEY_STATE_UNKNOWN;
+    }
     Vector<int32_t> scanCodes;
-    device->layoutMap->findScancodes(keyCode, &scanCodes);
+    device->layoutMap->findScanCodes(keyCode, &scanCodes);
 
     uint8_t key_bitmask[sizeof_bit_array(KEY_MAX + 1)];
     memset(key_bitmask, 0, sizeof(key_bitmask));
@@ -289,7 +291,7 @@ bool EventHub::markSupportedKeyCodesLocked(device_t* device, size_t numCodes,
     for (size_t codeIndex = 0; codeIndex < numCodes; codeIndex++) {
         scanCodes.clear();
 
-        status_t err = device->layoutMap->findScancodes(keyCodes[codeIndex], &scanCodes);
+        status_t err = device->layoutMap->findScanCodes(keyCodes[codeIndex], &scanCodes);
         if (! err) {
             // check the possible scan codes identified by the layout map against the
             // map of codes actually emitted by the driver
@@ -431,14 +433,14 @@ bool EventHub::getEvent(RawEvent* outEvent)
                 }
                 outEvent->type = iev.type;
                 outEvent->scanCode = iev.code;
+                outEvent->flags = 0;
                 if (iev.type == EV_KEY) {
-                    status_t err = device->layoutMap->map(iev.code,
-                            & outEvent->keyCode, & outEvent->flags);
-                    LOGV("iev.code=%d keyCode=%d flags=0x%08x err=%d\n",
-                        iev.code, outEvent->keyCode, outEvent->flags, err);
-                    if (err != 0) {
-                        outEvent->keyCode = AKEYCODE_UNKNOWN;
-                        outEvent->flags = 0;
+                    outEvent->keyCode = AKEYCODE_UNKNOWN;
+                    if (device->layoutMap) {
+                        status_t err = device->layoutMap->map(iev.code,
+                                &outEvent->keyCode, &outEvent->flags);
+                        LOGV("iev.code=%d keyCode=%d flags=0x%08x err=%d\n",
+                                iev.code, outEvent->keyCode, outEvent->flags, err);
                     }
                 } else {
                     outEvent->keyCode = iev.code;
@@ -809,7 +811,7 @@ int EventHub::openDevice(const char *deviceName) {
         }
 
         // tell the world about the devname (the descriptive name)
-        if (!mHaveFirstKeyboard && !defaultKeymap && strstr(name, "-keypad")) {
+        if (!mHaveFirstKeyboard && !keyMapInfo.isDefaultKeymap && strstr(name, "-keypad")) {
             // the built-in keyboard has a well-known device ID of 0,
             // this device better not go away.
             mHaveFirstKeyboard = true;
@@ -1036,7 +1038,7 @@ void EventHub::dump(String8& dump) {
                 }
                 dump.appendFormat(INDENT3 "Classes: 0x%08x\n", device->classes);
                 dump.appendFormat(INDENT3 "Path: %s\n", device->path.string());
-                dump.appendFormat(INDENT3 "KeyLayoutFile: %s\n", device->keylayoutFilename.string());
+                dump.appendFormat(INDENT3 "KeyLayoutFile: %s\n", device->keyMapInfo.keyLayoutFile.string());
             }
         }
     } // release lock

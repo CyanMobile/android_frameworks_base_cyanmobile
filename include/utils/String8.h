@@ -25,6 +25,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdarg.h>
 #include <sys/types.h>
 
 // ---------------------------------------------------------------------------
@@ -173,6 +174,7 @@ public:
 
             status_t            appendFormat(const char* fmt, ...)
                     __attribute__((format (printf, 2, 3)));
+            status_t            appendFormatV(const char* fmt, va_list args);
 
             // Note that this function takes O(N) time to calculate the value.
             // No cache value is stored.

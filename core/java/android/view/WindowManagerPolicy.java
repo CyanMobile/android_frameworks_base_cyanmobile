@@ -662,6 +662,27 @@ public interface WindowManagerPolicy {
             int keyCode, int scanCode, int metaState, int repeatCount, int policyFlags);
 
     /**
+     * Called from the input dispatcher thread when an application did not handle
+     * a key that was dispatched to it.
+     *
+     * <p>Allows you to define default global behavior for keys that were not handled
+     * by applications.  This method is called from the input thread, with no locks held.
+     * 
+     * @param win The window that currently has focus.  This is where the key
+     *            event will normally go.
+     * @param action The key event action.
+     * @param flags The key event flags.
+     * @param keyCode The key code.
+     * @param scanCode The key's scan code.
+     * @param metaState bit mask of meta keys that are held.
+     * @param repeatCount Number of times a key down has repeated.
+     * @param policyFlags The policy flags associated with the key.
+     * @return Returns true if the policy consumed the event.
+     */
+    public boolean dispatchUnhandledKey(WindowState win, int action, int flags,
+            int keyCode, int scanCode, int metaState, int repeatCount, int policyFlags);
+
+    /**
      * Called when layout of the windows is about to start.
      * 
      * @param displayWidth The current full width of the screen.

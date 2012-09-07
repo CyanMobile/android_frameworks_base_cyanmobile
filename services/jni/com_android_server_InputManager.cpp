@@ -56,6 +56,7 @@ static struct {
     jmethodID notifyANR;
     jmethodID interceptKeyBeforeQueueing;
     jmethodID interceptKeyBeforeDispatching;
+    jmethodID dispatchUnhandledKey;
     jmethodID checkInjectEventsPermission;
     jmethodID filterTouchEvents;
     jmethodID filterJumpyTouchEvents;
@@ -198,6 +199,7 @@ public:
     virtual bool interceptKeyBeforeDispatching(const sp<InputWindowHandle>& inputWindowHandle,
             const KeyEvent* keyEvent, uint32_t policyFlags);
     virtual bool dispatchUnhandledKey(const sp<InputWindowHandle>& inputWindowHandle,
+            const KeyEvent* keyEvent, uint32_t policyFlags);
     virtual void pokeUserActivity(nsecs_t eventTime, int32_t eventType);
     virtual bool checkInjectEventsPermissionNonReentrant(
             int32_t injectorPid, int32_t injectorUid);
@@ -741,6 +743,29 @@ bool NativeInputManager::interceptKeyBeforeDispatching(
 
         env->DeleteLocalRef(inputWindowHandleObj);
         return consumed && ! error;
+    } else {
+        return false;
+    }
+}
+
+bool NativeInputManager::dispatchUnhandledKey(const sp<InputChannel>& inputChannel,
+        const KeyEvent* keyEvent, uint32_t policyFlags) {
+    // Policy:
+    // - Ignore untrusted events and do not perform default handling.
+    if (policyFlags & POLICY_FLAG_TRUSTED) {
+        JNIEnv* env = jniEnv();
+
+        // Note: inputChannel may be null.
+        jobject inputChannelObj = getInputChannelObjLocal(env, inputChannel);
+        jboolean handled = env->CallBooleanMethod(mCallbacksObj,
+                gCallbacksClassInfo.dispatchUnhandledKey,
+                inputChannelObj, keyEvent->getAction(), keyEvent->getFlags(),
+                keyEvent->getKeyCode(), keyEvent->getScanCode(), keyEvent->getMetaState(),
+                keyEvent->getRepeatCount(), policyFlags);
+        bool error = checkAndClearExceptionFromCallback(env, "dispatchUnhandledKey");
+
+        env->DeleteLocalRef(inputChannelObj);
+        return handled && ! error;
     } else {
         return false;
     }

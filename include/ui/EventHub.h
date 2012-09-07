@@ -19,6 +19,7 @@
 #define _RUNTIME_EVENT_HUB_H
 
 #include <android/input.h>
+#include <ui/Keyboard.h>
 #include <utils/String8.h>
 #include <utils/threads.h>
 #include <utils/Log.h>
@@ -251,7 +252,7 @@ private:
         uint32_t        classes;
         uint8_t*        keyBitmask;
         KeyLayoutMap*   layoutMap;
-        String8         keylayoutFilename;
+        KeyMapInfo      keyMapInfo;
         int             fd;
         uint32_t        bustype;
         bool            bluetooth;

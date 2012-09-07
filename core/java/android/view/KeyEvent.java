@@ -18,6 +18,7 @@ package android.view;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.text.method.MetaKeyKeyListener;
 import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.KeyCharacterMap;
@@ -684,6 +685,7 @@ public class KeyEvent extends InputEvent implements Parcelable {
         mAction = action;
         mKeyCode = code;
         mRepeatCount = 0;
+        mDeviceId = KeyCharacterMap.VIRTUAL_KEYBOARD;
     }
 
     /**
@@ -706,6 +708,7 @@ public class KeyEvent extends InputEvent implements Parcelable {
         mAction = action;
         mKeyCode = code;
         mRepeatCount = repeat;
+        mDeviceId = KeyCharacterMap.VIRTUAL_KEYBOARD;
     }
 
     /**
@@ -730,6 +733,7 @@ public class KeyEvent extends InputEvent implements Parcelable {
         mKeyCode = code;
         mRepeatCount = repeat;
         mMetaState = metaState;
+        mDeviceId = KeyCharacterMap.VIRTUAL_KEYBOARD;
     }
 
     /**
@@ -1199,18 +1203,37 @@ public class KeyEvent extends InputEvent implements Parcelable {
      * Renamed to {@link #getDeviceId}.
      * 
      * @hide
-     * @deprecated
+     * @deprecated use {@link #getDeviceId()} instead.
      */
+    @Deprecated
     public final int getKeyboardDevice() {
         return mDeviceId;
     }
 
     /**
+     * Gets the {@link KeyCharacterMap} associated with the keyboard device.
+     *
+     * @return The associated key character map.
+     * @throws {@link KeyCharacterMapUnavailableException} if the key character map
+     * could not be loaded because it was malformed or the default key character map
+     * is missing from the system.
+     *
+     * @see {@link KeyCharacterMap#load}
+     */
+    public final KeyCharacterMap getKeyCharacterMap() {
+        return KeyCharacterMap.load(mDeviceId);
+    }
+
+    /**
+     * Gets the primary character for this key.
+     * In other words, the label that is physically printed on it.
+     *
+     * @return The display label character, or 0 if none (eg. for non-printing keys).
      * Get the primary character for this key.  In other words, the label
      * that is physically printed on it.
      */
     public char getDisplayLabel() {
-        return KeyCharacterMap.load(mDeviceId).getDisplayLabel(mKeyCode);
+        return getKeyCharacterMap().getDisplayLabel(mKeyCode);
     }
     
     /**
@@ -1246,8 +1269,8 @@ public class KeyEvent extends InputEvent implements Parcelable {
      * with {@link KeyCharacterMap#COMBINING_ACCENT_MASK}.
      * </p>
      */
-    public int getUnicodeChar(int meta) {
-        return KeyCharacterMap.load(mDeviceId).get(mKeyCode, meta);
+    public int getUnicodeChar(int metaState) {
+        return getKeyCharacterMap().get(mKeyCode, metaState);
     }
     
     /**
@@ -1258,8 +1281,9 @@ public class KeyEvent extends InputEvent implements Parcelable {
      * @return whether the key was mapped or not.  If the key was not mapped,
      *         results is not modified.
      */
+    @Deprecated
     public boolean getKeyData(KeyData results) {
-        return KeyCharacterMap.load(mDeviceId).getKeyData(mKeyCode, results);
+        return getKeyCharacterMap().getKeyData(mKeyCode, results);
     }
     
     /**
@@ -1277,8 +1301,8 @@ public class KeyEvent extends InputEvent implements Parcelable {
      *                  are set, if there are multiple choices, that could
      *                  work, the one for this modifier will be set.
      */
-    public char getMatch(char[] chars, int modifiers) {
-        return KeyCharacterMap.load(mDeviceId).getMatch(mKeyCode, chars, modifiers);
+    public char getMatch(char[] chars, int metaState) {
+        return getKeyCharacterMap().getMatch(mKeyCode, chars, metaState);
     }
     
     /**
@@ -1287,14 +1311,14 @@ public class KeyEvent extends InputEvent implements Parcelable {
      * a symbol, the symbol is retuned.
      */
     public char getNumber() {
-        return KeyCharacterMap.load(mDeviceId).getNumber(mKeyCode);
+        return getKeyCharacterMap().getNumber(mKeyCode);
     }
     
     /**
      * Does the key code of this key produce a glyph?
      */
     public boolean isPrintingKey() {
-        return KeyCharacterMap.load(mDeviceId).isPrintingKey(mKeyCode);
+        return getKeyCharacterMap().isPrintingKey(mKeyCode);
     }
     
     /**
@@ -1466,7 +1490,7 @@ public class KeyEvent extends InputEvent implements Parcelable {
     public String toString() {
         return "KeyEvent{action=" + mAction + " code=" + mKeyCode
             + " repeat=" + mRepeatCount
-            + " meta=" + mMetaState + " scancode=" + mScanCode
+            + " metaState=" + mMetaState + " scancode=" + mScanCode
             + " mFlags=" + mFlags + "}";
     }
 

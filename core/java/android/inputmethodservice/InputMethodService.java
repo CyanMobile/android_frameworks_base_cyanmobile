@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
+import android.graphics.Region;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ResultReceiver;
@@ -37,6 +38,7 @@ import android.util.Log;
 import android.util.PrintWriterPrinter;
 import android.util.Printer;
 import android.view.KeyEvent;
+import android.view.KeyCharacterMap;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -286,6 +288,7 @@ public class InputMethodService extends AbstractInputMethodService {
                 onComputeInsets(mTmpInsets);
                 info.contentInsets.top = mTmpInsets.contentTopInsets;
                 info.visibleInsets.top = mTmpInsets.visibleTopInsets;
+                info.touchableRegion.set(mTmpInsets.touchableRegion);
                 info.setTouchableInsets(mTmpInsets.touchableInsets);
             }
         }
@@ -504,7 +507,14 @@ public class InputMethodService extends AbstractInputMethodService {
          * of the input method window.
          */
         public int visibleTopInsets;
-        
+
+        /**
+         * This is the region of the UI that is touchable.  It is used when
+         * {@link #touchableInsets} is set to {@link #TOUCHABLE_INSETS_REGION}.
+         * The region should be specified relative to the origin of the window frame.
+         */
+        public final Region touchableRegion = new Region();
+
         /**
          * Option for {@link #touchableInsets}: the entire window frame
          * can be touched.
@@ -525,7 +535,14 @@ public class InputMethodService extends AbstractInputMethodService {
          */
         public static final int TOUCHABLE_INSETS_VISIBLE
                 = ViewTreeObserver.InternalInsetsInfo.TOUCHABLE_INSETS_VISIBLE;
-        
+
+        /**
+         * Option for {@link #touchableInsets}: the region specified by
+         * {@link #touchableRegion} can be touched.
+         */
+        public static final int TOUCHABLE_INSETS_REGION
+                = ViewTreeObserver.InternalInsetsInfo.TOUCHABLE_INSETS_REGION;
+
         /**
          * Determine which area of the window is touchable by the user.  May
          * be one of: {@link #TOUCHABLE_INSETS_FRAME},
@@ -938,6 +955,7 @@ public class InputMethodService extends AbstractInputMethodService {
         }
         outInsets.visibleTopInsets = loc[1];
         outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_VISIBLE;
+        outInsets.touchableRegion.setEmpty();
     }
     
     /**
@@ -1800,10 +1818,10 @@ public class InputMethodService extends AbstractInputMethodService {
         if (ic == null) return;
         long eventTime = SystemClock.uptimeMillis();
         ic.sendKeyEvent(new KeyEvent(eventTime, eventTime,
-                KeyEvent.ACTION_DOWN, keyEventCode, 0, 0, 0, 0,
+                KeyEvent.ACTION_DOWN, keyEventCode, 0, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
                 KeyEvent.FLAG_SOFT_KEYBOARD|KeyEvent.FLAG_KEEP_TOUCH_MODE));
         ic.sendKeyEvent(new KeyEvent(SystemClock.uptimeMillis(), eventTime,
-                KeyEvent.ACTION_UP, keyEventCode, 0, 0, 0, 0,
+                KeyEvent.ACTION_UP, keyEventCode, 0, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
                 KeyEvent.FLAG_SOFT_KEYBOARD|KeyEvent.FLAG_KEEP_TOUCH_MODE));
     }
     
@@ -2149,7 +2167,8 @@ public class InputMethodService extends AbstractInputMethodService {
         p.println("Last computed insets:");
         p.println("  contentTopInsets=" + mTmpInsets.contentTopInsets
                 + " visibleTopInsets=" + mTmpInsets.visibleTopInsets
-                + " touchableInsets=" + mTmpInsets.touchableInsets);
+                + " touchableInsets=" + mTmpInsets.touchableInsets
+                + " touchableRegion=" + mTmpInsets.touchableRegion);
     }
 }
 
