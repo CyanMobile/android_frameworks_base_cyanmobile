@@ -1302,9 +1302,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     public boolean canBeForceHidden(WindowState win, WindowManager.LayoutParams attrs) {
-        return attrs.type != WindowManager.LayoutParams.TYPE_STATUS_BAR
+        return (mShowStatBar ? (attrs.type != WindowManager.LayoutParams.TYPE_WALLPAPER) : (attrs.type != WindowManager.LayoutParams.TYPE_STATUS_BAR
                 && attrs.type != WindowManager.LayoutParams.TYPE_NAVIGATION_BAR
-                && attrs.type != WindowManager.LayoutParams.TYPE_WALLPAPER;
+                && attrs.type != WindowManager.LayoutParams.TYPE_WALLPAPER));
     }
 
     /** {@inheritDoc} */
