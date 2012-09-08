@@ -344,14 +344,12 @@ public class NativeActivity extends Activity implements SurfaceHolder.Callback2,
         }
     }
 
-    boolean dispatchUnhandledKeyEvent(KeyEvent event) {
+    void dispatchUnhandledKeyEvent(KeyEvent event) {
         try {
             mDispatchingUnhandledKey = true;
             View decor = getWindow().getDecorView();
             if (decor != null) {
-                return decor.dispatchKeyEvent(event);
-            } else {
-                return false;
+                decor.dispatchKeyEvent(event);
             }
         } finally {
             mDispatchingUnhandledKey = false;

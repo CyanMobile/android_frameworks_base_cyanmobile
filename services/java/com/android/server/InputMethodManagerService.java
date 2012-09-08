@@ -117,7 +117,7 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
     final SettingsObserver mSettingsObserver;
     final IWindowManager mIWindowManager;
     final HandlerCaller mCaller;
-
+    WindowManagerService mWindowManagerService;
     final InputBindResult mNoBinding = new InputBindResult(null, null, -1);
 
     private StatusBarManagerService mStatusBar;
@@ -280,6 +280,8 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
      * Have we called mCurMethod.bindInput()?
      */
     boolean mBoundToMethod;
+
+    boolean mVisualIME;
 
     /**
      * Currently enabled session.  Only touched by service thread, not
@@ -885,6 +887,10 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
         if (mCurToken != null) {
             try {
                 if (DEBUG) Slog.v(TAG, "Removing window token: " + mCurToken);
+                if (mVisualIME) {
+                    // The current IME is shown. Hence an IME switch (transition) is happening.
+                    mWindowManagerService.saveLastInputMethodWindowForTransition();
+                }
                 mIWindowManager.removeWindowToken(mCurToken);
             } catch (RemoteException e) {
             }
@@ -986,6 +992,7 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
 
             synchronized (mMethodMap) {
                 mStatusBar.setIMEVisible(visible);
+                mVisualIME = visible;
             }
         } finally {
             Binder.restoreCallingIdentity(ident);

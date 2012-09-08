@@ -296,8 +296,7 @@ public class CompatibilityInfo {
         
         private Rect mContentInsetsBuffer = null;
         private Rect mVisibleInsetsBuffer = null;
-        private Region mTouchableAreaBuffer = null;
-
+        
         Translator(float applicationScale, float applicationInvertedScale) {
             this.applicationScale = applicationScale;
             this.applicationInvertedScale = applicationInvertedScale;
@@ -400,22 +399,11 @@ public class CompatibilityInfo {
          * Translate the visible insets in application window to Screen. This uses
          * the internal buffer for content insets to avoid extra object allocation.
          */
-        public Rect getTranslatedVisibleInsets(Rect visibleInsets) {
+        public Rect getTranslatedVisbileInsets(Rect visibleInsets) {
             if (mVisibleInsetsBuffer == null) mVisibleInsetsBuffer = new Rect();
             mVisibleInsetsBuffer.set(visibleInsets);
             translateRectInAppWindowToScreen(mVisibleInsetsBuffer);
             return mVisibleInsetsBuffer;
-        }
-
-        /**
-         * Translate the touchable area in application window to Screen. This uses
-         * the internal buffer for touchable area to avoid extra object allocation.
-         */
-        public Region getTranslatedTouchableArea(Region touchableArea) {
-            if (mTouchableAreaBuffer == null) mTouchableAreaBuffer = new Region();
-            mTouchableAreaBuffer.set(touchableArea);
-            mTouchableAreaBuffer.scale(applicationScale);
-            return mTouchableAreaBuffer;
         }
     }
 

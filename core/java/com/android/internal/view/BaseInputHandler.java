@@ -17,7 +17,6 @@
 package com.android.internal.view;
 
 import android.view.InputHandler;
-import android.view.InputQueue;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
@@ -26,11 +25,11 @@ import android.view.MotionEvent;
  * @hide
  */
 public abstract class BaseInputHandler implements InputHandler {
-    public void handleKey(KeyEvent event, InputQueue.FinishedCallback finishedCallback) {
-        finishedCallback.finished(false);
+    public void handleKey(KeyEvent event, Runnable finishedCallback) {
+        finishedCallback.run();
     }
     
-    public void handleMotion(MotionEvent event, InputQueue.FinishedCallback finishedCallback) {
-        finishedCallback.finished(false);
+    public void handleMotion(MotionEvent event, Runnable finishedCallback) {
+        finishedCallback.run();
     }
 }

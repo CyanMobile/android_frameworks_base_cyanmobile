@@ -24,9 +24,6 @@ import android.view.InputChannel;
  * @hide
  */
 public final class InputWindow {
-    // The window handle.
-    public InputWindowHandle inputWindowHandle;
-
     // The input channel associated with the window.
     public InputChannel inputChannel;
     

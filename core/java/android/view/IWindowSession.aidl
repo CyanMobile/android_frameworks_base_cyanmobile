@@ -100,7 +100,7 @@ interface IWindowSession {
      * {@link android.view.ViewTreeObserver.InternalInsetsInfo}.
      */
     void setInsets(IWindow window, int touchableInsets, in Rect contentInsets,
-            in Rect visibleInsets, in Region touchableRegion);
+            in Rect visibleInsets);
     
     /**
      * Return the current display size in which the window is being laid out,

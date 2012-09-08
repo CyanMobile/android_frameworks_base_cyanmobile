@@ -3,8 +3,6 @@
 //
 
 #include <ui/InputReader.h>
-#include <ui/InputApplication.h>
-#include <ui/InputWindow.h>
 #include <utils/List.h>
 #include <gtest/gtest.h>
 #include <math.h>
@@ -348,8 +346,7 @@ private:
         ADD_FAILURE() << "Should never be called by input reader.";
     }
 
-    virtual status_t registerInputChannel(const sp<InputChannel>& inputChannel,
-            const sp<InputWindowHandle>& inputWindowHandle, bool monitor) {
+    virtual status_t registerInputChannel(const sp<InputChannel>& inputChannel, bool monitor) {
         ADD_FAILURE() << "Should never be called by input reader.";
         return 0;
     }

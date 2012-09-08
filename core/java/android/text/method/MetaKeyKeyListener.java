@@ -18,7 +18,6 @@ package android.text.method;
 
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.KeyCharacterMap;
 import android.text.*;
 
 /* For the hardware keyboard lights */
@@ -219,7 +218,8 @@ public abstract class MetaKeyKeyListener {
     /**
      * Handles presses of the meta keys.
      */
-    public boolean onKeyDown(View view, Editable content, int keyCode, KeyEvent event) {
+    public boolean onKeyDown(View view, Editable content,
+                             int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_SHIFT_LEFT || keyCode == KeyEvent.KEYCODE_SHIFT_RIGHT) {
             press(content, CAP);
             try {
@@ -294,41 +294,34 @@ public abstract class MetaKeyKeyListener {
     /**
      * Handles release of the meta keys.
      */
-    public boolean onKeyUp(View view, Editable content, int keyCode, KeyEvent event) {
+    public boolean onKeyUp(View view, Editable content, int keyCode,
+                                    KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_SHIFT_LEFT || keyCode == KeyEvent.KEYCODE_SHIFT_RIGHT) {
-            release(content, CAP, event);
+            release(content, CAP);
             return true;
         }
 
         if (keyCode == KeyEvent.KEYCODE_ALT_LEFT || keyCode == KeyEvent.KEYCODE_ALT_RIGHT
                 || keyCode == KeyEvent.KEYCODE_NUM) {
-            release(content, ALT, event);
+            release(content, ALT);
             return true;
         }
 
         if (keyCode == KeyEvent.KEYCODE_SYM) {
-            release(content, SYM, event);
+            release(content, SYM);
             return true;
         }
 
         return false; // no super to call through to
     }
 
-    private void release(Editable content, Object what, KeyEvent event) {
+    private void release(Editable content, Object what) {
         int current = content.getSpanFlags(what);
 
-        switch (event.getKeyCharacterMap().getModifierBehavior()) {
-            case KeyCharacterMap.MODIFIER_BEHAVIOR_CHORDED_OR_TOGGLED:
-                if (current == USED)
-                    content.removeSpan(what);
-                else if (current == PRESSED)
-                    content.setSpan(what, 0, 0, RELEASED);
-                break;
-
-            default:
-                content.removeSpan(what);
-                break;
-        }
+        if (current == USED)
+            content.removeSpan(what);
+        else if (current == PRESSED)
+            content.setSpan(what, 0, 0, RELEASED);
     }
 
     public void clearMetaKeyState(View view, Editable content, int states) {
@@ -472,34 +465,26 @@ public abstract class MetaKeyKeyListener {
      */
     public static long handleKeyUp(long state, int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_SHIFT_LEFT || keyCode == KeyEvent.KEYCODE_SHIFT_RIGHT) {
-            return release(state, META_SHIFT_ON, META_SHIFT_MASK, event);
+            return release(state, META_SHIFT_ON, META_SHIFT_MASK);
         }
 
         if (keyCode == KeyEvent.KEYCODE_ALT_LEFT || keyCode == KeyEvent.KEYCODE_ALT_RIGHT
                 || keyCode == KeyEvent.KEYCODE_NUM) {
-            return release(state, META_ALT_ON, META_ALT_MASK, event);
+            return release(state, META_ALT_ON, META_ALT_MASK);
         }
 
         if (keyCode == KeyEvent.KEYCODE_SYM) {
-            return release(state, META_SYM_ON, META_SYM_MASK, event);
+            return release(state, META_SYM_ON, META_SYM_MASK);
         }
 
         return state;
     }
 
-    private static long release(long state, int what, long mask, KeyEvent event) {
-        switch (event.getKeyCharacterMap().getModifierBehavior()) {
-            case KeyCharacterMap.MODIFIER_BEHAVIOR_CHORDED_OR_TOGGLED:
-                if ((state & used) != 0) {
-                    state &= ~mask;
-                } else if ((state & pressed) != 0) {
-                    state |= what | released;
-                }
-                break;
-            default:
-                state &= ~mask;
-                break;
-        }
+    private static long release(long state, int what, long mask) {
+        if ((state&(((long)what)<<USED_SHIFT)) != 0)
+            state = state&~mask;
+        else if ((state&(((long)what)<<PRESSED_SHIFT)) != 0)
+            state = state | what | (((long)what)<<RELEASED_SHIFT);
         return state;
     }
 

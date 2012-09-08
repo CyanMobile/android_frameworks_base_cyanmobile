@@ -38,7 +38,7 @@ public final class InputApplicationHandle {
     // Dispatching timeout.
     public long dispatchingTimeoutNanos;
 
-    private native void nativeDispose();
+    //private native void nativeDispose();
 
     public InputApplicationHandle(AppWindowToken appWindowToken) {
         this.appWindowToken = appWindowToken;
@@ -47,7 +47,7 @@ public final class InputApplicationHandle {
     @Override
     protected void finalize() throws Throwable {
         try {
-            nativeDispose();
+            //nativeDispose();
         } finally {
             super.finalize();
         }

@@ -195,7 +195,7 @@ int32_t AInputQueue::getEvent(AInputEvent** outEvent) {
         mLock.unlock();
 
         if (finishNow) {
-            finishEvent(*outEvent, true, false);
+            finishEvent(*outEvent, true);
             *outEvent = NULL;
             return -1;
         } else if (*outEvent != NULL) {
@@ -215,7 +215,7 @@ int32_t AInputQueue::getEvent(AInputEvent** outEvent) {
     if (res != android::OK) {
         LOGW("channel '%s' ~ Failed to consume input event.  status=%d",
                 mConsumer.getChannel()->getName().string(), res);
-        mConsumer.sendFinishedSignal(false);
+        mConsumer.sendFinishedSignal();
         return -1;
     }
 
@@ -245,12 +245,10 @@ bool AInputQueue::preDispatchEvent(AInputEvent* event) {
     return preDispatchKey((KeyEvent*)event);
 }
 
-void AInputQueue::finishEvent(AInputEvent* event, bool handled, bool didDefaultHandling) {
-    LOG_TRACE("finishEvent: %p handled=%d, didDefaultHandling=%d", event,
-            handled ? 1 : 0, didDefaultHandling ? 1 : 0);
+void AInputQueue::finishEvent(AInputEvent* event, bool handled) {
+    LOG_TRACE("finishEvent: %p handled=%d", event, handled ? 1 : 0);
 
-    if (!handled && !didDefaultHandling
-            && ((InputEvent*)event)->getType() == AINPUT_EVENT_TYPE_KEY
+    if (!handled && ((InputEvent*)event)->getType() == AINPUT_EVENT_TYPE_KEY
             && ((KeyEvent*)event)->hasDefaultAction()) {
         // The app didn't handle this, but it may have a default action
         // associated with it.  We need to hand this back to Java to be
@@ -265,7 +263,7 @@ void AInputQueue::finishEvent(AInputEvent* event, bool handled, bool didDefaultH
         const in_flight_event& inflight(mInFlightEvents[i]);
         if (inflight.event == event) {
             if (inflight.doFinish) {
-                int32_t res = mConsumer.sendFinishedSignal(handled);
+                int32_t res = mConsumer.sendFinishedSignal();
                 if (res != android::OK) {
                     LOGW("Failed to send finished signal on channel '%s'.  status=%d",
                             mConsumer.getChannel()->getName().string(), res);
@@ -580,12 +578,11 @@ static int mainWorkCallback(int fd, int events, void* data) {
             while ((keyEvent=code->nativeInputQueue->consumeUnhandledEvent()) != NULL) {
                 jobject inputEventObj = android_view_KeyEvent_fromNative(
                         code->env, keyEvent);
-                jboolean handled = code->env->CallBooleanMethod(code->clazz,
+                code->env->CallVoidMethod(code->clazz,
                         gNativeActivityClassInfo.dispatchUnhandledKeyEvent, inputEventObj);
                 checkAndClearExceptionFromCallback(code->env, "dispatchUnhandledKeyEvent");
                 code->env->DeleteLocalRef(inputEventObj);
-                code->env->DeleteLocalRef(inputEventObj);
-                code->nativeInputQueue->finishEvent(keyEvent, handled, true);
+                code->nativeInputQueue->finishEvent(keyEvent, true);
             }
             int seq;
             while ((keyEvent=code->nativeInputQueue->consumePreDispatchingEvent(&seq)) != NULL) {
@@ -1055,7 +1052,7 @@ int register_android_app_NativeActivity(JNIEnv* env)
     
     GET_METHOD_ID(gNativeActivityClassInfo.dispatchUnhandledKeyEvent,
             gNativeActivityClassInfo.clazz,
-            "dispatchUnhandledKeyEvent", "(Landroid/view/KeyEvent;)Z");
+            "dispatchUnhandledKeyEvent", "(Landroid/view/KeyEvent;)V");
     GET_METHOD_ID(gNativeActivityClassInfo.preDispatchKeyEvent,
             gNativeActivityClassInfo.clazz,
             "preDispatchKeyEvent", "(Landroid/view/KeyEvent;I)V");

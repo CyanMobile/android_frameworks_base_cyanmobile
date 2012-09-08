@@ -118,16 +118,13 @@ void InputPublisherAndConsumerTest::PublishAndConsumeKeyEvent() {
     EXPECT_EQ(downTime, keyEvent->getDownTime());
     EXPECT_EQ(eventTime, keyEvent->getEventTime());
 
-    status = mConsumer->sendFinishedSignal(true);
+    status = mConsumer->sendFinishedSignal();
     ASSERT_EQ(OK, status)
             << "consumer sendFinishedSignal should return OK";
 
-    bool handled = false;
-    status = mPublisher->receiveFinishedSignal(handled);
+    status = mPublisher->receiveFinishedSignal();
     ASSERT_EQ(OK, status)
             << "publisher receiveFinishedSignal should return OK";
-    ASSERT_TRUE(handled)
-            << "publisher receiveFinishedSignal should have set handled to consumer's reply";
 
     status = mPublisher->reset();
     ASSERT_EQ(OK, status)
@@ -282,16 +279,13 @@ void InputPublisherAndConsumerTest::PublishAndConsumeMotionEvent(
         EXPECT_EQ(samplePointerCoords[offset].orientation, motionEvent->getOrientation(i));
     }
 
-    status = mConsumer->sendFinishedSignal(false);
+    status = mConsumer->sendFinishedSignal();
     ASSERT_EQ(OK, status)
             << "consumer sendFinishedSignal should return OK";
 
-    bool handled = true;
-    status = mPublisher->receiveFinishedSignal(handled);
+    status = mPublisher->receiveFinishedSignal();
     ASSERT_EQ(OK, status)
             << "publisher receiveFinishedSignal should return OK";
-    ASSERT_FALSE(handled)
-            << "publisher receiveFinishedSignal should have set handled to consumer's reply";
 
     status = mPublisher->reset();
     ASSERT_EQ(OK, status)

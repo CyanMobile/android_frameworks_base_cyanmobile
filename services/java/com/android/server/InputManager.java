@@ -69,7 +69,7 @@ public class InputManager {
     private static native boolean nativeHasKeys(int deviceId, int sourceMask,
             int[] keyCodes, boolean[] keyExists);
     private static native void nativeRegisterInputChannel(InputChannel inputChannel,
-            InputWindowHandle inputWindowHandle, boolean monitor);
+            boolean monitor);
     private static native void nativeUnregisterInputChannel(InputChannel inputChannel);
     private static native int nativeInjectInputEvent(InputEvent event,
             int injectorPid, int injectorUid, int syncMode, int timeoutMillis);
@@ -230,7 +230,7 @@ public class InputManager {
         }
         
         InputChannel[] inputChannels = InputChannel.openInputChannelPair(inputChannelName);
-        nativeRegisterInputChannel(inputChannels[0], null, true);
+        nativeRegisterInputChannel(inputChannels[0], true);
         inputChannels[0].dispose(); // don't need to retain the Java object reference
         return inputChannels[1];
     }
@@ -239,13 +239,12 @@ public class InputManager {
      * Registers an input channel so that it can be used as an input event target.
      * @param inputChannel The input channel to register.
      */
-    public void registerInputChannel(InputChannel inputChannel,
-            InputWindowHandle inputWindowHandle) {
+    public void registerInputChannel(InputChannel inputChannel) {
         if (inputChannel == null) {
             throw new IllegalArgumentException("inputChannel must not be null.");
         }
         
-        nativeRegisterInputChannel(inputChannel, inputWindowHandle, false);
+        nativeRegisterInputChannel(inputChannel, false);
     }
     
     /**
@@ -370,15 +369,13 @@ public class InputManager {
         }
         
         @SuppressWarnings("unused")
-        public void notifyInputChannelBroken(InputWindowHandle inputWindowHandle) {
-            mWindowManagerService.mInputMonitor.notifyInputChannelBroken(inputWindowHandle);
+        public void notifyInputChannelBroken(InputChannel inputChannel) {
+            mWindowManagerService.mInputMonitor.notifyInputChannelBroken(inputChannel);
         }
         
         @SuppressWarnings("unused")
-        public long notifyANR(InputApplicationHandle inputApplicationHandle,
-                InputWindowHandle inputWindowHandle) {
-            return mWindowManagerService.mInputMonitor.notifyANR(
-                    inputApplicationHandle, inputWindowHandle);
+        public long notifyANR(Object token, InputChannel inputChannel) {
+            return mWindowManagerService.mInputMonitor.notifyANR(token, inputChannel);
         }
         
         @SuppressWarnings("unused")
@@ -389,21 +386,13 @@ public class InputManager {
         }
         
         @SuppressWarnings("unused")
-        public boolean interceptKeyBeforeDispatching(InputWindowHandle focus, int action,
+        public boolean interceptKeyBeforeDispatching(InputChannel focus, int action,
                 int flags, int keyCode, int scanCode, int metaState, int repeatCount,
                 int policyFlags) {
             return mWindowManagerService.mInputMonitor.interceptKeyBeforeDispatching(focus,
                     action, flags, keyCode, scanCode, metaState, repeatCount, policyFlags);
         }
-
-                @SuppressWarnings("unused")
-        public boolean dispatchUnhandledKey(InputWindowHandle focus, int action,
-                int flags, int keyCode, int scanCode, int metaState, int repeatCount,
-                int policyFlags) {
-            return mWindowManagerService.mInputMonitor.dispatchUnhandledKey(focus,
-                    action, flags, keyCode, scanCode, metaState, repeatCount, policyFlags);
-        }
-
+        
         @SuppressWarnings("unused")
         public boolean checkInjectEventsPermission(int injectorPid, int injectorUid) {
             return mContext.checkPermission(

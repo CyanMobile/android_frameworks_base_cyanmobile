@@ -37,7 +37,6 @@ import android.util.Slog;
 import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.View.MeasureSpec;
-import android.view.InputQueue.FinishedCallback;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.inputmethod.InputConnection;
@@ -1369,33 +1368,24 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
         }
 
         if (computesInternalInsets) {
-            // Clear the original insets.
-            final ViewTreeObserver.InternalInsetsInfo insets = attachInfo.mGivenInternalInsets;
-            insets.reset();
-
-            // Compute new insets in place.
+            ViewTreeObserver.InternalInsetsInfo insets = attachInfo.mGivenInternalInsets;
+            final Rect givenContent = attachInfo.mGivenInternalInsets.contentInsets;
+            final Rect givenVisible = attachInfo.mGivenInternalInsets.visibleInsets;
+            givenContent.left = givenContent.top = givenContent.right
+                    = givenContent.bottom = givenVisible.left = givenVisible.top
+                    = givenVisible.right = givenVisible.bottom = 0;
             attachInfo.mTreeObserver.dispatchOnComputeInternalInsets(insets);
-            
-            // Tell the window manager.
+            Rect contentInsets = insets.contentInsets;
+            Rect visibleInsets = insets.visibleInsets;
+            if (mTranslator != null) {
+                contentInsets = mTranslator.getTranslatedContentInsets(contentInsets);
+                visibleInsets = mTranslator.getTranslatedVisbileInsets(visibleInsets);
+            }
             if (insetsPending || !mLastGivenInsets.equals(insets)) {
                 mLastGivenInsets.set(insets);
-
-                // Translate insets to screen coordinates if needed.
-                final Rect contentInsets;
-                final Rect visibleInsets;
-                final Region touchableRegion;
-                if (mTranslator != null) {
-                    contentInsets = mTranslator.getTranslatedContentInsets(insets.contentInsets);
-                    visibleInsets = mTranslator.getTranslatedVisibleInsets(insets.visibleInsets);
-                    touchableRegion = mTranslator.getTranslatedTouchableArea(insets.touchableRegion);
-                } else {
-                    contentInsets = insets.contentInsets;
-                    visibleInsets = insets.visibleInsets;
-                    touchableRegion = insets.touchableRegion;
-                }
                 try {
                     sWindowSession.setInsets(mWindow, insets.mTouchableInsets,
-                            contentInsets, visibleInsets, touchableRegion);
+                            contentInsets, visibleInsets);
                 } catch (RemoteException e) {
                 }
             }
@@ -2097,14 +2087,34 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
             handleFinishedEvent(msg.arg1, msg.arg2 != 0);
             break;
         case DISPATCH_KEY:
+            if (LOCAL_LOGV) Log.v(
+                TAG, "Dispatching key "
+                + msg.obj + " to " + mView);
             deliverKeyEvent((KeyEvent)msg.obj, msg.arg1 != 0);
             break;
-        case DISPATCH_POINTER:
-            deliverPointerEvent((MotionEvent) msg.obj, msg.arg1 != 0);
-            break;
-        case DISPATCH_TRACKBALL:
-            deliverTrackballEvent((MotionEvent) msg.obj, msg.arg1 != 0);
-            break;
+        case DISPATCH_POINTER: {
+            MotionEvent event = (MotionEvent) msg.obj;
+            try {
+                deliverPointerEvent(event);
+            } finally {
+                event.recycle();
+                if (msg.arg1 != 0) {
+                    finishInputEvent();
+                }
+                if (LOCAL_LOGV || WATCH_POINTER) Log.i(TAG, "Done dispatching!");
+            }
+        } break;
+        case DISPATCH_TRACKBALL: {
+            MotionEvent event = (MotionEvent) msg.obj;
+            try {
+                deliverTrackballEvent(event);
+            } finally {
+                event.recycle();
+                if (msg.arg1 != 0) {
+                    finishInputEvent();
+                }
+            }
+        } break;
         case DISPATCH_APP_VISIBILITY:
             handleAppVisibility(msg.arg1 != 0);
             break;
@@ -2217,7 +2227,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                 event = KeyEvent.changeFlags(event,
                         event.getFlags()&~KeyEvent.FLAG_FROM_SYSTEM);
             }
-            deliverKeyEventPostIme((KeyEvent)msg.obj, false);
+            deliverKeyEventToViewHierarchy((KeyEvent)msg.obj, false);
         } break;
         case FINISH_INPUT_CONNECTION: {
             InputMethodManager imm = InputMethodManager.peekInstance();
@@ -2245,7 +2255,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
         }
     }
     
-    private void startInputEvent(InputQueue.FinishedCallback finishedCallback) {
+    private void startInputEvent(Runnable finishedCallback) {
         if (mFinishedCallback != null) {
             Slog.w(TAG, "Received a new input event from the input queue but there is "
                     + "already an unfinished input event in progress.");
@@ -2254,11 +2264,11 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
         mFinishedCallback = finishedCallback;
     }
 
-    private void finishInputEvent(boolean handled) {
+    private void finishInputEvent() {
         if (LOCAL_LOGV) Log.v(TAG, "Telling window manager input event is finished");
 
         if (mFinishedCallback != null) {
-            mFinishedCallback.finished(handled);
+            mFinishedCallback.run();
             mFinishedCallback = null;
         } else {
             Slog.w(TAG, "Attempted to tell the input queue that the current input event "
@@ -2420,134 +2430,102 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
         return false;
     }
 
-    private void deliverPointerEvent(MotionEvent event, boolean sendDone) {
-        // If there is no view, then the event will not be handled.
-        if (mView == null || !mAdded) {
-            finishPointerEvent(event, sendDone, false);
-            return;
-        }
-
-        // Translate the pointer event for compatibility, if needed.
+    private void deliverPointerEvent(MotionEvent event) {
         if (mTranslator != null) {
             mTranslator.translateEventInScreenToAppWindow(event);
         }
         
-        // Enter touch mode on the down.
-        boolean isDown = event.getAction() == MotionEvent.ACTION_DOWN;
-        if (isDown) {
-            ensureTouchMode(true);
-        }
-        if(Config.LOGV) {
-            captureMotionLog("captureDispatchPointer", event);
-        }
+        boolean handled;
+        if (mView != null && mAdded) {
 
-        // Offset the scroll position.
-        if (mCurScrollY != 0) {
-            event.offsetLocation(0, mCurScrollY);
-        }
-        if (MEASURE_LATENCY) {
-            lt.sample("A Dispatching TouchEvents", System.nanoTime() - event.getEventTimeNano());
-        }
-
-        // Remember the touch position for possible drag-initiation.
-        mLastTouchPoint.x = event.getRawX();
-        mLastTouchPoint.y = event.getRawY();
-
-        // Dispatch touch to view hierarchy.
-        boolean handled = mView.dispatchTouchEvent(event);
-        if (MEASURE_LATENCY) {
-            lt.sample("B Dispatched TouchEvents ", System.nanoTime() - event.getEventTimeNano());
-        }
-
-        if (handled) {
-            finishPointerEvent(event, sendDone, true);
-            return;
-        }
-
-        // Apply edge slop and try again, if appropriate.
-        final int edgeFlags = event.getEdgeFlags();
-        if (edgeFlags != 0 && mView instanceof ViewGroup) {
-            final int edgeSlop = mViewConfiguration.getScaledEdgeSlop();
-            int direction = View.FOCUS_UP;
-            int x = (int)event.getX();
-            int y = (int)event.getY();
-            final int[] deltas = new int[2];
-
-            if ((edgeFlags & MotionEvent.EDGE_TOP) != 0) {
-                direction = View.FOCUS_DOWN;
-                if ((edgeFlags & MotionEvent.EDGE_LEFT) != 0) {
-                    deltas[0] = edgeSlop;
-                    x += edgeSlop;
-                } else if ((edgeFlags & MotionEvent.EDGE_RIGHT) != 0) {
-                    deltas[0] = -edgeSlop;
-                    x -= edgeSlop;
-                }
-            } else if ((edgeFlags & MotionEvent.EDGE_BOTTOM) != 0) {
-                direction = View.FOCUS_UP;
-                if ((edgeFlags & MotionEvent.EDGE_LEFT) != 0) {
-                    deltas[0] = edgeSlop;
-                    x += edgeSlop;
-                } else if ((edgeFlags & MotionEvent.EDGE_RIGHT) != 0) {
-                    deltas[0] = -edgeSlop;
-                    x -= edgeSlop;
-                }
-            } else if ((edgeFlags & MotionEvent.EDGE_LEFT) != 0) {
-                direction = View.FOCUS_RIGHT;
-            } else if ((edgeFlags & MotionEvent.EDGE_RIGHT) != 0) {
-                direction = View.FOCUS_LEFT;
+            // enter touch mode on the down
+            boolean isDown = event.getAction() == MotionEvent.ACTION_DOWN;
+            if (isDown) {
+                ensureTouchMode(true);
             }
+            if(Config.LOGV) {
+                captureMotionLog("captureDispatchPointer", event);
+            }
+            if (mCurScrollY != 0) {
+                event.offsetLocation(0, mCurScrollY);
+            }
+            if (MEASURE_LATENCY) {
+                lt.sample("A Dispatching TouchEvents", System.nanoTime() - event.getEventTimeNano());
+            }
+            handled = mView.dispatchTouchEvent(event);
+            if (MEASURE_LATENCY) {
+                lt.sample("B Dispatched TouchEvents ", System.nanoTime() - event.getEventTimeNano());
+            }
+            if (!handled && isDown) {
+                int edgeSlop = mViewConfiguration.getScaledEdgeSlop();
 
-            View nearest = FocusFinder.getInstance().findNearestTouchable(
-                    ((ViewGroup) mView), x, y, direction, deltas);
-            if (nearest != null) {
-                event.offsetLocation(deltas[0], deltas[1]);
-                event.setEdgeFlags(0);
-                if (mView.dispatchTouchEvent(event)) {
-                    finishPointerEvent(event, sendDone, true);
-                    return;
+                final int edgeFlags = event.getEdgeFlags();
+                int direction = View.FOCUS_UP;
+                int x = (int)event.getX();
+                int y = (int)event.getY();
+                final int[] deltas = new int[2];
+
+                if ((edgeFlags & MotionEvent.EDGE_TOP) != 0) {
+                    direction = View.FOCUS_DOWN;
+                    if ((edgeFlags & MotionEvent.EDGE_LEFT) != 0) {
+                        deltas[0] = edgeSlop;
+                        x += edgeSlop;
+                    } else if ((edgeFlags & MotionEvent.EDGE_RIGHT) != 0) {
+                        deltas[0] = -edgeSlop;
+                        x -= edgeSlop;
+                    }
+                } else if ((edgeFlags & MotionEvent.EDGE_BOTTOM) != 0) {
+                    direction = View.FOCUS_UP;
+                    if ((edgeFlags & MotionEvent.EDGE_LEFT) != 0) {
+                        deltas[0] = edgeSlop;
+                        x += edgeSlop;
+                    } else if ((edgeFlags & MotionEvent.EDGE_RIGHT) != 0) {
+                        deltas[0] = -edgeSlop;
+                        x -= edgeSlop;
+                    }
+                } else if ((edgeFlags & MotionEvent.EDGE_LEFT) != 0) {
+                    direction = View.FOCUS_RIGHT;
+                } else if ((edgeFlags & MotionEvent.EDGE_RIGHT) != 0) {
+                    direction = View.FOCUS_LEFT;
+                }
+
+                if (edgeFlags != 0 && mView instanceof ViewGroup) {
+                    View nearest = FocusFinder.getInstance().findNearestTouchable(
+                            ((ViewGroup) mView), x, y, direction, deltas);
+                    if (nearest != null) {
+                        event.offsetLocation(deltas[0], deltas[1]);
+                        event.setEdgeFlags(0);
+                        mView.dispatchTouchEvent(event);
+                    }
                 }
             }
         }
-        // Pointer event was unhandled.
-        finishPointerEvent(event, sendDone, false);
     }
 
-    private void finishPointerEvent(MotionEvent event, boolean sendDone, boolean handled) {
-        event.recycle();
-        if (sendDone) {
-            finishInputEvent(handled);
-        }
-        if (LOCAL_LOGV || WATCH_POINTER) Log.i(TAG, "Done dispatching!");
-    }
-
-    private void deliverTrackballEvent(MotionEvent event, boolean sendDone) {
+    private void deliverTrackballEvent(MotionEvent event) {
         if (DEBUG_TRACKBALL) Log.v(TAG, "Motion event:" + event);
 
-        // If there is no view, then the event will not be handled.
-        if (mView == null || !mAdded) {
-            finishTrackballEvent(event, sendDone, false);
-            return;
+        boolean handled = false;
+        if (mView != null && mAdded) {
+            handled = mView.dispatchTrackballEvent(event);
+            if (handled) {
+                // If we reach this, we delivered a trackball event to mView and
+                // mView consumed it. Because we will not translate the trackball
+                // event into a key event, touch mode will not exit, so we exit
+                // touch mode here.
+                ensureTouchMode(false);
+                return;
+            }
+            
+            // Otherwise we could do something here, like changing the focus
+            // or something?
         }
 
-        // Deliver the trackball event to the view.
-        if (mView.dispatchTrackballEvent(event)) {
-            // If we reach this, we delivered a trackball event to mView and
-            // mView consumed it. Because we will not translate the trackball
-            // event into a key event, touch mode will not exit, so we exit
-            // touch mode here.
-            ensureTouchMode(false);
-
-            finishTrackballEvent(event, sendDone, true);
-            mLastTrackballTime = Integer.MIN_VALUE;
-            return;
-        }
-
-        // Translate the trackball event into DPAD keys and try to deliver those.
         final TrackballAxis x = mTrackballAxisX;
         final TrackballAxis y = mTrackballAxisY;
 
         long curTime = SystemClock.uptimeMillis();
-        if ((mLastTrackballTime + MAX_TRACKBALL_DELAY) < curTime) {
+        if ((mLastTrackballTime+MAX_TRACKBALL_DELAY) < curTime) {
             // It has been too long since the last movement,
             // so restart at the beginning.
             x.reset(0);
@@ -2635,16 +2613,6 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                         KeyEvent.ACTION_UP, keycode, 0, metastate), false);
             }
             mLastTrackballTime = curTime;
-        }
-        // Unfortunately we can't tell whether the application consumed the keys, so
-        // we always consider the trackball event handled.
-        finishTrackballEvent(event, sendDone, true);
-    }
-
-    private void finishTrackballEvent(MotionEvent event, boolean sendDone, boolean handled) {
-        event.recycle();
-        if (sendDone) {
-            finishInputEvent(handled);
         }
     }
 
@@ -2791,126 +2759,120 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
     }
 
     private void deliverKeyEvent(KeyEvent event, boolean sendDone) {
-        // If there is no view, then the event will not be handled.
-        if (mView == null || !mAdded) {
-            finishKeyEvent(event, sendDone, false);
+        // If mView is null, we just consume the key event because it doesn't
+        // make sense to do anything else with it.
+        boolean handled = mView != null
+                ? mView.dispatchKeyEventPreIme(event) : true;
+        if (handled) {
+            if (sendDone) {
+                finishInputEvent();
+            }
             return;
         }
-
-        if (LOCAL_LOGV) Log.v(TAG, "Dispatching key " + event + " to " + mView);
-
-        // Perform predispatching before the IME.
-        if (mView.dispatchKeyEventPreIme(event)) {
-            finishKeyEvent(event, sendDone, true);
-            return;
-        }
-        // Dispatch to the IME before propagating down the view hierarchy.
-        // The IME will eventually call back into handleFinishedEvent.
+        // If it is possible for this window to interact with the input
+        // method window, then we want to first dispatch our key events
+        // to the input method.
         if (mLastWasImTarget) {
             InputMethodManager imm = InputMethodManager.peekInstance();
-            if (imm != null) {
+            if (imm != null && mView != null) {
                 int seq = enqueuePendingEvent(event, sendDone);
                 if (DEBUG_IMF) Log.v(TAG, "Sending key event to IME: seq="
                         + seq + " event=" + event);
-                imm.dispatchKeyEvent(mView.getContext(), seq, event, mInputMethodCallback);
+                imm.dispatchKeyEvent(mView.getContext(), seq, event,
+                        mInputMethodCallback);
                 return;
             }
         }
-        // Not dispatching to IME, continue with post IME actions.
-        deliverKeyEventPostIme(event, sendDone);
+        deliverKeyEventToViewHierarchy(event, sendDone);
     }
 
-    private void handleFinishedEvent(int seq, boolean handled) {
+    void handleFinishedEvent(int seq, boolean handled) {
         final KeyEvent event = (KeyEvent)retrievePendingEvent(seq);
         if (DEBUG_IMF) Log.v(TAG, "IME finished event: seq=" + seq
                 + " handled=" + handled + " event=" + event);
         if (event != null) {
             final boolean sendDone = seq >= 0;
-            if (handled) {
-                finishKeyEvent(event, sendDone, true);
+            if (!handled) {
+                deliverKeyEventToViewHierarchy(event, sendDone);
+                return;
+            } else if (sendDone) {
+                finishInputEvent();
             } else {
-                deliverKeyEventPostIme(event, sendDone);
+                Log.w(TAG, "handleFinishedEvent(seq=" + seq
+                        + " handled=" + handled + " ev=" + event
+                        + ") neither delivering nor finishing key");
             }
         }
     }
 
-    private void deliverKeyEventPostIme(KeyEvent event, boolean sendDone) {
-        // If the view went away, then the event will not be handled.
-        if (mView == null || !mAdded) {
-            finishKeyEvent(event, sendDone, false);
-            return;
-        }
+    private void deliverKeyEventToViewHierarchy(KeyEvent event, boolean sendDone) {
+        try {
+            if (mView != null && mAdded) {
+                final int action = event.getAction();
+                boolean isDown = (action == KeyEvent.ACTION_DOWN);
 
-        // If the key's purpose is to exit touch mode then we consume it and consider it handled.
-        if (checkForLeavingTouchModeAndConsume(event)) {
-            finishKeyEvent(event, sendDone, true);
-            return;
-        }
-        if (Config.LOGV) {
-            captureKeyLog("captureDispatchKeyEvent", event);
-        }
+                if (checkForLeavingTouchModeAndConsume(event)) {
+                    return;
+                }
 
-        // Deliver the key to the view hierarchy.
-        if (mView.dispatchKeyEvent(event)) {
-            finishKeyEvent(event, sendDone, true);
-            return;
-        }
-         // Apply the fallback event policy.
-        if (mFallbackEventHandler.dispatchKeyEvent(event)) {
-            finishKeyEvent(event, sendDone, true);
-            return;
-        }
+                if (Config.LOGV) {
+                    captureKeyLog("captureDispatchKeyEvent", event);
+                }
+                boolean keyHandled = mView.dispatchKeyEvent(event);
 
-        // Handle automatic focus changes.
-        if (event.getAction() == KeyEvent.ACTION_DOWN) {
-            int direction = 0;
-            switch (event.getKeyCode()) {
-            case KeyEvent.KEYCODE_DPAD_LEFT:
-                direction = View.FOCUS_LEFT;
-                break;
-            case KeyEvent.KEYCODE_DPAD_RIGHT:
-                direction = View.FOCUS_RIGHT;
-                break;
-            case KeyEvent.KEYCODE_DPAD_UP:
-                direction = View.FOCUS_UP;
-                break;
-            case KeyEvent.KEYCODE_DPAD_DOWN:
-                direction = View.FOCUS_DOWN;
-                break;
-            }
+                if (!keyHandled && isDown) {
+                    int direction = 0;
+                    switch (event.getKeyCode()) {
+                    case KeyEvent.KEYCODE_DPAD_LEFT:
+                        direction = View.FOCUS_LEFT;
+                        break;
+                    case KeyEvent.KEYCODE_DPAD_RIGHT:
+                        direction = View.FOCUS_RIGHT;
+                        break;
+                    case KeyEvent.KEYCODE_DPAD_UP:
+                        direction = View.FOCUS_UP;
+                        break;
+                    case KeyEvent.KEYCODE_DPAD_DOWN:
+                        direction = View.FOCUS_DOWN;
+                        break;
+                    }
 
-            if (direction != 0) {
-                View focused = mView != null ? mView.findFocus() : null;
-                if (focused != null) {
-                    View v = focused.focusSearch(direction);
-                    if (v != null && v != focused) {
-                        // do the math the get the interesting rect
-                        // of previous focused into the coord system of
-                        // newly focused view
-                        focused.getFocusedRect(mTempRect);
-                        if (mView instanceof ViewGroup) {
-                            ((ViewGroup) mView).offsetDescendantRectToMyCoords(
-                                    focused, mTempRect);
-                            ((ViewGroup) mView).offsetRectIntoDescendantCoords(
-                                    v, mTempRect);
-                        }
-                        if (v.requestFocus(direction, mTempRect)) {
-                            playSoundEffect(
-                                    SoundEffectConstants.getContantForFocusDirection(direction));
-                            finishKeyEvent(event, sendDone, true);
-                            return;
+                    if (direction != 0) {
+
+                        View focused = mView != null ? mView.findFocus() : null;
+                        if (focused != null) {
+                            View v = focused.focusSearch(direction);
+                            boolean focusPassed = false;
+                            if (v != null && v != focused) {
+                                // do the math the get the interesting rect
+                                // of previous focused into the coord system of
+                                // newly focused view
+                                focused.getFocusedRect(mTempRect);
+                                if (mView instanceof ViewGroup) {
+                                    ((ViewGroup) mView).offsetDescendantRectToMyCoords(
+                                            focused, mTempRect);
+                                    ((ViewGroup) mView).offsetRectIntoDescendantCoords(
+                                            v, mTempRect);
+                                }
+                                focusPassed = v.requestFocus(direction, mTempRect);
+                            }
+
+                            if (!focusPassed) {
+                                mView.dispatchUnhandledMove(focused, direction);
+                            } else {
+                                playSoundEffect(SoundEffectConstants.getContantForFocusDirection(direction));
+                            }
                         }
                     }
                 }
             }
-        }
-        // Key was unhandled.
-        finishKeyEvent(event, sendDone, false);
-    }
 
-    private void finishKeyEvent(KeyEvent event, boolean sendDone, boolean handled) {
-        if (sendDone) {
-            finishInputEvent(handled);
+        } finally {
+            if (sendDone) {
+                finishInputEvent();
+            }
+            // Let the exception fall through -- the looper will catch
+            // it and take care of the bad app for us.
         }
     }
 
@@ -3094,15 +3056,15 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
         sendMessage(msg);
     }
     
-    private InputQueue.FinishedCallback mFinishedCallback;
+    private Runnable mFinishedCallback;
     
     private final InputHandler mInputHandler = new InputHandler() {
-        public void handleKey(KeyEvent event, InputQueue.FinishedCallback finishedCallback) {
+        public void handleKey(KeyEvent event, Runnable finishedCallback) {
             startInputEvent(finishedCallback);
             dispatchKey(event, true);
         }
 
-        public void handleMotion(MotionEvent event, InputQueue.FinishedCallback finishedCallback) {
+        public void handleMotion(MotionEvent event, Runnable finishedCallback) {
             startInputEvent(finishedCallback);
             dispatchMotion(event, true);
         }
@@ -3150,7 +3112,7 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
             // TODO
             Log.v(TAG, "Dropping unsupported motion event (unimplemented): " + event);
             if (sendDone) {
-                finishInputEvent(false);
+                finishInputEvent();
             }
         }
     }

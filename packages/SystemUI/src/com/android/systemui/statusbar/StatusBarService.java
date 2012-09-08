@@ -1334,8 +1334,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         lp.setTitle("NavigationBar");
         lp.gravity = Gravity.BOTTOM | Gravity.FILL_HORIZONTAL;
-        lp.windowAnimations = 0;
-
         return lp;
     }
 
@@ -1396,8 +1394,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 mPixelFormat);
         lp.gravity = Gravity.TOP | Gravity.FILL_HORIZONTAL;
         lp.setTitle("StatusBar");
-        lp.windowAnimations = com.android.internal.R.style.Animation_StatusBar;
-
         WindowManagerImpl.getDefault().addView(view, lp);
 
         //mRecentApps.setupRecentApps();

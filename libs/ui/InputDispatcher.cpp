@@ -39,8 +39,6 @@
 
 #include <cutils/log.h>
 #include <ui/InputDispatcher.h>
-#include <ui/InputApplication.h>
-#include <ui/InputWindow.h>
 #include <ui/PowerManager.h>
 
 #include <stddef.h>
@@ -65,9 +63,6 @@ const nsecs_t DEFAULT_INPUT_DISPATCHING_TIMEOUT = 5000 * 1000000LL; // 5 sec
 // when an application takes too long to respond and the user has pressed an app switch key.
 const nsecs_t APP_SWITCH_TIMEOUT = 500 * 1000000LL; // 0.5sec
 
-// Amount of time to allow for an event to be dispatched (measured since its eventTime)	
-// before considering it stale and dropping it.
-const nsecs_t STALE_EVENT_TIMEOUT = 10000 * 1000000LL; // 10sec
 
 static inline nsecs_t now() {
     return systemTime(SYSTEM_TIME_MONOTONIC);
@@ -146,12 +141,31 @@ static bool validateMotionEvent(int32_t action, size_t pointerCount,
     return true;
 }
 
+
+// --- InputWindow ---
+
+bool InputWindow::touchableAreaContainsPoint(int32_t x, int32_t y) const {
+    return x >= touchableAreaLeft && x <= touchableAreaRight
+            && y >= touchableAreaTop && y <= touchableAreaBottom;
+}
+
+bool InputWindow::frameContainsPoint(int32_t x, int32_t y) const {
+    return x >= frameLeft && x <= frameRight
+            && y >= frameTop && y <= frameBottom;
+}
+
+bool InputWindow::isTrustedOverlay() const {
+    return layoutParamsType == TYPE_INPUT_METHOD
+            || layoutParamsType == TYPE_INPUT_METHOD_DIALOG
+            || layoutParamsType == TYPE_SECURE_SYSTEM_OVERLAY;
+}
+
+
 // --- InputDispatcher ---
 
 InputDispatcher::InputDispatcher(const sp<InputDispatcherPolicyInterface>& policy) :
     mPolicy(policy),
-    mPendingEvent(NULL), mAppSwitchSawKeyDown(false), mAppSwitchDueTime(LONG_LONG_MAX),
-    mNextUnblockedEvent(NULL),
+    mPendingEvent(NULL), mAppSwitchDueTime(LONG_LONG_MAX),
     mDispatchEnabled(true), mDispatchFrozen(false),
     mFocusedWindow(NULL),
     mFocusedApplication(NULL),
@@ -349,9 +363,6 @@ void InputDispatcher::dispatchOnceInnerLocked(nsecs_t keyRepeatTimeout,
     } else if (!mDispatchEnabled) {
         dropReason = DROP_REASON_DISABLED;
     }
-    if (mNextUnblockedEvent == mPendingEvent) {
-        mNextUnblockedEvent = NULL;	
-    }
     switch (mPendingEvent->type) {
     case EventEntry::TYPE_CONFIGURATION_CHANGED: {
         ConfigurationChangedEntry* typedEntry =
@@ -371,13 +382,6 @@ void InputDispatcher::dispatchOnceInnerLocked(nsecs_t keyRepeatTimeout,
                 dropReason = DROP_REASON_APP_SWITCH;
             }
         }
-        if (dropReason == DROP_REASON_NOT_DROPPED
-                && isStaleEventLocked(currentTime, typedEntry)) {
-            dropReason = DROP_REASON_STALE;
-        }
-        if (dropReason == DROP_REASON_NOT_DROPPED && mNextUnblockedEvent) {
-            dropReason = DROP_REASON_BLOCKED;
-        }
         done = dispatchKeyLocked(currentTime, typedEntry, keyRepeatTimeout,
                 &dropReason, nextWakeupTime);
         break;
@@ -387,13 +391,6 @@ void InputDispatcher::dispatchOnceInnerLocked(nsecs_t keyRepeatTimeout,
         MotionEntry* typedEntry = static_cast<MotionEntry*>(mPendingEvent);
         if (dropReason == DROP_REASON_NOT_DROPPED && isAppSwitchDue) {
             dropReason = DROP_REASON_APP_SWITCH;
-        }
-        if (dropReason == DROP_REASON_NOT_DROPPED
-                && isStaleEventLocked(currentTime, typedEntry)) {
-            dropReason = DROP_REASON_STALE;
-        }
-        if (dropReason == DROP_REASON_NOT_DROPPED && mNextUnblockedEvent) {
-            dropReason = DROP_REASON_BLOCKED;
         }
         done = dispatchMotionLocked(currentTime, typedEntry,
                 &dropReason, nextWakeupTime);
@@ -438,59 +435,9 @@ bool InputDispatcher::enqueueInboundEventLocked(EventEntry* entry) {
         }
         break;
     }
-    case EventEntry::TYPE_MOTION: {
-        // Optimize case where the current application is unresponsive and the user
-        // decides to touch a window in a different application.
-        // If the application takes too long to catch up then we drop all events preceding
-        // the touch into the other window.
-        MotionEntry* motionEntry = static_cast<MotionEntry*>(entry);
-        if (motionEntry->action == AMOTION_EVENT_ACTION_DOWN
-                && (motionEntry->source & AINPUT_SOURCE_CLASS_POINTER)
-                && mInputTargetWaitCause == INPUT_TARGET_WAIT_CAUSE_APPLICATION_NOT_READY
-                && mInputTargetWaitApplication != NULL) {
-            int32_t x = int32_t(motionEntry->firstSample.pointerCoords[0].x);
-            int32_t y = int32_t(motionEntry->firstSample.pointerCoords[0].y);
-            const InputWindow* touchedWindow = findTouchedWindowAtLocked(x, y);
-            if (touchedWindow
-                    && touchedWindow->inputWindowHandle != NULL
-                    && touchedWindow->inputWindowHandle->getInputApplicationHandle()
-                            != mInputTargetWaitApplication) {
-                // User touched a different application than the one we are waiting on.
-                // Flag the event, and start pruning the input queue.
-                mNextUnblockedEvent = motionEntry;
-                needWake = true;
-            }
-        }
-        break;
-    }
     }
 
     return needWake;
-}
-
-const InputWindow* InputDispatcher::findTouchedWindowAtLocked(int32_t x, int32_t y) {
-    // Traverse windows from front to back to find touched window.
-    size_t numWindows = mWindows.size();
-    for (size_t i = 0; i < numWindows; i++) {
-        const InputWindow* window = & mWindows.editItemAt(i);
-        int32_t flags = window->layoutParamsFlags;
-        if (window->visible) {
-            if (!(flags & InputWindow::FLAG_NOT_TOUCHABLE)) {
-                bool isTouchModal = (flags & (InputWindow::FLAG_NOT_FOCUSABLE
-                        | InputWindow::FLAG_NOT_TOUCH_MODAL)) == 0;
-                if (isTouchModal || window->touchableAreaContainsPoint(x, y)) {
-                    // Found window.
-                    return window;
-                }
-            }
-        }
-
-        if (flags & InputWindow::FLAG_SYSTEM_ERROR) {
-            // Error window is on top but not visible, so touch is dropped.
-            return NULL;
-        }
-    }
-    return NULL;
 }
 
 void InputDispatcher::dropInboundEventLocked(EventEntry* entry, DropReason dropReason) {
@@ -509,16 +456,6 @@ void InputDispatcher::dropInboundEventLocked(EventEntry* entry, DropReason dropR
     case DROP_REASON_APP_SWITCH:
         LOGI("Dropped event because of pending overdue app switch.");
         reason = "inbound event was dropped because of pending overdue app switch";
-        break;
-    case DROP_REASON_BLOCKED:
-        LOGI("Dropped event because the current application is not responding and the user "
-                "has started interating with a different application.");
-        reason = "inbound event was dropped because the current application is not responding "
-                "and the user has started interating with a different application";
-        break;
-    case DROP_REASON_STALE:
-        LOGI("Dropped event because it is stale.");
-        reason = "inbound event was dropped because it is stale";
         break;
     default:
         assert(false);
@@ -569,10 +506,6 @@ void InputDispatcher::resetPendingAppSwitchLocked(bool handled) {
         LOGD("App switch was abandoned.");
     }
 #endif
-}
-
-bool InputDispatcher::isStaleEventLocked(nsecs_t currentTime, EventEntry* entry) {
-    return currentTime - entry->eventTime >= STALE_EVENT_TIMEOUT;
 }
 
 bool InputDispatcher::runCommandsLockedInterruptible() {
@@ -732,7 +665,7 @@ bool InputDispatcher::dispatchKeyLocked(
             CommandEntry* commandEntry = postCommandLocked(
                     & InputDispatcher::doInterceptKeyBeforeDispatchingLockedInterruptible);
             if (mFocusedWindow) {
-                commandEntry->inputWindowHandle = mFocusedWindow->inputWindowHandle;
+                commandEntry->inputChannel = mFocusedWindow->inputChannel;
             }
             commandEntry->keyEntry = entry;
             entry->refCount += 1;
@@ -912,7 +845,6 @@ void InputDispatcher::resetTargetsLocked() {
     mCurrentInputTargetsValid = false;
     mCurrentInputTargets.clear();
     mInputTargetWaitCause = INPUT_TARGET_WAIT_CAUSE_NONE;
-    mInputTargetWaitApplication.clear();
 }
 
 void InputDispatcher::commitTargetsLocked() {
@@ -931,7 +863,6 @@ int32_t InputDispatcher::handleTargetsNotReadyLocked(nsecs_t currentTime,
             mInputTargetWaitStartTime = currentTime;
             mInputTargetWaitTimeoutTime = LONG_LONG_MAX;
             mInputTargetWaitTimeoutExpired = false;
-            mInputTargetWaitApplication.clear();
         }
     } else {
         if (mInputTargetWaitCause != INPUT_TARGET_WAIT_CAUSE_APPLICATION_NOT_READY) {
@@ -946,15 +877,6 @@ int32_t InputDispatcher::handleTargetsNotReadyLocked(nsecs_t currentTime,
             mInputTargetWaitStartTime = currentTime;
             mInputTargetWaitTimeoutTime = currentTime + timeout;
             mInputTargetWaitTimeoutExpired = false;
-            mInputTargetWaitApplication.clear();
-
-            if (window && window->inputWindowHandle != NULL) {
-                mInputTargetWaitApplication =
-                        window->inputWindowHandle->getInputApplicationHandle();
-            }
-            if (mInputTargetWaitApplication == NULL && application) {
-                mInputTargetWaitApplication = application->inputApplicationHandle;
-            }
         }
     }
 
@@ -1855,20 +1777,22 @@ void InputDispatcher::startDispatchCycleLocked(nsecs_t currentTime,
 }
 
 void InputDispatcher::finishDispatchCycleLocked(nsecs_t currentTime,
-        const sp<Connection>& connection, bool handled) {
+        const sp<Connection>& connection) {
 #if DEBUG_DISPATCH_CYCLE
     LOGD("channel '%s' ~ finishDispatchCycle - %01.1fms since event, "
-            "%01.1fms since dispatch, handled=%s",
+            "%01.1fms since dispatch",
             connection->getInputChannelName(),
             connection->getEventLatencyMillis(currentTime),
-            connection->getDispatchLatencyMillis(currentTime)),
-            toString(handled));
+            connection->getDispatchLatencyMillis(currentTime));
 #endif
 
     if (connection->status == Connection::STATUS_BROKEN
             || connection->status == Connection::STATUS_ZOMBIE) {
         return;
     }
+
+    // Notify other system components.
+    onDispatchCycleFinishedLocked(currentTime, connection);
 
     // Reset the publisher since the event has been consumed.
     // We do this now so that the publisher can release some of its internal resources
@@ -1881,7 +1805,7 @@ void InputDispatcher::finishDispatchCycleLocked(nsecs_t currentTime,
         return;
     }
 
-    onDispatchCycleFinishedLocked(currentTime, connection, handled);
+    startNextDispatchCycleLocked(currentTime, connection);
 }
 
 void InputDispatcher::startNextDispatchCycleLocked(nsecs_t currentTime,
@@ -1981,8 +1905,7 @@ int InputDispatcher::handleReceiveCallback(int receiveFd, int events, void* data
             return 1;
         }
 
-        bool handled = false;
-        status_t status = connection->inputPublisher.receiveFinishedSignal(handled);
+        status_t status = connection->inputPublisher.receiveFinishedSignal();
         if (status) {
             LOGE("channel '%s' ~ Failed to receive finished signal.  status=%d",
                     connection->getInputChannelName(), status);
@@ -1991,7 +1914,7 @@ int InputDispatcher::handleReceiveCallback(int receiveFd, int events, void* data
             return 0; // remove the callback
         }
 
-        d->finishDispatchCycleLocked(currentTime, connection, handled);
+        d->finishDispatchCycleLocked(currentTime, connection);
         d->runCommandsLockedInterruptible();
         return 1;
     } // release lock
@@ -2681,7 +2604,7 @@ void InputDispatcher::setFocusedApplication(const InputApplication* inputApplica
 void InputDispatcher::releaseFocusedApplicationLocked() {
     if (mFocusedApplication) {
         mFocusedApplication = NULL;
-        mFocusedApplicationStorage.inputApplicationHandle.clear();
+        mFocusedApplicationStorage.handle.clear();
     }
 }
 
@@ -2845,8 +2768,7 @@ void InputDispatcher::dumpDispatchStateLocked(String8& dump) {
     }
 }
 
-status_t InputDispatcher::registerInputChannel(const sp<InputChannel>& inputChannel,
-        const sp<InputWindowHandle>& inputWindowHandle, bool monitor) {
+status_t InputDispatcher::registerInputChannel(const sp<InputChannel>& inputChannel, bool monitor) {
 #if DEBUG_REGISTRATION
     LOGD("channel '%s' ~ registerInputChannel - monitor=%s", inputChannel->getName().string(),
             toString(monitor));
@@ -2861,7 +2783,7 @@ status_t InputDispatcher::registerInputChannel(const sp<InputChannel>& inputChan
             return BAD_VALUE;
         }
 
-        sp<Connection> connection = new Connection(inputChannel, inputWindowHandle);
+        sp<Connection> connection = new Connection(inputChannel);
         status_t status = connection->initialize();
         if (status) {
             LOGE("Failed to initialize input publisher for input channel '%s', status=%d",
@@ -2959,11 +2881,7 @@ void InputDispatcher::onDispatchCycleStartedLocked(
 }
 
 void InputDispatcher::onDispatchCycleFinishedLocked(
-        nsecs_t currentTime, const sp<Connection>& connection, bool handled) {
-    CommandEntry* commandEntry = postCommandLocked(
-            & InputDispatcher::doDispatchCycleFinishedLockedInterruptible);
-    commandEntry->connection = connection;
-    commandEntry->handled = handled;
+        nsecs_t currentTime, const sp<Connection>& connection) {
 }
 
 void InputDispatcher::onDispatchCycleBrokenLocked(
@@ -2988,10 +2906,9 @@ void InputDispatcher::onANRLocked(
     CommandEntry* commandEntry = postCommandLocked(
             & InputDispatcher::doNotifyANRLockedInterruptible);
     if (application) {
-        commandEntry->inputApplicationHandle = application->inputApplicationHandle;
+        commandEntry->inputApplicationHandle = application->handle;
     }
     if (window) {
-        commandEntry->inputWindowHandle = window->inputWindowHandle;
         commandEntry->inputChannel = window->inputChannel;
     }
 }
@@ -3013,7 +2930,6 @@ void InputDispatcher::doNotifyInputChannelBrokenLockedInterruptible(
         mLock.unlock();
 
         mPolicy->notifyInputChannelBroken(connection->inputChannel);
-        mPolicy->notifyInputChannelBroken(connection->inputWindowHandle);
 
         mLock.lock();
     }
@@ -3025,7 +2941,6 @@ void InputDispatcher::doNotifyANRLockedInterruptible(
 
     nsecs_t newTimeout = mPolicy->notifyANR(
             commandEntry->inputApplicationHandle, commandEntry->inputChannel);
-            commandEntry->inputApplicationHandle, commandEntry->inputWindowHandle);
 
     mLock.lock();
 
@@ -3035,11 +2950,13 @@ void InputDispatcher::doNotifyANRLockedInterruptible(
 void InputDispatcher::doInterceptKeyBeforeDispatchingLockedInterruptible(
         CommandEntry* commandEntry) {
     KeyEntry* entry = commandEntry->keyEntry;
-    initializeKeyEvent(&mReusableKeyEvent, entry);
+    mReusableKeyEvent.initialize(entry->deviceId, entry->source, entry->action, entry->flags,
+            entry->keyCode, entry->scanCode, entry->metaState, entry->repeatCount,
+            entry->downTime, entry->eventTime);
 
     mLock.unlock();
 
-    bool consumed = mPolicy->interceptKeyBeforeDispatching(commandEntry->inputWindowHandle,
+    bool consumed = mPolicy->interceptKeyBeforeDispatching(commandEntry->inputChannel,
             & mReusableKeyEvent, entry->policyFlags);
 
     mLock.lock();
@@ -3050,86 +2967,12 @@ void InputDispatcher::doInterceptKeyBeforeDispatchingLockedInterruptible(
     mAllocator.releaseKeyEntry(entry);
 }
 
-void InputDispatcher::doDispatchCycleFinishedLockedInterruptible(
-        CommandEntry* commandEntry) {
-    sp<Connection> connection = commandEntry->connection;
-    bool handled = commandEntry->handled;
-
-    if (!connection->outboundQueue.isEmpty()) {
-        DispatchEntry* dispatchEntry = connection->outboundQueue.headSentinel.next;
-        if (dispatchEntry->inProgress
-                && dispatchEntry->hasForegroundTarget()
-                && dispatchEntry->eventEntry->type == EventEntry::TYPE_KEY) {
-            KeyEntry* keyEntry = static_cast<KeyEntry*>(dispatchEntry->eventEntry);
-            if (!(keyEntry->flags & AKEY_EVENT_FLAG_FALLBACK)) {
-                if (handled) {
-                    // If the application handled a non-fallback key, then immediately
-                    // cancel all fallback keys previously dispatched to the application.
-                    // This behavior will prevent chording with fallback keys (so they cannot
-                    // be used as modifiers) but it will ensure that fallback keys do not
-                    // get stuck.  This takes care of the case where the application does not handle
-                    // the original DOWN so we generate a fallback DOWN but it does handle
-                    // the original UP in which case we would not generate the fallback UP.
-                    synthesizeCancelationEventsForConnectionLocked(connection,
-                            InputState::CANCEL_FALLBACK_EVENTS,
-                            "application handled a non-fallback event, canceling all fallback events");
-                } else {
-                    // If the application did not handle a non-fallback key, then ask
-                    // the policy what to do with it.  We might generate a fallback key
-                    // event here.
-                    KeyEvent event;
-                    initializeKeyEvent(&event, keyEntry);
-
-                    mLock.unlock();
-
-                    bool fallback = mPolicy->dispatchUnhandledKey(connection->inputWindowHandle,
-                            &event, keyEntry->policyFlags, &event);
-
-                    mLock.lock();
-
-                    if (connection->status != Connection::STATUS_NORMAL) {
-                        return;
-                    }
-
-                    assert(connection->outboundQueue.headSentinel.next == dispatchEntry);
-
-                    if (fallback) {
-                        // Restart the dispatch cycle using the fallback key.
-                        keyEntry->eventTime = event.getEventTime();
-                        keyEntry->deviceId = event.getDeviceId();
-                        keyEntry->source = event.getSource();
-                        keyEntry->flags = event.getFlags() | AKEY_EVENT_FLAG_FALLBACK;
-                        keyEntry->keyCode = event.getKeyCode();
-                        keyEntry->scanCode = event.getScanCode();
-                        keyEntry->metaState = event.getMetaState();
-                        keyEntry->repeatCount = event.getRepeatCount();
-                        keyEntry->downTime = event.getDownTime();
-                        keyEntry->syntheticRepeat = false;
-
-                        dispatchEntry->inProgress = false;
-                        startDispatchCycleLocked(now(), connection);
-                        return;
-                    }
-                }
-            }
-        }
-    }
-
-    startNextDispatchCycleLocked(now(), connection);
-}
-
 void InputDispatcher::doPokeUserActivityLockedInterruptible(CommandEntry* commandEntry) {
     mLock.unlock();
 
     mPolicy->pokeUserActivity(commandEntry->eventTime, commandEntry->userActivityEventType);
 
     mLock.lock();
-}
-
-void InputDispatcher::initializeKeyEvent(KeyEvent* event, const KeyEntry* entry) {
-    event->initialize(entry->deviceId, entry->source, entry->action, entry->flags,
-            entry->keyCode, entry->scanCode, entry->metaState, entry->repeatCount,
-            entry->downTime, entry->eventTime);
 }
 
 void InputDispatcher::updateDispatchStatisticsLocked(nsecs_t currentTime, const EventEntry* entry,
@@ -3557,10 +3400,8 @@ bool InputDispatcher::InputState::shouldCancelEvent(int32_t eventSource,
 
 // --- InputDispatcher::Connection ---
 
-InputDispatcher::Connection::Connection(const sp<InputChannel>& inputChannel,
-        const sp<InputWindowHandle>& inputWindowHandle) :
-        status(STATUS_NORMAL), inputChannel(inputChannel), inputWindowHandle(inputWindowHandle),
-        inputPublisher(inputChannel),
+InputDispatcher::Connection::Connection(const sp<InputChannel>& inputChannel) :
+        status(STATUS_NORMAL), inputChannel(inputChannel), inputPublisher(inputChannel),
         lastEventTime(LONG_LONG_MAX), lastDispatchTime(LONG_LONG_MAX) {
 }
 

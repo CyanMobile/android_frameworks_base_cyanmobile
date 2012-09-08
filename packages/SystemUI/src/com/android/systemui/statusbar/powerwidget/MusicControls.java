@@ -141,7 +141,6 @@ public class MusicControls extends FrameLayout {
              Slog.d(TAG, "Music is active");
 	     updateInfo();
 	     mSBService.mMusicToggleButton.setVisibility(View.VISIBLE);
-             setVisibility(View.VISIBLE);
         } else {
              Slog.d(TAG, "Music is not active");
              mSBService.mMusicToggleButton.setVisibility(View.GONE);

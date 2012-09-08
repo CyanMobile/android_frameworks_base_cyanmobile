@@ -59,7 +59,6 @@ class ActivityRecord extends IApplicationToken.Stub {
     final String taskAffinity; // as per ActivityInfo.taskAffinity
     final boolean stateNotNeeded; // As per ActivityInfo.flags
     final boolean fullscreen;     // covers the full screen?
-    final boolean noDisplay;  // activity is not displayed?
     final boolean componentSpecified;  // did caller specifiy an explicit component?
     final boolean isHomeActivity; // do we consider this to be a home activity?
     final String baseDir;   // where activity source (resources etc) located
@@ -160,13 +159,12 @@ class ActivityRecord extends IApplicationToken.Stub {
                 pw.print(" finishing="); pw.println(finishing);
         pw.print(prefix); pw.print("keysPaused="); pw.print(keysPaused);
                 pw.print(" inHistory="); pw.print(inHistory);
+                pw.print(" launchMode="); pw.println(launchMode);
+        pw.print(prefix); pw.print("fullscreen="); pw.print(fullscreen);
                 pw.print(" visible="); pw.print(visible);
                 pw.print(" frozenBeforeDestroy="); pw.print(frozenBeforeDestroy);
                 pw.print(" thumbnailNeeded="); pw.print(thumbnailNeeded);
                 pw.print(" idle="); pw.println(idle);
-        pw.print(prefix); pw.print("fullscreen="); pw.print(fullscreen);
-                pw.print(" noDisplay="); pw.print(noDisplay);
-                pw.print(" launchMode="); pw.println(launchMode);
         if (launchTime != 0 || startTime != 0) {
             pw.print(prefix); pw.print("launchTime=");
                     TimeUtils.formatDuration(launchTime, pw); pw.print(" startTime=");
@@ -267,8 +265,7 @@ class ActivityRecord extends IApplicationToken.Stub {
                     com.android.internal.R.styleable.Window_windowIsFloating, false)
                     && !ent.array.getBoolean(
                     com.android.internal.R.styleable.Window_windowIsTranslucent, false);
-            noDisplay = ent != null && ent.array.getBoolean(
-                    com.android.internal.R.styleable.Window_windowNoDisplay, false);
+            
             if (!_componentSpecified || _launchedFromUid == Process.myUid()
                     || _launchedFromUid == 0) {
                 // If we know the system has determined the component, then
@@ -302,7 +299,6 @@ class ActivityRecord extends IApplicationToken.Stub {
             processName = null;
             packageName = null;
             fullscreen = true;
-            noDisplay = false;
             isHomeActivity = false;
         }
     }

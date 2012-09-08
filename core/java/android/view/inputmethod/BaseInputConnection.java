@@ -381,13 +381,11 @@ public class BaseInputConnection implements InputConnection {
     public boolean performEditorAction(int actionCode) {
         long eventTime = SystemClock.uptimeMillis();
         sendKeyEvent(new KeyEvent(eventTime, eventTime,
-                KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER, 0, 0,
-                KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
+                KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER, 0, 0, 0, 0,
                 KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE
                 | KeyEvent.FLAG_EDITOR_ACTION));
         sendKeyEvent(new KeyEvent(SystemClock.uptimeMillis(), eventTime,
-                KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER, 0, 0,
-                KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
+                KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER, 0, 0, 0, 0,
                 KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE
                 | KeyEvent.FLAG_EDITOR_ACTION));
         return true;
@@ -524,7 +522,8 @@ public class BaseInputConnection implements InputConnection {
                 // If it's 1 character, we have a chance of being
                 // able to generate normal key events...
                 if (mKeyCharacterMap == null) {
-                    mKeyCharacterMap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
+                    mKeyCharacterMap = KeyCharacterMap.load(
+                            KeyCharacterMap.BUILT_IN_KEYBOARD);
                 }
                 char[] chars = new char[1];
                 content.getChars(0, 1, chars, 0);
@@ -542,7 +541,7 @@ public class BaseInputConnection implements InputConnection {
             // Otherwise, revert to the special key event containing
             // the actual characters.
             KeyEvent event = new KeyEvent(SystemClock.uptimeMillis(),
-                    content.toString(), KeyCharacterMap.VIRTUAL_KEYBOARD, 0);
+                    content.toString(), KeyCharacterMap.BUILT_IN_KEYBOARD, 0);
             sendKeyEvent(event);
             content.clear();
         }

@@ -832,7 +832,8 @@ public class Instrumentation {
         if (text == null) {
             return;
         }
-        KeyCharacterMap keyCharacterMap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
+        KeyCharacterMap keyCharacterMap = 
+            KeyCharacterMap.load(KeyCharacterMap.BUILT_IN_KEYBOARD);
         
         KeyEvent[] events = keyCharacterMap.getEvents(text.toCharArray());
         

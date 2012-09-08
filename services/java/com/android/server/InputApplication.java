@@ -22,16 +22,12 @@ package com.android.server;
  * @hide
  */
 public final class InputApplication {
-    // Application handle.
-    public InputApplicationHandle inputApplicationHandle;
-
     // Application name.
     public String name;
     
     // Dispatching timeout.
     public long dispatchingTimeoutNanos;
     
-    public void recycle() {
-        inputApplicationHandle = null;
-    }
+    // The application window token.
+    public Object token;
 }

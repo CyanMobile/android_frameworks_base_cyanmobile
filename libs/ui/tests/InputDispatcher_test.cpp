@@ -3,8 +3,6 @@
 //
 
 #include <ui/InputDispatcher.h>
-#include <ui/InputApplication.h>
-#include <ui/InputWindow.h>
 #include <gtest/gtest.h>
 #include <linux/input.h>
 
@@ -37,11 +35,11 @@ private:
     }
 
     virtual nsecs_t notifyANR(const sp<InputApplicationHandle>& inputApplicationHandle,
-            const sp<InputWindowHandle>& inputWindowHandle) {
+            const sp<InputChannel>& inputChannel) {
         return 0;
     }
 
-    virtual void notifyInputChannelBroken(const sp<InputWindowHandle>& inputWindowHandle) {
+    virtual void notifyInputChannelBroken(const sp<InputChannel>& inputChannel) {
     }
 
     virtual nsecs_t getKeyRepeatTimeout() {
@@ -68,13 +66,8 @@ private:
     virtual void interceptGenericBeforeQueueing(nsecs_t when, uint32_t& policyFlags) {
     }
 
-    virtual bool interceptKeyBeforeDispatching(const sp<InputWindowHandle>& inputWindowHandle,
+    virtual bool interceptKeyBeforeDispatching(const sp<InputChannel>& inputChannel,
             const KeyEvent* keyEvent, uint32_t policyFlags) {
-        return false;
-    }
-
-    virtual bool dispatchUnhandledKey(const sp<InputWindowHandle>& inputWindowHandle,
-            const KeyEvent* keyEvent, uint32_t policyFlags, KeyEvent* outFallbackKeyEvent) {
         return false;
     }
 

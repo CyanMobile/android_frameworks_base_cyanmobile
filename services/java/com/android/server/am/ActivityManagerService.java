@@ -4796,7 +4796,8 @@ public final class ActivityManagerService extends ActivityManagerNative
                             maxNum < N ? maxNum : N);
             for (int i=0; i<N && maxNum > 0; i++) {
                 TaskRecord tr = mRecentTasks.get(i);
-                if (((flags&ActivityManager.RECENT_WITH_EXCLUDED) != 0)
+                if (i == 0
+                        || ((flags&ActivityManager.RECENT_WITH_EXCLUDED) != 0)
                         || (tr.intent == null)
                         || ((tr.intent.getFlags()
                                 &Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS) == 0)) {

@@ -1300,7 +1300,7 @@ public class ActivityStack {
                 EventLog.writeEvent(EventLogTags.AM_RESUME_ACTIVITY,
                         System.identityHashCode(next),
                         next.task.taskId, next.shortComponentName);
-                
+
                 next.app.thread.scheduleResumeActivity(next,
                         mService.isNextTransitionForward());
                 

@@ -23,8 +23,9 @@ import android.text.method.TextKeyListener.Capitalize;
 import android.text.style.ReplacementSpan;
 import android.widget.TextView;
 
-public abstract class BaseKeyListener extends MetaKeyKeyListener 
-             implements KeyListener {
+public abstract class BaseKeyListener
+extends MetaKeyKeyListener
+implements KeyListener {
     /* package */ static final Object OLD_SEL_START = new NoCopySpan.Concrete();
 
     /**
@@ -72,7 +73,7 @@ public abstract class BaseKeyListener extends MetaKeyKeyListener
 
     private boolean altBackspace(View view, Editable content, int keyCode,
                                  KeyEvent event) {
-        if (!event.isAltPressed() && getMetaState(content, META_ALT_ON) != 1) {
+        if (getMetaState(content, META_ALT_ON) != 1) {
             return false;
         }
 

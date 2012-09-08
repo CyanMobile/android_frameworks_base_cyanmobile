@@ -61,7 +61,7 @@ public:
 
     status_t unregisterInputChannel(JNIEnv* env, jobject inputChannelObj);
 
-    status_t finished(JNIEnv* env, jlong finishedToken, bool handled, bool ignoreSpuriousFinish);
+    status_t finished(JNIEnv* env, jlong finishedToken, bool ignoreSpuriousFinish);
 
 private:
     class Connection : public RefBase {
@@ -211,7 +211,7 @@ status_t NativeInputQueue::unregisterInputChannel(JNIEnv* env, jobject inputChan
                     "while an input message is still in progress.",
                     connection->getInputChannelName());
             connection->messageInProgress = false;
-            connection->inputConsumer.sendFinishedSignal(false); // ignoring result
+            connection->inputConsumer.sendFinishedSignal(); // ignoring result
         }
     } // release lock
 
@@ -231,8 +231,7 @@ ssize_t NativeInputQueue::getConnectionIndex(const sp<InputChannel>& inputChanne
     return -1;
 }
 
-status_t NativeInputQueue::finished(JNIEnv* env, jlong finishedToken,
-        bool handled, bool ignoreSpuriousFinish) {
+status_t NativeInputQueue::finished(JNIEnv* env, jlong finishedToken, bool ignoreSpuriousFinish) {
     int32_t receiveFd;
     uint16_t connectionId;
     uint16_t messageSeqNum;
@@ -269,7 +268,7 @@ status_t NativeInputQueue::finished(JNIEnv* env, jlong finishedToken,
 
         connection->messageInProgress = false;
 
-        status_t status = connection->inputConsumer.sendFinishedSignal(handled);
+        status_t status = connection->inputConsumer.sendFinishedSignal();
         if (status) {
             LOGW("Failed to send finished signal on channel '%s'.  status=%d",
                     connection->getInputChannelName(), status);
@@ -342,7 +341,7 @@ int NativeInputQueue::handleReceiveCallback(int receiveFd, int events, void* dat
         if (status) {
             LOGW("channel '%s' ~ Failed to consume input event.  status=%d",
                     connection->getInputChannelName(), status);
-            connection->inputConsumer.sendFinishedSignal(false);
+            connection->inputConsumer.sendFinishedSignal();
             return 1;
         }
 
@@ -394,7 +393,7 @@ int NativeInputQueue::handleReceiveCallback(int receiveFd, int events, void* dat
         LOGW("channel '%s' ~ Failed to obtain DVM event object.",
                 connection->getInputChannelName());
         env->DeleteLocalRef(inputHandlerObjLocal);
-        q->finished(env, finishedToken, false, false);
+        q->finished(env, finishedToken, false);
         return 1;
     }
 
@@ -413,7 +412,7 @@ int NativeInputQueue::handleReceiveCallback(int receiveFd, int events, void* dat
         LOGE_EX(env);
         env->ExceptionClear();
 
-        q->finished(env, finishedToken, false, true /*ignoreSpuriousFinish*/);
+        q->finished(env, finishedToken, true /*ignoreSpuriousFinish*/);
     }
 
     env->DeleteLocalRef(inputEventObj);
@@ -471,9 +470,9 @@ static void android_view_InputQueue_nativeUnregisterInputChannel(JNIEnv* env, jc
 }
 
 static void android_view_InputQueue_nativeFinished(JNIEnv* env, jclass clazz,
-        jlong finishedToken, bool handled) {
+        jlong finishedToken) {
     status_t status = gNativeInputQueue.finished(
-            env, finishedToken, handled, false /*ignoreSpuriousFinish*/);
+            env, finishedToken, false /*ignoreSpuriousFinish*/);
 
     // We ignore the case where an event could not be finished because the input channel
     // was no longer registered (DEAD_OBJECT) since it is a common race that can occur
@@ -494,7 +493,7 @@ static JNINativeMethod gInputQueueMethods[] = {
     { "nativeUnregisterInputChannel",
             "(Landroid/view/InputChannel;)V",
             (void*)android_view_InputQueue_nativeUnregisterInputChannel },
-    { "nativeFinished", "(JZ)V",
+    { "nativeFinished", "(J)V",
             (void*)android_view_InputQueue_nativeFinished }
 };
 
