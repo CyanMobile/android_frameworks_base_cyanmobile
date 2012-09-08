@@ -704,26 +704,34 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             break;
         }
 
-            // apply transparent navi bar drawables
-            int transNaviBar = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_NAVI_BAR, 0);
-            int naviBarColor = Settings.System.getInt(getContentResolver(), Settings.System.NAVI_BAR_COLOR, 0xFF38FF00);
-            switch (transNaviBar) {
-               case 0 : // theme, leave alone
-                 mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background));
-                 break;
-               case 1 : // based on ROM
-                 mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background_black));
-                 break;
-               case 2 : // user defined argb hex color
-                 mNaviBarContainer.setBackgroundColor(naviBarColor);
-                 break;
-               case 3 : // BackLogo
-                 Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/navb_background"));
-                 Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
-                 Drawable bgrImage = new BitmapDrawable(bitmapImage);
-                 mNaviBarContainer.setBackgroundDrawable(bgrImage);
-                 break;
-            }
+        // apply transparent navi bar drawables
+        int transNaviBar = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_NAVI_BAR, 0);
+        int naviBarColor = Settings.System.getInt(getContentResolver(), Settings.System.NAVI_BAR_COLOR, 0xFF38FF00);
+        switch (transNaviBar) {
+          case 0 : // theme, leave alone
+            mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background));
+            break;
+          case 1 : // based on ROM
+            mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background_black));
+            break;
+          case 2 : // semi transparent
+            mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.statusbar_background_semi));
+            break;
+          case 3 : // gradient
+            mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.statusbar_background_gradient));
+            break;
+          case 4 : // user defined argb hex color
+            mNaviBarContainer.setBackgroundColor(naviBarColor);
+            break;
+          case 5 : // transparent
+            break;
+          case 6 : // BackLogo
+            Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/navb_background"));
+            Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
+            Drawable bgrImage = new BitmapDrawable(bitmapImage);
+            mNaviBarContainer.setBackgroundDrawable(bgrImage);
+            break;
+        }
 
         // figure out which pixel-format to use for the status bar.
         mPixelFormat = PixelFormat.TRANSLUCENT;
