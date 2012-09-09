@@ -3525,7 +3525,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     Runnable mScreenSaverActivator = new Runnable() {
         public void run() {
             synchronized (this) {
-                if (!(mScreenSaverEnabled && mScreenOn)) {
+                if (!(mScreenSaverEnabled && mScreenOnEarly)) {
                     Log.w(TAG, "mScreenSaverActivator ran, but the screensaver should not be showing. Who's driving this thing?");
                     return;
                 }
@@ -3558,7 +3558,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private void updateScreenSaverTimeoutLocked() {
         synchronized (mScreenSaverActivator) {
             mHandler.removeCallbacks(mScreenSaverActivator);
-            if (mScreenSaverEnabled && mScreenOn && mScreenSaverTimeout > 0) {
+            if (mScreenSaverEnabled && mScreenOnEarly && mScreenSaverTimeout > 0) {
                 if (localLOGV)
                     Log.v(TAG, "scheduling screensaver for " + mScreenSaverTimeout + "ms from now");
                 mHandler.postDelayed(mScreenSaverActivator, mScreenSaverTimeout);
@@ -3566,7 +3566,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if (localLOGV) {
                     if (mScreenSaverTimeout == 0)
                         Log.v(TAG, "screen saver disabled by user");
-                    else if (!mScreenOn)
+                    else if (!mScreenOnEarly)
                         Log.v(TAG, "screen saver disabled while screen off");
                     else
                         Log.v(TAG, "screen saver disabled by wakelock");

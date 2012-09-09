@@ -11001,7 +11001,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
         Watermark(Display display, SurfaceSession session, String[] tokens) {
             final DisplayMetrics dm = new DisplayMetrics();
-            display.getMetrics(dm);
+            display.getRealMetrics(dm);
 
             if (false) {
                 Log.i(TAG, "*********************** WATERMARK");
