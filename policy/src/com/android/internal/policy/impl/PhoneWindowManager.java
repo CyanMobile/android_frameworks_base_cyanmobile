@@ -28,6 +28,7 @@ import android.app.UiModeManager;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -386,6 +387,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     int mLockScreenTimeout;
     boolean mLockScreenTimerActive;
 
+    // visual screen saver support
+    int mScreenSaverTimeout;
+    boolean mScreenSaverEnabled = false;
+
     // Behavior of ENDCALL Button.  (See Settings.System.END_BUTTON_BEHAVIOR.)
     int mEndcallBehavior;
 
@@ -469,6 +474,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.getUriFor(Settings.System.STATUSBAR_STATS_SIZE), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUSBAR_NAVI_SIZE), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.Secure.DREAM_TIMEOUT), false, this);
             updateSettings();
         }
 
@@ -1061,6 +1068,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mLongPressBackKill = (Settings.Secure.getInt(
                     resolver, Settings.Secure.KILL_APP_LONGPRESS_BACK, 0) == 1);
         }
+
+        mScreenSaverTimeout = Settings.System.getInt(resolver,
+                    Settings.Secure.DREAM_TIMEOUT, 0);
+        mScreenSaverEnabled = true;
+        updateScreenSaverTimeoutLocked();
+
         if (updateRotation) {
             updateRotation(0);
         }
@@ -3161,6 +3174,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mScreenOffReason = why;
             updateOrientationListenerLp();
             updateLockScreenTimeout();
+            updateScreenSaverTimeoutLocked();
         }
     }
 
@@ -3207,6 +3221,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mCameraKeyPressable = false;
             updateOrientationListenerLp();
             updateLockScreenTimeout();
+            updateScreenSaverTimeoutLocked();
         }
     }
 
@@ -3502,6 +3517,62 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 mHandler.postDelayed(mScreenLockTimeout, mLockScreenTimeout);
             }
         }
+        synchronized (mLock) {
+            updateScreenSaverTimeoutLocked();
+        }
+    }
+
+    Runnable mScreenSaverActivator = new Runnable() {
+        public void run() {
+            synchronized (this) {
+                if (!(mScreenSaverEnabled && mScreenOn)) {
+                    Log.w(TAG, "mScreenSaverActivator ran, but the screensaver should not be showing. Who's driving this thing?");
+                    return;
+                }
+
+                if (localLOGV) Log.v(TAG, "mScreenSaverActivator entering dreamland");
+                try {
+                    String component = Settings.System.getString(
+                            mContext.getContentResolver(), Settings.Secure.DREAM_COMPONENT);
+                    if (component != null) {
+                        ComponentName cn = ComponentName.unflattenFromString(component);
+                        Intent intent = new Intent(Intent.ACTION_MAIN)
+                            .setComponent(cn)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+                                | Intent.FLAG_ACTIVITY_NO_USER_ACTION
+                                | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                        mContext.startActivity(intent);
+                    } else {
+                        Log.e(TAG, "Couldn't start screen saver: none selected");
+                    }
+                } catch (android.content.ActivityNotFoundException exc) {
+                    // no screensaver? give up
+                    Log.e(TAG, "Couldn't start screen saver: none installed");
+                }
+            }
+        }
+    };
+
+    // Must call while holding mLock
+    private void updateScreenSaverTimeoutLocked() {
+        synchronized (mScreenSaverActivator) {
+            mHandler.removeCallbacks(mScreenSaverActivator);
+            if (mScreenSaverEnabled && mScreenOn && mScreenSaverTimeout > 0) {
+                if (localLOGV)
+                    Log.v(TAG, "scheduling screensaver for " + mScreenSaverTimeout + "ms from now");
+                mHandler.postDelayed(mScreenSaverActivator, mScreenSaverTimeout);
+            } else {
+                if (localLOGV) {
+                    if (mScreenSaverTimeout == 0)
+                        Log.v(TAG, "screen saver disabled by user");
+                    else if (!mScreenOn)
+                        Log.v(TAG, "screen saver disabled while screen off");
+                    else
+                        Log.v(TAG, "screen saver disabled by wakelock");
+                }
+            }
+        }
     }
 
     Runnable mScreenLockTimeout = new Runnable() {
@@ -3711,10 +3782,27 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         return true;
     }
 
+    public void screenOnStartedLw() {
+        // The window manager has just grabbed a wake lock. This is our cue to disable the screen
+        // saver.
+        synchronized (mLock) {
+            mScreenSaverEnabled = false;
+        }
+    }
+
     public void screenOnStoppedLw() {
-        if (!mKeyguardMediator.isShowingAndNotHidden() && mPowerManager.isScreenOn()) {
-            long curTime = SystemClock.uptimeMillis();
-            mPowerManager.userActivity(curTime, false, LocalPowerManager.OTHER_EVENT);
+        if (mPowerManager.isScreenOn()) {
+            if (!mKeyguardMediator.isShowingAndNotHidden()) {
+                long curTime = SystemClock.uptimeMillis();
+                mPowerManager.userActivity(curTime, false, LocalPowerManager.OTHER_EVENT);
+            }
+
+            synchronized (mLock) {
+                // even if the keyguard is up, now that all the wakelocks have been released, we
+                // should re-enable the screen saver
+                mScreenSaverEnabled = true;
+                updateScreenSaverTimeoutLocked();
+            }
         }
     }
 
