@@ -1265,6 +1265,16 @@
   <public type="attr" name="windowCloseOnTouchOutside" />
   <public type="attr" name="textAppearanceListItem" />
   <public type="attr" name="textAppearanceListItemSmall" />
+  <public type="attr" name="rowCount" />
+  <public type="attr" name="rowOrderPreserved" />
+  <public type="attr" name="columnCount" />
+  <public type="attr" name="columnOrderPreserved" />
+  <public type="attr" name="useDefaultMargins" />
+  <public type="attr" name="layout_row" />
+  <public type="attr" name="layout_rowSpan" />
+  <public type="attr" name="layout_rowWeight" />
+  <public type="attr" name="layout_columnSpan" />
+  <public type="attr" name="layout_columnWeight" />
 
   <!-- presence drawables for videochat or audiochat capable contacts -->
   <public type="drawable" name="presence_video_away" id="0x010800ac" />
