@@ -428,9 +428,12 @@ public class WindowManagerService extends IWindowManager.Stub
     boolean mShowingBootMessages = false;
     int mInitialDisplayWidth = 0;
     int mInitialDisplayHeight = 0;
+    int mCurDisplayWidth = 0;
+    int mCurDisplayHeight = 0;
     int mRotation = 0;
     int mRequestedRotation = 0;
     int mForcedAppOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+    boolean mAltOrientation = false;
     int mLastRotationFlags;
     ArrayList<IRotationWatcher> mRotationWatchers
             = new ArrayList<IRotationWatcher>();
@@ -552,7 +555,6 @@ public class WindowManagerService extends IWindowManager.Stub
     }
 
     final Configuration mTempConfiguration = new Configuration();
-    int mScreenLayout = Configuration.SCREENLAYOUT_SIZE_UNDEFINED;
 
     // The frame use to limit the size of the app running in compatibility mode.
     Rect mCompatibleScreenFrame = new Rect();
@@ -1378,8 +1380,8 @@ public class WindowManagerService extends IWindowManager.Stub
     int adjustWallpaperWindowsLocked() {
         int changed = 0;
 
-        final int dw = mDisplay.getWidth();
-        final int dh = mDisplay.getHeight();
+        final int dw = mCurDisplayWidth;
+        final int dh = mCurDisplayHeight;
 
         // First find top-most window that has asked to be on top of the
         // wallpaper; all wallpapers go behind it.
@@ -1799,8 +1801,8 @@ public class WindowManagerService extends IWindowManager.Stub
     }
 
     boolean updateWallpaperOffsetLocked(WindowState changingTarget, boolean sync) {
-        final int dw = mDisplay.getWidth();
-        final int dh = mDisplay.getHeight();
+        final int dw = mCurDisplayWidth;
+        final int dh = mCurDisplayHeight;
 
         boolean changed = false;
 
@@ -1840,8 +1842,8 @@ public class WindowManagerService extends IWindowManager.Stub
 
     void updateWallpaperVisibilityLocked() {
         final boolean visible = isWallpaperVisible(mWallpaperTarget);
-        final int dw = mDisplay.getWidth();
-        final int dh = mDisplay.getHeight();
+        final int dw = mCurDisplayWidth;
+        final int dh = mCurDisplayHeight;
 
         int curTokenIndex = mWallpaperTokens.size();
         while (curTokenIndex > 0) {
@@ -1895,9 +1897,10 @@ public class WindowManagerService extends IWindowManager.Stub
             if (mDisplay == null) {
                 WindowManager wm = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
                 mDisplay = wm.getDefaultDisplay();
-                mInitialDisplayWidth = mDisplay.getWidth();
-                mInitialDisplayHeight = mDisplay.getHeight();
-                mInputManager.setDisplaySize(0, mDisplay.getRealWidth(), mDisplay.getRealHeight());
+                mInitialDisplayWidth = mCurDisplayWidth = mDisplay.getRealWidth();
+                mInitialDisplayHeight = mCurDisplayHeight = mDisplay.getRealHeight();
+                mInputManager.setDisplaySize(0, mDisplay.getRawWidth(), mDisplay.getRawHeight());
+                mPolicy.setInitialDisplaySize(mInitialDisplayWidth, mInitialDisplayHeight);
                 reportNewConfig = true;
             }
 
@@ -2645,8 +2648,7 @@ public class WindowManagerService extends IWindowManager.Stub
             configChanged = updateOrientationFromAppTokensLocked(false);
             performLayoutAndPlaceSurfacesLocked();
             if (displayed && win.mIsWallpaper) {
-                updateWallpaperOffsetLocked(win, mDisplay.getWidth(),
-                        mDisplay.getHeight(), false);
+                updateWallpaperOffsetLocked(win, mCurDisplayWidth, mCurDisplayHeight, false);
             }
             if (win.mAppToken != null) {
                 win.mAppToken.updateReportedVisibilityLocked();
@@ -4803,7 +4805,52 @@ public class WindowManagerService extends IWindowManager.Stub
         rotation = mPolicy.rotationForOrientationLw(mForcedAppOrientation,
                 mRotation, mDisplayEnabled);
         if (DEBUG_ORIENTATION) Slog.v(TAG, "new rotation is set to " + rotation);
+
+        int desiredRotation = rotation;
+        int lockedRotation = mPolicy.getLockedRotationLw();
+        if (lockedRotation >= 0 && rotation != lockedRotation) {
+            // We are locked in a rotation but something is requesting
+            // a different rotation...  we will either keep the locked
+            // rotation if it results in the same orientation, or have to
+            // switch into an emulated orientation mode.
+
+            // First, we know that our rotation is actually going to be
+            // the locked rotation.
+            rotation = lockedRotation;
+
+            // Now the difference between the desired and lockedRotation
+            // may mean that the orientation is different...  if that is
+            // not the case, we can just make the desired rotation be the
+            // same as the new locked rotation.
+            switch (lockedRotation) {
+                case Surface.ROTATION_0:
+                    if (rotation == Surface.ROTATION_180) {
+                        desiredRotation = lockedRotation;
+                    }
+                    break;
+                case Surface.ROTATION_90:
+                    if (rotation == Surface.ROTATION_270) {
+                        desiredRotation = lockedRotation;
+                    }
+                    break;
+                case Surface.ROTATION_180:
+                    if (rotation == Surface.ROTATION_0) {
+                        desiredRotation = lockedRotation;
+                    }
+                    break;
+                case Surface.ROTATION_270:
+                    if (rotation == Surface.ROTATION_90) {
+                        desiredRotation = lockedRotation;
+                    }
+                    break;
+            }
+        }
+
         changed = mDisplayEnabled && mRotation != rotation;
+        if (mAltOrientation != (rotation != desiredRotation)) {
+            changed = true;
+            mAltOrientation = rotation != desiredRotation;	
+        }
 
         if (changed) {
             if (DEBUG_ORIENTATION) Slog.v(TAG,
@@ -5324,8 +5371,32 @@ public class WindowManagerService extends IWindowManager.Stub
         // Use the effective "visual" dimensions based on current rotation
         final boolean rotated = (mRotation == Surface.ROTATION_90
                 || mRotation == Surface.ROTATION_270);
-        final int dw = rotated ? mInitialDisplayHeight : mInitialDisplayWidth;
-        final int dh = rotated ? mInitialDisplayWidth : mInitialDisplayHeight;
+        final int realdw = rotated ? mInitialDisplayHeight : mInitialDisplayWidth;
+        final int realdh = rotated ? mInitialDisplayWidth : mInitialDisplayHeight;
+
+        if (mAltOrientation) {
+            mCurDisplayWidth = realdw;
+            mCurDisplayHeight = realdh;
+            if (realdw > realdh) {
+                // Turn landscape into portrait.
+                int maxw = (int)(realdh/1.3f);
+                if (maxw < realdw) {
+                    mCurDisplayWidth = maxw;
+                }
+            } else {
+                // Turn portrait into landscape.
+                int maxh = (int)(realdw/1.3f);
+                if (maxh < realdh) {
+                    mCurDisplayHeight = maxh;
+                }
+            }
+        } else {
+            mCurDisplayWidth = realdw;
+            mCurDisplayHeight = realdh;
+        }
+
+        final int dw = mCurDisplayWidth;
+        final int dh = mCurDisplayHeight;
 
         int orientation = Configuration.ORIENTATION_SQUARE;
         if (dw < dh) {
@@ -5336,63 +5407,67 @@ public class WindowManagerService extends IWindowManager.Stub
         config.orientation = orientation;
 
         DisplayMetrics dm = new DisplayMetrics();
-        mDisplay.getMetrics(dm);
+        mDisplay.getRealMetrics(dm);
+
+        // Override display width and height with what we are computing,
+        // to be sure they remain consistent.
+        dm.widthPixels = mPolicy.getNonDecorDisplayWidth(dw);
+        dm.heightPixels = mPolicy.getNonDecorDisplayHeight(dh);
         mCompatibleScreenScale = 1;
         CompatibilityInfo.updateCompatibleScreenFrame(dm, orientation, mCompatibleScreenFrame);
 
-        if (mScreenLayout == Configuration.SCREENLAYOUT_SIZE_UNDEFINED) {
-            // Note we only do this once because at this point we don't
-            // expect the screen to change in this way at runtime, and want
-            // to avoid all of this computation for every config change.
-            int longSize = dw;
-            int shortSize = dh;
-            if (longSize < shortSize) {
-                int tmp = longSize;
-                longSize = shortSize;
-                shortSize = tmp;
-            }
-            longSize = (int)(longSize/dm.density);
-            shortSize = (int)(shortSize/dm.density);
+        // Compute the screen layout size class.
+        int screenLayout;
+        int longSize = dw;
+        int shortSize = dh;
+        if (longSize < shortSize) {
+            int tmp = longSize;
+            longSize = shortSize;
+            shortSize = tmp;
+        }
 
-            // These semi-magic numbers define our compatibility modes for
-            // applications with different screens.  Don't change unless you
-            // make sure to test lots and lots of apps!
-            if (longSize < 470) {
-                // This is shorter than an HVGA normal density screen (which
-                // is 480 pixels on its long side).
-                mScreenLayout = Configuration.SCREENLAYOUT_SIZE_SMALL
-                        | Configuration.SCREENLAYOUT_LONG_NO;
+        longSize = (int)(longSize/dm.density);
+        shortSize = (int)(shortSize/dm.density);
+
+        // These semi-magic numbers define our compatibility modes for
+        // applications with different screens.  These are guarantees to
+        // app developers about the space they can expect for a particular
+        // configuration.  DO NOT CHANGE!
+        if (longSize < 470) {
+            // This is shorter than an HVGA normal density screen (which
+            // is 480 pixels on its long side).
+            screenLayout = Configuration.SCREENLAYOUT_SIZE_SMALL
+                    | Configuration.SCREENLAYOUT_LONG_NO;
+        } else {
+            // What size is this screen screen?
+            if (longSize >= 960 && shortSize >= 720) {
+                // 1.5xVGA or larger screens at medium density are the point
+                // at which we consider it to be an extra large screen.
+                screenLayout = Configuration.SCREENLAYOUT_SIZE_XLARGE;
+            } else if (longSize >= 640 && shortSize >= 480) {
+                // VGA or larger screens at medium density are the point
+                // at which we consider it to be a large screen.
+                screenLayout = Configuration.SCREENLAYOUT_SIZE_LARGE;
             } else {
-                // What size is this screen screen?
-                if (longSize >= 960 && shortSize >= 720) {
-                    // SVGA or larger screens at medium density are the point
-                    // at which we consider it to be an extra large screen.
-                    mScreenLayout = Configuration.SCREENLAYOUT_SIZE_XLARGE;
-                } else if (longSize >= 640 && shortSize >= 480) {
-                    // SVGA or larger screens at high density are the point
-                    // at which we consider it to be a large screen.
-                    mScreenLayout = Configuration.SCREENLAYOUT_SIZE_LARGE;
-                } else {
-                    mScreenLayout = Configuration.SCREENLAYOUT_SIZE_NORMAL;
-                }
-                
-                // If this screen is wider than normal HVGA, or taller
-                // than FWVGA, then for old apps we want to run in size
-                // compatibility mode.
-                if (shortSize > 321 || longSize > 570) {
-                    mScreenLayout |= Configuration.SCREENLAYOUT_COMPAT_NEEDED;
-                }
+                screenLayout = Configuration.SCREENLAYOUT_SIZE_NORMAL;
+            }
 
-                // Is this a long screen?
-                if (((longSize*3)/5) >= (shortSize-1)) {
-                    // Anything wider than WVGA (5:3) is considering to be long.
-                    mScreenLayout |= Configuration.SCREENLAYOUT_LONG_YES;
-                } else {
-                    mScreenLayout |= Configuration.SCREENLAYOUT_LONG_NO;
-                }
+            // If this screen is wider than normal HVGA, or taller
+            // than FWVGA, then for old apps we want to run in size
+            // compatibility mode.
+            if (shortSize > 321 || longSize > 570) {
+                screenLayout |= Configuration.SCREENLAYOUT_COMPAT_NEEDED;
+            }
+
+            // Is this a long screen?
+            if (((longSize*3)/5) >= (shortSize-1)) {
+                // Anything wider than WVGA (5:3) is considering to be long.
+                screenLayout |= Configuration.SCREENLAYOUT_LONG_YES;
+            } else {
+                screenLayout |= Configuration.SCREENLAYOUT_LONG_NO;
             }
         }
-        config.screenLayout = mScreenLayout;
+        config.screenLayout = screenLayout;
 
         config.keyboardHidden = Configuration.KEYBOARDHIDDEN_NO;
         config.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_NO;
@@ -6660,8 +6735,8 @@ public class WindowManagerService extends IWindowManager.Stub
         }
 
             if (mIsWallpaper && (fw != frame.width() || fh != frame.height())) {
-                updateWallpaperOffsetLocked(this, mDisplay.getWidth(),
-                        mDisplay.getHeight(), false);
+                updateWallpaperOffsetLocked(this, mDisplay.getRealWidth(),
+                        mDisplay.getRealHeight(), false);
             }
 
             if (localLOGV) {
@@ -8781,6 +8856,21 @@ public class WindowManagerService extends IWindowManager.Stub
         }
     }
 
+    public void getDisplaySize(Point size) {
+        synchronized(mWindowMap) {
+            size.x = mCurDisplayWidth;
+            size.y = mCurDisplayHeight;
+        }
+    }
+
+    public int getMaximumSizeDimension() {
+        synchronized(mWindowMap) {
+            // Do this based on the raw screen size, until we are smarter.
+            return mInitialDisplayWidth > mInitialDisplayHeight
+                    ? mInitialDisplayWidth : mInitialDisplayHeight;
+        }
+    }
+
     // -------------------------------------------------------------
     // Internals
     // -------------------------------------------------------------
@@ -9019,16 +9109,16 @@ public class WindowManagerService extends IWindowManager.Stub
         
         mLayoutNeeded = false;
         
-        final int dw = mPolicy.getNonDecorDisplayWidth(mDisplay.getWidth());
-        final int dh = mPolicy.getNonDecorDisplayHeight(mDisplay.getHeight());
+        final int dw = mCurDisplayWidth;
+        final int dh = mCurDisplayHeight;
 
-        final int newdw = mDisplay.getWidth();
-        final int newdh = mDisplay.getHeight();
+        final int innerDw = mPolicy.getNonDecorDisplayWidth(dw);
+        final int innerDh = mPolicy.getNonDecorDisplayHeight(dh);
 
         final int NFW = mFakeWindows.size();
 
         for (int i=0; i<NFW; i++) {
-            mFakeWindows.get(i).layout(newdw, newdh);
+            mFakeWindows.get(i).layout(dw, dh);
         }
 
         final int N = mWindows.size();
@@ -9040,7 +9130,7 @@ public class WindowManagerService extends IWindowManager.Stub
                     + mLayoutNeeded + " dw=" + dw + " dh=" + dh);
         }
         
-        mPolicy.beginLayoutLw(newdw, newdh);
+        mPolicy.beginLayoutLw(dw, dh);
         mSystemDecorLayer = mPolicy.getSystemDecorRectLw(mSystemDecorRect);
 
         int seq = mLayoutSeq+1;
@@ -9090,7 +9180,7 @@ public class WindowManagerService extends IWindowManager.Stub
                     win.mLayoutNeededs = false;
                     win.prelayout();
                     mPolicy.layoutWindowLw(win, win.mAttrs, null);
-                    win.evalNeedsBackgroundFiller(newdw, newdh);
+                    win.evalNeedsBackgroundFiller(innerDw, innerDh);
                     win.mLayoutSeq = seq;
                     if (DEBUG_LAYOUT) Slog.v(TAG, "  LAYOUT: mFrame="
                             + win.mFrame + " mContainingFrame="
@@ -9127,7 +9217,7 @@ public class WindowManagerService extends IWindowManager.Stub
                     win.mLayoutNeededs = false;
                     win.prelayout();
                     mPolicy.layoutWindowLw(win, win.mAttrs, win.mAttachedWindow);
-                    win.evalNeedsBackgroundFiller(newdw, newdh);
+                    win.evalNeedsBackgroundFiller(innerDw, innerDh);
                     win.mLayoutSeq = seq;
                     if (DEBUG_LAYOUT) Slog.v(TAG, "  LAYOUT: mFrame="
                             + win.mFrame + " mContainingFrame="
@@ -9165,8 +9255,8 @@ public class WindowManagerService extends IWindowManager.Stub
     private final void performLayoutAndPlaceSurfacesLockedInner(
             boolean recoveringMemory) {
         final long currentTime = SystemClock.uptimeMillis();
-        final int dw = mDisplay.getWidth();
-        final int dh = mDisplay.getHeight();
+        final int dw = mCurDisplayWidth;
+        final int dh = mCurDisplayHeight;
 
         final int innerDw = mPolicy.getNonDecorDisplayWidth(dw);
         final int innerDh = mPolicy.getNonDecorDisplayHeight(dh);
@@ -11366,8 +11456,13 @@ public class WindowManagerService extends IWindowManager.Stub
             if (mClosingApps.size() > 0) {
                 pw.print("  mClosingApps="); pw.println(mClosingApps);
             }
-            pw.print("  DisplayWidth="); pw.print(mDisplay.getWidth());
-                    pw.print(" DisplayHeight="); pw.println(mDisplay.getHeight());
+            pw.print("  Display: init="); pw.print(mInitialDisplayWidth); pw.print("x");
+                        pw.print(mInitialDisplayHeight); pw.print(" cur=");
+                        pw.print(mCurDisplayWidth); pw.print("x"); pw.print(mCurDisplayHeight);
+                        pw.print(" real="); pw.print(mDisplay.getRealWidth());
+                        pw.print("x"); pw.print(mDisplay.getRealHeight());
+                        pw.print(" raw="); pw.print(mDisplay.getRawWidth());
+                        pw.print("x"); pw.println(mDisplay.getRawHeight());
         }
     }
 

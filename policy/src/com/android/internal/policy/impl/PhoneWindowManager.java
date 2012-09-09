@@ -408,10 +408,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // (See Settings.Secure.INCALL_POWER_BUTTON_BEHAVIOR.)
     int mIncallPowerBehavior;
 
-    int mLandscapeRotation = -1; // default landscape rotation
-    int mSeascapeRotation = -1; // "other" landscape rotation, 180 degrees from mLandscapeRotation
-    int mPortraitRotation = -1; // default portrait rotation
-    int mUpsideDownRotation = -1; // "other" portrait rotation
+    int mLandscapeRotation = 0;  // default landscape rotation
+    int mSeascapeRotation = 0;   // "other" landscape rotation, 180 degrees from mLandscapeRotation
+    int mPortraitRotation = 0;   // default portrait rotation
+    int mUpsideDownRotation = 0; // "other" portrait rotation
 
     // Nothing to see here, move along...
     int mFancyRotationAnimation;
@@ -975,6 +975,20 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             screenTurningOn(null);
         } else {
             screenTurnedOff(WindowManagerPolicy.OFF_BECAUSE_OF_USER);
+        }
+    }
+
+    public void setInitialDisplaySize(int width, int height) {
+        if (width > height) {
+            mPortraitRotation = Surface.ROTATION_90;
+            mLandscapeRotation = Surface.ROTATION_0;
+            mUpsideDownRotation = Surface.ROTATION_270;
+            mSeascapeRotation = Surface.ROTATION_180;
+        } else {
+            mPortraitRotation = Surface.ROTATION_0;
+            mLandscapeRotation = Surface.ROTATION_90;
+            mUpsideDownRotation = Surface.ROTATION_180;
+            mSeascapeRotation = Surface.ROTATION_270;
         }
     }
 
@@ -3245,23 +3259,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     public int rotationForOrientationLw(int orientation, int lastRotation,
             boolean displayEnabled) {
 
-        if (mPortraitRotation < 0) {
-            // Initialize the rotation angles for each orientation once.
-            Display d = ((WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE))
-                    .getDefaultDisplay();
-            if (d.getWidth() > d.getHeight()) {
-                mPortraitRotation = Surface.ROTATION_90;
-                mLandscapeRotation = Surface.ROTATION_0;
-                mUpsideDownRotation = Surface.ROTATION_270;
-                mSeascapeRotation = Surface.ROTATION_180;
-            } else {
-                mPortraitRotation = Surface.ROTATION_0;
-                mLandscapeRotation = Surface.ROTATION_90;
-                mUpsideDownRotation = Surface.ROTATION_180;
-                mSeascapeRotation = Surface.ROTATION_270;
-            }
-        }
-
         synchronized (mLock) {
             switch (orientation) {
                 case ActivityInfo.SCREEN_ORIENTATION_PORTRAIT:
@@ -3330,6 +3327,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
          */
         return appOrientation == ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             || appOrientation == ActivityInfo.SCREEN_ORIENTATION_USER;
+    }
+
+    public int getLockedRotationLw() {
+        synchronized (mLock) {
+            if (false) {
+            }
+            return -1;	
+        }
     }
 
     private int getCurrentLandscapeRotation(int lastRotation) {
