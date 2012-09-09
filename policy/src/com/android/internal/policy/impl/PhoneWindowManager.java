@@ -2053,6 +2053,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if (navVisible) {
                     mNavigationBar.showLw(true);
                     mContentBottom = mCurBottom = mDockBottom = mTmpNavigationFrame.top;
+                    mRestrictedScreenHeight = mDockBottom - mDockTop;
                 } else {
                     mNavigationBar.hideLw(true);
                 }

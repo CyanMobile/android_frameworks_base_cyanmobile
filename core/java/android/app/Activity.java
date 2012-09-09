@@ -3797,20 +3797,23 @@ public class Activity extends ContextThemeWrapper
     }
     
     final void performRestart() {
-        synchronized (mManagedCursors) {
-            final int N = mManagedCursors.size();
-            for (int i=0; i<N; i++) {
-                ManagedCursor mc = mManagedCursors.get(i);
-                if (mc.mReleased || mc.mUpdated) {
-                    mc.mCursor.requery();
-                    mc.mReleased = false;
-                    mc.mUpdated = false;
-                }
-            }
-        }
-
         if (mStopped) {
             mStopped = false;
+            synchronized (mManagedCursors) {
+                final int N = mManagedCursors.size();
+                for (int i=0; i<N; i++) {
+                    ManagedCursor mc = mManagedCursors.get(i);
+                    if (mc.mReleased || mc.mUpdated) {
+                       if (!mc.mCursor.requery()) {
+                            throw new IllegalStateException(
+                                    "trying to requery an already closed cursor  "
+                                    + mc.mCursor);
+                       }
+                       mc.mReleased = false;
+                       mc.mUpdated = false;
+                    }
+                }
+            }
             mCalled = false;
             mInstrumentation.callActivityOnRestart(this);
             if (!mCalled) {
