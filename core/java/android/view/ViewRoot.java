@@ -1961,7 +1961,6 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
 
         if (mView != null && mAttached) {
             mView.dispatchDetachedFromWindow();
-            mAttached = false;
         }
 
         mView = null;

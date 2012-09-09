@@ -1064,6 +1064,11 @@ public class WebView extends AbsoluteLayout
     }
 
     @Override
+    public boolean shouldDelayChildPressedState() {
+        return true;
+    }
+
+    @Override
     public void setOverScrollMode(int mode) {
         super.setOverScrollMode(mode);
         if (mode != OVER_SCROLL_NEVER) {

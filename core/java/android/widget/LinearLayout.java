@@ -225,6 +225,11 @@ public class LinearLayout extends ViewGroup {
         return childTop + lp.topMargin + childBaseline;
     }
 
+    @Override
+    public boolean shouldDelayChildPressedState() {
+        return false;
+    }
+
     /**
      * @return The index of the child that will be used if this layout is
      *   part of a larger layout that is baseline aligned, or -1 if none has
