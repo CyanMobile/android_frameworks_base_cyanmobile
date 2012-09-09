@@ -181,7 +181,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     LinearLayout mIcons;
     LinearLayout mCenterClock;
     LinearLayout mCenterClockex;
-    SignalClusterView mCenterIconex;
     LinearLayout mLeftClock;
     IconMerger mNotificationIcons;
     LinearLayout mStatusIcons;
@@ -795,13 +794,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mBottomScrollView = (ScrollView)mExpandedView.findViewById(R.id.bottomScroll);
         mNotificationLinearLayout = (LinearLayout)mExpandedView.findViewById(R.id.notificationLinearLayout);
         mBottomNotificationLinearLayout = (LinearLayout)mExpandedView.findViewById(R.id.bottomNotificationLinearLayout);
-	    mMusicToggleButton = (ImageView)mExpandedView.findViewById(R.id.music_toggle_button);
+	mMusicToggleButton = (ImageView)mExpandedView.findViewById(R.id.music_toggle_button);
         mMusicToggleButton.setOnClickListener(mMusicToggleButtonListener);
         mCenterClockex = (LinearLayout)mExpandedView.findViewById(R.id.centerClockex);
-        mCenterIconex = (SignalClusterView)mExpandedView.findViewById(R.id.centerIconex);
-        mSettingsIconButton = (ImageView)mExpandedView.findViewById(R.id.settingIcon);
         mSettingsIconButton.setOnClickListener(mSettingsIconButtonListener);
-        mStatusIconsExp = (LinearLayout)mExpandedView.findViewById(R.id.expstatusIcons);
+        
 
         mExpandedView.setVisibility(View.GONE);
         mOngoingTitle.setVisibility(View.GONE);
