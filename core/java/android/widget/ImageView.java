@@ -318,8 +318,14 @@ public class ImageView extends View {
         if (mDrawable != drawable) {
             mResource = 0;
             mUri = null;
+            int oldWidth = mDrawableWidth;
+            int oldHeight = mDrawableHeight;
+
             updateDrawable(drawable);
-            requestLayout();
+
+            if (oldWidth != mDrawableWidth || oldHeight != mDrawableHeight) {
+                requestLayout();
+            }
             invalidate();
         }
     }
@@ -569,6 +575,8 @@ public class ImageView extends View {
             mDrawableHeight = d.getIntrinsicHeight();
             applyColorMod();
             configureBounds();
+        } else {
+            mDrawableWidth = mDrawableHeight = -1;
         }
     }
 
@@ -613,7 +621,10 @@ public class ImageView extends View {
         
         // We are allowed to change the view's height
         boolean resizeHeight = false;
-        
+
+        final int widthSpecMode = MeasureSpec.getMode(widthMeasureSpec);
+        final int heightSpecMode = MeasureSpec.getMode(heightMeasureSpec);
+
         if (mDrawable == null) {
             // If no drawable, its intrinsic size is 0.
             mDrawableWidth = -1;
@@ -628,9 +639,6 @@ public class ImageView extends View {
             // We are supposed to adjust view bounds to match the aspect
             // ratio of our drawable. See if that is possible.
             if (mAdjustViewBounds) {
-                
-                int widthSpecMode = MeasureSpec.getMode(widthMeasureSpec);
-                int heightSpecMode = MeasureSpec.getMode(heightMeasureSpec);
                 
                 resizeWidth = widthSpecMode != MeasureSpec.EXACTLY;
                 resizeHeight = heightSpecMode != MeasureSpec.EXACTLY;

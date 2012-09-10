@@ -287,6 +287,8 @@ public class WindowManagerService extends IWindowManager.Stub
 
     final boolean mHaveInputMethods;
 
+    final boolean mAllowBootMessages;
+
     final boolean mLimitedAlphaCompositing;
 
     final WindowManagerPolicy mPolicy = PolicyManager.makeNewWindowManager();
@@ -426,6 +428,8 @@ public class WindowManagerService extends IWindowManager.Stub
     boolean mSystemBooted = false;
     boolean mForceDisplayEnabled = false;
     boolean mShowingBootMessages = false;
+    int mAppDisplayWidth = 0;
+    int mAppDisplayHeight = 0;
     int mInitialDisplayWidth = 0;
     int mInitialDisplayHeight = 0;
     int mCurDisplayWidth = 0;
@@ -480,6 +484,8 @@ public class WindowManagerService extends IWindowManager.Stub
     final ArrayList<AppWindowToken> mClosingApps = new ArrayList<AppWindowToken>();
 
     Display mDisplay;
+    final DisplayMetrics mDisplayMetrics = new DisplayMetrics();
+    final DisplayMetrics mRealDisplayMetrics = new DisplayMetrics();
 
     H mH = new H();
 
@@ -588,8 +594,8 @@ public class WindowManagerService extends IWindowManager.Stub
     };
 
     public static WindowManagerService main(Context context,
-            PowerManagerService pm, boolean haveInputMethods) {
-        WMThread thr = new WMThread(context, pm, haveInputMethods);
+            PowerManagerService pm, boolean haveInputMethods, boolean allowBootMsgs) {
+        WMThread thr = new WMThread(context, pm, haveInputMethods, allowBootMsgs);
         thr.start();
 
         synchronized (thr) {
@@ -609,19 +615,21 @@ public class WindowManagerService extends IWindowManager.Stub
         private final Context mContext;
         private final PowerManagerService mPM;
         private final boolean mHaveInputMethods;
+        private final boolean mAllowBootMessages;
 
         public WMThread(Context context, PowerManagerService pm,
-                boolean haveInputMethods) {
+                boolean haveInputMethods, boolean allowBootMsgs) {
             super("WindowManager");
             mContext = context;
             mPM = pm;
             mHaveInputMethods = haveInputMethods;
+            mAllowBootMessages = allowBootMsgs;
         }
 
         public void run() {
             Looper.prepare();
             WindowManagerService s = new WindowManagerService(mContext, mPM,
-                    mHaveInputMethods);
+                    mHaveInputMethods, mAllowBootMessages);
             android.os.Process.setThreadPriority(
                     android.os.Process.THREAD_PRIORITY_DISPLAY);
             android.os.Process.setCanSelfBackground(false);
@@ -673,9 +681,10 @@ public class WindowManagerService extends IWindowManager.Stub
     }
 
     private WindowManagerService(Context context, PowerManagerService pm,
-            boolean haveInputMethods) {
+            boolean haveInputMethods, boolean showBootMsgs) {
         mContext = context;
         mHaveInputMethods = haveInputMethods;
+        mAllowBootMessages = showBootMsgs;
         mLimitedAlphaCompositing = context.getResources().getBoolean(
                 com.android.internal.R.bool.config_sf_limitedAlpha);
 
@@ -1897,9 +1906,10 @@ public class WindowManagerService extends IWindowManager.Stub
             if (mDisplay == null) {
                 WindowManager wm = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
                 mDisplay = wm.getDefaultDisplay();
-                mInitialDisplayWidth = mCurDisplayWidth = mDisplay.getRealWidth();
-                mInitialDisplayHeight = mCurDisplayHeight = mDisplay.getRealHeight();
-                mInputManager.setDisplaySize(0, mDisplay.getRawWidth(), mDisplay.getRawHeight());
+                mInitialDisplayWidth = mCurDisplayWidth = mAppDisplayWidth = mDisplay.getRawWidth();
+                mInitialDisplayHeight = mCurDisplayHeight = mAppDisplayHeight = mDisplay.getRawHeight();
+                mInputManager.setDisplaySize(Display.DEFAULT_DISPLAY,
+                    mDisplay.getRawWidth(), mDisplay.getRawHeight());
                 mPolicy.setInitialDisplaySize(mInitialDisplayWidth, mInitialDisplayHeight);
                 reportNewConfig = true;
             }
@@ -4727,6 +4737,9 @@ public class WindowManagerService extends IWindowManager.Stub
     public void showBootMessage(final CharSequence msg, final boolean always) {
         boolean first = false;
         synchronized(mWindowMap) {
+            if (!mAllowBootMessages) {
+                return;
+            }
             if (!mShowingBootMessages) {
                 if (!always) {
                     return;
@@ -5406,13 +5419,14 @@ public class WindowManagerService extends IWindowManager.Stub
         }
         config.orientation = orientation;
 
-        DisplayMetrics dm = new DisplayMetrics();
-        mDisplay.getRealMetrics(dm);
+        mDisplay.getMetricsWithSize(mRealDisplayMetrics, mCurDisplayWidth, mCurDisplayHeight);
 
         // Override display width and height with what we are computing,
         // to be sure they remain consistent.
-        dm.widthPixels = mPolicy.getNonDecorDisplayWidth(dw);
-        dm.heightPixels = mPolicy.getNonDecorDisplayHeight(dh);
+        final DisplayMetrics dm = mDisplayMetrics;
+        mAppDisplayWidth = mPolicy.getNonDecorDisplayWidth(dw);
+        mAppDisplayHeight = mPolicy.getNonDecorDisplayHeight(dh);
+        mDisplay.getMetricsWithSize(dm, mAppDisplayWidth, mAppDisplayHeight);
         mCompatibleScreenScale = 1;
         CompatibilityInfo.updateCompatibleScreenFrame(dm, orientation, mCompatibleScreenFrame);
 
@@ -6735,8 +6749,8 @@ public class WindowManagerService extends IWindowManager.Stub
         }
 
             if (mIsWallpaper && (fw != frame.width() || fh != frame.height())) {
-                updateWallpaperOffsetLocked(this, mDisplay.getRealWidth(),
-                        mDisplay.getRealHeight(), false);
+                updateWallpaperOffsetLocked(this, mAppDisplayWidth,
+                        mAppDisplayHeight, false);
             }
 
             if (localLOGV) {
@@ -8851,12 +8865,19 @@ public class WindowManagerService extends IWindowManager.Stub
 
     public void getInitialDisplaySize(Point size) {
         synchronized(mWindowMap) {
+            size.x = mInitialDisplayWidth;
+            size.y = mInitialDisplayHeight;
+        }
+    }
+
+    public void getDisplaySize(Point size) {
+        synchronized(mWindowMap) {
             size.x = mCurDisplayWidth;
             size.y = mCurDisplayHeight;
         }
     }
 
-    public void getDisplaySize(Point size) {
+    public void getRealDisplaySize(Point size) {
         synchronized(mWindowMap) {
             size.x = mCurDisplayWidth;
             size.y = mCurDisplayHeight;
@@ -10907,7 +10928,8 @@ public class WindowManagerService extends IWindowManager.Stub
         if (CUSTOM_SCREEN_ROTATION && mPolicy.isScreenOnFully()) {
             if (mScreenRotationAnimation == null) {
                 mScreenRotationAnimation = new ScreenRotationAnimation(mContext,
-                        mDisplay, mFxSession, inTransaction);
+                        mFxSession, inTransaction, mCurDisplayWidth, mCurDisplayHeight,
+                        mDisplay.getRotation());
             }
         } else {
             Surface.freezeDisplay(0);
@@ -10934,7 +10956,7 @@ public class WindowManagerService extends IWindowManager.Stub
         if (mScreenRotationAnimation != null) {
             if (DEBUG_ORIENTATION) Slog.i(TAG, "**** Dismissing screen rotation animation");
             if (mScreenRotationAnimation.dismiss(MAX_ANIMATION_DURATION,
-                    mTransitionAnimationScale)) {
+                    mTransitionAnimationScale, mCurDisplayWidth, mCurDisplayHeight)) {
                 requestAnimationLocked(0);
             } else {
                 mScreenRotationAnimation = null;
@@ -10999,10 +11021,7 @@ public class WindowManagerService extends IWindowManager.Stub
         int mLastDH;
         boolean mDrawNeeded;
 
-        Watermark(Display display, SurfaceSession session, String[] tokens) {
-            final DisplayMetrics dm = new DisplayMetrics();
-            display.getRealMetrics(dm);
-
+        Watermark(DisplayMetrics dm, SurfaceSession session, String[] tokens) {
             if (false) {
                 Log.i(TAG, "*********************** WATERMARK");
                 for (int i=0; i<tokens.length; i++) {
@@ -11139,7 +11158,7 @@ public class WindowManagerService extends IWindowManager.Stub
             if (line != null) {
                 String[] toks = line.split("%");
                 if (toks != null && toks.length > 0) {
-                    mWatermark = new Watermark(mDisplay, mFxSession, toks);
+                    mWatermark = new Watermark(mRealDisplayMetrics, mFxSession, toks);
                 }
             }
         } catch (FileNotFoundException e) {
@@ -11460,8 +11479,6 @@ public class WindowManagerService extends IWindowManager.Stub
             pw.print("  Display: init="); pw.print(mInitialDisplayWidth); pw.print("x");
                         pw.print(mInitialDisplayHeight); pw.print(" cur=");
                         pw.print(mCurDisplayWidth); pw.print("x"); pw.print(mCurDisplayHeight);
-                        pw.print(" real="); pw.print(mDisplay.getRealWidth());
-                        pw.print("x"); pw.print(mDisplay.getRealHeight());
                         pw.print(" raw="); pw.print(mDisplay.getRawWidth());
                         pw.print("x"); pw.println(mDisplay.getRawHeight());
         }

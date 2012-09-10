@@ -351,4 +351,6 @@ interface IPackageManager {
     void setRevokedPermissions(String packageName, in String[] perms);
 
     VerifierDeviceIdentity getVerifierDeviceIdentity();
+
+    boolean isFirstBoot();
 }

@@ -188,6 +188,12 @@ class ServerThread extends Thread {
             pm = PackageManagerService.main(context,
                     factoryTest != SystemServer.FACTORY_TEST_OFF);
 
+            boolean firstBoot = false;
+            try {
+                firstBoot = pm.isFirstBoot();
+            } catch (RemoteException e) {
+            }
+
             ActivityManagerService.setSystemProcess();
 
             mContentResolver = context.getContentResolver();
@@ -232,7 +238,8 @@ class ServerThread extends Thread {
 
             Slog.i(TAG, "Window Manager");
             wm = WindowManagerService.main(context, power,
-                    factoryTest != SystemServer.FACTORY_TEST_LOW_LEVEL);
+                    factoryTest != SystemServer.FACTORY_TEST_LOW_LEVEL,
+                    !firstBoot);
             ServiceManager.addService(Context.WINDOW_SERVICE, wm);
 
             ActivityManagerService.self().setWindowManager(wm);
@@ -305,11 +312,6 @@ class ServerThread extends Thread {
             } catch (Throwable e) {
                 reportWtf("starting Accessibility Manager", e);
             }
-        }
-
-        try {
-            ActivityManagerNative.getDefault().showBootMessage("DEXOPT!", true);
-        } catch (RemoteException e) {
         }
 
         try {

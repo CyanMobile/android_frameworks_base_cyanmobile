@@ -1981,6 +1981,24 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
     }
 
     /**
+     * @hide
+     */
+    protected void onViewAdded(View child) {
+        if (mOnHierarchyChangeListener != null) {
+            mOnHierarchyChangeListener.onChildViewAdded(this, child);
+        }
+    }
+
+    /**
+     * @hide
+     */
+    protected void onViewRemoved(View child) {
+        if (mOnHierarchyChangeListener != null) {
+            mOnHierarchyChangeListener.onChildViewRemoved(this, child);
+        }
+    }
+
+    /**
      * Adds a view during layout. This is useful if in your onLayout() method,
      * you need to add more views (as does the list view for example).
      *
@@ -2071,9 +2089,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
             ai.mKeepScreenOn = lastKeepOn;
         }
 
-        if (mOnHierarchyChangeListener != null) {
-            mOnHierarchyChangeListener.onChildViewAdded(this, child);
-        }
+        onViewAdded(child);
 
         if ((child.mViewFlags & DUPLICATE_PARENT_STATE) == DUPLICATE_PARENT_STATE) {
             mGroupFlags |= FLAG_NOTIFY_CHILDREN_ON_DRAWABLE_STATE_CHANGE;
@@ -2257,9 +2273,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
            view.dispatchDetachedFromWindow();
         }
 
-        if (mOnHierarchyChangeListener != null) {
-            mOnHierarchyChangeListener.onChildViewRemoved(this, view);
-        }
+        onViewRemoved(view);
 
         needGlobalAttributesUpdate(false);
 
@@ -2271,8 +2285,6 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
     }
 
     private void removeViewsInternal(int start, int count) {
-        final OnHierarchyChangeListener onHierarchyChangeListener = mOnHierarchyChangeListener;
-        final boolean notifyListener = onHierarchyChangeListener != null;
         final View focused = mFocused;
         final boolean detach = mAttachInfo != null;
         View clearChildFocus = null;
@@ -2296,9 +2308,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
 
             needGlobalAttributesUpdate(false);
 
-            if (notifyListener) {
-                onHierarchyChangeListener.onChildViewRemoved(this, view);
-            }
+            onViewRemoved(view);
         }
 
         removeFromArray(start, count);
@@ -2336,8 +2346,6 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
         final View[] children = mChildren;
         mChildrenCount = 0;
 
-        final OnHierarchyChangeListener listener = mOnHierarchyChangeListener;
-        final boolean notify = listener != null;
         final View focused = mFocused;
         final boolean detach = mAttachInfo != null;
         View clearChildFocus = null;
@@ -2358,9 +2366,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
                view.dispatchDetachedFromWindow();
             }
 
-            if (notify) {
-                listener.onChildViewRemoved(this, view);
-            }
+            onViewRemoved(view);
 
             view.mParent = null;
             children[i] = null;
@@ -2395,9 +2401,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
             child.dispatchDetachedFromWindow();
         }
 
-        if (mOnHierarchyChangeListener != null) {
-            mOnHierarchyChangeListener.onChildViewRemoved(this, child);
-        }
+        onViewRemoved(child);
     }
 
     /**
@@ -2591,7 +2595,8 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
                 final int left = mLeft;
                 final int top = mTop;
 
-                if (dirty.intersect(0, 0, mRight - left, mBottom - top) ||
+                if ((mGroupFlags & FLAG_CLIP_CHILDREN) != FLAG_CLIP_CHILDREN ||
+                        dirty.intersect(0, 0, mRight - left, mBottom - top) ||
                         (mPrivateFlags & DRAW_ANIMATION) == DRAW_ANIMATION) {
                     mPrivateFlags &= ~DRAWING_CACHE_VALID;
 
@@ -2606,8 +2611,12 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
                 location[CHILD_LEFT_INDEX] = mLeft;
                 location[CHILD_TOP_INDEX] = mTop;
 
-                dirty.set(0, 0, mRight - location[CHILD_LEFT_INDEX],
-                        mBottom - location[CHILD_TOP_INDEX]);
+                if ((mGroupFlags & FLAG_CLIP_CHILDREN) == FLAG_CLIP_CHILDREN) {
+                    dirty.set(0, 0, mRight - mLeft, mBottom - mTop);
+                } else {
+                    // in case the dirty rect extends outside the bounds of this container
+                    dirty.union(0, 0, mRight - mLeft, mBottom - mTop);
+                }
 
                 return mParent;
             }

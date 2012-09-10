@@ -1667,8 +1667,13 @@ public class SyncManager implements OnAccountsUpdateListener {
                         continue;
                     }
 
-                    // skip the sync if it isn't manual and auto sync or
-                    // background data usage is disabled
+                    final RegisteredServicesCache.ServiceInfo<SyncAdapterType> syncAdapterInfo;
+                    syncAdapterInfo = mSyncAdapters.getServiceInfo(
+                            SyncAdapterType.newKey(op.authority, op.account.type));
+
+                    // skip the sync if it isn't manual, and auto sync or
+                    // background data usage is disabled or network is
+                    // disconnected for the target UID.
                     if (!op.extras.getBoolean(ContentResolver.SYNC_EXTRAS_IGNORE_SETTINGS, false)
                             && (syncableState > 0)
                             && (!masterSyncAutomatically

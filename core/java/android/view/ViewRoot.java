@@ -25,6 +25,7 @@ import android.graphics.Canvas;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
+import android.graphics.Point;
 import android.graphics.Region;
 import android.os.*;
 import android.os.Process;
@@ -47,6 +48,7 @@ import android.content.res.CompatibilityInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.ComponentCallbacks;
+import android.content.ComponentCallbacks2;
 import android.content.Context;
 import android.app.ActivityManagerNative;
 import android.Manifest;
@@ -894,10 +896,18 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
             fullRedrawNeeded = true;
             mLayoutRequested = true;
 
-            DisplayMetrics packageMetrics =
-                mView.getContext().getResources().getDisplayMetrics();
-            desiredWindowWidth = packageMetrics.widthPixels;
-            desiredWindowHeight = packageMetrics.heightPixels;
+            if (lp.type == WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL) {
+                 Display disp = WindowManagerImpl.getDefault().getDefaultDisplay();
+                 Point size = new Point();
+                 disp.getRealSize(size);
+                 desiredWindowWidth = size.x;
+                 desiredWindowHeight = size.y;
+            } else {
+                 DisplayMetrics packageMetrics =
+                     mView.getContext().getResources().getDisplayMetrics();
+                 desiredWindowWidth = packageMetrics.widthPixels;
+                 desiredWindowHeight = packageMetrics.heightPixels;
+            }
 
             // For the very first time, tell the view hierarchy that it
             // is attached to the window.  Note that at this point the surface
@@ -982,10 +992,18 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                         || lp.height == ViewGroup.LayoutParams.WRAP_CONTENT) {
                     windowResizesToFitContent = true;
 
-                    DisplayMetrics packageMetrics =
-                        mView.getContext().getResources().getDisplayMetrics();
-                    desiredWindowWidth = packageMetrics.widthPixels;
-                    desiredWindowHeight = packageMetrics.heightPixels;
+                    if (lp.type == WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL) {
+                        Display disp = WindowManagerImpl.getDefault().getDefaultDisplay();
+                        Point size = new Point();
+                        disp.getRealSize(size);
+                        desiredWindowWidth = size.x;
+                        desiredWindowHeight = size.y;
+                    } else {
+                        DisplayMetrics packageMetrics =
+                            mView.getContext().getResources().getDisplayMetrics();
+                        desiredWindowWidth = packageMetrics.widthPixels;
+                        desiredWindowHeight = packageMetrics.heightPixels;
+                    }
                 }
             }
 

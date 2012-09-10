@@ -1995,15 +1995,19 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
 
     /**
      * Cache the paddingRight set by the user to append to the scrollbar's size.
+     *
+     * @hide
      */
     @ViewDebug.ExportedProperty(category = "padding")
-    int mUserPaddingRight;
+    protected int mUserPaddingRight;
 
     /**
      * Cache the paddingBottom set by the user to append to the scrollbar's size.
+     *
+     * @hide
      */
     @ViewDebug.ExportedProperty(category = "padding")
-    int mUserPaddingBottom;
+    protected int mUserPaddingBottom;
 
     /**
      * Cache the paddingLeft set by the user to append to the scrollbar's size.
@@ -7791,12 +7795,14 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
             // Remember our drawn bit
             int drawn = mPrivateFlags & DRAWN;
 
-            // Invalidate our old position
-            invalidate();
-
-
             int oldWidth = mRight - mLeft;
             int oldHeight = mBottom - mTop;
+            int newWidth = right - left;
+            int newHeight = bottom - top;	
+            boolean sizeChanged = (newWidth != oldWidth) || (newHeight != oldHeight);
+	
+            // Invalidate our old position
+            invalidate();
 
             mLeft = left;
             mTop = top;
@@ -7805,10 +7811,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
 
             mPrivateFlags |= HAS_BOUNDS;
 
-            int newWidth = right - left;
-            int newHeight = bottom - top;
-
-            if (newWidth != oldWidth || newHeight != oldHeight) {
+            if (sizeChanged) {
                 onSizeChanged(newWidth, newHeight, oldWidth, oldHeight);
             }
 
@@ -8118,6 +8121,10 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      *        background
      */
     public void setBackgroundDrawable(Drawable d) {
+        if (d == mBGDrawable) {
+            return;
+        }
+
         boolean requestLayout = false;
 
         mBackgroundResource = 0;

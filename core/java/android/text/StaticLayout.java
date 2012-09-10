@@ -1312,6 +1312,12 @@ extends Layout
         return mEllipsizedWidth;
     }
 
+    void prepare() {
+    }
+
+    void finish() {
+    }
+
     private int mLineCount;
     private int mTopPadding, mBottomPadding;
     private int mColumns;

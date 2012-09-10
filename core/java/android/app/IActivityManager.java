@@ -321,6 +321,7 @@ public interface IActivityManager extends IInterface {
     public void revokeUriPermissionFromOwner(IBinder owner, Uri uri,
             int mode) throws RemoteException;
     public void showBootMessage(CharSequence msg, boolean always) throws RemoteException;
+    public void updatePersistentConfiguration(Configuration values) throws RemoteException;
 
     /*
      * Private non-Binder interfaces
@@ -533,4 +534,5 @@ public interface IActivityManager extends IInterface {
     int GRANT_URI_PERMISSION_FROM_OWNER_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+116;
     int REVOKE_URI_PERMISSION_FROM_OWNER_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+117;
     int SHOW_BOOT_MESSAGE_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+118;
+    int UPDATE_PERSISTENT_CONFIGURATION_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+119;
 }

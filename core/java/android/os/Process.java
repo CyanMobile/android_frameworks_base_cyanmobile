@@ -263,7 +263,7 @@ public class Process {
      * 
      * {@hide}
      */
-    public static final int start(final String processClass,
+    public static final ProcessStartResult start(final String processClass,
                                   final String niceName,
                                   int uid, int gid, int[] gids,
                                   int debugFlags,
@@ -281,7 +281,9 @@ public class Process {
             }
         } else {
             // Running in single-process mode
-            
+            ProcessStartResult ForceName = new ProcessStartResult();
+            ForceName.pid = 0;
+            ForceName.usingWrapper = false;
             Runnable runnable = new Runnable() {
                         public void run() {
                             Process.invokeStaticMain(processClass);
@@ -294,8 +296,8 @@ public class Process {
             } else {
                 new Thread(runnable).start();
             }
-            
-            return 0;
+
+            return ForceName;
         }
     }
     
@@ -303,7 +305,7 @@ public class Process {
      * Start a new process.  Don't supply a custom nice name.
      * {@hide}
      */
-    public static final int start(String processClass, int uid, int gid,
+    public static final ProcessStartResult start(String processClass, int uid, int gid,
             int[] gids, int debugFlags, String[] zygoteArgs) {
         return start(processClass, "", uid, gid, gids, 
                 debugFlags, zygoteArgs);
@@ -421,10 +423,8 @@ public class Process {
      * @return PID of new child process
      * @throws ZygoteStartFailedEx if process start failed for any reason
      */
-    private static int zygoteSendArgsAndGetPid(ArrayList<String> args)
+    private static ProcessStartResult zygoteSendArgsAndGetResult(ArrayList<String> args)
             throws ZygoteStartFailedEx {
-
-        int pid;
 
         openZygoteSocketIfNeeded();
 
@@ -456,11 +456,13 @@ public class Process {
             sZygoteWriter.flush();
 
             // Should there be a timeout on this?
-            pid = sZygoteInputStream.readInt();
-
-            if (pid < 0) {
+            ProcessStartResult result = new ProcessStartResult();
+            result.pid = sZygoteInputStream.readInt();
+            if (result.pid < 0) {
                 throw new ZygoteStartFailedEx("fork() failed");
             }
+            result.usingWrapper = sZygoteInputStream.readBoolean();
+            return result;
         } catch (IOException ex) {
             try {
                 if (sZygoteSocket != null) {
@@ -475,8 +477,6 @@ public class Process {
 
             throw new ZygoteStartFailedEx(ex);
         }
-
-        return pid;
     }
 
     /**
@@ -493,14 +493,13 @@ public class Process {
      * @return PID
      * @throws ZygoteStartFailedEx if process start failed for any reason
      */
-    private static int startViaZygote(final String processClass,
+    private static ProcessStartResult startViaZygote(final String processClass,
                                   final String niceName,
                                   final int uid, final int gid,
                                   final int[] gids,
                                   int debugFlags,
                                   String[] extraArgs)
                                   throws ZygoteStartFailedEx {
-        int pid;
 
         synchronized(Process.class) {
             ArrayList<String> argsForZygote = new ArrayList<String>();
@@ -554,14 +553,8 @@ public class Process {
                 }
             }
             
-            pid = zygoteSendArgsAndGetPid(argsForZygote);
+            return zygoteSendArgsAndGetResult(argsForZygote);
         }
-
-        if (pid <= 0) {
-            throw new ZygoteStartFailedEx("zygote start failed:" + pid);
-        }
-
-        return pid;
     }
     
     /**
@@ -832,6 +825,23 @@ public class Process {
      * @hide
      */
     public static final native long getPss(int pid);
+
+    /**
+     * Specifies the outcome of having started a process.
+     * @hide
+     */
+    public static final class ProcessStartResult {
+        /**
+         * The PID of the newly started process.
+         * Always >= 0.  (If the start failed, an exception will have been thrown instead.)
+         */
+        public int pid;
+
+        /**
+         * True if the process was started with a wrapper attached.
+         */
+        public boolean usingWrapper;
+    }
 
     private static final int[] PROCESS_STATE_FORMAT = new int[] {
         PROC_SPACE_TERM,

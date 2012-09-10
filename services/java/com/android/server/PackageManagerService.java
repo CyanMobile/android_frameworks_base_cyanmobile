@@ -1148,6 +1148,10 @@ class PackageManagerService extends IPackageManager.Stub {
         } // synchronized (mInstallLock)
     }
 
+    public boolean isFirstBoot() {
+        return !mRestoredSettings;
+    }
+
     @Override
     public boolean onTransact(int code, Parcel data, Parcel reply, int flags)
             throws RemoteException {
@@ -2941,12 +2945,14 @@ class PackageManagerService extends IPackageManager.Stub {
 
         if (pkgs != null) {
             for (int i=0; i<pkgs.size(); i++) {
-                try {
-                    ActivityManagerNative.getDefault().showBootMessage(
-                            mContext.getResources().getString(
-                                    com.android.internal.R.string.android_upgrading_apk,
-                                    i+1, pkgs.size()), true);
-                } catch (RemoteException e) {
+                if (!isFirstBoot()) {
+                    try {
+                        ActivityManagerNative.getDefault().showBootMessage(
+                                mContext.getResources().getString(
+                                        com.android.internal.R.string.android_upgrading_apk,
+                                        i+1, pkgs.size()), true);
+                    } catch (RemoteException e) {
+                    }
                 }
 
                 PackageParser.Package p = pkgs.get(i);
@@ -9596,9 +9602,7 @@ class PackageManagerService extends IPackageManager.Stub {
                 serializer.attribute(null, "uidError", "true");
             }
             if (pkg.enabled != COMPONENT_ENABLED_STATE_DEFAULT) {
-                serializer.attribute(null, "enabled",
-                        pkg.enabled == COMPONENT_ENABLED_STATE_ENABLED
-                        ? "true" : "false");
+                serializer.attribute(null, "enabled", Integer.toString(pkg.enabled));
             }
             if(pkg.installStatus == PKG_INSTALL_INCOMPLETE) {
                 serializer.attribute(null, "installStatus", "false");
@@ -10191,17 +10195,21 @@ class PackageManagerService extends IPackageManager.Stub {
                 packageSetting.nativeLibraryPathString = nativeLibraryPathStr;
                 final String enabledStr = parser.getAttributeValue(null, "enabled");
                 if (enabledStr != null) {
-                    if (enabledStr.equalsIgnoreCase("true")) {
-                        packageSetting.enabled = COMPONENT_ENABLED_STATE_ENABLED;
-                    } else if (enabledStr.equalsIgnoreCase("false")) {
-                        packageSetting.enabled = COMPONENT_ENABLED_STATE_DISABLED;
-                    } else if (enabledStr.equalsIgnoreCase("default")) {
-                        packageSetting.enabled = COMPONENT_ENABLED_STATE_DEFAULT;
-                    } else {
-                        reportSettingsProblem(Log.WARN,
-                                "Error in package manager settings: package "
-                                + name + " has bad enabled value: " + idStr
-                                + " at " + parser.getPositionDescription());
+                    try {
+                        packageSetting.enabled = Integer.parseInt(enabledStr);
+                    } catch (NumberFormatException e) {
+                        if (enabledStr.equalsIgnoreCase("true")) {
+                            packageSetting.enabled = COMPONENT_ENABLED_STATE_ENABLED;
+                        } else if (enabledStr.equalsIgnoreCase("false")) {
+                            packageSetting.enabled = COMPONENT_ENABLED_STATE_DISABLED;
+                        } else if (enabledStr.equalsIgnoreCase("default")) {
+                            packageSetting.enabled = COMPONENT_ENABLED_STATE_DEFAULT;
+                        } else {
+                            PackageManagerService.reportSettingsProblem(Log.WARN,
+                                "Error in package manager settings: package " + name
+                                        + " has bad enabled value: " + idStr + " at "
+                                        + parser.getPositionDescription());
+                        }
                     }
                 } else {
                     packageSetting.enabled = COMPONENT_ENABLED_STATE_DEFAULT;

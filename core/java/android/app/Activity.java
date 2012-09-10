@@ -18,7 +18,7 @@ package android.app;
 
 import com.android.internal.policy.PolicyManager;
 
-import android.content.ComponentCallbacks;
+import android.content.ComponentCallbacks2;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -594,7 +594,7 @@ import java.util.HashMap;
 public class Activity extends ContextThemeWrapper
         implements LayoutInflater.Factory,
         Window.Callback, KeyEvent.Callback,
-        OnCreateContextMenuListener, ComponentCallbacks {
+        OnCreateContextMenuListener, ComponentCallbacks2 {
     private static final String TAG = "Activity";
 
     /** Standard activity result: operation canceled. */
@@ -789,6 +789,7 @@ public class Activity extends ContextThemeWrapper
     protected void onCreate(Bundle savedInstanceState) {
         mVisibleFromClient = !mWindow.getWindowStyle().getBoolean(
                 com.android.internal.R.styleable.Window_windowNoDisplay, false);
+        getApplication().dispatchActivityCreated(this, savedInstanceState);
         mCalled = true;
     }
 
@@ -920,6 +921,7 @@ public class Activity extends ContextThemeWrapper
      * @see #onResume
      */
     protected void onStart() {
+        getApplication().dispatchActivityStarted(this);
         mCalled = true;
     }
 
@@ -968,6 +970,7 @@ public class Activity extends ContextThemeWrapper
      * @see #onPause
      */
     protected void onResume() {
+        getApplication().dispatchActivityResumed(this);
         mCalled = true;
     }
 
@@ -1073,6 +1076,7 @@ public class Activity extends ContextThemeWrapper
      */
     protected void onSaveInstanceState(Bundle outState) {
         outState.putBundle(WINDOW_HIERARCHY_TAG, mWindow.saveHierarchyState());
+        getApplication().dispatchActivitySaveInstanceState(this, outState);
     }
 
     /**
@@ -1149,6 +1153,7 @@ public class Activity extends ContextThemeWrapper
      * @see #onStop
      */
     protected void onPause() {
+        getApplication().dispatchActivityPaused(this);
         mCalled = true;
     }
 
@@ -1270,6 +1275,7 @@ public class Activity extends ContextThemeWrapper
      * @see #onDestroy
      */
     protected void onStop() {
+        getApplication().dispatchActivityStopped(this);
         mCalled = true;
     }
 
@@ -1332,6 +1338,8 @@ public class Activity extends ContextThemeWrapper
         if (mSearchManager != null) {
             mSearchManager.stopSearch();
         }
+
+        getApplication().dispatchActivityDestroyed(this);
     }
 
     /**
@@ -1480,7 +1488,11 @@ public class Activity extends ContextThemeWrapper
     public void onLowMemory() {
         mCalled = true;
     }
-    
+
+    public void onTrimMemory(int level) {
+        mCalled = true;
+    }
+
     /**
      * Wrapper around
      * {@link ContentResolver#query(android.net.Uri , String[], String, String[], String)}

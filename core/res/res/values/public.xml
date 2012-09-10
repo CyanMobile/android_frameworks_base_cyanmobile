@@ -1273,9 +1273,9 @@
   <public type="attr" name="alignmentMode" />
   <public type="attr" name="layout_row" />
   <public type="attr" name="layout_rowSpan" />
+  <public type="attr" name="layout_rowFlexibility" />
   <public type="attr" name="layout_columnSpan" />
-  <public type="attr" name="layout_widthSpec" />
-  <public type="attr" name="layout_heightSpec" />
+  <public type="attr" name="layout_columnFlexibility" />
 
   <!-- presence drawables for videochat or audiochat capable contacts -->
   <public type="drawable" name="presence_video_away" id="0x010800ac" />

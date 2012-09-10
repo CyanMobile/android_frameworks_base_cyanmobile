@@ -2053,7 +2053,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if (navVisible) {
                     mNavigationBar.showLw(true);
                     mContentBottom = mCurBottom = mDockBottom = mTmpNavigationFrame.top;
-                    mRestrictedScreenHeight = mDockBottom - mDockTop;
                 } else {
                     mNavigationBar.hideLw(true);
                 }
@@ -3468,11 +3467,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             @Override public void run() {
                 if (mBootMsgDialog == null) {
                     mBootMsgDialog = new ProgressDialog(mContext);
-                    if ("1".equals(SystemProperties.get("persist.sys.booting.first", "0"))) {
-                      mBootMsgDialog.setTitle(R.string.android_booting_title);
-                    } else {
-                      mBootMsgDialog.setTitle(R.string.android_upgrading_title);
-                    }
+                    mBootMsgDialog.setTitle(R.string.android_upgrading_title);
                     mBootMsgDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
                     mBootMsgDialog.setIndeterminate(true);
                     mBootMsgDialog.getWindow().setType(
@@ -3487,11 +3482,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     mBootMsgDialog.setCancelable(false);
                     mBootMsgDialog.show();
                 }
-                if ("1".equals(SystemProperties.get("persist.sys.booting.first", "0"))) {
-                    mBootMsgDialog.setMessage(mContext.getText(R.string.android_upgrading_complete));
-                } else {
-                    mBootMsgDialog.setMessage(msg);
-                }
+                mBootMsgDialog.setMessage(msg);
             }
         });
     }
@@ -3523,7 +3514,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
-    Runnable mScreenSaverActivator = new Runnable() {
+    Runnable mScreenSaverActivator = null;
+    /*new Runnable() {
         public void run() {
             synchronized (this) {
                 if (!(mScreenSaverEnabled && mScreenOnEarly)) {
@@ -3554,9 +3546,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
         }
     };
+    */
 
     // Must call while holding mLock
     private void updateScreenSaverTimeoutLocked() {
+        if (mScreenSaverActivator == null) return;
+
         synchronized (mScreenSaverActivator) {
             mHandler.removeCallbacks(mScreenSaverActivator);
             if (mScreenSaverEnabled && mScreenOnEarly && mScreenSaverTimeout > 0) {

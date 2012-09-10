@@ -1114,6 +1114,14 @@ public final class Settings {
         }
 
         /**
+         * @hide Erase the fields in the Configuration that should be applied
+         * by the settings.
+         */
+        public static void clearConfiguration(Configuration inoutConfig) {
+            inoutConfig.fontScale = 0;
+        }
+
+        /**
          * Convenience function to write a batch of configuration-related
          * settings from a {@link Configuration} object.
          *
