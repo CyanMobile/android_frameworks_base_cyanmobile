@@ -1270,12 +1270,12 @@
   <public type="attr" name="columnCount" />
   <public type="attr" name="columnOrderPreserved" />
   <public type="attr" name="useDefaultMargins" />
-  <public type="attr" name="marginsIncludedInAlignment" />
+  <public type="attr" name="alignmentMode" />
   <public type="attr" name="layout_row" />
   <public type="attr" name="layout_rowSpan" />
-  <public type="attr" name="layout_rowWeight" />
   <public type="attr" name="layout_columnSpan" />
-  <public type="attr" name="layout_columnWeight" />
+  <public type="attr" name="layout_widthSpec" />
+  <public type="attr" name="layout_heightSpec" />
 
   <!-- presence drawables for videochat or audiochat capable contacts -->
   <public type="drawable" name="presence_video_away" id="0x010800ac" />

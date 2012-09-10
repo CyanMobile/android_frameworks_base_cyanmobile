@@ -24,6 +24,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.Pair;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,13 +34,10 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static android.view.View.MeasureSpec.EXACTLY;
-import static android.view.View.MeasureSpec.UNSPECIFIED;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
@@ -48,11 +46,11 @@ import static java.lang.Math.min;
  * <p>
  * The grid is composed of a set of infinitely thin lines that separate the
  * viewing area into <em>cells</em>. Throughout the API, grid lines are referenced
- * by grid <em>indices</em>. A grid with <code>N</code> columns
- * has <code>N + 1</code> grid indices that run from <code>0</code>
- * through <code>N</code> inclusive. Regardless of how GridLayout is
- * configured, grid index <code>0</code> is fixed to the leading edge of the
- * container and grid index <code>N</code> is fixed to its trailing edge
+ * by grid <em>indices</em>. A grid with {@code N} columns
+ * has {@code N + 1} grid indices that run from {@code 0}
+ * through {@code N} inclusive. Regardless of how GridLayout is
+ * configured, grid index {@code 0} is fixed to the leading edge of the
+ * container and grid index {@code N} is fixed to its trailing edge
  * (after padding is taken into account).
  *
  * <h4>Row and Column Groups</h4>
@@ -69,7 +67,7 @@ import static java.lang.Math.min;
  *
  * <h4>Default Cell Assignment</h4>
  *
- * If no child specifies the row and column indices of the cell it
+ * If a child does not specify the row and column indices of the cell it
  * wishes to occupy, GridLayout assigns cell locations automatically using its:
  * {@link GridLayout#setOrientation(int) orientation},
  * {@link GridLayout#setRowCount(int) rowCount} and
@@ -96,8 +94,8 @@ import static java.lang.Math.min;
  *
  * Like {@link LinearLayout}, a child's ability to stretch is controlled
  * using <em>weights</em>, which are specified using the
- * {@link GridLayout.LayoutParams#rowWeight rowWeight} and
- * {@link GridLayout.LayoutParams#columnWeight columnWeight} layout parameters.
+ * {@link GridLayout.LayoutParams#widthSpec widthSpec} and
+ * {@link GridLayout.LayoutParams#heightSpec heightSpec} layout parameters.
  * <p>
  * <p>
  * See {@link GridLayout.LayoutParams} for a full description of the
@@ -135,15 +133,45 @@ public class GridLayout extends ViewGroup {
      */
     public static final int UNDEFINED = Integer.MIN_VALUE;
 
+    /**
+     * This constant is an {@link #setAlignmentMode(int) alignmentMode}.
+     * When the {@code alignmentMode} is set to {@link #ALIGN_BOUNDS}, alignment
+     * is made between the edges of each component's raw
+     * view boundary: i.e. the area delimited by the component's:
+     * {@link android.view.View#getTop() top},
+     * {@link android.view.View#getLeft() left},
+     * {@link android.view.View#getBottom() bottom} and
+     * {@link android.view.View#getRight() right} properties.
+     * <p>
+     * For example, when {@code GridLayout} is in {@link #ALIGN_BOUNDS} mode,
+     * children that belong to a row group that uses {@link #TOP} alignment will
+     * all return the same value when their {@link android.view.View#getTop()}
+     * method is called.
+     *
+     * @see #setAlignmentMode(int)
+     */
+    public static final int ALIGN_BOUNDS = 0;
+
+    /**
+     * This constant is an {@link #setAlignmentMode(int) alignmentMode}.
+     * When the {@code alignmentMode} is set to {@link #ALIGN_MARGINS},
+     * the bounds of each view are extended outwards, according
+     * to their margins, before the edges of the resulting rectangle are aligned.
+     * <p>
+     * For example, when {@code GridLayout} is in {@link #ALIGN_MARGINS} mode,
+     * the quantity {@code top - layoutParams.topMargin} is the same for all children that
+     * belong to a row group that uses {@link #TOP} alignment.
+     *
+     * @see #setAlignmentMode(int)
+     */
+    public static final int ALIGN_MARGINS = 1;
+
     // Misc constants
 
     private static final String TAG = GridLayout.class.getName();
     private static final boolean DEBUG = false;
-    private static final Paint GRID_PAINT = new Paint();
     private static final double GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2;
-    private static final int MIN = 0;
     private static final int PRF = 1;
-    private static final int MAX = 2;
 
     // Defaults
 
@@ -151,9 +179,10 @@ public class GridLayout extends ViewGroup {
     private static final int DEFAULT_COUNT = UNDEFINED;
     private static final boolean DEFAULT_USE_DEFAULT_MARGINS = false;
     private static final boolean DEFAULT_ORDER_PRESERVED = false;
-    private static final boolean DEFAULT_MARGINS_INCLUDED = true;
+    private static final int DEFAULT_ALIGNMENT_MODE = ALIGN_MARGINS;
     // todo remove this
     private static final int DEFAULT_CONTAINER_MARGIN = 20;
+    private static final int MAX_SIZE = 100000;
 
     // TypedArray indices
 
@@ -161,15 +190,9 @@ public class GridLayout extends ViewGroup {
     private static final int ROW_COUNT = styleable.GridLayout_rowCount;
     private static final int COLUMN_COUNT = styleable.GridLayout_columnCount;
     private static final int USE_DEFAULT_MARGINS = styleable.GridLayout_useDefaultMargins;
-    private static final int MARGINS_INCLUDED = styleable.GridLayout_marginsIncludedInAlignment;
+    private static final int ALIGNMENT_MODE = styleable.GridLayout_alignmentMode;
     private static final int ROW_ORDER_PRESERVED = styleable.GridLayout_rowOrderPreserved;
     private static final int COLUMN_ORDER_PRESERVED = styleable.GridLayout_columnOrderPreserved;
-
-    // Static initialization
-
-    static {
-        GRID_PAINT.setColor(Color.argb(50, 255, 255, 255));
-    }
 
     // Instance variables
 
@@ -178,47 +201,26 @@ public class GridLayout extends ViewGroup {
     private boolean mLayoutParamsValid = false;
     private int mOrientation = DEFAULT_ORIENTATION;
     private boolean mUseDefaultMargins = DEFAULT_USE_DEFAULT_MARGINS;
-    private boolean mMarginsIncludedInAlignment = DEFAULT_MARGINS_INCLUDED;
+    private int mAlignmentMode = DEFAULT_ALIGNMENT_MODE;
     private int mDefaultGravity = Gravity.NO_GRAVITY;
-
-    /* package */ boolean accommodateBothMinAndMax = false;
 
     // Constructors
 
     /**
      * {@inheritDoc}
      */
-    public GridLayout(Context context) {
-        super(context);
+    public GridLayout(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
         if (DEBUG) {
             setWillNotDraw(false);
         }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public GridLayout(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-        processAttributes(context, attrs);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public GridLayout(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        processAttributes(context, attrs);
-    }
-
-    private void processAttributes(Context context, AttributeSet attrs) {
         TypedArray a = context.obtainStyledAttributes(attrs, styleable.GridLayout);
         try {
-            setRowCount(a.getInteger(ROW_COUNT, DEFAULT_COUNT));
-            setColumnCount(a.getInteger(COLUMN_COUNT, DEFAULT_COUNT));
-            mOrientation = a.getInteger(ORIENTATION, DEFAULT_ORIENTATION);
+            setRowCount(a.getInt(ROW_COUNT, DEFAULT_COUNT));
+            setColumnCount(a.getInt(COLUMN_COUNT, DEFAULT_COUNT));
+            mOrientation = a.getInt(ORIENTATION, DEFAULT_ORIENTATION);
             mUseDefaultMargins = a.getBoolean(USE_DEFAULT_MARGINS, DEFAULT_USE_DEFAULT_MARGINS);
-            mMarginsIncludedInAlignment = a.getBoolean(MARGINS_INCLUDED, DEFAULT_MARGINS_INCLUDED);
+            mAlignmentMode = a.getInt(ALIGNMENT_MODE, DEFAULT_ALIGNMENT_MODE);
             setRowOrderPreserved(a.getBoolean(ROW_ORDER_PRESERVED, DEFAULT_ORDER_PRESERVED));
             setColumnOrderPreserved(a.getBoolean(COLUMN_ORDER_PRESERVED, DEFAULT_ORDER_PRESERVED));
         } finally {
@@ -226,13 +228,26 @@ public class GridLayout extends ViewGroup {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public GridLayout(Context context, AttributeSet attrs) {
+        this(context, attrs, 0);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public GridLayout(Context context) {
+        this(context, null);
+    }
+
     // Implementation
 
     /**
      * Returns the current orientation.
      *
-     * @return either {@link #HORIZONTAL} or {@link #VERTICAL}. The default
-     * is {@link #HORIZONTAL}.
+     * @return either {@link #HORIZONTAL} or {@link #VERTICAL}
      *
      * @see #setOrientation(int)
      *
@@ -246,8 +261,10 @@ public class GridLayout extends ViewGroup {
      * The orientation property does not affect layout. Orientation is used
      * only to generate default row/column indices when they are not specified
      * by a component's layout parameters.
+     * <p>
+     * The default value of this property is {@link #HORIZONTAL}.
      *
-     * @param orientation the orientation, either {@link #HORIZONTAL} or {@link #VERTICAL}.
+     * @param orientation either {@link #HORIZONTAL} or {@link #VERTICAL}
      *
      * @see #getOrientation()
      *
@@ -281,7 +298,7 @@ public class GridLayout extends ViewGroup {
      * only to generate default row/column indices when they are not specified
      * by a component's layout parameters.
      *
-     * @param rowCount the number of rows.
+     * @param rowCount the number of rows
      *
      * @see #getRowCount()
      * @see LayoutParams#rowGroup
@@ -328,7 +345,7 @@ public class GridLayout extends ViewGroup {
      * Returns whether or not this GridLayout will allocate default margins when no
      * corresponding layout parameters are defined.
      *
-     * @return true if default margins should be allocated.
+     * @return {@code true} if default margins should be allocated
      *
      * @see #setUseDefaultMargins(boolean)
      *
@@ -339,21 +356,23 @@ public class GridLayout extends ViewGroup {
     }
 
     /**
-     * When true, GridLayout allocates default margins around children
+     * When {@code true}, GridLayout allocates default margins around children
      * based on the child's visual characteristics. Each of the
      * margins so defined may be independently overridden by an assignment
      * to the appropriate layout parameter.
      * <p>
-     * When false, the default value of all margins is zero.
+     * When {@code false}, the default value of all margins is zero.
      * <p>
-     * When setting to true, consider setting the value of the
-     * {@link #setMarginsIncludedInAlignment(boolean) marginsIncludedInAlignment}
-     * property to false.
+     * When setting to {@code true}, consider setting the value of the
+     * {@link #setAlignmentMode(int) alignmentMode}
+     * property to {@link #ALIGN_BOUNDS}.
+     * <p>
+     * The default value of this property is {@code false}.
      *
-     * @param useDefaultMargins use true to make GridLayout allocate default margins
+     * @param useDefaultMargins use {@code true} to make GridLayout allocate default margins
      *
      * @see #getUseDefaultMargins()
-     * @see #setMarginsIncludedInAlignment(boolean)
+     * @see #setAlignmentMode(int)
      *
      * @see MarginLayoutParams#leftMargin
      * @see MarginLayoutParams#topMargin
@@ -368,42 +387,46 @@ public class GridLayout extends ViewGroup {
     }
 
     /**
-     * Returns whether GridLayout aligns the edges of the view or the edges
-     * of the larger rectangle created by extending the view by its associated
-     * margins.
+     * Returns the alignment mode.
      *
-     * @see #setMarginsIncludedInAlignment(boolean)
+     * @return the alignment mode; either {@link #ALIGN_BOUNDS} or {@link #ALIGN_MARGINS}
      *
-     * @return true if alignment is between edges including margins.
+     * @see #ALIGN_BOUNDS
+     * @see #ALIGN_MARGINS
      *
-     * @attr ref android.R.styleable#GridLayout_marginsIncludedInAlignment
+     * @see #setAlignmentMode(int)
+     *
+     * @attr ref android.R.styleable#GridLayout_alignmentMode
      */
-    public boolean getMarginsIncludedInAlignment() {
-        return mMarginsIncludedInAlignment;
+    public int getAlignmentMode() {
+        return mAlignmentMode;
     }
 
     /**
-     * When true, the bounds of a view are extended outwards according to its
-     * margins before the edges of the resulting rectangle are aligned.
-     * When false, alignment occurs between the bounds of the view - i.e.
-     * {@link #LEFT} alignment means align the left edges of the view.
+     * Sets the alignment mode to be used for all of the alignments between the
+     * children of this container.
+     * <p>
+     * The default value of this property is {@link #ALIGN_MARGINS}.
      *
-     * @param marginsIncludedInAlignment true if alignment is between edges including margins.
+     * @param alignmentMode either {@link #ALIGN_BOUNDS} or {@link #ALIGN_MARGINS}
      *
-     * @see #getMarginsIncludedInAlignment()
+     * @see #ALIGN_BOUNDS
+     * @see #ALIGN_MARGINS
      *
-     * @attr ref android.R.styleable#GridLayout_marginsIncludedInAlignment
+     * @see #getAlignmentMode()
+     *
+     * @attr ref android.R.styleable#GridLayout_alignmentMode
      */
-    public void setMarginsIncludedInAlignment(boolean marginsIncludedInAlignment) {
-        mMarginsIncludedInAlignment = marginsIncludedInAlignment;
+    public void setAlignmentMode(int alignmentMode) {
+        mAlignmentMode = alignmentMode;
         requestLayout();
     }
 
     /**
      * Returns whether or not row boundaries are ordered by their grid indices.
      *
-     * @return true if row boundaries must appear in the order of their indices, false otherwise.
-     *         The default is false.
+     * @return {@code true} if row boundaries must appear in the order of their indices,
+     *         {@code false} otherwise
      *
      * @see #setRowOrderPreserved(boolean)
      *
@@ -414,23 +437,25 @@ public class GridLayout extends ViewGroup {
     }
 
     /**
-     * When this property is <code>false</code>, the default state, GridLayout
+     * When this property is {@code false}, the default state, GridLayout
      * is at liberty to choose an order that better suits the heights of its children.
      <p>
-     * When this property is <code>true</code>, GridLayout is forced to place the row boundaries
+     * When this property is {@code true}, GridLayout is forced to place the row boundaries
      * so that their associated grid indices are in ascending order in the view.
      * <p>
      * GridLayout implements this specification by creating ordering constraints between
      * the variables that represent the locations of the row boundaries.
      *
-     * When this property is <code>true</code>, constraints are added for each pair of consecutive
-     * indices: i.e. between row boundaries: <code>[0..1], [1..2], [3..4],...</code> etc.
+     * When this property is {@code true}, constraints are added for each pair of consecutive
+     * indices: i.e. between row boundaries: {@code [0..1], [1..2], [2..3],...} etc.
      *
-     * When the property is <code>false</code>, the ordering constraints are placed
+     * When the property is {@code false}, the ordering constraints are placed
      * only between boundaries that separate opposing edges of the layout's children.
-     *
-     * @param rowOrderPreserved use true to force GridLayout to respect the order
-     *        of row boundaries.
+     * <p>
+     * The default value of this property is {@code false}.
+
+     * @param rowOrderPreserved {@code true} to force GridLayout to respect the order
+     *        of row boundaries
      *
      * @see #isRowOrderPreserved()
      *
@@ -445,8 +470,8 @@ public class GridLayout extends ViewGroup {
     /**
      * Returns whether or not column boundaries are ordered by their grid indices.
      *
-     * @return true if column boundaries must appear in the order of their indices, false otherwise.
-     *         The default is false.
+     * @return {@code true} if column boundaries must appear in the order of their indices,
+     *         {@code false} otherwise
      *
      * @see #setColumnOrderPreserved(boolean)
      *
@@ -457,22 +482,24 @@ public class GridLayout extends ViewGroup {
     }
 
     /**
-     * When this property is <code>false</code>, the default state, GridLayout
+     * When this property is {@code false}, the default state, GridLayout
      * is at liberty to choose an order that better suits the widths of its children.
      <p>
-     * When this property is <code>true</code>, GridLayout is forced to place the column boundaries
+     * When this property is {@code true}, GridLayout is forced to place the column boundaries
      * so that their associated grid indices are in ascending order in the view.
      * <p>
      * GridLayout implements this specification by creating ordering constraints between
      * the variables that represent the locations of the column boundaries.
      *
-     * When this property is <code>true</code>, constraints are added for each pair of consecutive
-     * indices: i.e. between column boundaries: <code>[0..1], [1..2], [3..4],...</code> etc.
+     * When this property is {@code true}, constraints are added for each pair of consecutive
+     * indices: i.e. between column boundaries: {@code [0..1], [1..2], [2..3],...} etc.
      *
-     * When the property is <code>false</code>, the ordering constraints are placed
+     * When the property is {@code false}, the ordering constraints are placed
      * only between boundaries that separate opposing edges of the layout's children.
+     * <p>
+     * The default value of this property is {@code false}.
      *
-     * @param columnOrderPreserved use true to force GridLayout to respect the order
+     * @param columnOrderPreserved use {@code true} to force GridLayout to respect the order
      *        of column boundaries.
      *
      * @see #isColumnOrderPreserved()
@@ -485,15 +512,22 @@ public class GridLayout extends ViewGroup {
         requestLayout();
     }
 
-    private static int sum(float[] a) {
-        int result = 0;
-        for (int i = 0, length = a.length; i < length; i++) {
-            result += a[i];
+    private static int max2(int[] a, int valueIfEmpty) {
+        int result = valueIfEmpty;
+        for (int i = 0, N = a.length; i < N; i++) {
+            result = Math.max(result, a[i]);
         }
         return result;
     }
 
-    private int getDefaultMargin(View c, boolean leading, boolean horizontal) {
+    private static <T> T[] append(T[] a, T[] b) {
+        T[] result = (T[]) Array.newInstance(a.getClass().getComponentType(), a.length + b.length);
+        System.arraycopy(a, 0, result, 0, a.length);
+        System.arraycopy(b, 0, result, a.length, b.length);
+        return result;
+    }
+
+    private int getDefaultMargin(View c, boolean horizontal, boolean leading) {
         // In the absence of any other information, calculate a default gap such
         // that, in a grid of identical components, the heights and the vertical
         // gaps are in the proportion of the golden ratio.
@@ -502,12 +536,12 @@ public class GridLayout extends ViewGroup {
         return (int) (c.getMeasuredHeight() / GOLDEN_RATIO / 2);
     }
 
-    private int getDefaultMargin(View c, boolean isAtEdge, boolean leading, boolean horizontal) {
+    private int getDefaultMargin(View c, boolean isAtEdge, boolean horizontal, boolean leading) {
         // todo remove DEFAULT_CONTAINER_MARGIN. Use padding? Seek advice on Themes/Styles, etc.
-        return isAtEdge ? DEFAULT_CONTAINER_MARGIN : getDefaultMargin(c, leading, horizontal);
+        return isAtEdge ? DEFAULT_CONTAINER_MARGIN : getDefaultMargin(c, horizontal, leading);
     }
 
-    private int getDefaultMarginValue(View c, LayoutParams p, boolean leading, boolean horizontal) {
+    private int getDefaultMarginValue(View c, LayoutParams p, boolean horizontal, boolean leading) {
         if (!mUseDefaultMargins) {
             return 0;
         }
@@ -516,81 +550,93 @@ public class GridLayout extends ViewGroup {
         Interval span = group.span;
         boolean isAtEdge = leading ? (span.min == 0) : (span.max == axis.getCount());
 
-        return getDefaultMargin(c, isAtEdge, leading, horizontal);
+        return getDefaultMargin(c, isAtEdge, horizontal, leading);
     }
 
-    private int getMargin(View view, boolean leading, boolean horizontal) {
+    private int getMargin(View view, boolean horizontal, boolean leading) {
         LayoutParams lp = getLayoutParams(view);
         int margin = horizontal ?
                 (leading ? lp.leftMargin : lp.rightMargin) :
                 (leading ? lp.topMargin : lp.bottomMargin);
-        return margin == UNDEFINED ? getDefaultMarginValue(view, lp, leading, horizontal) : margin;
+        return margin == UNDEFINED ? getDefaultMarginValue(view, lp, horizontal, leading) : margin;
     }
 
-    private static boolean isUndefined(Interval span) {
-        return span.min == UNDEFINED || span.max == UNDEFINED;
+    private int getTotalMargin(View child, boolean horizontal) {
+        return getMargin(child, horizontal, true) + getMargin(child, horizontal, false);
     }
 
+    private static int valueIfDefined(int value, int defaultValue) {
+        return (value != UNDEFINED) ? value : defaultValue;
+    }
+
+    // install default indices for cells that don't define them
     private void validateLayoutParams() {
-        // install default indices for cells if *none* are defined
-        if (mHorizontalAxis.maxIndex1() == UNDEFINED || (mVerticalAxis.maxIndex1() == UNDEFINED)) {
-            boolean horizontal = mOrientation == HORIZONTAL;
-            int count = horizontal ? mHorizontalAxis.count : mVerticalAxis.count;
-            if (count == UNDEFINED) {
-                count = Integer.MAX_VALUE;
-            }
-            int x = 0;
-            int y = 0;
-            int maxSize = 0;
-            for (int i = 0, size = getChildCount(); i < size; i++) {
-                LayoutParams lp = getLayoutParams1(getChildAt(i));
+        new Object() {
+            public int maxSize = 0;
 
-                Interval hSpan = lp.columnGroup.span;
-                int cellWidth = hSpan.size();
-
-                Interval vSpan = lp.rowGroup.span;
-                int cellHeight = vSpan.size();
-
-                if (horizontal) {
-                    if (x + cellWidth > count) {
-                        x = 0;
-                        y += maxSize;
-                        maxSize = 0;
-                    }
+            private int valueIfDefined2(int value, int defaultValue) {
+                if (value != UNDEFINED) {
+                    maxSize = 0;
+                    return value;
                 } else {
-                    if (y + cellHeight > count) {
-                        y = 0;
-                        x += maxSize;
-                        maxSize = 0;
+                    return defaultValue;
+                }
+            }
+
+            {
+                final boolean horizontal = (mOrientation == HORIZONTAL);
+                final int axis = horizontal ? mHorizontalAxis.count : mVerticalAxis.count;
+                final int count = valueIfDefined(axis, Integer.MAX_VALUE);
+
+                int row = 0;
+                int col = 0;
+                for (int i = 0, N = getChildCount(); i < N; i++) {
+                    View c = getChildAt(i);
+                    if (isGone(c)) continue;
+                    LayoutParams lp = getLayoutParams1(c);
+
+                    final Group colGroup = lp.columnGroup;
+                    final Interval cols = colGroup.span;
+                    final int colSpan = cols.size();
+
+                    final Group rowGroup = lp.rowGroup;
+                    final Interval rows = rowGroup.span;
+                    final int rowSpan = rows.size();
+
+                    if (horizontal) {
+                        row = valueIfDefined2(rows.min, row);
+
+                        int newCol = valueIfDefined(cols.min, (col + colSpan > count) ? 0 : col);
+                        if (newCol < col) {
+                            row += maxSize;
+                            maxSize = 0;
+                        }
+                        col = newCol;
+                        maxSize = max(maxSize, rowSpan);
+                    } else {
+                        col = valueIfDefined2(cols.min, col);
+
+                        int newRow = valueIfDefined(rows.min, (row + rowSpan > count) ? 0 : row);
+                        if (newRow < row) {
+                            col += maxSize;
+                            maxSize = 0;
+                        }
+                        row = newRow;
+                        maxSize = max(maxSize, colSpan);
+                    }
+
+                    lp.setColumnGroupSpan(new Interval(col, col + colSpan));
+                    lp.setRowGroupSpan(new Interval(row, row + rowSpan));
+
+                    if (horizontal) {
+                        col = col + colSpan;
+                    } else {
+                        row = row + rowSpan;
                     }
                 }
-                lp.setHorizontalGroupSpan(new Interval(x, x + cellWidth));
-                lp.setVerticalGroupSpan(new Interval(y, y + cellHeight));
-
-                if (horizontal) {
-                    x = x + cellWidth;
-                } else {
-                    y = y + cellHeight;
-                }
-                maxSize = max(maxSize, horizontal ? cellHeight : cellWidth);
             }
-        } else {
-            /*
-            At least one row and one column index have been defined.
-            Assume missing row/cols are in error and set them to zero so that
-            they will display top/left and the developer can add the right indices.
-            Without this UNDEFINED would cause ArrayIndexOutOfBoundsException.
-            */
-            for (int i = 0, size = getChildCount(); i < size; i++) {
-                LayoutParams lp = getLayoutParams1(getChildAt(i));
-                if (isUndefined(lp.columnGroup.span)) {
-                    lp.setHorizontalGroupSpan(LayoutParams.DEFAULT_SPAN);
-                }
-                if (isUndefined(lp.rowGroup.span)) {
-                    lp.setVerticalGroupSpan(LayoutParams.DEFAULT_SPAN);
-                }
-            }
-        }
+        };
+        invalidateStructure();
     }
 
     private void invalidateStructure() {
@@ -645,6 +691,15 @@ public class GridLayout extends ViewGroup {
         graphics.drawLine(dx + x1, dy + y1, dx + x2, dy + y2, paint);
     }
 
+    private void drawRectangle(Canvas graphics, int x1, int y1, int x2, int y2, Paint paint) {
+        x2 = x2 - 1;
+        y2 = y2 - 1;
+        graphics.drawLine(x1, y1, x1, y2, paint);
+        graphics.drawLine(x1, y1, x2, y1, paint);
+        graphics.drawLine(x1, y2, x2, y2, paint);
+        graphics.drawLine(x2, y1, x2, y2, paint);
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -653,15 +708,45 @@ public class GridLayout extends ViewGroup {
             int height = getHeight() - getPaddingTop() - getPaddingBottom();
             int width = getWidth() - getPaddingLeft() - getPaddingRight();
 
+            Paint paint = new Paint();
+            paint.setColor(Color.argb(50, 255, 255, 255));
+
             int[] xs = mHorizontalAxis.locations;
-            for (int i = 0, length = xs.length; i < length; i++) {
-                int x = xs[i];
-                drawLine(canvas, x, 0, x, height - 1, GRID_PAINT);
+            if (xs != null) {
+                for (int i = 0, length = xs.length; i < length; i++) {
+                    int x = xs[i];
+                    drawLine(canvas, x, 0, x, height - 1, paint);
+                }
             }
+
             int[] ys = mVerticalAxis.locations;
-            for (int i = 0, length = ys.length; i < length; i++) {
-                int y = ys[i];
-                drawLine(canvas, 0, y, width - 1, y, GRID_PAINT);
+            if (ys != null) {
+                for (int i = 0, length = ys.length; i < length; i++) {
+                    int y = ys[i];
+                    drawLine(canvas, 0, y, width - 1, y, paint);
+                }
+            }
+
+            // Draw bounds
+            paint.setColor(Color.BLUE);
+            for (int i = 0; i < getChildCount(); i++) {
+                View c = getChildAt(i);
+                drawRectangle(canvas,
+                        c.getLeft(),
+                        c.getTop(),
+                        c.getRight(),
+                        c.getBottom(), paint);
+            }
+
+            // Draw margins
+            paint.setColor(Color.YELLOW);
+            for (int i = 0; i < getChildCount(); i++) {
+                View c = getChildAt(i);
+                drawRectangle(canvas,
+                        c.getLeft() - getMargin(c, true, true),
+                        c.getTop() - getMargin(c, false, true),
+                        c.getRight() + getMargin(c, true, false),
+                        c.getBottom() + getMargin(c, false, false), paint);
             }
         }
     }
@@ -700,78 +785,54 @@ public class GridLayout extends ViewGroup {
 
     // Measurement
 
-    private static int getChildMeasureSpec2(int spec, int padding, int childDimension) {
-        int resultSize;
-        int resultMode;
-
-        if (childDimension >= 0) {
-            resultSize = childDimension;
-            resultMode = EXACTLY;
-        } else {
-            /*
-            using the following lines would replicate the logic of ViewGroup.getChildMeasureSpec()
-
-            int specMode = MeasureSpec.getMode(spec);
-            int specSize = MeasureSpec.getSize(spec);
-            int size = Math.max(0, specSize - padding);
-
-            resultSize = size;
-            resultMode = (specMode == EXACTLY && childDimension == LayoutParams.WRAP_CONTENT) ?
-                    AT_MOST : specMode;
-            */
-            resultSize = 0;
-            resultMode = UNSPECIFIED;
-        }
-        return MeasureSpec.makeMeasureSpec(resultSize, resultMode);
+    private boolean isGone(View c) {
+        return c.getVisibility() == View.GONE;
     }
 
-    @Override
-    protected void measureChild(View child, int parentWidthSpec, int parentHeightSpec) {
-        ViewGroup.LayoutParams lp = child.getLayoutParams();
-
-        int childWidthMeasureSpec = getChildMeasureSpec2(parentWidthSpec,
-                mPaddingLeft + mPaddingRight, lp.width);
-        int childHeightMeasureSpec = getChildMeasureSpec2(parentHeightSpec,
-                mPaddingTop + mPaddingBottom, lp.height);
-
+    private void measureChildWithMargins(View child, int widthMeasureSpec, int heightMeasureSpec) {
+        LayoutParams lp = getLayoutParams(child);
+        int childWidthMeasureSpec = getChildMeasureSpec(widthMeasureSpec,
+                mPaddingLeft + mPaddingRight + getTotalMargin(child, true), lp.width);
+        int childHeightMeasureSpec = getChildMeasureSpec(heightMeasureSpec,
+                mPaddingTop + mPaddingBottom + getTotalMargin(child, false), lp.height);
         child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
+    }
+
+    private void measureChildrenWithMargins(int widthMeasureSpec, int heightMeasureSpec) {
+        for (int i = 0, N = getChildCount(); i < N; i++) {
+            View c = getChildAt(i);
+            if (isGone(c)) continue;
+            measureChildWithMargins(c, widthMeasureSpec, heightMeasureSpec);
+        }
     }
 
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
-        measureChildren(widthSpec, heightSpec);
+        measureChildrenWithMargins(widthSpec, heightSpec);
 
-        int computedWidth = getPaddingLeft() + mHorizontalAxis.getMin() + getPaddingRight();
-        int computedHeight = getPaddingTop() + mVerticalAxis.getMin() + getPaddingBottom();
+        int width = getPaddingLeft() + mHorizontalAxis.getMeasure(widthSpec) + getPaddingRight();
+        int height = getPaddingTop() + mVerticalAxis.getMeasure(heightSpec) + getPaddingBottom();
+
+        int measuredWidth = Math.max(width, getSuggestedMinimumWidth());
+        int measuredHeight = Math.max(height, getSuggestedMinimumHeight());
 
         setMeasuredDimension(
-                resolveSizeAndState(computedWidth, widthSpec, 0),
-                resolveSizeAndState(computedHeight, heightSpec, 0));
+                resolveSizeAndState(measuredWidth, widthSpec, 0),
+                resolveSizeAndState(measuredHeight, heightSpec, 0));
     }
 
     private int protect(int alignment) {
         return (alignment == UNDEFINED) ? 0 : alignment;
     }
 
-    private int getMeasurement(View c, boolean horizontal, int measurementType) {
+    private int getMeasurement(View c, boolean horizontal) {
         return horizontal ? c.getMeasuredWidth() : c.getMeasuredHeight();
     }
 
-    private int getMeasurementIncludingMargin(View c, boolean horizontal, int measurementType) {
-        int result = getMeasurement(c, horizontal, measurementType);
-        if (mMarginsIncludedInAlignment) {
-            int leadingMargin = getMargin(c, true, horizontal);
-            int trailingMargin = getMargin(c, false, horizontal);
-            return result + leadingMargin + trailingMargin;
-        }
-        return result;
-    }
-
-    private int getAlignmentValue(Alignment alignment, View c, int dim, boolean horizontal, View c1) {
-        int result = alignment.getAlignmentValue(c, dim);
-        if (mMarginsIncludedInAlignment) {
-            int leadingMargin = getMargin(c1, true, horizontal);
-            return result + leadingMargin;
+    private int getMeasurementIncludingMargin(View c, boolean horizontal) {
+        int result = getMeasurement(c, horizontal);
+        if (mAlignmentMode == ALIGN_MARGINS) {
+            return result + getTotalMargin(c, horizontal);
         }
         return result;
     }
@@ -797,9 +858,9 @@ public class GridLayout extends ViewGroup {
      and sizing to each child view and then placing it in its cell.
      */
     @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        int targetWidth = r - l;
-        int targetHeight = b - t;
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        int targetWidth = right - left;
+        int targetHeight = bottom - top;
 
         int paddingLeft = getPaddingLeft();
         int paddingTop = getPaddingTop();
@@ -809,52 +870,75 @@ public class GridLayout extends ViewGroup {
         mHorizontalAxis.layout(targetWidth - paddingLeft - paddingRight);
         mVerticalAxis.layout(targetHeight - paddingTop - paddingBottom);
 
-        for (int i = 0, size = getChildCount(); i < size; i++) {
-            View view = getChildAt(i);
-            LayoutParams lp = getLayoutParams(view);
+        for (int i = 0, N = getChildCount(); i < N; i++) {
+            View c = getChildAt(i);
+            if (isGone(c)) continue;
+            LayoutParams lp = getLayoutParams(c);
             Group columnGroup = lp.columnGroup;
             Group rowGroup = lp.rowGroup;
 
             Interval colSpan = columnGroup.span;
             Interval rowSpan = rowGroup.span;
 
-            int x1 = mHorizontalAxis.getLocationIncludingMargin(view, true, colSpan.min);
-            int y1 = mVerticalAxis.getLocationIncludingMargin(view, true, rowSpan.min);
+            int x1 = mHorizontalAxis.getLocationIncludingMargin(true, colSpan.min);
+            int y1 = mVerticalAxis.getLocationIncludingMargin(true, rowSpan.min);
 
-            int x2 = mHorizontalAxis.getLocationIncludingMargin(view, false, colSpan.max);
-            int y2 = mVerticalAxis.getLocationIncludingMargin(view, false, rowSpan.max);
+            int x2 = mHorizontalAxis.getLocationIncludingMargin(false, colSpan.max);
+            int y2 = mVerticalAxis.getLocationIncludingMargin(false, rowSpan.max);
 
             int cellWidth = x2 - x1;
             int cellHeight = y2 - y1;
 
-            int pWidth = getMeasurement(view, true, PRF);
-            int pHeight = getMeasurement(view, false, PRF);
+            int pWidth = getMeasurement(c, true);
+            int pHeight = getMeasurement(c, false);
 
-            Alignment hAlignment = columnGroup.alignment;
-            Alignment vAlignment = rowGroup.alignment;
+            Alignment hAlign = columnGroup.alignment;
+            Alignment vAlign = rowGroup.alignment;
 
             int dx, dy;
 
-            if (mMarginsIncludedInAlignment) {
-                dx = protect(hAlignment.getAlignmentValue(view, cellWidth - pWidth));
-                dy = protect(vAlignment.getAlignmentValue(view, cellHeight - pHeight));
+            Bounds colBounds = mHorizontalAxis.getGroupBounds().getValue(i);
+            Bounds rowBounds = mVerticalAxis.getGroupBounds().getValue(i);
+
+            // Gravity offsets: the location of the alignment group relative to its cell group.
+            int c2ax = protect(hAlign.getAlignmentValue(null, cellWidth - colBounds.size(true)));
+            int c2ay = protect(vAlign.getAlignmentValue(null, cellHeight - rowBounds.size(true)));
+
+            if (mAlignmentMode == ALIGN_MARGINS) {
+                int leftMargin = getMargin(c, true, true);
+                int topMargin = getMargin(c, false, true);
+                int rightMargin = getMargin(c, true, false);
+                int bottomMargin = getMargin(c, false, false);
+
+                // Same calculation as getMeasurementIncludingMargin()
+                int mWidth = leftMargin + pWidth + rightMargin;
+                int mHeight = topMargin + pHeight + bottomMargin;
+
+                // Alignment offsets: the location of the view relative to its alignment group.
+                int a2vx = colBounds.getOffset(c, hAlign, mWidth);
+                int a2vy = rowBounds.getOffset(c, vAlign, mHeight);
+
+                dx = c2ax + a2vx + leftMargin;
+                dy = c2ay + a2vy + topMargin;
+
+                cellWidth -= leftMargin + rightMargin;
+                cellHeight -= topMargin + bottomMargin;
             } else {
-                Bounds colBounds = mHorizontalAxis.getGroupBounds().getValue(i);
-                Bounds rowBounds = mVerticalAxis.getGroupBounds().getValue(i);
+                // Alignment offsets: the location of the view relative to its alignment group.
+                int a2vx = colBounds.getOffset(c, hAlign, pWidth);
+                int a2vy = rowBounds.getOffset(c, vAlign, pHeight);
 
-                int mx = protect(hAlignment.getAlignmentValue(null, cellWidth - colBounds.size()));
-                int my = protect(vAlignment.getAlignmentValue(null, cellHeight - rowBounds.size()));
-
-                dx = mx + -colBounds.below - hAlignment.getAlignmentValue(view, pWidth);
-                dy = my + -rowBounds.below - vAlignment.getAlignmentValue(view, pHeight);
+                dx = c2ax + a2vx;
+                dy = c2ay + a2vy;
             }
 
-            int width = hAlignment.getSizeInCell(view, pWidth, cellWidth);
-            int height = vAlignment.getSizeInCell(view, pHeight, cellHeight);
+            int type = PRF;
+            int width = hAlign.getSizeInCell(c, pWidth, cellWidth, type);
+            int height = vAlign.getSizeInCell(c, pHeight, cellHeight, type);
 
             int cx = paddingLeft + x1 + dx;
             int cy = paddingTop + y1 + dy;
-            view.layout(cx, cy, cx + width, cy + height);
+            c.layout(cx, cy, cx + width, cy + height);
         }
     }
 
@@ -869,7 +953,7 @@ public class GridLayout extends ViewGroup {
     private class Axis {
         private static final int MIN_VALUE = -1000000;
 
-        private static final int UNVISITED = 0;
+        private static final int NEW = 0;
         private static final int PENDING = 1;
         private static final int COMPLETE = 2;
 
@@ -882,8 +966,11 @@ public class GridLayout extends ViewGroup {
         PackedMap<Group, Bounds> groupBounds;
         public boolean groupBoundsValid = false;
 
-        PackedMap<Interval, MutableInt> spanSizes;
-        public boolean spanSizesValid = false;
+        PackedMap<Interval, MutableInt> forwardLinks;
+        public boolean forwardLinksValid = false;
+
+        PackedMap<Interval, MutableInt> backwardLinks;
+        public boolean backwardLinksValid = false;
 
         public int[] leadingMargins;
         public boolean leadingMarginsValid = false;
@@ -894,25 +981,25 @@ public class GridLayout extends ViewGroup {
         public Arc[] arcs;
         public boolean arcsValid = false;
 
-        public int[] minima;
-        public boolean minimaValid = false;
-
-        public float[] weights;
         public int[] locations;
+        public boolean locationsValid = false;
 
         private boolean mOrderPreserved = DEFAULT_ORDER_PRESERVED;
+
+        private MutableInt parentMin = new MutableInt(0);
+        private MutableInt parentMax = new MutableInt(-MAX_SIZE);
 
         private Axis(boolean horizontal) {
             this.horizontal = horizontal;
         }
 
-        private int maxIndex(boolean internal) {
+        private int maxIndex() {
             // note the number Integer.MIN_VALUE + 1 comes up in undefined cells
             int count = -1;
-            for (int i = 0, size = getChildCount(); i < size; i++) {
-                LayoutParams params = internal ?
-                        getLayoutParams1(getChildAt(i)) :
-                        getLayoutParams(getChildAt(i));
+            for (int i = 0, N = getChildCount(); i < N; i++) {
+                View c = getChildAt(i);
+                if (isGone(c)) continue;
+                LayoutParams params = getLayoutParams(c);
                 Group g = horizontal ? params.columnGroup : params.rowGroup;
                 count = max(count, g.span.min);
                 count = max(count, g.span.max);
@@ -920,13 +1007,9 @@ public class GridLayout extends ViewGroup {
             return count == -1 ? UNDEFINED : count;
         }
 
-        private int maxIndex1() {
-            return maxIndex(true);
-        }
-
         public int getCount() {
-            if (!countWasExplicitySet && !countValid) {
-                count = max(0, maxIndex(false)); // if there are no cells, the count is zero
+            if (!countValid) {
+                count = max(0, maxIndex()); // if there are no cells, the count is zero
                 countValid = true;
             }
             return count;
@@ -947,35 +1030,32 @@ public class GridLayout extends ViewGroup {
         }
 
         private PackedMap<Group, Bounds> createGroupBounds() {
-            int N = getChildCount();
-            Group[] groups = new Group[N];
-            Bounds[] bounds = new Bounds[N];
-            for (int i = 0; i < N; i++) {
-                LayoutParams lp = getLayoutParams(getChildAt(i));
-                Group group = horizontal ? lp.columnGroup : lp.rowGroup;
-
-                groups[i] = group;
-                bounds[i] = new Bounds();
+            Assoc<Group, Bounds> assoc = Assoc.of(Group.class, Bounds.class);
+            for (int i = 0, N = getChildCount(); i < N; i++) {
+                View c = getChildAt(i);
+                if (isGone(c)) {
+                    assoc.put(Group.GONE, Bounds.GONE);
+                } else {
+                    LayoutParams lp = getLayoutParams(c);
+                    Group group = horizontal ? lp.columnGroup : lp.rowGroup;
+                    Bounds bounds = group.alignment.getBounds();
+                    assoc.put(group, bounds);
+                }
             }
-
-            return new PackedMap<Group, Bounds>(groups, bounds);
+            return assoc.pack();
         }
 
         private void computeGroupBounds() {
-            for (int i = 0; i < groupBounds.values.length; i++) {
-                groupBounds.values[i].reset();
+            Bounds[] values = groupBounds.values;
+            for (int i = 0; i < values.length; i++) {
+                values[i].reset();
             }
             for (int i = 0, N = getChildCount(); i < N; i++) {
                 View c = getChildAt(i);
+                if (isGone(c)) continue;
                 LayoutParams lp = getLayoutParams(c);
                 Group g = horizontal ? lp.columnGroup : lp.rowGroup;
-
-                Bounds bounds = groupBounds.getValue(i);
-
-                int size = getMeasurementIncludingMargin(c, horizontal, PRF);
-                // todo test this works correctly when the returned value is UNDEFINED
-                int below = getAlignmentValue(g.alignment, c, size, horizontal, c);
-                bounds.include(-below, size - below);
+                groupBounds.getValue(i).include(c, g, GridLayout.this, this, lp);
             }
         }
 
@@ -991,80 +1071,91 @@ public class GridLayout extends ViewGroup {
         }
 
         // Add values computed by alignment - taking the max of all alignments in each span
-        private PackedMap<Interval, MutableInt> createSpanSizes() {
-            PackedMap<Group, Bounds> groupBounds = getGroupBounds();
-            int N = groupBounds.keys.length;
-            Interval[] spans = new Interval[N];
-            MutableInt[] values = new MutableInt[N];
-            for (int i = 0; i < N; i++) {
-                Interval key = groupBounds.keys[i].span;
-
-                spans[i] = key;
-                values[i] = new MutableInt();
+        private PackedMap<Interval, MutableInt> createLinks(boolean min) {
+            Assoc<Interval, MutableInt> result = Assoc.of(Interval.class, MutableInt.class);
+            Group[] keys = getGroupBounds().keys;
+            for (int i = 0, N = keys.length; i < N; i++) {
+                Interval span = min ? keys[i].span : keys[i].span.inverse();
+                result.put(span, new MutableInt());
             }
-            return new PackedMap<Interval, MutableInt>(spans, values);
+            return result.pack();
         }
 
-        private void computeSpanSizes() {
-            MutableInt[] spans = spanSizes.values;
+        private void computeLinks(PackedMap<Interval, MutableInt> links, boolean min) {
+            MutableInt[] spans = links.values;
             for (int i = 0; i < spans.length; i++) {
                 spans[i].reset();
             }
 
-            Bounds[] bounds = getGroupBounds().values;  // use getter to trigger a re-evaluation
+            // use getter to trigger a re-evaluation
+            Bounds[] bounds = getGroupBounds().values;
             for (int i = 0; i < bounds.length; i++) {
-                int value = bounds[i].size();
-
-                MutableInt valueHolder = spanSizes.getValue(i);
+                int size = bounds[i].size(min);
+                int value = min ? size : -size;
+                MutableInt valueHolder = links.getValue(i);
                 valueHolder.value = max(valueHolder.value, value);
             }
         }
 
-        private PackedMap<Interval, MutableInt> getSpanSizes() {
-            if (spanSizes == null) {
-                spanSizes = createSpanSizes();
+        private PackedMap<Interval, MutableInt> getForwardLinks() {
+            if (forwardLinks == null) {
+                forwardLinks = createLinks(true);
             }
-            if (!spanSizesValid) {
-                computeSpanSizes();
-                spanSizesValid = true;
+            if (!forwardLinksValid) {
+                computeLinks(forwardLinks, true);
+                forwardLinksValid = true;
             }
-            return spanSizes;
+            return forwardLinks;
         }
 
-        private void include(List<Arc> arcs, Interval key, MutableInt size) {
+        private PackedMap<Interval, MutableInt> getBackwardLinks() {
+            if (backwardLinks == null) {
+                backwardLinks = createLinks(false);
+            }
+            if (!backwardLinksValid) {
+                computeLinks(backwardLinks, false);
+                backwardLinksValid = true;
+            }
+            return backwardLinks;
+        }
+
+        private void include(List<Arc> arcs, Interval key, MutableInt size,
+                boolean ignoreIfAlreadyPresent) {
+            /*
+            Remove self referential links.
+            These appear:
+                . as parental constraints when GridLayout has no children
+                . when components have been marked as GONE
+            */
+            if (key.size() == 0) {
+                return;
+            }
             // this bit below should really be computed outside here -
-            // its just to stop default (col>0) constraints obliterating valid entries
-            for (Arc arc : arcs) {
-                Interval span = arc.span;
-                if (span.equals(key)) {
-                    return;
+            // its just to stop default (row/col > 0) constraints obliterating valid entries
+            if (ignoreIfAlreadyPresent) {
+                for (Arc arc : arcs) {
+                    Interval span = arc.span;
+                    if (span.equals(key)) {
+                        return;
+                    }
                 }
             }
             arcs.add(new Arc(key, size));
         }
 
-        private void include2(List<Arc> arcs, Interval span, MutableInt min, MutableInt max,
-                boolean both) {
-            include(arcs, span, min);
-            if (both) {
-                // todo
-//                include(arcs, span.inverse(), max.neg());
-            }
-        }
-
-        private void include2(List<Arc> arcs, Interval span, int min, int max, boolean both) {
-            include2(arcs, span, new MutableInt(min), new MutableInt(max), both);
+        private void include(List<Arc> arcs, Interval key, MutableInt size) {
+            include(arcs, key, size, true);
         }
 
         // Group arcs by their first vertex, returning an array of arrays.
         // This is linear in the number of arcs.
         private Arc[][] groupArcsByFirstVertex(Arc[] arcs) {
-            int N = getCount() + 1;// the number of vertices
+            int N = getCount() + 1; // the number of vertices
             Arc[][] result = new Arc[N][];
             int[] sizes = new int[N];
             for (Arc arc : arcs) {
                 sizes[arc.span.min]++;
-            }
+           }
             for (int i = 0; i < sizes.length; i++) {
                 result[i] = new Arc[sizes[i]];
             }
@@ -1078,41 +1169,46 @@ public class GridLayout extends ViewGroup {
             return result;
         }
 
-        /*
-        Topological sort.
-         */
-        private Arc[] topologicalSort(final Arc[] arcs, int start) {
-        // todo ensure the <start> vertex is added in edge cases
-            final List<Arc> result = new ArrayList<Arc>();
-            new Object() {
-                Arc[][] arcsByFirstVertex = groupArcsByFirstVertex(arcs);
+        private Arc[] topologicalSort(final Arc[] arcs) {
+            return new Object() {
+                Arc[] result = new Arc[arcs.length];
+                int cursor = result.length - 1;
+                Arc[][] arcsByVertex = groupArcsByFirstVertex(arcs);
                 int[] visited = new int[getCount() + 1];
 
-                boolean completesCycle(int loc) {
-                    int state = visited[loc];
-                    if (state == UNVISITED) {
-                        visited[loc] = PENDING;
-                        for (Arc arc : arcsByFirstVertex[loc]) {
-                            Interval span = arc.span;
-                            // the recursive call
-                            if (completesCycle(span.max)) {
-                                // which arcs get set here is dependent on the order
-                                // in which we explore nodes
-                                arc.completesCycle = true;
+                void walk(int loc) {
+                    switch (visited[loc]) {
+                        case NEW: {
+                            visited[loc] = PENDING;
+                            for (Arc arc : arcsByVertex[loc]) {
+                                walk(arc.span.max);
+                                result[cursor--] = arc;
                             }
-                            result.add(arc);
+                            visited[loc] = COMPLETE;
+                            break;
                         }
-                        visited[loc] = COMPLETE;
-                    } else if (state == PENDING) {
-                        return true;
-                    } else if (state == COMPLETE) {
+                        case PENDING: {
+                            assert false;
+                            break;
+                        }
+                        case COMPLETE: {
+                            break;
+                        }
                     }
-                    return false;
                 }
-            }.completesCycle(start);
-            Collections.reverse(result);
-            assert arcs.length == result.size();
-            return result.toArray(new Arc[result.size()]);
+
+                Arc[] sort() {
+                    for (int loc = 0, N = arcsByVertex.length; loc < N; loc++) {
+                        walk(loc);
+                    }
+                    assert cursor == -1;
+                    return result;
+                }
+            }.sort();
+        }
+
+        private Arc[] topologicalSort(List<Arc> arcs) {
+            return topologicalSort(arcs.toArray(new Arc[arcs.size()]));
         }
 
         private boolean[] findUsed(Collection<Arc> arcs) {
@@ -1131,11 +1227,13 @@ public class GridLayout extends ViewGroup {
         // todo unify with findUsed above. Both routines analyze which rows/columns are empty.
         private Collection<Interval> getSpacers() {
             List<Interval> result = new ArrayList<Interval>();
-            int N = getCount() + 1;
-            int[] leadingEdgeCount = new int[N];
-            int[] trailingEdgeCount = new int[N];
-            for (int i = 0, size = getChildCount(); i < size; i++) {
-                LayoutParams lp = getLayoutParams(getChildAt(i));
+            int V = getCount() + 1;
+            int[] leadingEdgeCount = new int[V];
+            int[] trailingEdgeCount = new int[V];
+            for (int i = 0, N = getChildCount(); i < N; i++) {
+                View c = getChildAt(i);
+                if (isGone(c)) continue;
+                LayoutParams lp = getLayoutParams(c);
                 Group g = horizontal ? lp.columnGroup : lp.rowGroup;
                 Interval span = g.span;
                 leadingEdgeCount[span.min]++;
@@ -1146,9 +1244,9 @@ public class GridLayout extends ViewGroup {
 
             // treat the parent's edges like peer edges of the opposite type
             trailingEdgeCount[0] = 1;
-            leadingEdgeCount[N - 1] = 1;
+            leadingEdgeCount[V - 1] = 1;
 
-            for (int i = 0; i < N; i++) {
+            for (int i = 0; i < V; i++) {
                 if (trailingEdgeCount[i] > 0) {
                     lastTrailingEdge = i;
                     continue; // if this is also a leading edge, don't add a space of length zero
@@ -1160,42 +1258,64 @@ public class GridLayout extends ViewGroup {
             return result;
         }
 
-        private Arc[] createArcs() {
-            List<Arc> spanToSize = new ArrayList<Arc>();
-
-            // Add all the preferred elements that were not defined by the user.
-            PackedMap<Interval, MutableInt> spanSizes = getSpanSizes();
-            for (int i = 0; i < spanSizes.keys.length; i++) {
-                Interval key = spanSizes.keys[i];
-                MutableInt value = spanSizes.values[i];
-                // todo remove value duplicate
-                include2(spanToSize, key, value, value, accommodateBothMinAndMax);
+        private void addComponentSizes(List<Arc> result, PackedMap<Interval, MutableInt> links) {
+            for (int i = 0; i < links.keys.length; i++) {
+                Interval key = links.keys[i];
+                include(result, key, links.values[i], false);
             }
+        }
+
+        private Arc[] createArcs() {
+            List<Arc> mins = new ArrayList<Arc>();
+            List<Arc> maxs = new ArrayList<Arc>();
+
+            // Add the minimum values from the components.
+            addComponentSizes(mins, getForwardLinks());
+            // Add the maximum values from the components.
+            addComponentSizes(maxs, getBackwardLinks());
 
             // Find redundant rows/cols and glue them together with 0-length arcs to link the tree
-            boolean[] used = findUsed(spanToSize);
+            boolean[] used = findUsed(mins);
             for (int i = 0; i < getCount(); i++) {
                 if (!used[i]) {
                     Interval span = new Interval(i, i + 1);
-                    include(spanToSize, span, new MutableInt(0));
-                    include(spanToSize, span.inverse(), new MutableInt(0));
+                    include(mins, span, new MutableInt(0));
+                    include(maxs, span.inverse(), new MutableInt(0));
                 }
             }
 
+            // Add ordering constraints to prevent row/col sizes from going negative
             if (mOrderPreserved) {
-                // Add preferred gaps
+                // Add a constraint for every row/col
                 for (int i = 0; i < getCount(); i++) {
                     if (used[i]) {
-                        include2(spanToSize, new Interval(i, i + 1), 0, 0, false);
+                        include(mins, new Interval(i, i + 1), new MutableInt(0));
                     }
                 }
             } else {
+                // Add a constraint for each row/col that separates opposing component edges
                 for (Interval gap : getSpacers()) {
-                    include2(spanToSize, gap, 0, 0, false);
+                    include(mins, gap, new MutableInt(0));
                 }
             }
-            Arc[] arcs = spanToSize.toArray(new Arc[spanToSize.size()]);
-            return topologicalSort(arcs, 0);
+
+            // Add the container constraints. Use the version of include that allows
+            // duplicate entries in case a child spans the entire grid.
+            int N = getCount();
+            include(mins, new Interval(0, N), parentMin, false);
+            include(maxs, new Interval(N, 0), parentMax, false);
+
+            // Sort
+            Arc[] sMins = topologicalSort(mins);
+            Arc[] sMaxs = topologicalSort(maxs);
+
+            return append(sMins, sMaxs);
+        }
+
+        private void computeArcs() {
+            // getting the links validates the values that are shared by the arc list
+            getForwardLinks();
+            getBackwardLinks();
         }
 
         public Arc[] getArcs() {
@@ -1203,13 +1323,16 @@ public class GridLayout extends ViewGroup {
                 arcs = createArcs();
             }
             if (!arcsValid) {
-                getSpanSizes();
+                computeArcs();
                 arcsValid = true;
             }
             return arcs;
         }
 
         private boolean relax(int[] locations, Arc entry) {
+            if (!entry.valid) {
+                return false;
+            }
             Interval span = entry.span;
             int u = span.min;
             int v = span.max;
@@ -1256,7 +1379,8 @@ public class GridLayout extends ViewGroup {
         typical layout problems complete after the first iteration and the algorithm
         completes in O(N) steps with very low constants.
         */
-        private int[] solve(Arc[] arcs, int[] locations) {
+        private void solve(Arc[] arcs, int[] locations) {
+            String axis = horizontal ? "horizontal" : "vertical";
             int N = getCount() + 1; // The number of vertices is the number of columns/rows + 1.
 
             boolean changed = false;
@@ -1264,31 +1388,56 @@ public class GridLayout extends ViewGroup {
             for (int i = 0; i < N; i++) {
                 changed = false;
                 for (int j = 0, length = arcs.length; j < length; j++) {
-                    changed = changed | relax(locations, arcs[j]);
+                    changed |= relax(locations, arcs[j]);
                 }
                 if (!changed) {
                     if (DEBUG) {
-                        Log.d(TAG, "Iteration " +
-                                " completed after " + (1 + i) + " steps out of " + N);
+                        Log.d(TAG, axis + " iteration completed in " + (1 + i) + " steps of " + N);
                     }
+                    return;
+                }
+            }
+
+            Log.d(TAG, "The " + axis + " constraints contained a contradiction. Resolving... ");
+            Log.d(TAG, Arrays.toString(arcs));
+
+            boolean[] culprits = new boolean[arcs.length];
+            for (int i = 0; i < N; i++) {
+                for (int j = 0, length = arcs.length; j < length; j++) {
+                    culprits[j] |= relax(locations, arcs[j]);
+                }
+            }
+            for (int i = 0; i < culprits.length; i++) {
+                if (culprits[i]) {
+                    Arc arc = arcs[i];
+                    // Only remove max values, min values alone cannot be inconsistent
+                    if (arc.span.min < arc.span.max) {
+                        continue;
+                    }
+                    Log.d(TAG, "Removing: " + arc);
+                    arc.valid = false;
                     break;
                 }
             }
-            if (changed) {
-                Log.d(TAG, "*** Algorithm failed to terminate ***");
-            }
-            return locations;
+            solve1(arcs, locations);
+        }
+
+        private void solve1(Arc[] arcs, int[] a) {
+            Arrays.fill(a, MIN_VALUE);
+            a[0] = 0;
+            solve(arcs, a);
         }
 
         private void computeMargins(boolean leading) {
             int[] margins = leading ? leadingMargins : trailingMargins;
-            for (int i = 0, size = getChildCount(); i < size; i++) {
+            for (int i = 0, N = getChildCount(); i < N; i++) {
                 View c = getChildAt(i);
+                if (isGone(c)) continue;
                 LayoutParams lp = getLayoutParams(c);
                 Group g = horizontal ? lp.columnGroup : lp.rowGroup;
                 Interval span = g.span;
                 int index = leading ? span.min : span.max;
-                margins[index] = max(margins[index], getMargin(c, leading, horizontal));
+                margins[index] = max(margins[index], getMargin(c, horizontal, leading));
             }
         }
 
@@ -1322,59 +1471,26 @@ public class GridLayout extends ViewGroup {
             for (int i = 0, N = getCount(); i < N; i++) {
                 int margins = leadingMargins[i] + trailingMargins[i + 1];
                 delta += margins;
-                minima[i + 1] += delta;
+                locations[i + 1] += delta;
             }
         }
 
-        private int getLocationIncludingMargin(View view, boolean leading, int index) {
+        private int getLocationIncludingMargin(boolean leading, int index) {
             int location = locations[index];
             int margin;
-            if (!mMarginsIncludedInAlignment) {
+            if (mAlignmentMode != ALIGN_MARGINS) {
                 margin = (leading ? leadingMargins : trailingMargins)[index];
             } else {
-                margin = getMargin(view, leading, horizontal);
+                margin = 0;
             }
             return leading ? (location + margin) : (location - margin);
         }
 
-        private void computeMinima(int[] a) {
-            Arrays.fill(a, MIN_VALUE);
-            a[0] = 0;
-            solve(getArcs(), a);
-            if (!mMarginsIncludedInAlignment) {
+        private void computeLocations(int[] a) {
+            solve1(getArcs(), a);
+            if (mAlignmentMode != ALIGN_MARGINS) {
                 addMargins();
             }
-        }
-
-        private int[] getMinima() {
-            if (minima == null) {
-                int N = getCount() + 1;
-                minima = new int[N];
-            }
-            if (!minimaValid) {
-                computeMinima(minima);
-                minimaValid = true;
-            }
-            return minima;
-        }
-
-        private void computeWeights() {
-            for (int i = 0, N = getChildCount(); i < N; i++) {
-                LayoutParams lp = getLayoutParams(getChildAt(i));
-                Group g = horizontal ? lp.columnGroup : lp.rowGroup;
-                Interval span = g.span;
-                int penultimateIndex = span.max - 1;
-                weights[penultimateIndex] += horizontal ? lp.columnWeight : lp.rowWeight;
-            }
-        }
-
-        private float[] getWeights() {
-            if (weights == null) {
-                int N = getCount() + 1;
-                weights = new float[N];
-            }
-            computeWeights();
-            return weights;
         }
 
         private int[] getLocations() {
@@ -1382,55 +1498,66 @@ public class GridLayout extends ViewGroup {
                 int N = getCount() + 1;
                 locations = new int[N];
             }
+            if (!locationsValid) {
+                computeLocations(locations);
+                locationsValid = true;
+            }
             return locations;
         }
 
         // External entry points
 
         private int size(int[] locations) {
-            return locations[locations.length - 1] - locations[0];
+            return max2(locations, 0) - locations[0];
         }
 
-        private int getMin() {
-            return size(getMinima());
+        private void setParentConstraints(int min, int max) {
+            parentMin.value = min;
+            parentMax.value = -max;
+            locationsValid = false;
         }
 
-        private void layout(int targetSize) {
-            int[] mins = getMinima();
+        private int getMeasure(int min, int max) {
+            setParentConstraints(min, max);
+            return size(getLocations());
+        }
 
-            int totalDelta = max(0, targetSize - size(mins)); // confine to expansion
-
-            float[] weights = getWeights();
-            float totalWeight = sum(weights);
-
-            if (totalWeight == 0f) {
-                weights[weights.length - 1] = 1;
-                totalWeight = 1;
+        private int getMeasure(int measureSpec) {
+            int mode = MeasureSpec.getMode(measureSpec);
+            int size = MeasureSpec.getSize(measureSpec);
+            switch (mode) {
+                case MeasureSpec.UNSPECIFIED: {
+                     return getMeasure(0, MAX_SIZE);
+                }
+                case MeasureSpec.EXACTLY: {
+                    return getMeasure(size, size);
+                }
+                case MeasureSpec.AT_MOST: {
+                    return getMeasure(0, size);
+                }
+                default: {
+                    assert false;
+                    return 0;
+                }
             }
+        }
 
-            int[] locations = getLocations();
-            int cumulativeDelta = 0;
-
-            for (int i = 0; i < locations.length; i++) {
-                float weight = weights[i];
-                int delta = (int) (totalDelta * weight / totalWeight);
-                cumulativeDelta += delta;
-                locations[i] = mins[i] + cumulativeDelta;
-
-                totalDelta -= delta;
-                totalWeight -= weight;
-            }
+        private void layout(int size) {
+            setParentConstraints(size, size);
+            getLocations();
         }
 
         private void invalidateStructure() {
             countValid = false;
 
             groupBounds = null;
-            spanSizes = null;
+            forwardLinks = null;
+            backwardLinks = null;
+
             leadingMargins = null;
             trailingMargins = null;
-            minima = null;
-            weights = null;
+            arcs = null;
+
             locations = null;
 
             invalidateValues();
@@ -1438,11 +1565,14 @@ public class GridLayout extends ViewGroup {
 
         private void invalidateValues() {
             groupBoundsValid = false;
-            spanSizesValid = false;
-            arcsValid = false;
+            forwardLinksValid = false;
+            backwardLinksValid = false;
+
             leadingMarginsValid = false;
             trailingMarginsValid = false;
-            minimaValid = false;
+            arcsValid = false;
+
+            locationsValid = false;
         }
     }
 
@@ -1474,34 +1604,34 @@ public class GridLayout extends ViewGroup {
      *     <li>{@link #height} = {@link #WRAP_CONTENT}</li>
      *     <li>{@link #topMargin} = 0 when
      *          {@link GridLayout#setUseDefaultMargins(boolean) useDefaultMargins} is
-     *          <code>false</code>; otherwise {@link #UNDEFINED}, to
+     *          {@code false}; otherwise {@link #UNDEFINED}, to
      *          indicate that a default value should be computed on demand. </li>
      *     <li>{@link #leftMargin} = 0 when
      *          {@link GridLayout#setUseDefaultMargins(boolean) useDefaultMargins} is
-     *          <code>false</code>; otherwise {@link #UNDEFINED}, to
+     *          {@code false}; otherwise {@link #UNDEFINED}, to
      *          indicate that a default value should be computed on demand. </li>
      *     <li>{@link #bottomMargin} = 0 when
      *          {@link GridLayout#setUseDefaultMargins(boolean) useDefaultMargins} is
-     *          <code>false</code>; otherwise {@link #UNDEFINED}, to
+     *          {@code false}; otherwise {@link #UNDEFINED}, to
      *          indicate that a default value should be computed on demand. </li>
      *     <li>{@link #rightMargin} = 0 when
      *          {@link GridLayout#setUseDefaultMargins(boolean) useDefaultMargins} is
-     *          <code>false</code>; otherwise {@link #UNDEFINED}, to
+     *          {@code false}; otherwise {@link #UNDEFINED}, to
      *          indicate that a default value should be computed on demand. </li>
-     *     <li>{@link #rowGroup}<code>.span</code> = <code>[0, 1]</code> </li>
-     *     <li>{@link #rowGroup}<code>.alignment</code> = {@link #BASELINE} </li>
-     *     <li>{@link #columnGroup}<code>.span</code> = <code>[0, 1]</code> </li>
-     *     <li>{@link #columnGroup}<code>.alignment</code> = {@link #LEFT} </li>
-     *     <li>{@link #rowWeight} = <code>0f</code> </li>
-     *     <li>{@link #columnWeight} = <code>0f</code> </li>
+     *     <li>{@link #rowGroup}{@code .span} = {@code [0, 1]} </li>
+     *     <li>{@link #rowGroup}{@code .alignment} = {@link #BASELINE} </li>
+     *     <li>{@link #columnGroup}{@code .span} = {@code [0, 1]} </li>
+     *     <li>{@link #columnGroup}{@code .alignment} = {@link #LEFT} </li>
+     *     <li>{@link #widthSpec} = {@link #FIXED} </li>
+     *     <li>{@link #heightSpec} = {@link #FIXED} </li>
      * </ul>
      *
      * @attr ref android.R.styleable#GridLayout_Layout_layout_row
      * @attr ref android.R.styleable#GridLayout_Layout_layout_rowSpan
-     * @attr ref android.R.styleable#GridLayout_Layout_layout_rowWeight
+     * @attr ref android.R.styleable#GridLayout_Layout_layout_heightSpec
      * @attr ref android.R.styleable#GridLayout_Layout_layout_column
      * @attr ref android.R.styleable#GridLayout_Layout_layout_columnSpan
-     * @attr ref android.R.styleable#GridLayout_Layout_layout_columnWeight
+     * @attr ref android.R.styleable#GridLayout_Layout_layout_widthSpec
      * @attr ref android.R.styleable#GridLayout_Layout_layout_gravity
      */
     public static class LayoutParams extends MarginLayoutParams {
@@ -1513,22 +1643,23 @@ public class GridLayout extends ViewGroup {
         private static final int DEFAULT_MARGIN = UNDEFINED;
         private static final int DEFAULT_ROW = UNDEFINED;
         private static final int DEFAULT_COLUMN = UNDEFINED;
-        private static final Interval DEFAULT_SPAN = new Interval(0, 1);
+        private static final Interval DEFAULT_SPAN = new Interval(UNDEFINED, UNDEFINED + 1);
         private static final int DEFAULT_SPAN_SIZE = DEFAULT_SPAN.size();
-        private static final Alignment DEFAULT_HORIZONTAL_ALIGNMENT = LEFT;
-        private static final Alignment DEFAULT_VERTCIAL_ALGIGNMENT = BASELINE;
-        private static final Group DEFAULT_HORIZONTAL_GROUP =
-                new Group(DEFAULT_SPAN, DEFAULT_HORIZONTAL_ALIGNMENT);
-        private static final Group DEFAULT_VERTICAL_GROUP =
-                new Group(DEFAULT_SPAN, DEFAULT_VERTCIAL_ALGIGNMENT);
-        private static final int DEFAULT_WEIGHT_0 = 0;
-        private static final int DEFAULT_WEIGHT_1 = 1;
+        private static final Alignment DEFAULT_COLUMN_ALIGNMENT = LEFT;
+        private static final Alignment DEFAULT_ROW_ALIGNMENT = BASELINE;
+        private static final Group DEFAULT_COLUMN_GROUP =
+                new Group(DEFAULT_SPAN, DEFAULT_COLUMN_ALIGNMENT);
+        private static final Group DEFAULT_ROW_GROUP =
+                new Group(DEFAULT_SPAN, DEFAULT_ROW_ALIGNMENT);
+        private static final Spec DEFAULT_SPEC = FIXED;
+        private static final int DEFAULT_SPEC_INDEX = 0;
 
         // Misc
 
         private static final Rect CONTAINER_BOUNDS = new Rect(0, 0, 2, 2);
-        private static final Alignment[] HORIZONTAL_ALIGNMENTS = { LEFT, CENTER, RIGHT };
-        private static final Alignment[] VERTICAL_ALIGNMENTS = { TOP, CENTER, BOTTOM };
+        private static final Alignment[] COLUMN_ALIGNMENTS = { LEFT, CENTER, RIGHT };
+        private static final Alignment[] ROW_ALIGNMENTS = { TOP, CENTER, BOTTOM };
+        private static final Spec[] SPECS = { FIXED, CAN_SHRINK, CAN_STRETCH };
 
         // TypedArray indices
 
@@ -1541,10 +1672,10 @@ public class GridLayout extends ViewGroup {
 
         private static final int COLUMN = styleable.GridLayout_Layout_layout_column;
         private static final int COLUMN_SPAN = styleable.GridLayout_Layout_layout_columnSpan;
-        private static final int COLUMN_WEIGHT = styleable.GridLayout_Layout_layout_columnWeight;
+        private static final int WIDTH_SPEC = styleable.GridLayout_Layout_layout_widthSpec;
         private static final int ROW = styleable.GridLayout_Layout_layout_row;
         private static final int ROW_SPAN = styleable.GridLayout_Layout_layout_rowSpan;
-        private static final int ROW_WEIGHT = styleable.GridLayout_Layout_layout_rowWeight;
+        private static final int HEIGHT_SPEC = styleable.GridLayout_Layout_layout_heightSpec;
         private static final int GRAVITY = styleable.GridLayout_Layout_layout_gravity;
 
         // Instance variables
@@ -1560,28 +1691,29 @@ public class GridLayout extends ViewGroup {
          */
         public Group columnGroup;
         /**
-         * The proportional space that should be taken by the associated row group
-         * during excess space distribution.
-         */
-        public float rowWeight;
-        /**
          * The proportional space that should be taken by the associated column group
          * during excess space distribution.
          */
-        public float columnWeight;
+        public Spec widthSpec;
+        /**
+         * The proportional space that should be taken by the associated row group
+         * during excess space distribution.
+         */
+        public Spec heightSpec;
 
         // Constructors
 
         private LayoutParams(
                 int width, int height,
                 int left, int top, int right, int bottom,
-                Group rowGroup, Group columnGroup, float rowWeight, float columnWeight) {
+                Group rowGroup, Group columnGroup,
+                Spec widthSpec, Spec heightSpec) {
             super(width, height);
             setMargins(left, top, right, bottom);
             this.rowGroup = rowGroup;
             this.columnGroup = columnGroup;
-            this.rowWeight = rowWeight;
-            this.columnWeight = columnWeight;
+            this.heightSpec = heightSpec;
+            this.widthSpec = widthSpec;
         }
 
         /**
@@ -1595,14 +1727,14 @@ public class GridLayout extends ViewGroup {
         public LayoutParams(Group rowGroup, Group columnGroup) {
             this(DEFAULT_WIDTH, DEFAULT_HEIGHT,
                     DEFAULT_MARGIN, DEFAULT_MARGIN, DEFAULT_MARGIN, DEFAULT_MARGIN,
-                    rowGroup, columnGroup, DEFAULT_WEIGHT_0, DEFAULT_WEIGHT_0);
+                    rowGroup, columnGroup, DEFAULT_SPEC, DEFAULT_SPEC);
         }
 
         /**
          * Constructs a new LayoutParams with default values as defined in {@link LayoutParams}.
          */
         public LayoutParams() {
-            this(DEFAULT_HORIZONTAL_GROUP, DEFAULT_VERTICAL_GROUP);
+            this(DEFAULT_ROW_GROUP, DEFAULT_COLUMN_GROUP);
         }
 
         // Copying constructors
@@ -1628,8 +1760,8 @@ public class GridLayout extends ViewGroup {
             super(that);
             this.columnGroup = that.columnGroup;
             this.rowGroup = that.rowGroup;
-            this.columnWeight = that.columnWeight;
-            this.rowWeight = that.rowWeight;
+            this.widthSpec = that.widthSpec;
+            this.heightSpec = that.heightSpec;
         }
 
         // AttributeSet constructors
@@ -1693,61 +1825,58 @@ public class GridLayout extends ViewGroup {
 
         // Gravity. For conversion from the static the integers defined in the Gravity class,
         // use Gravity.apply() to apply gravity to a view of zero size and see where it ends up.
-        private static Alignment getHorizontalAlignment(int gravity, int width) {
+        private static Alignment getColumnAlignment(int gravity, int width) {
             Rect r = new Rect(0, 0, 0, 0);
             Gravity.apply(gravity, 0, 0, CONTAINER_BOUNDS, r);
 
-            boolean fill = width == MATCH_PARENT;
-            Alignment defaultAlignment = fill ? FILL : DEFAULT_HORIZONTAL_ALIGNMENT;
-            return getAlignment(HORIZONTAL_ALIGNMENTS, FILL, r.left, r.right,
+            boolean fill = (width == MATCH_PARENT);
+            Alignment defaultAlignment = fill ? FILL : DEFAULT_COLUMN_ALIGNMENT;
+            return getAlignment(COLUMN_ALIGNMENTS, FILL, r.left, r.right,
                     !definesHorizontal(gravity), defaultAlignment);
         }
 
-        private static Alignment getVerticalAlignment(int gravity, int height) {
+        private static Alignment getRowAlignment(int gravity, int height) {
             Rect r = new Rect(0, 0, 0, 0);
             Gravity.apply(gravity, 0, 0, CONTAINER_BOUNDS, r);
 
-            boolean fill = height == MATCH_PARENT;
-            Alignment defaultAlignment = fill ? FILL : DEFAULT_VERTCIAL_ALGIGNMENT;
-            return getAlignment(VERTICAL_ALIGNMENTS, FILL, r.top, r.bottom,
+            boolean fill = (height == MATCH_PARENT);
+            Alignment defaultAlignment = fill ? FILL : DEFAULT_ROW_ALIGNMENT;
+            return getAlignment(ROW_ALIGNMENTS, FILL, r.top, r.bottom,
                     !definesVertical(gravity), defaultAlignment);
-        }
-
-        private int getDefaultWeight(int size) {
-            return (size == MATCH_PARENT) ? DEFAULT_WEIGHT_1 : DEFAULT_WEIGHT_0;
         }
 
         private void init(Context context, AttributeSet attrs, int defaultGravity) {
             TypedArray a = context.obtainStyledAttributes(attrs, styleable.GridLayout_Layout);
             try {
-                int gravity = a.getInteger(GRAVITY, defaultGravity);
+                int gravity = a.getInt(GRAVITY, defaultGravity);
 
-                int column = a.getInteger(COLUMN, DEFAULT_COLUMN);
-                int columnSpan = a.getInteger(COLUMN_SPAN, DEFAULT_SPAN_SIZE);
+                int column = a.getInt(COLUMN, DEFAULT_COLUMN);
+                int columnSpan = a.getInt(COLUMN_SPAN, DEFAULT_SPAN_SIZE);
                 Interval hSpan = new Interval(column, column + columnSpan);
-                this.columnGroup = new Group(hSpan, getHorizontalAlignment(gravity, width));
-                this.columnWeight = a.getFloat(COLUMN_WEIGHT, getDefaultWeight(width));
+                this.columnGroup = new Group(hSpan, getColumnAlignment(gravity, width));
+                this.widthSpec = SPECS[a.getInt(WIDTH_SPEC, DEFAULT_SPEC_INDEX)];
 
-                int row = a.getInteger(ROW, DEFAULT_ROW);
-                int rowSpan = a.getInteger(ROW_SPAN, DEFAULT_SPAN_SIZE);
+                int row = a.getInt(ROW, DEFAULT_ROW);
+                int rowSpan = a.getInt(ROW_SPAN, DEFAULT_SPAN_SIZE);
                 Interval vSpan = new Interval(row, row + rowSpan);
-                this.rowGroup = new Group(vSpan, getVerticalAlignment(gravity, height));
-                this.rowWeight = a.getFloat(ROW_WEIGHT, getDefaultWeight(height));
+                this.rowGroup = new Group(vSpan, getRowAlignment(gravity, height));
+                this.heightSpec = SPECS[a.getInt(HEIGHT_SPEC, DEFAULT_SPEC_INDEX)];
             } finally {
                 a.recycle();
             }
         }
 
         /**
-         * Describes how the child views are positioned. Default is <code>LEFT | BASELINE</code>.
+         * Describes how the child views are positioned. Default is {@code LEFT | BASELINE}.
+         * See {@link android.view.Gravity}.
          *
-         * @param gravity the new gravity. See {@link android.view.Gravity}.
+         * @param gravity the new gravity value
          *
          * @attr ref android.R.styleable#GridLayout_Layout_layout_gravity
          */
         public void setGravity(int gravity) {
-            columnGroup = columnGroup.copyWriteAlignment(getHorizontalAlignment(gravity, width));
-            rowGroup = rowGroup.copyWriteAlignment(getVerticalAlignment(gravity, height));
+            columnGroup = columnGroup.copyWriteAlignment(getColumnAlignment(gravity, width));
+            rowGroup = rowGroup.copyWriteAlignment(getRowAlignment(gravity, height));
         }
 
         @Override
@@ -1756,11 +1885,11 @@ public class GridLayout extends ViewGroup {
             this.height = attributes.getLayoutDimension(heightAttr, DEFAULT_HEIGHT);
         }
 
-        private void setVerticalGroupSpan(Interval span) {
+        private void setRowGroupSpan(Interval span) {
             rowGroup = rowGroup.copyWriteSpan(span);
         }
 
-        private void setHorizontalGroupSpan(Interval span) {
+        private void setColumnGroupSpan(Interval span) {
             columnGroup = columnGroup.copyWriteSpan(span);
         }
     }
@@ -1772,7 +1901,7 @@ public class GridLayout extends ViewGroup {
     private static class Arc {
         public final Interval span;
         public final MutableInt value;
-        public boolean completesCycle;
+        public boolean valid = true;
 
         public Arc(Interval span, MutableInt value) {
             this.span = span;
@@ -1781,7 +1910,7 @@ public class GridLayout extends ViewGroup {
 
         @Override
         public String toString() {
-            return span + " " + (completesCycle ? "+>" : "->") + " " + value;
+            return span + " " + (!valid ? "+>" : "->") + " " + value;
         }
     }
 
@@ -1800,6 +1929,41 @@ public class GridLayout extends ViewGroup {
 
         private void reset() {
             value = Integer.MIN_VALUE;
+        }
+
+        @Override
+        public String toString() {
+            return Integer.toString(value);
+        }
+    }
+
+    private static class Assoc<K, V> extends ArrayList<Pair<K, V>> {
+        private final Class<K> keyType;
+        private final Class<V> valueType;
+
+        private Assoc(Class<K> keyType, Class<V> valueType) {
+            this.keyType = keyType;
+            this.valueType = valueType;
+        }
+
+        private static <K, V> Assoc<K, V> of(Class<K> keyType, Class<V> valueType) {
+            return new Assoc<K, V>(keyType, valueType);
+        }
+
+        public void put(K key, V value) {
+            add(Pair.create(key, value));
+        }
+
+        @SuppressWarnings(value = "unchecked")
+        public PackedMap<K, V> pack() {
+            int N = size();
+            K[] keys = (K[]) Array.newInstance(keyType, N);
+            V[] values = (V[]) Array.newInstance(valueType, N);
+            for (int i = 0; i < N; i++) {
+                keys[i] = get(i).first;
+                values[i] = get(i).second;
+            }
+            return new PackedMap<K, V>(keys, values);
         }
     }
 
@@ -1855,21 +2019,13 @@ public class GridLayout extends ViewGroup {
             return result;
         }
 
-        private static int max(int[] a, int valueIfEmpty) {
-            int result = valueIfEmpty;
-            for (int i = 0, length = a.length; i < length; i++) {
-                result = Math.max(result, a[i]);
-            }
-            return result;
-        }
-
         /*
         Create a compact array of keys or values using the supplied index.
          */
         private static <K> K[] compact(K[] a, int[] index) {
             int size = a.length;
             Class<?> componentType = a.getClass().getComponentType();
-            K[] result = (K[]) Array.newInstance(componentType, max(index, -1) + 1);
+            K[] result = (K[]) Array.newInstance(componentType, max2(index, -1) + 1);
 
             // this overwrite duplicates, retaining the last equivalent entry
             for (int i = 0; i < size; i++) {
@@ -1881,7 +2037,7 @@ public class GridLayout extends ViewGroup {
 
     /*
     For each Group (with a given alignment) we need to store the amount of space required
-    above the alignment point and the amount of space required below it. One side of this
+    before the alignment point and the amount of space required after it. One side of this
     calculation is always 0 for LEADING and TRAILING alignments but we don't make use of this.
     For CENTER and BASELINE alignments both sides are needed and in the BASELINE case no
     simple optimisations are possible.
@@ -1891,37 +2047,54 @@ public class GridLayout extends ViewGroup {
     of the values for each View.
     */
     private static class Bounds {
-        public int below;
-        public int above;
+        private static final Bounds GONE = new Bounds();
 
-        private Bounds(int below, int above) {
-            this.below = below;
-            this.above = above;
-        }
+        public int before;
+        public int after;
+        public boolean canStretch;
 
         private Bounds() {
             reset();
         }
 
-        private void reset() {
-            below = Integer.MAX_VALUE;
-            above = Integer.MIN_VALUE;
+        protected void reset() {
+            before = Integer.MIN_VALUE;
+            after = Integer.MIN_VALUE;
+            canStretch = false;
         }
 
-        private void include(int below, int above) {
-            this.below = min(this.below, below);
-            this.above = max(this.above, above);
+        protected void include(int before, int after) {
+            this.before = max(this.before, before);
+            this.after = max(this.after, after);
         }
 
-        private int size() {
-            return above - below;
+        protected int size(boolean min) {
+            if (!min && canStretch) {
+                return MAX_SIZE;
+            }
+            return before + after;
+        }
+
+        protected int getOffset(View c, Alignment alignment, int size) {
+            return before - alignment.getAlignmentValue(c, size);
+        }
+
+        protected void include(View c, Group g, GridLayout gridLayout, Axis axis, LayoutParams lp) {
+            Spec spec = axis.horizontal ? lp.widthSpec : lp.heightSpec;
+            if (spec == CAN_STRETCH) {
+                canStretch = true;
+            }
+            int size = gridLayout.getMeasurementIncludingMargin(c, axis.horizontal);
+            // todo test this works correctly when the returned value is UNDEFINED
+            int before = g.alignment.getAlignmentValue(c, size);
+            include(before, size - before);
         }
 
         @Override
         public String toString() {
             return "Bounds{" +
-                    "below=" + below +
-                    ", above=" + above +
+                    "before=" + before +
+                    ", after=" + after +
                     '}';
         }
     }
@@ -1934,10 +2107,12 @@ public class GridLayout extends ViewGroup {
      * It is not necessary to have multiple instances of Intervals which have the same
      * {@link #min} and {@link #max} values.
      * <p>
-     * Intervals are often written as <code>[min, max]</code> and represent the set of values
-     * <em>x</em> such that <em>min <= x < max</em>.
+     * Intervals are often written as {@code [min, max]} and represent the set of values
+     * {@code x} such that {@code min <= x < max}.
      */
-    /* package */ static class Interval {
+    static class Interval {
+        private static final Interval GONE = new Interval(UNDEFINED, UNDEFINED);
+
         /**
          * The minimum value.
          */
@@ -1949,10 +2124,10 @@ public class GridLayout extends ViewGroup {
         public final int max;
 
         /**
-         * Construct a new Interval, <code>interval</code>, where:
+         * Construct a new Interval, {@code interval}, where:
          * <ul>
-         *     <li> <code>interval.min = min</code> </li>
-         *     <li> <code>interval.max = max</code> </li>
+         *     <li> {@code interval.min = min} </li>
+         *     <li> {@code interval.max = max} </li>
          * </ul>
          *
          * @param min the minimum value.
@@ -1972,13 +2147,14 @@ public class GridLayout extends ViewGroup {
         }
 
         /**
-         * Returns true if the {@link #getClass class}, {@link #min} and {@link #max} properties
-         * of this Interval and the supplied parameter are pairwise equal; false otherwise.
+         * Returns {@code true} if the {@link #getClass class},
+         * {@link #min} and {@link #max} properties of this Interval and the
+         * supplied parameter are pairwise equal; {@code false} otherwise.
          *
-         * @param that the object to compare this interval with.
+         * @param that the object to compare this interval with
          *
          * @return {@code true} if the specified object is equal to this
-         *         {@code Interval}; {@code false} otherwise.
+         *         {@code Interval}, {@code false} otherwise.
          */
         @Override
         public boolean equals(Object that) {
@@ -2019,9 +2195,11 @@ public class GridLayout extends ViewGroup {
      * cells.
      * <p>
      * Groups are immutable and so may be shared between views with the same
-     * <code>span</code> and <code>alignment</code>.
+     * {@code span} and {@code alignment}.
      */
     public static class Group {
+        private static final Group GONE = new Group(Interval.GONE, Alignment.GONE);
+
         /**
          * The grid indices of the leading and trailing edges of this cell group for the
          * appropriate axis.
@@ -2029,7 +2207,7 @@ public class GridLayout extends ViewGroup {
          * See {@link GridLayout} for a description of the conventions used by GridLayout
          * for grid indices.
          */
-        /* package */ final Interval span;
+        final Interval span;
         /**
          * Specifies how cells should be aligned in this group.
          * For row groups, this specifies the vertical alignment.
@@ -2038,47 +2216,47 @@ public class GridLayout extends ViewGroup {
         public final Alignment alignment;
 
         /**
-         * Construct a new Group, <code>group</code>, where:
+         * Construct a new Group, {@code group}, where:
          * <ul>
-         *     <li> <code>group.span = span</code> </li>
-         *     <li> <code>group.alignment = alignment</code> </li>
+         *     <li> {@code group.span = span} </li>
+         *     <li> {@code group.alignment = alignment} </li>
          * </ul>
          *
-         * @param span      the span.
-         * @param alignment the alignment.
+         * @param span      the span
+         * @param alignment the alignment
          */
-        /* package */ Group(Interval span, Alignment alignment) {
+        Group(Interval span, Alignment alignment) {
             this.span = span;
             this.alignment = alignment;
         }
 
         /**
-         * Construct a new Group, <code>group</code>, where:
+         * Construct a new Group, {@code group}, where:
          * <ul>
-         *     <li> <code>group.span = [min, max]</code> </li>
-         *     <li> <code>group.alignment = alignment</code> </li>
+         *     <li> {@code group.span = [start, start + size]} </li>
+         *     <li> {@code group.alignment = alignment} </li>
          * </ul>
          *
-         * @param min       the minimum.
-         * @param max       the maximum.
-         * @param alignment the alignment.
+         * @param start     the start
+         * @param size      the size
+         * @param alignment the alignment
          */
-        public Group(int min, int max, Alignment alignment) {
-            this(new Interval(min, max), alignment);
+        public Group(int start, int size, Alignment alignment) {
+            this(new Interval(start, start + size), alignment);
         }
 
         /**
-         * Construct a new Group, <code>group</code>, where:
+         * Construct a new Group, {@code group}, where:
          * <ul>
-         *     <li> <code>group.span = [min, min + 1]</code> </li>
-         *     <li> <code>group.alignment = alignment</code> </li>
+         *     <li> {@code group.span = [start, start + 1]} </li>
+         *     <li> {@code group.alignment = alignment} </li>
          * </ul>
          *
-         * @param min       the minimum.
-         * @param alignment the alignment.
+         * @param start     the start index
+         * @param alignment the alignment
          */
-        public Group(int min, Alignment alignment) {
-            this(min, min + 1, alignment);
+        public Group(int start, Alignment alignment) {
+            this(start, 1, alignment);
         }
 
         private Group copyWriteSpan(Interval span) {
@@ -2090,13 +2268,14 @@ public class GridLayout extends ViewGroup {
         }
 
         /**
-         * Returns true if the {@link #getClass class}, {@link #alignment} and <code>span</code>
-         * properties of this Group and the supplied parameter are pairwise equal; false otherwise.
+         * Returns {@code true} if the {@link #getClass class}, {@link #alignment} and {@code span}
+         * properties of this Group and the supplied parameter are pairwise equal,
+         * {@code false} otherwise.
          *
-         * @param that the object to compare this group with.
+         * @param that the object to compare this group with
          *
          * @return {@code true} if the specified object is equal to this
-         *         {@code Group}; {@code false} otherwise.
+         *         {@code Group}; {@code false} otherwise
          */
         @Override
         public boolean equals(Object that) {
@@ -2136,56 +2315,73 @@ public class GridLayout extends ViewGroup {
      * {@link Group#alignment alignment}. Overall placement of the view in the cell
      * group is specified by the two alignments which act along each axis independently.
      * <p>
-     * An Alignment implementation must define the {@link #getAlignmentValue(View, int)}
-     * to return the appropriate value for the type of alignment being defined.
-     * The enclosing algorithms position the children
-     * so that the values returned from the alignment
-     * are the same for all of the views in a group.
-     * <p>
      *  The GridLayout class defines the most common alignments used in general layout:
      * {@link #TOP}, {@link #LEFT}, {@link #BOTTOM}, {@link #RIGHT}, {@link #CENTER}, {@link
      * #BASELINE} and {@link #FILL}.
      */
-    public static interface Alignment {
+    /*
+     * An Alignment implementation must define {@link #getAlignmentValue(View, int, int)},
+     * to return the appropriate value for the type of alignment being defined.
+     * The enclosing algorithms position the children
+     * so that the locations defined by the alignment values
+     * are the same for all of the views in a group.
+     * <p>
+     */
+    public static abstract class Alignment {
+        private static final Alignment GONE = new Alignment() {
+            public int getAlignmentValue(View view, int viewSize) {
+                assert false;
+                return 0;
+            }
+        };
+
+        Alignment() {
+        }
+
         /**
          * Returns an alignment value. In the case of vertical alignments the value
          * returned should indicate the distance from the top of the view to the
          * alignment location.
          * For horizontal alignments measurement is made from the left edge of the component.
          *
-         * @param view     the view to which this alignment should be applied.
-         * @param viewSize the measured size of the view.
-         * @return the alignment value.
+         * @param view              the view to which this alignment should be applied
+         * @param viewSize          the measured size of the view
+         * @return the alignment value
          */
-        public int getAlignmentValue(View view, int viewSize);
+        abstract int getAlignmentValue(View view, int viewSize);
 
         /**
          * Returns the size of the view specified by this alignment.
          * In the case of vertical alignments this method should return a height; for
          * horizontal alignments this method should return the width.
+         * <p>
+         * The default implementation returns {@code viewSize}.
          *
-         * @param view     the view to which this alignment should be applied.
-         * @param viewSize the measured size of the view.
-         * @param cellSize the size of the cell into which this view will be placed.
-         * @return the aligned size.
+         * @param view              the view to which this alignment should be applied
+         * @param viewSize          the measured size of the view
+         * @param cellSize          the size of the cell into which this view will be placed
+         * @param measurementType   This parameter is currently unused as GridLayout only supports
+         *                          one type of measurement: {@link View#measure(int, int)}.
+         *
+         * @return the aligned size
          */
-        public int getSizeInCell(View view, int viewSize, int cellSize);
-    }
-
-    private static abstract class AbstractAlignment implements Alignment {
-        public int getSizeInCell(View view, int viewSize, int cellSize) {
+        int getSizeInCell(View view, int viewSize, int cellSize, int measurementType) {
             return viewSize;
+        }
+
+        Bounds getBounds() {
+            return new Bounds();
         }
     }
 
-    private static final Alignment LEADING = new AbstractAlignment() {
+    private static final Alignment LEADING = new Alignment() {
         public int getAlignmentValue(View view, int viewSize) {
             return 0;
         }
 
     };
 
-    private static final Alignment TRAILING = new AbstractAlignment() {
+    private static final Alignment TRAILING = new Alignment() {
         public int getAlignmentValue(View view, int viewSize) {
             return viewSize;
         }
@@ -2220,7 +2416,7 @@ public class GridLayout extends ViewGroup {
      * This constant may be used in both {@link LayoutParams#rowGroup rowGroups} and {@link
      * LayoutParams#columnGroup columnGroups}.
      */
-    public static final Alignment CENTER = new AbstractAlignment() {
+    public static final Alignment CENTER = new Alignment() {
         public int getAlignmentValue(View view, int viewSize) {
             return viewSize >> 1;
         }
@@ -2233,16 +2429,49 @@ public class GridLayout extends ViewGroup {
      *
      * @see View#getBaseline()
      */
-    public static final Alignment BASELINE = new AbstractAlignment() {
+    public static final Alignment BASELINE = new Alignment() {
         public int getAlignmentValue(View view, int viewSize) {
             if (view == null) {
                 return UNDEFINED;
             }
-            // todo do we need to call measure first?
             int baseline = view.getBaseline();
-            return baseline == -1 ? UNDEFINED : baseline;
+            return (baseline == -1) ? UNDEFINED : baseline;
         }
 
+        @Override
+        public Bounds getBounds() {
+            return new Bounds() {
+                /*
+                In a baseline aligned row in which some components define a baseline
+                and some don't, we need a third variable to properly account for all
+                the sizes. This tracks the maximum size of all the components -
+                including those that don't define a baseline.
+                */
+                private int size;
+
+                @Override
+                protected void reset() {
+                    super.reset();
+                    size = Integer.MIN_VALUE;
+                }
+
+                @Override
+                protected void include(int before, int after) {
+                    super.include(before, after);
+                    size = max(size, before + after);
+                }
+
+                @Override
+                protected int size(boolean min) {
+                    return max(super.size(min), size);
+                }
+
+                @Override
+                protected int getOffset(View c, Alignment alignment, int size) {
+                    return max(0, super.getOffset(c, alignment, size));
+                }
+            };
+        }
     };
 
     /**
@@ -2255,8 +2484,46 @@ public class GridLayout extends ViewGroup {
             return UNDEFINED;
         }
 
-        public int getSizeInCell(View view, int viewSize, int cellSize) {
+        @Override
+        public int getSizeInCell(View view, int viewSize, int cellSize, int measurementType) {
             return cellSize;
         }
     };
+
+    /**
+     * Spec's tell GridLayout how to derive minimum and maximum size values for a
+     * component. Specifications are made with respect to a child's 'measured size'.
+     * A child's measured size is, in turn, controlled by its height and width
+     * layout parameters which either specify a size or, in the case of
+     * WRAP_CONTENT, defer to the computed size of the component.
+     */
+    public static abstract class Spec {
+    }
+
+    /**
+     * Indicates that a view requests precisely the size specified by its layout parameters.
+     *
+     * @see Spec
+     */
+    public static final Spec FIXED = new Spec() {
+    };
+
+    /**
+     * Indicates that a view's size should lie between its minimum and the size specified by
+     * its layout parameters.
+     *
+     * @see Spec
+     */
+    public static final Spec CAN_SHRINK = new Spec() {
+    };
+
+    /**
+     * Indicates that a view's size should be greater than or equal to the size specified by
+     * its layout parameters.
+     *
+     * @see Spec
+     */
+    public static final Spec CAN_STRETCH = new Spec() {
+    };
+
 }

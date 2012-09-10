@@ -75,13 +75,13 @@ class AppErrorDialog extends BaseErrorDialog {
 
         setCancelable(false);
 
-        setButton(DialogInterface.BUTTON_POSITIVE,
+        setButton(DialogInterface.BUTTON_NEGATIVE,
                 res.getText(com.android.internal.R.string.force_close),
                 mHandler.obtainMessage(FORCE_QUIT));
 
         // disable the error send if there are revoked permissions. 
         if (!showRevoked && app.errorReportReceiver != null) {
-            setButton(DialogInterface.BUTTON_NEGATIVE,
+            setButton(DialogInterface.BUTTON_POSITIVE,
                     res.getText(com.android.internal.R.string.report),
                     mHandler.obtainMessage(FORCE_QUIT_AND_REPORT));
         }
@@ -90,7 +90,7 @@ class AppErrorDialog extends BaseErrorDialog {
             setButton(DialogInterface.BUTTON_NEUTRAL,
                     res.getText(com.android.internal.R.string.edit_perms),
                     mHandler.obtainMessage(FORCE_QUIT_AND_OPEN_APP_SETTINGS));
-            setButton(DialogInterface.BUTTON_NEGATIVE,
+            setButton(DialogInterface.BUTTON_POSITIVE,
                     res.getText(com.android.internal.R.string.reset_perms),
                     mHandler.obtainMessage(FORCE_QUIT_AND_RESET_PERMS));
         }

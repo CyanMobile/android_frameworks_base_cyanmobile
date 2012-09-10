@@ -1778,8 +1778,12 @@ final class WebViewCore {
         if (DebugFlags.WEB_VIEW_CORE) Log.v(LOGTAG, "webkitDraw start");
         if (nativeRecordContent(draw.mInvalRegion, draw.mWidthHeight)
                 == false) {
-            if (DebugFlags.WEB_VIEW_CORE) Log.v(LOGTAG, "webkitDraw abort, resending draw message");
-            mEventHub.sendMessage(Message.obtain(null, EventHub.WEBKIT_DRAW));
+            if (mWebView != null && !mWebView.isPaused()) {
+                if (DebugFlags.WEB_VIEW_CORE) Log.v(LOGTAG, "webkitDraw abort, resending draw message");
+                mEventHub.sendMessage(Message.obtain(null, EventHub.WEBKIT_DRAW));
+            } else {
+                if (DebugFlags.WEB_VIEW_CORE) Log.v(LOGTAG, "webkitDraw abort, webview paused");
+            }
             return;
         }
         if (mWebView != null) {

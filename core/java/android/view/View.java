@@ -6640,6 +6640,10 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
             initialAwakenScrollBars();
             mPrivateFlags &= ~AWAKEN_SCROLL_BARS_ON_ATTACH;
         }
+        if (isFocused()) {
+            InputMethodManager imm = InputMethodManager.peekInstance();
+            imm.focusIn(this);
+        }
     }
 
     /**

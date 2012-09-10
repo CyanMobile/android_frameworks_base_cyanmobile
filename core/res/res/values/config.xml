@@ -678,5 +678,5 @@
     <string name="config_authentecJarLocation"></string>
     <bool name="config_symKeyShowsImePicker">true</bool>
     <bool name="config_fmSeparateVolumeControl">false</bool>
-
+    <bool name="show_ongoing_ime_switcher">true</bool>
 </resources>
