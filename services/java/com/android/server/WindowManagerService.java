@@ -1906,10 +1906,9 @@ public class WindowManagerService extends IWindowManager.Stub
             if (mDisplay == null) {
                 WindowManager wm = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
                 mDisplay = wm.getDefaultDisplay();
-                mInitialDisplayWidth = mCurDisplayWidth = mAppDisplayWidth = mDisplay.getRawWidth();
-                mInitialDisplayHeight = mCurDisplayHeight = mAppDisplayHeight = mDisplay.getRawHeight();
-                mInputManager.setDisplaySize(Display.DEFAULT_DISPLAY,
-                    mDisplay.getRawWidth(), mDisplay.getRawHeight());
+                mInitialDisplayWidth = mCurDisplayWidth = mAppDisplayWidth = mDisplay.getRealWidth();
+                mInitialDisplayHeight = mCurDisplayHeight = mAppDisplayHeight = mDisplay.getRealHeight();
+                mInputManager.setDisplaySize(0, mInitialDisplayWidth, mInitialDisplayHeight);
                 mPolicy.setInitialDisplaySize(mInitialDisplayWidth, mInitialDisplayHeight);
                 reportNewConfig = true;
             }
@@ -5419,14 +5418,12 @@ public class WindowManagerService extends IWindowManager.Stub
         }
         config.orientation = orientation;
 
-        mDisplay.getMetricsWithSize(mRealDisplayMetrics, mCurDisplayWidth, mCurDisplayHeight);
-
         // Override display width and height with what we are computing,
         // to be sure they remain consistent.
         final DisplayMetrics dm = mDisplayMetrics;
-        mAppDisplayWidth = mPolicy.getNonDecorDisplayWidth(dw);
-        mAppDisplayHeight = mPolicy.getNonDecorDisplayHeight(dh);
-        mDisplay.getMetricsWithSize(dm, mAppDisplayWidth, mAppDisplayHeight);
+        mDisplay.getRealMetrics(dm);
+        dm.widthPixels = mPolicy.getNonDecorDisplayWidth(dw);
+        dm.heightPixels = mPolicy.getNonDecorDisplayHeight(dh);
         mCompatibleScreenScale = 1;
         CompatibilityInfo.updateCompatibleScreenFrame(dm, orientation, mCompatibleScreenFrame);
 
@@ -8871,13 +8868,6 @@ public class WindowManagerService extends IWindowManager.Stub
     }
 
     public void getDisplaySize(Point size) {
-        synchronized(mWindowMap) {
-            size.x = mCurDisplayWidth;
-            size.y = mCurDisplayHeight;
-        }
-    }
-
-    public void getRealDisplaySize(Point size) {
         synchronized(mWindowMap) {
             size.x = mCurDisplayWidth;
             size.y = mCurDisplayHeight;

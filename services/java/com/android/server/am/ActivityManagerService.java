@@ -11428,9 +11428,6 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
 
             final long origId = Binder.clearCallingIdentity();
-            if (values != null) {
-                Settings.System.clearConfiguration(values);
-            }
             updateConfigurationLocked(values, null, false);
             Binder.restoreCallingIdentity(origId);
         }

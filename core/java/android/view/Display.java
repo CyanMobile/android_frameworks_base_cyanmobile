@@ -24,9 +24,6 @@ import android.os.SystemClock;
 import android.util.DisplayMetrics;
 import android.util.Slog;
 
-/**
- * Provides information about the display size and density.
- */
 public class Display {
     /**
      * Specify the default Display
@@ -83,8 +80,8 @@ public class Display {
             } else {
                 // This is just for boot-strapping, initializing the
                 // system process before the window manager is up.
-                outSize.x = getRawWidth();
-                outSize.y = getRawHeight();
+                outSize.x = getRealWidth();
+                outSize.y = getRealHeight();
             }
         } catch (RemoteException e) {
             Slog.w("Display", "Unable to get display size", e);
@@ -146,49 +143,16 @@ public class Display {
         }
     }
 
-    /**
-     * Gets the real size of the display without subtracting any window decor or
-     * applying any compatibility scale factors.
-     * <p>
-     * The real size may be smaller than the raw size when the window manager
-     * is emulating a smaller display (using adb shell am display-size).
-     * </p><p>
-     * The size is adjusted based on the current rotation of the display.
-     * </p>
-     * @hide
-     */
-    public void getRealSize(Point outSize) {
-        try {
-            IWindowManager wm = getWindowManager();	
-            if (wm != null) {
-                wm.getRealDisplaySize(outSize);
-            } else {
-                // This is just for boot-strapping, initializing the
-                // system process before the window manager is up.
-                outSize.x = getRawWidth();
-                outSize.y = getRawHeight();
-            }
-        } catch (RemoteException e) {
-            Slog.w("Display", "Unable to get real display size", e);
-        }
-    }
+    /** @hide Returns the actual screen size, not including any decor. */
+    native public int getRealWidth();
+	
+    /** @hide Returns the actual screen size, not including any decor. */
+    native public int getRealHeight();
 
-    /**	
-     * Gets the raw width of the display, in pixels.
-     * <p>
-     * The size is adjusted based on the current rotation of the display.
-     * </p>
-     * @hide
-     */
+    /** @hide special for when we are faking the screen size. */
     native public int getRawWidth();
 
-    /**
-     * Gets the raw height of the display, in pixels.
-     * <p>
-     * The size is adjusted based on the current rotation of the display.
-     * </p>
-     * @hide
-     */
+    /** @hide special for when we are faking the screen size. */
     native public int getRawHeight();
 
     /**
@@ -241,8 +205,10 @@ public class Display {
     public void getMetrics(DisplayMetrics outMetrics) {
         synchronized (mTmpPoint) {
             getSize(mTmpPoint);
-            getMetricsWithSize(outMetrics, mTmpPoint.x, mTmpPoint.y);
+            outMetrics.widthPixels = mTmpPoint.x;
+           outMetrics.heightPixels = mTmpPoint.y;
         }
+        getNonSizeMetrics(outMetrics);
     }
 
     /**
@@ -252,25 +218,17 @@ public class Display {
      * @hide
      */
     public void getRealMetrics(DisplayMetrics outMetrics) {
-        synchronized (mTmpPoint) {
-            getRealSize(mTmpPoint);
-            getMetricsWithSize(outMetrics, mTmpPoint.x, mTmpPoint.y);
-        }
+        outMetrics.widthPixels = getRealWidth();
+        outMetrics.heightPixels = getRealHeight();
+        getNonSizeMetrics(outMetrics);
     }
 
-    /**
-     * Gets display metrics based on an explicit assumed display size.
-     * @hide
-     */
-    public void getMetricsWithSize(DisplayMetrics outMetrics,
-            int width, int height) {
+    private void getNonSizeMetrics(DisplayMetrics outMetrics) {
         outMetrics.density      = mDensity;
         outMetrics.densityDpi   = (int)((mDensity*DisplayMetrics.DENSITY_DEFAULT)+.5f);
         outMetrics.scaledDensity= outMetrics.density;
         outMetrics.xdpi         = mDpiX;
         outMetrics.ydpi         = mDpiY;
-        outMetrics.widthPixels  = width;
-        outMetrics.heightPixels = height;
     }
 
     static IWindowManager getWindowManager() {

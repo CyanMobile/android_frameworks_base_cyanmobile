@@ -55,7 +55,6 @@ interface IWindowManager
     boolean inputMethodClientHasFocus(IInputMethodClient client);
 
     void getDisplaySize(out Point size);
-    void getRealDisplaySize(out Point size);
     int getMaximumSizeDimension();
 
     // These can only be called when injecting events to your own window,

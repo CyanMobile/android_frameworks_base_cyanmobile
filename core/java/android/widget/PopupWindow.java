@@ -87,7 +87,7 @@ public class PopupWindow {
     private boolean mClippingEnabled = true;
     private boolean mSplitTouchEnabled;
     private boolean mLayoutInScreen;
-    private boolean mLayoutInsetDecor = false;
+    private boolean mLayoutInsetDecor = true;
 
     private OnTouchListener mTouchInterceptor;
     

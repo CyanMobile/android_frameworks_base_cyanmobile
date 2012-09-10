@@ -394,7 +394,7 @@ public class AlertController {
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
             
-            topPanel.addView(mCustomTitleView, 0, lp);
+            topPanel.addView(mCustomTitleView, lp);
             
             // Hide the title template
             View titleTemplate = mWindow.findViewById(R.id.title_template);

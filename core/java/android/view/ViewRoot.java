@@ -896,18 +896,18 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
             fullRedrawNeeded = true;
             mLayoutRequested = true;
 
-            if (lp.type == WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL) {
-                 Display disp = WindowManagerImpl.getDefault().getDefaultDisplay();
-                 Point size = new Point();
-                 disp.getRealSize(size);
-                 desiredWindowWidth = size.x;
-                 desiredWindowHeight = size.y;
-            } else {
+            //if (lp.type == WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL) {
+            //     Display disp = WindowManagerImpl.getDefault().getDefaultDisplay();
+            //     Point size = new Point();
+            //     disp.getRealSize(size);
+            //     desiredWindowWidth = size.x;
+            //     desiredWindowHeight = size.y;
+            //} else {
                  DisplayMetrics packageMetrics =
                      mView.getContext().getResources().getDisplayMetrics();
                  desiredWindowWidth = packageMetrics.widthPixels;
                  desiredWindowHeight = packageMetrics.heightPixels;
-            }
+            //}
 
             // For the very first time, tell the view hierarchy that it
             // is attached to the window.  Note that at this point the surface
@@ -992,18 +992,18 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                         || lp.height == ViewGroup.LayoutParams.WRAP_CONTENT) {
                     windowResizesToFitContent = true;
 
-                    if (lp.type == WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL) {
-                        Display disp = WindowManagerImpl.getDefault().getDefaultDisplay();
-                        Point size = new Point();
-                        disp.getRealSize(size);
-                        desiredWindowWidth = size.x;
-                        desiredWindowHeight = size.y;
-                    } else {
+                    //if (lp.type == WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL) {
+                    //    Display disp = WindowManagerImpl.getDefault().getDefaultDisplay();
+                    //    Point size = new Point();
+                    //    disp.getRealSize(size);
+                    //    desiredWindowWidth = size.x;
+                    //    desiredWindowHeight = size.y;
+                    //} else {
                         DisplayMetrics packageMetrics =
                             mView.getContext().getResources().getDisplayMetrics();
                         desiredWindowWidth = packageMetrics.widthPixels;
                         desiredWindowHeight = packageMetrics.heightPixels;
-                    }
+                    //}
                 }
             }
 
