@@ -63,7 +63,7 @@
         <item name="textAppearanceSearchResultTitle">@android:style/TextAppearance.SearchResult.Title</item>
         <item name="textAppearanceSearchResultSubtitle">@android:style/TextAppearance.SearchResult.Subtitle</item>
         <item name="textAppearanceListItem">?android:attr/textAppearanceLarge</item>
-        <item name="textAppearanceListItemSmall">?android:attr/textAppearanceLarge</item>
+        <item name="textAppearanceListItemSmall">?android:attr/textAppearanceLargeInverse</item>
         <item name="textAppearanceButton">@android:style/TextAppearance.Widget.Button</item>
         
         <item name="candidatesTextStyleSpans">@android:string/candidates_style</item>
