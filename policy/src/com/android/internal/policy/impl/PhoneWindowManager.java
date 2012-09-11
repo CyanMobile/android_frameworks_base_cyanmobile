@@ -268,6 +268,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private boolean mShowStatBar;
     private boolean mNaviShow;
     private boolean mNaviShowAll;
+    private boolean mNaviShowAll2;
     int mPointerLocationMode = 0;
     int mBackKillTimeout;
 
@@ -935,6 +936,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
             mNaviShowAll = (Settings.System.getInt(resolver,
                     Settings.System.NAVI_BUTTONS, 1) == 1);
+            mNaviShowAll2 = (Settings.System.getInt(resolver,
+                    Settings.System.NAVI_BUTTONS, 1) == 2);
             int accelerometerDefault = Settings.System.getInt(resolver,
                     Settings.System.ACCELEROMETER_ROTATION, DEFAULT_ACCELEROMETER_ROTATION);
             if (mAccelerometerDefault != accelerometerDefault) {
@@ -2116,7 +2119,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 } else {
                     if (DEBUG_LAYOUT) Log.v(TAG, "Showing status bar");
                     if (mStatusBar.showLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
-                    if (mNavigationBar != null && mNaviShow) {
+                    if (mNavigationBar != null && mNaviShow && mNaviShowAll2) {
                        Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, 1);
                     }
                 }
