@@ -322,7 +322,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private int mStatusBarCarrierLogo;
     private int mStatusBarClock;
     private boolean mShowDate = true;
-    private boolean mShowNotif = true;
+    private boolean mShowNotif;
     private boolean mFirstis = true;
     private boolean mNaviShow;
     private boolean mStatusBarReverse = false;
@@ -1784,7 +1784,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 animateCollapse();
             }
         }
-        if ((diff & StatusBarManager.DISABLE_NOTIFICATION_ICONS) != 0) {
+        if (((diff & StatusBarManager.DISABLE_NOTIFICATION_ICONS) != 0)) {
             if ((state & StatusBarManager.DISABLE_NOTIFICATION_ICONS) != 0) {
                 if (SPEW) Slog.d(TAG, "DISABLE_NOTIFICATION_ICONS: yes");
                 if (mTicking) {
@@ -2553,7 +2553,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
 	if (visible) {
             setNotificationIconVisibility(false, com.android.internal.R.anim.fade_out);
-        } else {
+        } else if (mShowNotif) {
             setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);
         }
     }
@@ -2595,9 +2595,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     void setNotificationIconVisibility(boolean visible, int anim) {
-
         int old = mNotificationIcons.getVisibility();
-        int v = visible ? View.VISIBLE : View.INVISIBLE;
+        int v = visible ? (mShowNotif ? View.VISIBLE : View.INVISIBLE) : View.INVISIBLE;
         if (old != v) {
            if (mStatusBarCarrierLogo == 2 && mStatusBarReverse) {
                mNotificationIcons.setVisibility(View.INVISIBLE);
@@ -2606,11 +2605,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                mNotificationIcons.setVisibility(View.INVISIBLE);
                mNotificationIcons.startAnimation(loadAnim(anim, null));
            } else {
-               if(!mShowNotif) {
-                  mNotificationIcons.setVisibility(View.INVISIBLE);
-               } else {
-                  mNotificationIcons.setVisibility(v);
-               }
+               mNotificationIcons.setVisibility(v);
                mNotificationIcons.startAnimation(loadAnim(anim, null));
            }
         }
