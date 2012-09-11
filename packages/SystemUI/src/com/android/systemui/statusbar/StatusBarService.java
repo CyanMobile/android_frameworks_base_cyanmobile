@@ -323,7 +323,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private int mStatusBarClock;
     private boolean mShowDate = true;
     private boolean mShowNotif = true;
-    private boolean mFirstis;
+    private boolean mFirstis = true;
     private boolean mNaviShow;
     private boolean mStatusBarReverse = false;
     private boolean mStatusBarTab = false;
@@ -875,7 +875,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mCarrierLabelLayout = (LinearLayout)mExpandedView.findViewById(R.id.carrier_label_layout);
         mCompactCarrierLayout = (LinearLayout)mExpandedView.findViewById(R.id.compact_carrier_layout);
-        mCompactCarrierLayout.setOnClickListener(mCarrierButtonListener);
 
         mTicker = new MyTicker(context, mStatusBarView);
 
@@ -1740,14 +1739,17 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
        Clock clock = (Clock)mStatusBarView.findViewById(R.id.clock);
        if (clock != null) {
            clock.VisibilityChecks(show);
+           clock.setOnClickListener(mCarrierButtonListener);
        }
        CenterClock centerClo = (CenterClock)mStatusBarView.findViewById(R.id.centerClo);
        if (centerClo != null) {
            centerClo.VisibilityChecks(show);
+           centerClo.setOnClickListener(mCarrierButtonListener);
        }
        LeftClock clockLeft = (LeftClock)mStatusBarView.findViewById(R.id.clockLe);
        if (clockLeft != null) {
            clockLeft.VisibilityChecks(show);
+           clockLeft.setOnClickListener(mCarrierButtonListener);
        }
       }
     }
@@ -2831,19 +2833,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     private View.OnClickListener mCarrierButtonListener = new View.OnClickListener() {
         public void onClick(View v) {
-          if (mStatusBarCarrier == 5) {
-            if(Settings.System.getInt(getContentResolver(),
+             if(Settings.System.getInt(getContentResolver(),
                       Settings.System.EXPANDED_VIEW_WIDGET, 1) == 0) {
                 QuickSettingsPopupWindow quickSettingsWindow = new QuickSettingsPopupWindow(v);
                 quickSettingsWindow.showLikeQuickAction();
-            } else {
-                if (Settings.System.getInt(getContentResolver(),
-                      Settings.System.ENABLE_SETTING_BUTTON, 0) == 0) {
-                    WeatherPopup weatherWindow = new WeatherPopup(v);
-                    weatherWindow.showLikePopDownMenu();
-                }
-            }
-          }
+             }
         }
     };
 
