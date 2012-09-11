@@ -102,7 +102,6 @@ import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_SUB_PANEL;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
 import static android.view.WindowManager.LayoutParams.TYPE_BOOT_PROGRESS;
-import static android.view.WindowManager.LayoutParams.TYPE_HIDDEN_NAV_CONSUMER;
 import static android.view.WindowManager.LayoutParams.TYPE_INPUT_METHOD;
 import static android.view.WindowManager.LayoutParams.TYPE_INPUT_METHOD_DIALOG;
 import static android.view.WindowManager.LayoutParams.TYPE_KEYGUARD;
@@ -1766,7 +1765,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         // decide where the status bar goes ahead of time
         if (mStatusBar != null) {
             if (mNavigationBar != null) {
-                final boolean navVisible = (mNavigationBar.isVisibleLw() && mNaviShow && mShowNavi);
+                final boolean navVisible = (mNavigationBar.isVisibleLw() && mNaviShow && mNaviShowAll);
                 int navSizeval = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.STATUSBAR_NAVI_SIZE, 25);
                 int navSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
@@ -1801,7 +1800,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 final Rect r = mStatusBar.getFrameLw();
                 // If the status bar is hidden, we don't want to cause
                 // windows behind it to scroll.
-                if(mBottomBar && (!mNaviShow || !mShowNavi)) {
+                if(mBottomBar && (!mNaviShow || !mNaviShowAll)) {
                     //setting activites bottoms, to top of status bar
                     mDockBottom = mContentBottom = mCurBottom = r.top;
                 } else {
@@ -1885,7 +1884,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         final Rect cf = mTmpContentFrame;
         final Rect vf = mTmpVisibleFrame;
         
-        final boolean hasNavBar = (mNaviShow && mShowNaviAll);
+        final boolean hasNavBar = (mNaviShow && mNaviShowAll);
 
         if (attrs.type == TYPE_INPUT_METHOD) {
             pf.left = df.left = cf.left = vf.left = mDockLeft;
@@ -2110,7 +2109,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if (hideStatusBar || mShowStatBar) {
                     if (DEBUG_LAYOUT) Log.v(TAG, "Hiding status bar");
                     if (mStatusBar.hideLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
-                    if (mNavigationBar != null && mNaviShow && mShowNaviAll) {
+                    if (mNavigationBar != null && mNaviShow && mNaviShowAll) {
                        Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, 2);
                     }
                     hiding = true;

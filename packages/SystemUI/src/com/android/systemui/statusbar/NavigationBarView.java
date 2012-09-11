@@ -120,7 +120,8 @@ public class NavigationBarView extends LinearLayout {
     private Bitmap mCustomBackIcon;
     private Bitmap mCustomSearchIcon;
     private Bitmap mCustomQuickIcon;
-
+    boolean mVisible = true;
+    boolean mHidden = false;
     Handler mHandler;
 
     class SettingsObserver extends ContentObserver {
