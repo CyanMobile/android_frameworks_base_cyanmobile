@@ -54,7 +54,6 @@ import android.app.Service;
 import android.app.backup.IBackupManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
-import android.content.ComponentCallbacks2;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -89,6 +88,7 @@ import android.os.Environment;
 import android.os.FileObserver;
 import android.os.FileUtils;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.IPermissionController;
 import android.os.Looper;
@@ -186,6 +186,19 @@ public final class ActivityManagerService extends ActivityManagerNative
     
     private static final String SYSTEM_SECURE = "ro.secure";
 
+    // This is the maximum number of application processes we would like
+    // to have running.  Due to the asynchronous nature of things, we can
+    // temporarily go beyond this limit.
+    static final int MAX_PROCESSES = 2;
+
+    // Set to false to leave processes running indefinitely, relying on
+    // the kernel killing them as resources are required.
+    static final boolean ENFORCE_PROCESS_LIMIT = false;
+
+    // This is the maximum number of activities that we would like to have
+    // running at a given time.
+    static final int MAX_ACTIVITIES = 20;
+
     // Maximum number of recent tasks that we can remember.
     static final int MAX_RECENT_TASKS = 20;
     
@@ -196,12 +209,6 @@ public final class ActivityManagerService extends ActivityManagerNative
     // How long we wait for a launched process to attach to the activity manager
     // before we decide it's never going to come up for real.
     static final int PROC_START_TIMEOUT = 10*1000;
-
-    // How long we wait for a launched process to attach to the activity manager
-    // before we decide it's never going to come up for real, when the process was
-    // started with a wrapper for instrumentation (such as Valgrind) because it
-    // could take much longer than usual.
-    static final int PROC_START_TIMEOUT_WITH_WRAPPER = 300*1000;
 
     // How long to wait after going idle before forcing apps to GC.
     static final int GC_TIMEOUT = 5*1000;
@@ -1676,7 +1683,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 // An application record is attached to a previous process,
                 // clean it up now.
                 if (DEBUG_PROCESSES) Slog.v(TAG, "App died: " + app);
-                handleAppDiedLocked(app, true, true);
+                handleAppDiedLocked(app, true);
             }
         }
 
@@ -1792,12 +1799,9 @@ public final class ActivityManagerService extends ActivityManagerNative
             if ("1".equals(SystemProperties.get("debug.assert"))) {
                 debugFlags |= Zygote.DEBUG_ENABLE_ASSERT;
             }
-            // Start the process.  It will either succeed and return a result containing
-            // the PID of the new process, or else throw a RuntimeException.
-            Process.ProcessStartResult startResult = Process.start("android.app.ActivityThread",
+            int pid = Process.start("android.app.ActivityThread",
                     mSimpleProcessManagement ? app.processName : null, uid, uid,
                     gids, debugFlags, null);
-
             BatteryStatsImpl bs = app.batteryStats.getBatteryStats();
             synchronized (bs) {
                 if (bs.isOnBattery()) {
@@ -1805,12 +1809,12 @@ public final class ActivityManagerService extends ActivityManagerNative
                 }
             }
             
-            EventLog.writeEvent(EventLogTags.AM_PROC_START, startResult.pid, uid,
+            EventLog.writeEvent(EventLogTags.AM_PROC_START, pid, uid,
                     app.processName, hostingType,
                     hostingNameStr != null ? hostingNameStr : "");
             
             if (app.persistent) {
-                Watchdog.getInstance().processStarted(app.processName, startResult.pid);
+                Watchdog.getInstance().processStarted(app.processName, pid);
             }
             
             StringBuilder buf = mStringBuilder;
@@ -1824,7 +1828,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 buf.append(hostingNameStr);
             }
             buf.append(": pid=");
-            buf.append(startResult.pid);
+            buf.append(pid);
             buf.append(" uid=");
             buf.append(uid);
             buf.append(" gids={");
@@ -1837,22 +1841,26 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
             buf.append("}");
             Slog.i(TAG, buf.toString());
-            if (startResult.pid == MY_PID) {
+            if (pid == 0 || pid == MY_PID) {
                 // Processes are being emulated with threads.
                 app.pid = MY_PID;
                 app.removed = false;
                 mStartingProcesses.add(app);
-            } else {
-                app.pid = startResult.pid;
-                app.usingWrapper = startResult.usingWrapper;
+            } else if (pid > 0) {
+                app.pid = pid;
                 app.removed = false;
                 synchronized (mPidsSelfLocked) {
-                    this.mPidsSelfLocked.put(startResult.pid, app);
+                    this.mPidsSelfLocked.put(pid, app);
                     Message msg = mHandler.obtainMessage(PROC_START_TIMEOUT_MSG);
                     msg.obj = app;
-                    mHandler.sendMessageDelayed(msg, startResult.usingWrapper
-                        ? PROC_START_TIMEOUT_WITH_WRAPPER : PROC_START_TIMEOUT);
+                    mHandler.sendMessageDelayed(msg, PROC_START_TIMEOUT);
                 }
+            } else {
+                app.pid = 0;
+                RuntimeException e = new RuntimeException(
+                        "Failure starting process " + app.processName
+                        + ": returned pid=" + pid);
+                Slog.e(TAG, e.getMessage(), e);
             }
         } catch (RuntimeException e) {
             // XXX do better error recovery.
@@ -2066,10 +2074,11 @@ public final class ActivityManagerService extends ActivityManagerNative
         }
 
         synchronized (this) {
-            ActivityRecord r = mMainStack.isInStackLocked(callingActivity);
-            if (r == null) {
+            int index = mMainStack.indexOfTokenLocked(callingActivity);
+            if (index < 0) {
                 return false;
             }
+            ActivityRecord r = (ActivityRecord)mMainStack.mHistory.get(index);
             if (r.app == null || r.app.thread == null) {
                 // The caller is not running...  d'oh!
                 return false;
@@ -2222,10 +2231,11 @@ public final class ActivityManagerService extends ActivityManagerNative
     public void setRequestedOrientation(IBinder token,
             int requestedOrientation) {
         synchronized (this) {
-            ActivityRecord r = mMainStack.isInStackLocked(token);
-            if (r == null) {
+            int index = mMainStack.indexOfTokenLocked(token);
+            if (index < 0) {
                 return;
             }
+            ActivityRecord r = (ActivityRecord)mMainStack.mHistory.get(index);
             final long origId = Binder.clearCallingIdentity();
             mWindowManager.setAppOrientation(r, requestedOrientation);
             Configuration config = mWindowManager.updateOrientationFromAppTokens(
@@ -2233,7 +2243,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     r.mayFreezeScreenLocked(r.app) ? r : null);
             if (config != null) {
                 r.frozenBeforeDestroy = true;
-                if (!updateConfigurationLocked(config, r, false)) {
+                if (!updateConfigurationLocked(config, r)) {
                     mMainStack.resumeTopActivityLocked(null);
                 }
             }
@@ -2243,10 +2253,11 @@ public final class ActivityManagerService extends ActivityManagerNative
 
     public int getRequestedOrientation(IBinder token) {
         synchronized (this) {
-            ActivityRecord r = mMainStack.isInStackLocked(token);
-            if (r == null) {
+            int index = mMainStack.indexOfTokenLocked(token);
+            if (index < 0) {
                 return ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
             }
+            ActivityRecord r = (ActivityRecord)mMainStack.mHistory.get(index);
             return mWindowManager.getAppOrientation(r);
         }
     }
@@ -2383,10 +2394,11 @@ public final class ActivityManagerService extends ActivityManagerNative
     public final void finishSubActivity(IBinder token, String resultWho,
             int requestCode) {
         synchronized(this) {
-            ActivityRecord self = mMainStack.isInStackLocked(token);
-           if (self == null) {
+            int index = mMainStack.indexOfTokenLocked(token);
+            if (index < 0) {
                 return;
             }
+            ActivityRecord self = (ActivityRecord)mMainStack.mHistory.get(index);
 
             final long origId = Binder.clearCallingIdentity();
 
@@ -2425,10 +2437,11 @@ public final class ActivityManagerService extends ActivityManagerNative
     public void overridePendingTransition(IBinder token, String packageName,
             int enterAnim, int exitAnim) {
         synchronized(this) {
-            ActivityRecord self = mMainStack.isInStackLocked(token);
-            if (self == null) {
+            int index = mMainStack.indexOfTokenLocked(token);
+            if (index < 0) {
                 return;
             }
+            ActivityRecord self = (ActivityRecord)mMainStack.mHistory.get(index);
 
             final long origId = Binder.clearCallingIdentity();
             
@@ -2448,8 +2461,8 @@ public final class ActivityManagerService extends ActivityManagerNative
      * to the process.
      */
     private final void handleAppDiedLocked(ProcessRecord app,
-            boolean restarting, boolean allowRestart) {
-        cleanUpApplicationRecordLocked(app, restarting, allowRestart, -1);
+            boolean restarting) {
+        cleanUpApplicationRecordLocked(app, restarting, -1);
         if (!restarting) {
             mLruProcesses.remove(app);
         }
@@ -2509,7 +2522,8 @@ public final class ActivityManagerService extends ActivityManagerNative
                     }
                 }
 
-                r.stack.cleanUpActivityLocked(r, true, true);
+                r.stack.cleanUpActivityLocked(r, true);
+                r.state = ActivityState.STOPPED;
             }
             atTop = false;
         }
@@ -2583,7 +2597,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 TAG, "Dying app: " + app + ", pid: " + pid
                 + ", thread: " + thread.asBinder());
             boolean doLowMem = app.instrumentationClass == null;
-            handleAppDiedLocked(app, false, true);
+            handleAppDiedLocked(app, false);
 
             if (doLowMem) {
                 // If there are no longer any background processes running,
@@ -2984,7 +2998,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     return;
                 }
                 killPackageProcessesLocked(packageName, pkgUid,
-                        ProcessList.SECONDARY_SERVER_ADJ, false, true, true);
+                        ProcessList.SECONDARY_SERVER_ADJ, false, true);
             }
         } finally {
             Binder.restoreCallingIdentity(callingId);
@@ -3140,7 +3154,7 @@ public final class ActivityManagerService extends ActivityManagerNative
     }
     
     private final boolean killPackageProcessesLocked(String packageName, int uid,
-            int minOomAdj, boolean callerWillRestart, boolean allowRestart, boolean doit) {
+            int minOomAdj, boolean callerWillRestart, boolean doit) {
         ArrayList<ProcessRecord> procs = new ArrayList<ProcessRecord>();
 
         // Remove all processes this package may have touched: all with the
@@ -3151,10 +3165,6 @@ public final class ActivityManagerService extends ActivityManagerNative
             final int NA = apps.size();
             for (int ia=0; ia<NA; ia++) {
                 ProcessRecord app = apps.valueAt(ia);
-                if (app.persistent) {
-                    // we don't kill persistent processes
-                    continue;
-                }
                 if (app.removed) {
                     if (doit) {
                         procs.add(app);
@@ -3175,7 +3185,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         
         int N = procs.size();
         for (int i=0; i<N; i++) {
-            removeProcessLocked(procs.get(i), callerWillRestart, allowRestart);
+            removeProcessLocked(procs.get(i), callerWillRestart);
         }
         return N > 0;
     }
@@ -3204,18 +3214,12 @@ public final class ActivityManagerService extends ActivityManagerNative
         }
         
         boolean didSomething = killPackageProcessesLocked(name, uid, -100,
-                callerWillRestart, false, doit);
+                callerWillRestart, doit);
         
         for (i=mMainStack.mHistory.size()-1; i>=0; i--) {
             ActivityRecord r = (ActivityRecord)mMainStack.mHistory.get(i);
-            if (r.packageName.equals(name)
-                    && (r.app == null || !r.app.persistent)) {
+            if (r.packageName.equals(name)) {
                 if (!doit) {
-                    if (r.finishing) {
-                        // If this activity is just finishing, then it is not
-                        // interesting as far as something to stop.
-                        continue;
-                    }
                     return true;
                 }
                 didSomething = true;
@@ -3230,8 +3234,7 @@ public final class ActivityManagerService extends ActivityManagerNative
 
         ArrayList<ServiceRecord> services = new ArrayList<ServiceRecord>();
         for (ServiceRecord service : mServices.values()) {
-            if (service.packageName.equals(name)
-                    && (service.app == null || !service.app.persistent)) {
+            if (service.packageName.equals(name)) {
                 if (!doit) {
                     return true;
                 }
@@ -3265,8 +3268,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         return didSomething;
     }
 
-    private final boolean removeProcessLocked(ProcessRecord app,
-            boolean callerWillRestart, boolean allowRestart) {
+    private final boolean removeProcessLocked(ProcessRecord app, boolean callerWillRestart) {
         final String name = app.processName;
         final int uid = app.info.uid;
         if (DEBUG_PROCESSES) Slog.d(
@@ -3285,7 +3287,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 mPidsSelfLocked.remove(pid);
                 mHandler.removeMessages(PROC_START_TIMEOUT_MSG, app);
             }
-            handleAppDiedLocked(app, true, allowRestart);
+            handleAppDiedLocked(app, true);
             mLruProcesses.remove(app);
             Process.killProcess(pid);
             
@@ -3396,7 +3398,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         // If this application record is still attached to a previous
         // process, clean it up now.
         if (app.thread != null) {
-            handleAppDiedLocked(app, true, true);
+            handleAppDiedLocked(app, true);
         }
 
         // Tell the process all about itself.
@@ -3406,10 +3408,8 @@ public final class ActivityManagerService extends ActivityManagerNative
 
         String processName = app.processName;
         try {
-            AppDeathRecipient adr = new AppDeathRecipient(
-                    app, pid, thread);
-            thread.asBinder().linkToDeath(adr, 0);
-            app.deathRecipient = adr;
+            thread.asBinder().linkToDeath(new AppDeathRecipient(
+                    app, pid, thread), 0);
         } catch (RemoteException e) {
             app.resetPackageList();
             startProcessLocked(app, "link fail", processName);
@@ -3424,7 +3424,6 @@ public final class ActivityManagerService extends ActivityManagerNative
         app.setSchedGroup = Process.THREAD_GROUP_BG_NONINTERACTIVE;
         app.forcingToForeground = null;
         app.foregroundServices = false;
-        app.hasShownUi = false;
         app.debugging = false;
 
         mHandler.removeMessages(PROC_START_TIMEOUT_MSG, app);
@@ -3482,7 +3481,6 @@ public final class ActivityManagerService extends ActivityManagerNative
             Slog.w(TAG, "Exception thrown during bind!", e);
 
             app.resetPackageList();
-                        app.unlinkDeathRecipient();
             startProcessLocked(app, "bind fail", processName);
             return false;
         }
@@ -3570,7 +3568,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         if (badApp) {
             // todo: Also need to kill application to deal with all
             // kinds of exceptions.
-            handleAppDiedLocked(app, false, true);
+            handleAppDiedLocked(app, false);
             return false;
         }
 
@@ -3702,9 +3700,19 @@ public final class ActivityManagerService extends ActivityManagerNative
         final long origId = Binder.clearCallingIdentity();
 
         synchronized (this) {
-            r = mMainStack.isInStackLocked(token);
-            if (r != null) {
-                r.stack.activityStoppedLocked(r, thumbnail, description);
+            int index = mMainStack.indexOfTokenLocked(token);
+            if (index >= 0) {
+                r = (ActivityRecord)mMainStack.mHistory.get(index);
+                r.thumbnail = thumbnail;
+                r.description = description;
+                r.stopped = true;
+                r.state = ActivityState.STOPPED;
+                if (!r.finishing) {
+                    if (r.configDestroy) {
+                        r.stack.destroyActivityLocked(r, true);
+                        r.stack.resumeTopActivityLocked(null);
+                    }
+                }
             }
         }
 
@@ -3737,30 +3745,35 @@ public final class ActivityManagerService extends ActivityManagerNative
     }
 
     private ActivityRecord getCallingRecordLocked(IBinder token) {
-        ActivityRecord r = mMainStack.isInStackLocked(token);	
-        if (r == null) {
-            return null;
+        int index = mMainStack.indexOfTokenLocked(token);
+        if (index >= 0) {
+            ActivityRecord r = (ActivityRecord)mMainStack.mHistory.get(index);
+            if (r != null) {
+                return r.resultTo;
+            }
         }
-        return r.resultTo;
+        return null;
     }
 
     public ComponentName getActivityClassForToken(IBinder token) {
         synchronized(this) {
-            ActivityRecord r = mMainStack.isInStackLocked(token);
-            if (r == null) {
-                return null;
+            int index = mMainStack.indexOfTokenLocked(token);
+            if (index >= 0) {
+                ActivityRecord r = (ActivityRecord)mMainStack.mHistory.get(index);
+                return r.intent.getComponent();
             }
-            return r.intent.getComponent();
+            return null;
         }
     }
 
     public String getPackageForToken(IBinder token) {
         synchronized(this) {
-            ActivityRecord r = mMainStack.isInStackLocked(token);
-            if (r == null) {
-                return null;
+            int index = mMainStack.indexOfTokenLocked(token);
+            if (index >= 0) {
+                ActivityRecord r = (ActivityRecord)mMainStack.mHistory.get(index);
+                return r.packageName;
             }
-            return r.packageName;
+            return null;
         }
     }
 
@@ -3811,10 +3824,11 @@ public final class ActivityManagerService extends ActivityManagerNative
             int requestCode, Intent intent, String resolvedType, int flags) {
         ActivityRecord activity = null;
         if (type == INTENT_SENDER_ACTIVITY_RESULT) {
-            activity = mMainStack.isInStackLocked(token);
-            if (activity == null) {
+            int index = mMainStack.indexOfTokenLocked(token);
+            if (index < 0) {
                 return null;
             }
+            activity = (ActivityRecord)mMainStack.mHistory.get(index);
             if (activity.finishing) {
                 return null;
             }
@@ -4783,8 +4797,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                             maxNum < N ? maxNum : N);
             for (int i=0; i<N && maxNum > 0; i++) {
                 TaskRecord tr = mRecentTasks.get(i);
-                if (i == 0
-                        || ((flags&ActivityManager.RECENT_WITH_EXCLUDED) != 0)
+                if (((flags&ActivityManager.RECENT_WITH_EXCLUDED) != 0)
                         || (tr.intent == null)
                         || ((tr.intent.getFlags()
                                 &Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS) == 0)) {
@@ -5018,10 +5031,11 @@ public final class ActivityManagerService extends ActivityManagerNative
 
         synchronized(this) {
             if (r == null) {
-                r = mMainStack.isInStackLocked(token);
-                if (r == null) {
+                int index = mMainStack.indexOfTokenLocked(token);
+                if (index < 0) {
                     return;
                 }
+                r = (ActivityRecord)mMainStack.mHistory.get(index);
             }
             if (thumbnail == null) {
                 thumbnail = r.thumbnail;
@@ -5170,7 +5184,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 return true;
             } else {
                 r.conProviders.put(cpr, new Integer(cnt.intValue()+1));
-            }	
+            }  
         } else {
             cpr.externals++;
         }
@@ -5262,13 +5276,14 @@ public final class ActivityManagerService extends ActivityManagerNative
                            Process.killProcess(cpr.app.pid);
                         }
                     }
+
                     boolean success = updateOomAdjLocked(cpr.app);
                     if (DEBUG_PROVIDER) Slog.i(TAG, "Adjust success: " + success);
                     // NOTE: there is still a race here where a signal could be
                     // pending on the process even though we managed to update its
                     // adj level.  Not sure what to do about this, but at least
                     // the race is now smaller.
-                    if (!Process.isAlive(cpr.app.pid)) {
+                    if (!success || !Process.isAlive(cpr.app.pid)) {
                         // Uh oh...  it looks like the provider's process
                         // has been killed on us.  We need to wait for a new
                         // process to be started, and make sure its death
@@ -5290,6 +5305,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 }
 
                 Binder.restoreCallingIdentity(origId);
+
             }
             if (!providerRunning) {
                 try {
@@ -5451,6 +5467,9 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
             //update content provider record entry info
             ContentProviderRecord localCpr = mProvidersByClass.get(cpr.info.name);
+            if (DEBUG_PROVIDER) Slog.v(TAG, "Removing provider requested by "
+                    + r.info.processName + " from process "
+                    + localCpr.appInfo.processName);
             if (localCpr.app == r) {
                 //should not happen. taken care of as a local provider
                 Slog.w(TAG, "removeContentProvider called on local provider: "
@@ -6204,7 +6223,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 for (int i=procsToKill.size()-1; i>=0; i--) {
                     ProcessRecord proc = procsToKill.get(i);
                     Slog.i(TAG, "Removing system update proc: " + proc);
-                    removeProcessLocked(proc, true, false);
+                    removeProcessLocked(proc, true);
                 }
             }
             
@@ -6399,10 +6418,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 app.bad = true;
                 mProcessCrashTimes.remove(app.info.processName, app.info.uid);
                 app.removed = true;
-                // Don't let services in this process be restarted and potentially
-                // annoy the user repeatedly.  Unless it is persistent, since those
-                // processes run critical code.
-                removeProcessLocked(app, false, false);
+                removeProcessLocked(app, false);
                 return false;
             }
         } else {
@@ -8290,7 +8306,7 @@ public final class ActivityManagerService extends ActivityManagerNative
      * a process when running in single process mode.
      */
     private final void cleanUpApplicationRecordLocked(ProcessRecord app,
-            boolean restarting, boolean allowRestart, int index) {
+            boolean restarting, int index) {
         if (index >= 0) {
             mLruProcesses.remove(index);
         }
@@ -8315,14 +8331,11 @@ public final class ActivityManagerService extends ActivityManagerNative
         app.notResponding = false;
         
         app.resetPackageList();
-        app.unlinkDeathRecipient();
         app.thread = null;
         app.forcingToForeground = null;
         app.foregroundServices = false;
-        app.hasShownUi = false;
-        app.hasAboveClient = false;
 
-        killServicesLocked(app, allowRestart);
+        killServicesLocked(app, true);
 
         boolean restart = false;
 
@@ -8339,7 +8352,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 // See if someone is waiting for this provider...  in which
                 // case we don't remove it, but just let it restart.
                 int i = 0;
-                if (!app.bad && allowRestart) {
+                if (!app.bad) {
                     for (; i<NL; i++) {
                         if (mLaunchingProviders.get(i) == cpr) {
                             restart = true;
@@ -8432,6 +8445,9 @@ public final class ActivityManagerService extends ActivityManagerNative
             // This app is persistent, so we need to keep its record around.
             // If it is not already on the pending app list, add it there
             // and start a new process for it.
+            app.thread = null;
+            app.forcingToForeground = null;
+            app.foregroundServices = false;
             if (mPersistentStartingProcesses.indexOf(app) < 0) {
                 mPersistentStartingProcesses.add(app);
                 restart = true;
@@ -9062,12 +9078,8 @@ public final class ActivityManagerService extends ActivityManagerNative
             while (it.hasNext()) {
                 ArrayList<ConnectionRecord> c = it.next();
                 for (int i=0; i<c.size(); i++) {
-                    ConnectionRecord cr = c.get(i);
-                    // There is still a connection to the service that is
-                    // being brought down.  Mark it as dead.
-                    cr.serviceDead = true;
                     try {
-                        cr.conn.connected(r.name, null);
+                        c.get(i).conn.connected(r.name, null);
                     } catch (Exception e) {
                         Slog.w(TAG, "Failure disconnecting service " + r.name +
                               " to connection " + c.get(i).conn.asBinder() +
@@ -9448,11 +9460,12 @@ public final class ActivityManagerService extends ActivityManagerNative
 
             ActivityRecord activity = null;
             if (token != null) {
-                activity = mMainStack.isInStackLocked(token);
-                if (activity == null) {
+                int aindex = mMainStack.indexOfTokenLocked(token);
+                if (aindex < 0) {
                     Slog.w(TAG, "Binding with unknown activity: " + token);
                     return 0;
                 }
+                activity = (ActivityRecord)mMainStack.mHistory.get(aindex);
             }
 
             int clientLabel = 0;
@@ -9515,9 +9528,6 @@ public final class ActivityManagerService extends ActivityManagerNative
                 activity.connections.add(c);
             }
             b.client.connections.add(c);
-            if ((c.flags&Context.BIND_ABOVE_CLIENT) != 0) {
-                b.client.hasAboveClient = true;
-            }
             clist = mServiceConnections.get(binder);
             if (clist == null) {
                 clist = new ArrayList<ConnectionRecord>();
@@ -9589,9 +9599,6 @@ public final class ActivityManagerService extends ActivityManagerNative
         }
         if (b.client != skipApp) {
             b.client.connections.remove(c);
-            if ((c.flags&Context.BIND_ABOVE_CLIENT) != 0) {
-                b.client.updateHasAboveClientLocked();
-            }
         }
         clist = mServiceConnections.get(binder);
         if (clist != null) {
@@ -9605,28 +9612,26 @@ public final class ActivityManagerService extends ActivityManagerNative
             b.intent.apps.remove(b.client);
         }
 
-        if (!c.serviceDead) {
-            if (DEBUG_SERVICE) Slog.v(TAG, "Disconnecting binding " + b.intent
-                    + ": shouldUnbind=" + b.intent.hasBound);
-            if (s.app != null && s.app.thread != null && b.intent.apps.size() == 0
-                    && b.intent.hasBound) {
-                try {
-                    bumpServiceExecutingLocked(s, "unbind");
-                    updateOomAdjLocked(s.app);
-                    b.intent.hasBound = false;
-                    // Assume the client doesn't want to know about a rebind;
-                    // we will deal with that later if it asks for one.
-                    b.intent.doRebind = false;
-                    s.app.thread.scheduleUnbindService(s, b.intent.intent.getIntent());
-                } catch (Exception e) {
-                    Slog.w(TAG, "Exception when unbinding service " + s.shortName, e);
-                    serviceDoneExecutingLocked(s, true);
-                }
+        if (DEBUG_SERVICE) Slog.v(TAG, "Disconnecting binding " + b.intent
+                + ": shouldUnbind=" + b.intent.hasBound);
+        if (s.app != null && s.app.thread != null && b.intent.apps.size() == 0
+                && b.intent.hasBound) {
+            try {
+                bumpServiceExecutingLocked(s, "unbind");
+                updateOomAdjLocked(s.app);
+                b.intent.hasBound = false;
+                // Assume the client doesn't want to know about a rebind;
+                // we will deal with that later if it asks for one.
+                b.intent.doRebind = false;
+                s.app.thread.scheduleUnbindService(s, b.intent.intent.getIntent());
+            } catch (Exception e) {
+                Slog.w(TAG, "Exception when unbinding service " + s.shortName, e);
+                serviceDoneExecutingLocked(s, true);
             }
+        }
 
-            if ((c.flags&Context.BIND_AUTO_CREATE) != 0) {
-                bringDownServiceLocked(s, false);
-            }
+        if ((c.flags&Context.BIND_AUTO_CREATE) != 0) {
+            bringDownServiceLocked(s, false);
         }
     }
 
@@ -10633,8 +10638,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             return false;
         }
         int state = r.state;
-        r.state = BroadcastRecord.IDLE;
-        if (state == BroadcastRecord.IDLE) {
+        if (state == r.IDLE) {
             if (explicit) {
                 Slog.w(TAG, "finishReceiver called but state is IDLE");
             }
@@ -11397,22 +11401,6 @@ public final class ActivityManagerService extends ActivityManagerNative
         return ci;
     }
 
-    public void updatePersistentConfiguration(Configuration values) {
-        enforceCallingPermission(android.Manifest.permission.CHANGE_CONFIGURATION,
-                "updateConfiguration()");
-        enforceCallingPermission(android.Manifest.permission.WRITE_SETTINGS,
-                "updateConfiguration()");
-        if (values == null) {
-            throw new NullPointerException("Configuration must not be null");
-        }
-
-        synchronized(this) {
-            final long origId = Binder.clearCallingIdentity();
-            updateConfigurationLocked(values, null, true); 	
-            Binder.restoreCallingIdentity(origId);
-        }
-    }
-
     public void updateConfiguration(Configuration values) {
         enforceCallingPermission(android.Manifest.permission.CHANGE_CONFIGURATION,
                 "updateConfiguration()");
@@ -11428,7 +11416,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
 
             final long origId = Binder.clearCallingIdentity();
-            updateConfigurationLocked(values, null, false);
+            updateConfigurationLocked(values, null);
             Binder.restoreCallingIdentity(origId);
         }
     }
@@ -11439,10 +11427,9 @@ public final class ActivityManagerService extends ActivityManagerNative
      * configuration.  Returns true if the activity has been left running, or
      * false if <var>starting</var> is being destroyed to match the new
      * configuration.
-     * @param persistent TODO
      */
     public boolean updateConfigurationLocked(Configuration values,
-            ActivityRecord starting, boolean persistent) {
+            ActivityRecord starting) {
         int changes = 0;
         
         boolean kept = true;
@@ -11481,7 +11468,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     ac.updateConfiguration(mConfiguration);
                 }
 
-                if (persistent && Settings.System.hasInterestingConfigurationChanges(changes)) {
+                if (Settings.System.hasInterestingConfigurationChanges(changes)) {
                     Message msg = mHandler.obtainMessage(UPDATE_CONFIGURATION_MSG);
                     msg.obj = new Configuration(mConfiguration);
                     mHandler.sendMessage(msg);
@@ -11573,9 +11560,9 @@ public final class ActivityManagerService extends ActivityManagerNative
             // an earlier hidden adjustment that isn't really for us... if
             // so, use the new hidden adjustment.
             if (!recursed && app.hidden) {
-                app.curAdj = app.curRawAdj = hiddenAdj;
+                app.curAdj = hiddenAdj;
             }
-            return app.curRawAdj;
+            return app.curAdj;
         }
 
         if (app.thread == null) {
@@ -11583,13 +11570,6 @@ public final class ActivityManagerService extends ActivityManagerNative
             app.curSchedGroup = Process.THREAD_GROUP_BG_NONINTERACTIVE;
             return (app.curAdj=ProcessList.EMPTY_APP_ADJ);
         }
-
-        app.adjTypeCode = ActivityManager.RunningAppProcessInfo.REASON_UNKNOWN;
-        app.adjSource = null;
-        app.adjTarget = null;
-        app.empty = false;
-        app.hidden = false;
-        final int activitiesSize = app.activities.size();
 
         if (app.maxAdj <= ProcessList.FOREGROUND_APP_ADJ) {
             // The max adjustment doesn't allow this app to be anything
@@ -11599,27 +11579,15 @@ public final class ActivityManagerService extends ActivityManagerNative
             app.curRawAdj = app.maxAdj;
             app.keeping = true;
             app.curSchedGroup = Process.THREAD_GROUP_DEFAULT;
-            // System process can do UI, and when they do we want to have
-            // them trim their memory after the user leaves the UI.  To
-            // facilitate this, here we need to determine whether or not it
-            // is currently showing UI.
-            app.systemNoUi = true;
-            if (app == TOP_APP) {
-                app.systemNoUi = false;
-            } else if (activitiesSize > 0) {
-                for (int j = 0; j < activitiesSize; j++) {
-                    final ActivityRecord r = app.activities.get(j);
-                    if (r.visible) {
-                        app.systemNoUi = false;
-                        break;
-                    }
-                }
-            }
             return (app.curAdj=app.maxAdj);
        }
-
+        
+        app.adjTypeCode = ActivityManager.RunningAppProcessInfo.REASON_UNKNOWN;
+        app.adjSource = null;
+        app.adjTarget = null;
         app.keeping = false;
-        app.systemNoUi = false;
+        app.empty = false;
+        app.hidden = false;
 
         // Determine the importance of the process, starting with most
         // important to least, and assign an appropriate OOM adjustment.
@@ -11738,30 +11706,21 @@ public final class ActivityManagerService extends ActivityManagerNative
             while (jt.hasNext() && adj > ProcessList.FOREGROUND_APP_ADJ) {
                 ServiceRecord s = jt.next();
                 if (s.startRequested) {
-                    if (app.hasShownUi) {
+                    if (now < (s.lastActivity+MAX_SERVICE_INACTIVITY)) {
                         // This service has seen some activity within
                         // recent memory, so we will keep its process ahead
                         // of the background processes.
                         if (adj > ProcessList.SECONDARY_SERVER_ADJ) {
-                            app.adjType = "started-bg-ui-services";
+                            adj = ProcessList.SECONDARY_SERVER_ADJ;
+                            app.adjType = "started-services";
+                            app.hidden = false;
                         }
-                    } else {
-                        if (now < (s.lastActivity+MAX_SERVICE_INACTIVITY)) {
-                            // This service has seen some activity within
-                            // recent memory, so we will keep its process ahead
-                            // of the background processes.
-                            if (adj > ProcessList.SECONDARY_SERVER_ADJ) {
-                               adj = ProcessList.SECONDARY_SERVER_ADJ;
-                                app.adjType = "started-services";
-                                app.hidden = false;
-                            }
-                        }
-                        // If we have let the service slide into the background
-                        // state, still have some text describing what it is doing
-                        // even though the service no longer has an impact.
-                        if (adj > ProcessList.SECONDARY_SERVER_ADJ) {
-                            app.adjType = "started-bg-services";
-                        }
+                    }
+                    // If we have let the service slide into the background
+                    // state, still have some text describing what it is doing
+                    // even though the service no longer has an impact.
+                    if (adj > ProcessList.SECONDARY_SERVER_ADJ) {
+                        app.adjType = "started-bg-services";
                     }
                     // Don't kill this process because it is doing work; it
                     // has said it is doing work.
@@ -11790,9 +11749,8 @@ public final class ActivityManagerService extends ActivityManagerNative
                                 // Binding to ourself is not interesting.
                                 continue;
                             }
-                            if ((cr.flags&Context.BIND_WAIVE_PRIORITY) == 0) {
+                            if ((cr.flags&Context.BIND_AUTO_CREATE) != 0) {
                                 ProcessRecord client = cr.binding.client;
-                                int clientAdj = adj;
                                 int myHiddenAdj = hiddenAdj;
                                 if (myHiddenAdj > client.hiddenAdj) {
                                     if (client.hiddenAdj >= ProcessList.VISIBLE_APP_ADJ) {
@@ -11801,65 +11759,18 @@ public final class ActivityManagerService extends ActivityManagerNative
                                         myHiddenAdj = ProcessList.VISIBLE_APP_ADJ;
                                     }
                                 }
-                                clientAdj = computeOomAdjLocked(
+                                int clientAdj = computeOomAdjLocked(
                                     client, myHiddenAdj, TOP_APP, true);
-                                String adjType = null;
-                                if ((cr.flags&Context.BIND_ALLOW_OOM_MANAGEMENT) != 0) {
-                                    // Not doing bind OOM management, so treat
-                                    // this guy more like a started service.
-                                    if (app.hasShownUi) {
-                                        // If this process has shown some UI, let it immediately
-                                        // go to the LRU list because it may be pretty heavy with
-                                        // UI stuff.  We'll tag it with a label just to help
-                                        // debug and understand what is going on.
-                                        if (adj > clientAdj) {
-                                            adjType = "bound-bg-ui-services";
-                                        }
-                                        clientAdj = adj;
-                                    } else {
-                                        if (now >= (s.lastActivity+MAX_SERVICE_INACTIVITY)) {
-                                            // This service has not seen activity within
-                                            // recent memory, so allow it to drop to the
-                                            // LRU list if there is no other reason to keep
-                                            // it around.  We'll also tag it with a label just
-                                            // to help debug and undertand what is going on.
-                                            if (adj > clientAdj) {
-                                                adjType = "bound-bg-services";
-                                            }
-                                            clientAdj = adj;
-                                        }
-                                    }
-                                }
                                 if (adj > clientAdj) {
-                                    // If this process has recently shown UI, and
-                                    // the process that is binding to it is less
-                                    // important than being visible, then we don't
-                                    // care about the binding as much as we care
-                                    // about letting this process get into the LRU
-                                    // list to be killed and restarted if needed for
-                                    // memory.
-                                    if (app.hasShownUi && clientAdj > ProcessList.PERCEPTIBLE_APP_ADJ) {
-                                        adjType = "bound-bg-ui-services";
-                                    } else {
-                                        if ((cr.flags&(Context.BIND_ABOVE_CLIENT
-                                                |Context.BIND_IMPORTANT)) != 0) {
-                                            adj = clientAdj;
-                                        } else if (clientAdj >= ProcessList.VISIBLE_APP_ADJ) {
-                                            adj = clientAdj;
-                                        } else {
-                                            adj = ProcessList.VISIBLE_APP_ADJ;
-                                        }
-                                        if (!client.hidden) {
-                                            app.hidden = false;
-                                        }
-                                        if (client.keeping) {
-                                            app.keeping = true;
-                                        }
-                                        adjType = "service";
+                                    adj = clientAdj >= ProcessList.VISIBLE_APP_ADJ
+                                            ? clientAdj : ProcessList.VISIBLE_APP_ADJ;
+                                    if (!client.hidden) {
+                                        app.hidden = false;
                                     }
-                                }
-                                if (adjType != null) {
-                                    app.adjType = adjType;
+                                    if (client.keeping) {
+                                        app.keeping = true;
+                                    }
+                                    app.adjType = "service";
                                     app.adjTypeCode = ActivityManager.RunningAppProcessInfo
                                             .REASON_SERVICE_IN_USE;
                                     app.adjSource = cr.binding.client;
@@ -11872,22 +11783,22 @@ public final class ActivityManagerService extends ActivityManagerNative
                                     }
                                 }
                             }
-                            if ((cr.flags&Context.BIND_ADJUST_WITH_ACTIVITY) != 0) {
-                                ActivityRecord a = cr.activity;
-                                if (a != null && adj > ProcessList.FOREGROUND_APP_ADJ &&
-                                        (a.visible || a.state == ActivityState.RESUMED
-                                         || a.state == ActivityState.PAUSING)) {
-                                    adj = ProcessList.FOREGROUND_APP_ADJ;
-                                    if ((cr.flags&Context.BIND_NOT_FOREGROUND) == 0) {
-                                        schedGroup = Process.THREAD_GROUP_DEFAULT;
-                                    }
-                                    app.hidden = false;
-                                    app.adjType = "service";
-                                    app.adjTypeCode = ActivityManager.RunningAppProcessInfo
-                                            .REASON_SERVICE_IN_USE;
-                                    app.adjSource = a;
-                                    app.adjTarget = s.name;
-                                }
+                            ActivityRecord a = cr.activity;
+                            //if (a != null) {
+                            //    Slog.i(TAG, "Connection to " + a ": state=" + a.state);
+                            //}
+                            if (a != null && adj > ProcessList.FOREGROUND_APP_ADJ &&
+                                    (a.state == ActivityState.RESUMED
+                                     || a.state == ActivityState.PAUSING)) {
+                                adj = ProcessList.FOREGROUND_APP_ADJ;
+                                schedGroup = Process.THREAD_GROUP_DEFAULT;
+                                app.hidden = false;
+                                app.adjType = "service";
+                                app.adjTypeCode = ActivityManager.RunningAppProcessInfo
+                                        .REASON_SERVICE_IN_USE;
+                                app.adjSource = a;
+                                app.adjSourceOom = adj;
+                                app.adjTarget = s.name;
                             }
                         }
                     }
@@ -11931,19 +11842,15 @@ public final class ActivityManagerService extends ActivityManagerNative
                         int clientAdj = computeOomAdjLocked(
                             client, myHiddenAdj, TOP_APP, true);
                         if (adj > clientAdj) {
-                            if (app.hasShownUi && clientAdj > ProcessList.PERCEPTIBLE_APP_ADJ) {
-                                app.adjType = "bg-ui-provider";
-                            } else {
-                                adj = clientAdj > ProcessList.FOREGROUND_APP_ADJ
-                                        ? clientAdj : ProcessList.FOREGROUND_APP_ADJ;
-                                app.adjType = "provider";
-                            }
+                            adj = clientAdj > ProcessList.FOREGROUND_APP_ADJ
+                                    ? clientAdj : ProcessList.FOREGROUND_APP_ADJ;
                             if (!client.hidden) {
                                 app.hidden = false;
                             }
                             if (client.keeping) {
                                 app.keeping = true;
                             }
+                            app.adjType = "provider";
                             app.adjTypeCode = ActivityManager.RunningAppProcessInfo
                                     .REASON_PROVIDER_IN_USE;
                             app.adjSource = client;
@@ -11985,29 +11892,10 @@ public final class ActivityManagerService extends ActivityManagerNative
             app.keeping = true;
         }
 
-        if (app.hasAboveClient) {
-            // If this process has bound to any services with BIND_ABOVE_CLIENT,
-            // then we need to drop its adjustment to be lower than the service's
-            // in order to honor the request.  We want to drop it by one adjustment
-            // level...  but there is special meaning applied to various levels so
-            // we will skip some of them.
-            if (adj < ProcessList.FOREGROUND_APP_ADJ) {
-                // System process will not get dropped, ever
-            } else if (adj < ProcessList.VISIBLE_APP_ADJ) {
-                adj = ProcessList.VISIBLE_APP_ADJ;
-            } else if (adj < ProcessList.PERCEPTIBLE_APP_ADJ) {
-                adj = ProcessList.PERCEPTIBLE_APP_ADJ;
-            } else if (adj < ProcessList.HIDDEN_APP_MIN_ADJ) {
-                adj = ProcessList.HIDDEN_APP_MIN_ADJ;
-            } else if (adj < ProcessList.EMPTY_APP_ADJ) {
-                adj++;
-            }	
-        }
-
         app.curAdj = adj;
         app.curSchedGroup = schedGroup;
         
-        return app.curRawAdj;
+        return adj;
     }
 
     /**
@@ -12095,7 +11983,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             ProcessRecord proc = mProcessesToGc.get(0);
             Message msg = mHandler.obtainMessage(GC_BACKGROUND_PROCESSES_MSG);
             
-            long when = proc.lastRequestedGc + GC_MIN_INTERVAL;
+            long when = mProcessesToGc.get(0).lastRequestedGc + GC_MIN_INTERVAL;
             long now = SystemClock.uptimeMillis();
             if (when < (now+GC_TIMEOUT)) {
                 when = now + GC_TIMEOUT;
@@ -12243,14 +12131,12 @@ public final class ActivityManagerService extends ActivityManagerNative
         app.hiddenAdj = hiddenAdj;
 
         if (app.thread == null) {
-            return false;
+            return true;
         }
 
         final boolean wasKeeping = app.keeping;
 
-        boolean success = true;
-
-        computeOomAdjLocked(app, hiddenAdj, TOP_APP, false);
+        int adj = computeOomAdjLocked(app, hiddenAdj, TOP_APP, false);
 
         if ((app.pid != 0 && app.pid != MY_PID) || Process.supportsProcesses()) {
             if (app.curRawAdj != app.setRawAdj) {
@@ -12285,15 +12171,14 @@ public final class ActivityManagerService extends ActivityManagerNative
 
                 app.setRawAdj = app.curRawAdj;
             }
-            if (app.curAdj != app.setAdj) {
-                if (Process.setOomAdj(app.pid, app.curAdj)) {
+            if (adj != app.setAdj) {
+                if (Process.setOomAdj(app.pid, adj)) {
                     if (DEBUG_SWITCH || DEBUG_OOM_ADJ) Slog.v(
                         TAG, "Set app " + app.processName +
-                        " oom adj to " + app.curAdj + " because " + app.adjType);
-                    app.setAdj = app.curAdj;
+                        " oom adj to " + adj);
+                    app.setAdj = adj;
                 } else {
-                    success = false;
-                    Slog.w(TAG, "Failed setting oom adj of " + app + " to " + app.curAdj);
+                    return false;
                 }
             }
             if (app.setSchedGroup != app.curSchedGroup) {
@@ -12312,7 +12197,8 @@ public final class ActivityManagerService extends ActivityManagerNative
                     } finally {
                         Binder.restoreCallingIdentity(oldId);
                     }
-                } else {
+                }
+                if (false) {
                     if (app.thread != null) {
                         try {
                             app.thread.setSchedulingGroup(app.curSchedGroup);
@@ -12322,7 +12208,8 @@ public final class ActivityManagerService extends ActivityManagerNative
                 }
             }
         }
-        return success;
+
+        return true;
     }
 
     private final ActivityRecord resumedAppLocked() {
@@ -12340,23 +12227,26 @@ public final class ActivityManagerService extends ActivityManagerNative
         final ActivityRecord TOP_ACT = resumedAppLocked();
         final ProcessRecord TOP_APP = TOP_ACT != null ? TOP_ACT.app : null;
         int curAdj = app.curAdj;
-        final boolean wasHidden = curAdj >= ProcessList.HIDDEN_APP_MIN_ADJ
-            && curAdj <= ProcessList.HIDDEN_APP_MAX_ADJ;
+        final boolean wasHidden = app.curAdj >= ProcessList.HIDDEN_APP_MIN_ADJ
+            && app.curAdj <= ProcessList.HIDDEN_APP_MAX_ADJ;
 
         mAdjSeq++;
 
-        boolean success = updateOomAdjLocked(app, app.hiddenAdj, TOP_APP);
-        final boolean nowHidden = curAdj >= ProcessList.HIDDEN_APP_MIN_ADJ
-                && curAdj <= ProcessList.HIDDEN_APP_MAX_ADJ;
-        if (nowHidden != wasHidden) {
-            // Changed to/from hidden state, so apps after it in the LRU
-            // list may also be changed.
-            updateOomAdjLocked();
+        final boolean res = updateOomAdjLocked(app, app.hiddenAdj, TOP_APP);
+        if (res) {
+            final boolean nowHidden = app.curAdj >= ProcessList.HIDDEN_APP_MIN_ADJ
+                && app.curAdj <= ProcessList.HIDDEN_APP_MAX_ADJ;
+            if (nowHidden != wasHidden) {
+                // Changed to/from hidden state, so apps after it in the LRU
+                // list may also be changed.
+                updateOomAdjLocked();
+            }
         }
-        return success;
+        return res;
     }
 
-    final void updateOomAdjLocked() {
+    final boolean updateOomAdjLocked() {
+        boolean didOomAdj = true;
         final ActivityRecord TOP_ACT = resumedAppLocked();
         final ProcessRecord TOP_APP = TOP_ACT != null ? TOP_ACT.app : null;
 
@@ -12382,126 +12272,41 @@ public final class ActivityManagerService extends ActivityManagerNative
         // application processes based on their current state.
         int i = mLruProcesses.size();
         int curHiddenAdj = ProcessList.HIDDEN_APP_MIN_ADJ;
-        int numBg = 0;
         while (i > 0) {
             i--;
             ProcessRecord app = mLruProcesses.get(i);
             //Slog.i(TAG, "OOM " + app + ": cur hidden=" + curHiddenAdj);
-            updateOomAdjLocked(app, curHiddenAdj, TOP_APP);
-            if (curHiddenAdj < ProcessList.EMPTY_APP_ADJ
-                && app.curAdj == curHiddenAdj) {
-                step++;
-                if (step >= factor) {
-                    step = 0;
-                    curHiddenAdj++;
-                }
-            }
-            if (!app.killedBackground) {
-                if (app.curAdj >= ProcessList.HIDDEN_APP_MIN_ADJ) {
-                    numHidden++;
-                    if (numHidden > mProcessLimit) {
-                        Slog.i(TAG, "No longer want " + app.processName
-                                + " (pid " + app.pid + "): hidden #" + numHidden);
-                        EventLog.writeEvent(EventLogTags.AM_KILL, app.pid,
-                                app.processName, app.setAdj, "too many background");
-                        app.killedBackground = true;
-                        Process.killProcessQuiet(app.pid);
-                    } else {
-                        numBg++;
-                    }
-                } else if (app.curAdj >= ProcessList.HOME_APP_ADJ) {
-                    numBg++;
-                }
-            }
-        }
-
-        // Now determine the memory trimming level of background processes.
-        // Unfortunately we need to start at the back of the list to do this
-        // properly.  We only do this if the number of background apps we
-        // are managing to keep around is less than half the maximum we desire;
-        // if we are keeping a good number around, we'll let them use whatever
-        // memory they want.
-        if (numHidden <= (ProcessList.MAX_HIDDEN_APPS/2)) {
-            final int N = mLruProcesses.size();
-            factor = numBg/3;
-            step = 0;
-            int curLevel = ComponentCallbacks2.TRIM_MEMORY_COMPLETE;
-            for (i=0; i<N; i++) {
-                ProcessRecord app = mLruProcesses.get(i);
-                if (app.curAdj >= ProcessList.HIDDEN_APP_MIN_ADJ && !app.killedBackground) {
-                    if (app.trimMemoryLevel < curLevel && app.thread != null) {
-                        try {
-                            app.thread.scheduleTrimMemory(curLevel);
-                        } catch (RemoteException e) {
-                        }
-                        if (curLevel >= ComponentCallbacks2.TRIM_MEMORY_COMPLETE) {
-                            // For these apps we will also finish their activities
-                            // to help them free memory.
-                            mMainStack.destroyActivitiesLocked(app, false);
-                        }
-                    }
-                    app.trimMemoryLevel = curLevel;
+            if (updateOomAdjLocked(app, curHiddenAdj, TOP_APP)) {
+                if (curHiddenAdj < ProcessList.EMPTY_APP_ADJ
+                    && app.curAdj == curHiddenAdj) {
                     step++;
                     if (step >= factor) {
-                        switch (curLevel) {
-                            case ComponentCallbacks2.TRIM_MEMORY_COMPLETE:
-                                curLevel = ComponentCallbacks2.TRIM_MEMORY_MODERATE;
-                                break;
-                            case ComponentCallbacks2.TRIM_MEMORY_MODERATE:
-                                curLevel = ComponentCallbacks2.TRIM_MEMORY_BACKGROUND;
-                                break;
-                        }
+                        step = 0;
+                        curHiddenAdj++;
                     }
-                } else if (app.curAdj == ProcessList.HEAVY_WEIGHT_APP_ADJ) {
-                    if (app.trimMemoryLevel < ComponentCallbacks2.TRIM_MEMORY_BACKGROUND
-                            && app.thread != null) {
-                        try {
-                            app.thread.scheduleTrimMemory(ComponentCallbacks2.TRIM_MEMORY_BACKGROUND);
-                        } catch (RemoteException e) {
-                        }
-                    }
-                    app.trimMemoryLevel = ComponentCallbacks2.TRIM_MEMORY_BACKGROUND;
-                } else if ((app.curAdj > ProcessList.VISIBLE_APP_ADJ || app.systemNoUi)
-                        && app.pendingUiClean) {
-                    if (app.trimMemoryLevel < ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN
-                            && app.thread != null) {
-                        try {
-                            app.thread.scheduleTrimMemory(
-                                    ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN);
-                        } catch (RemoteException e) {
-                        }
-                    }
-                    app.trimMemoryLevel = ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN;
-                    app.pendingUiClean = false;
-                } else {
-                    app.trimMemoryLevel = 0;
                 }
-            }
-        } else {
-            final int N = mLruProcesses.size();
-            for (i=0; i<N; i++) {
-                ProcessRecord app = mLruProcesses.get(i);
-                if ((app.curAdj > ProcessList.VISIBLE_APP_ADJ || app.systemNoUi)
-                        && app.pendingUiClean) {
-                    if (app.trimMemoryLevel < ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN
-                            && app.thread != null) {
-                        try {
-                            app.thread.scheduleTrimMemory(
-                                    ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN);
-                        } catch (RemoteException e) {
+                if (app.curAdj >= ProcessList.HIDDEN_APP_MIN_ADJ) {
+                    if (!app.killedBackground) {
+                        numHidden++;
+                        if (numHidden > ProcessList.MAX_HIDDEN_APPS) {
+                            Slog.i(TAG, "No longer want " + app.processName
+                                    + " (pid " + app.pid + "): hidden #" + numHidden);
+                            EventLog.writeEvent(EventLogTags.AM_KILL, app.pid,
+                                    app.processName, app.setAdj, "too many background");
+                            app.killedBackground = true;
+                            Process.killProcessQuiet(app.pid);
                         }
                     }
-                    app.trimMemoryLevel = ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN;
-                    app.pendingUiClean = false;
-                } else {
-                    app.trimMemoryLevel = 0;
                 }
+            } else {
+                didOomAdj = false;
             }
         }
 
-        if (mAlwaysFinishActivities) {
-            mMainStack.destroyActivitiesLocked(null, false);
-        }
+        // If we return false, we will fall back on killing processes to
+        // have a fixed limit.  Do this if a limit has been requested; else
+        // only return false if one of the adjustments failed.
+        return ENFORCE_PROCESS_LIMIT || mProcessLimit > 0 ? false : didOomAdj;
     }
 
     final void trimApplications() {
@@ -12528,7 +12333,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                             // Ignore exceptions.
                         }
                     }
-                    cleanUpApplicationRecordLocked(app, false, true, -1);
+                    cleanUpApplicationRecordLocked(app, false, -1);
                     mRemovedProcesses.remove(i);
                     
                     if (app.persistent) {
@@ -12538,8 +12343,162 @@ public final class ActivityManagerService extends ActivityManagerNative
                     }
                 }
             }
-            // Now update the oom adj for all processes.
-            updateOomAdjLocked();
+
+            // Now try updating the OOM adjustment for each of the
+            // application processes based on their current state.
+            // If the setOomAdj() API is not supported, then go with our
+            // back-up plan...
+            if (!updateOomAdjLocked()) {
+
+                // Count how many processes are running services.
+                int numServiceProcs = 0;
+                for (i=mLruProcesses.size()-1; i>=0; i--) {
+                    final ProcessRecord app = mLruProcesses.get(i);
+
+                    if (app.persistent || app.services.size() != 0
+                            || app.curReceiver != null) {
+                        // Don't count processes holding services against our
+                        // maximum process count.
+                        if (localLOGV) Slog.v(
+                            TAG, "Not trimming app " + app + " with services: "
+                            + app.services);
+                        numServiceProcs++;
+                    }
+                }
+
+                int curMaxProcs = mProcessLimit;
+                if (curMaxProcs <= 0) curMaxProcs = MAX_PROCESSES;
+                if (mAlwaysFinishActivities) {
+                    curMaxProcs = 1;
+                }
+                curMaxProcs += numServiceProcs;
+
+                // Quit as many processes as we can to get down to the desired
+                // process count.  First remove any processes that no longer
+                // have activites running in them.
+                for (   i=0;
+                        i<mLruProcesses.size()
+                            && mLruProcesses.size() > curMaxProcs;
+                        i++) {
+                    final ProcessRecord app = mLruProcesses.get(i);
+                    // Quit an application only if it is not currently
+                    // running any activities.
+                    if (!app.persistent && app.activities.size() == 0
+                            && app.curReceiver == null && app.services.size() == 0) {
+                        Slog.i(
+                            TAG, "Exiting empty application process "
+                            + app.processName + " ("
+                            + (app.thread != null ? app.thread.asBinder() : null)
+                            + ")\n");
+                        if (app.pid > 0 && app.pid != MY_PID) {
+                            Process.killProcess(app.pid);
+                        } else {
+                            try {
+                                app.thread.scheduleExit();
+                            } catch (Exception e) {
+                                // Ignore exceptions.
+                            }
+                        }
+                        // todo: For now we assume the application is not buggy
+                        // or evil, and will quit as a result of our request.
+                        // Eventually we need to drive this off of the death
+                        // notification, and kill the process if it takes too long.
+                        cleanUpApplicationRecordLocked(app, false, i);
+                        i--;
+                    }
+                }
+
+                // If we still have too many processes, now from the least
+                // recently used process we start finishing activities.
+                if (Config.LOGV) Slog.v(
+                    TAG, "*** NOW HAVE " + mLruProcesses.size() +
+                    " of " + curMaxProcs + " processes");
+                for (   i=0;
+                        i<mLruProcesses.size()
+                            && mLruProcesses.size() > curMaxProcs;
+                        i++) {
+                    final ProcessRecord app = mLruProcesses.get(i);
+                    // Quit the application only if we have a state saved for
+                    // all of its activities.
+                    boolean canQuit = !app.persistent && app.curReceiver == null
+                        && app.services.size() == 0;
+                    int NUMA = app.activities.size();
+                    int j;
+                    if (Config.LOGV) Slog.v(
+                        TAG, "Looking to quit " + app.processName);
+                    for (j=0; j<NUMA && canQuit; j++) {
+                        ActivityRecord r = app.activities.get(j);
+                        if (Config.LOGV) Slog.v(
+                            TAG, "  " + r.intent.getComponent().flattenToShortString()
+                            + ": frozen=" + r.haveState + ", visible=" + r.visible);
+                        canQuit = (r.haveState || !r.stateNotNeeded)
+                                && !r.visible && r.stopped;
+                    }
+                    if (canQuit) {
+                        // Finish all of the activities, and then the app itself.
+                        for (j=0; j<NUMA; j++) {
+                            ActivityRecord r = app.activities.get(j);
+                            if (!r.finishing) {
+                                r.stack.destroyActivityLocked(r, false);
+                            }
+                            r.resultTo = null;
+                        }
+                        Slog.i(TAG, "Exiting application process "
+                              + app.processName + " ("
+                              + (app.thread != null ? app.thread.asBinder() : null)
+                              + ")\n");
+                        if (app.pid > 0 && app.pid != MY_PID) {
+                            Process.killProcess(app.pid);
+                        } else {
+                            try {
+                                app.thread.scheduleExit();
+                            } catch (Exception e) {
+                                // Ignore exceptions.
+                            }
+                        }
+                        // todo: For now we assume the application is not buggy
+                        // or evil, and will quit as a result of our request.
+                        // Eventually we need to drive this off of the death
+                        // notification, and kill the process if it takes too long.
+                        cleanUpApplicationRecordLocked(app, false, i);
+                        i--;
+                        //dump();
+                    }
+                }
+
+            }
+
+            int curMaxActivities = MAX_ACTIVITIES;
+            if (mAlwaysFinishActivities) {
+                curMaxActivities = 1;
+            }
+
+            // Finally, if there are too many activities now running, try to
+            // finish as many as we can to get back down to the limit.
+            for (   i=0;
+                    i<mMainStack.mLRUActivities.size()
+                        && mMainStack.mLRUActivities.size() > curMaxActivities;
+                    i++) {
+                final ActivityRecord r
+                    = (ActivityRecord)mMainStack.mLRUActivities.get(i);
+
+                // We can finish this one if we have its icicle saved and
+                // it is not persistent.
+                if ((r.haveState || !r.stateNotNeeded) && !r.visible
+                        && r.stopped && !r.finishing) {
+                    final int origSize = mMainStack.mLRUActivities.size();
+                    r.stack.destroyActivityLocked(r, true);
+
+                    // This will remove it from the LRU list, so keep
+                    // our index at the same value.  Note that this check to
+                    // see if the size changes is just paranoia -- if
+                    // something unexpected happens, we don't want to end up
+                    // in an infinite loop.
+                    if (origSize > mMainStack.mLRUActivities.size()) {
+                        i--;
+                    }
+                }
+            }
         }
     }
 
@@ -12632,4 +12591,3 @@ public final class ActivityManagerService extends ActivityManagerNative
         synchronized (this) { }
     }
 }
-

@@ -144,7 +144,7 @@ public class WindowManagerPermissionTests extends TestCase {
         }
         
         try {
-            mWm.prepareAppTransition(0, false);
+            mWm.prepareAppTransition(0);
             fail("IWindowManager.prepareAppTransition did not throw SecurityException as"
                     + " expected");
         } catch (SecurityException e) {

@@ -146,8 +146,8 @@ public class AnalogClock extends View {
 
         float scale = Math.min(hScale, vScale);
 
-        setMeasuredDimension(resolveSizeAndState((int) (mDialWidth * scale), widthMeasureSpec, 0),
-                resolveSizeAndState((int) (mDialHeight * scale), heightMeasureSpec, 0));
+        setMeasuredDimension(resolveSize((int) (mDialWidth * scale), widthMeasureSpec),
+                resolveSize((int) (mDialHeight * scale), heightMeasureSpec));
     }
 
     @Override

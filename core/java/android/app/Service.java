@@ -16,7 +16,7 @@
 
 package android.app;
 
-import android.content.ComponentCallbacks2;
+import android.content.ComponentCallbacks;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ContextWrapper;
@@ -273,7 +273,7 @@ import java.io.PrintWriter;
  * {@sample development/samples/ApiDemos/src/com/example/android/apis/app/MessengerServiceActivities.java
  *      bind}
  */
-public abstract class Service extends ContextWrapper implements ComponentCallbacks2 {
+public abstract class Service extends ContextWrapper implements ComponentCallbacks {
     private static final String TAG = "Service";
 
     public Service() {
@@ -443,10 +443,7 @@ public abstract class Service extends ContextWrapper implements ComponentCallbac
     
     public void onLowMemory() {
     }
-
-    public void onTrimMemory(int level) {
-    }
-
+    
     /**
      * Return the communication channel to the service.  May return null if 
      * clients can not bind to the service.  The returned
@@ -641,6 +638,12 @@ public abstract class Service extends ContextWrapper implements ComponentCallbac
      */
     protected void dump(FileDescriptor fd, PrintWriter writer, String[] args) {
         writer.println("nothing to dump");
+    }
+    
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        //Log.i("Service", "Finalizing Service: " + this);
     }
 
     // ------------------ Internal API ------------------

@@ -148,7 +148,6 @@ public abstract class WallpaperService extends Service {
         int mCurWindowFlags = mWindowFlags;
         final Rect mVisibleInsets = new Rect();
         final Rect mWinFrame = new Rect();
-        final Rect mSystemInsets = new Rect();
         final Rect mContentInsets = new Rect();
         final Configuration mConfiguration = new Configuration();
         
@@ -234,7 +233,7 @@ public abstract class WallpaperService extends Service {
         
         final BaseIWindow mWindow = new BaseIWindow() {
             @Override
-            public void resized(int w, int h, Rect systemInsets, Rect contentInsets,
+            public void resized(int w, int h, Rect coveredInsets,
                     Rect visibleInsets, boolean reportDraw, Configuration newConfig) {
                 Message msg = mCaller.obtainMessageI(MSG_WINDOW_RESIZED,
                         reportDraw ? 1 : 0);
@@ -515,7 +514,7 @@ public abstract class WallpaperService extends Service {
                         mLayout.windowAnimations =
                                 com.android.internal.R.style.Animation_Wallpaper;
                         mInputChannel = new InputChannel();
-                        if (mSession.add(mWindow, mWindow.mSeq, mLayout, View.VISIBLE, mContentInsets,
+                        if (mSession.add(mWindow, mLayout, View.VISIBLE, mContentInsets,
                                 mInputChannel) < 0) {
                             Log.w(TAG, "Failed to add window while updating wallpaper surface.");
                             return;
@@ -530,8 +529,8 @@ public abstract class WallpaperService extends Service {
                     mDrawingAllowed = true;
 
                     final int relayoutResult = mSession.relayout(
-                        mWindow, mWindow.mSeq, mLayout, mWidth, mHeight,
-                            View.VISIBLE, false, mWinFrame, mSystemInsets, mContentInsets,
+                        mWindow, mLayout, mWidth, mHeight,
+                            View.VISIBLE, false, mWinFrame, mContentInsets,
                             mVisibleInsets, mConfiguration, mSurfaceHolder.mSurface);
 
                     if (DEBUG) Log.v(TAG, "New surface: " + mSurfaceHolder.mSurface
@@ -1003,4 +1002,3 @@ public abstract class WallpaperService extends Service {
      */
     public abstract Engine onCreateEngine();
 }
-

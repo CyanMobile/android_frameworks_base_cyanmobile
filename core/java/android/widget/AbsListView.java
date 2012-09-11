@@ -2409,11 +2409,9 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                         }
 
                         mTouchMode = TOUCH_MODE_SCROLL;
-
                         // We did not scroll the full amount. Treat this essentially like the
                         // start of a new touch scroll
                         final int motionPosition = findClosestMotionRow(y);
-
                         mMotionCorrection = 0;
                         View motionView = getChildAt(motionPosition - mFirstPosition);
                         mMotionViewOriginalTop = motionView != null ? motionView.getTop() : 0;
@@ -2652,6 +2650,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
     protected void onOverScrolled(int scrollX, int scrollY,
             boolean clampedX, boolean clampedY) {
         mScrollY = scrollY;
+
         awakenScrollBars();
     }
 
@@ -3035,7 +3034,6 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                         if (crossDown || crossUp) {
                             int velocity = (int) scroller.getCurrVelocity();
                             if (crossUp) velocity = -velocity;
-
                             // Don't flywheel from this; we're just continuing things.
                             scroller.abortAnimation();
                             start(velocity);

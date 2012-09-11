@@ -911,12 +911,6 @@ class ContextImpl extends Context {
             throw new RuntimeException("Not supported in system context");
         }
         try {
-            IBinder token = getActivityToken();
-            if (token == null && (flags&BIND_AUTO_CREATE) == 0 && mPackageInfo != null
-                    && mPackageInfo.getApplicationInfo().targetSdkVersion
-                    < 14) {
-                flags |= BIND_WAIVE_PRIORITY;
-            }
             int res = ActivityManagerNative.getDefault().bindService(
                 mMainThread.getApplicationThread(), getActivityToken(),
                 service, service.resolveTypeIfNeeded(getContentResolver()),

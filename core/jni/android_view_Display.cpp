@@ -97,14 +97,14 @@ static jint android_view_Display_getHeight(
     return h == gOldSize ? gNewSize : h;
 }
 
-static jint android_view_Display_getRawWidth(
+static jint android_view_Display_getRealWidth(
         JNIEnv* env, jobject clazz)
 {
     DisplayID dpy = env->GetIntField(clazz, offsets.display);
     return SurfaceComposerClient::getDisplayWidth(dpy);
 }
 
-static jint android_view_Display_getRawHeight(
+static jint android_view_Display_getRealHeight(
         JNIEnv* env, jobject clazz)
 {
     DisplayID dpy = env->GetIntField(clazz, offsets.display);
@@ -135,16 +135,16 @@ static JNINativeMethod gMethods[] = {
             (void*)nativeClassInit },
     {   "getDisplayCount", "()I",
             (void*)android_view_Display_getDisplayCount },
-    {   "init", "(I)V",
+	{   "init", "(I)V",
             (void*)android_view_Display_init },
-    {   "getRealWidth", "()I",
+    {   "getWidth", "()I",
             (void*)android_view_Display_getWidth },
-    {   "getRealHeight", "()I",
+    {   "getHeight", "()I",
             (void*)android_view_Display_getHeight },
-    {   "getRawWidth", "()I",
-            (void*)android_view_Display_getRawWidth },
-    {   "getRawHeight", "()I",
-            (void*)android_view_Display_getRawHeight },
+    {   "getRealWidth", "()I",
+            (void*)android_view_Display_getRealWidth },
+    {   "getRealHeight", "()I",
+            (void*)android_view_Display_getRealHeight },
     {   "getOrientation", "()I",
             (void*)android_view_Display_getOrientation }
 };
@@ -178,7 +178,6 @@ int register_android_view_Display(JNIEnv* env)
             gNewSize = temp2;
         }
     }
-
     return AndroidRuntime::registerNativeMethods(env,
             kClassPathName, gMethods, NELEM(gMethods));
 }

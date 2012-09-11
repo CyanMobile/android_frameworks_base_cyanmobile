@@ -248,7 +248,7 @@ public final class InputDevice implements Parcelable {
      * @return The input device or null if not found.
      */
     public static InputDevice getDevice(int id) {
-        IWindowManager wm = Display.getWindowManager();
+        IWindowManager wm = IWindowManager.Stub.asInterface(ServiceManager.getService("window"));
         try {
             return wm.getInputDevice(id);
         } catch (RemoteException ex) {
@@ -262,7 +262,7 @@ public final class InputDevice implements Parcelable {
      * @return The input device ids.
      */
     public static int[] getDeviceIds() {
-        IWindowManager wm = Display.getWindowManager();
+        IWindowManager wm = IWindowManager.Stub.asInterface(ServiceManager.getService("window"));
         try {
             return wm.getInputDeviceIds();
         } catch (RemoteException ex) {

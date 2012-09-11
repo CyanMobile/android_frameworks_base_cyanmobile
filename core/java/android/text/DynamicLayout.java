@@ -255,11 +255,8 @@ extends Layout
             sStaticLayout = null;
         }
 
-        if (reflowed == null) {
+        if (reflowed == null)
             reflowed = new StaticLayout(true);
-        } else {
-            reflowed.prepare();
-        }
 
         reflowed.generate(text, where, where + after,
                                       getPaint(), getWidth(), getAlignment(),
@@ -342,7 +339,6 @@ extends Layout
 
         synchronized (sLock) {
             sStaticLayout = reflowed;
-            reflowed.finish();
         }
     }
 
@@ -485,7 +481,7 @@ extends Layout
     private int mTopPadding, mBottomPadding;
 
     private static StaticLayout sStaticLayout = new StaticLayout(true);
-    private static final Object[] sLock = new Object[0];
+    private static Object sLock = new Object();
 
     private static final int START = 0;
     private static final int DIR = START;

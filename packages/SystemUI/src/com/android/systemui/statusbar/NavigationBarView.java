@@ -121,8 +121,6 @@ public class NavigationBarView extends LinearLayout {
     private Bitmap mCustomSearchIcon;
     private Bitmap mCustomQuickIcon;
 
-    private boolean mHidden;
-    private boolean mVisible;
     Handler mHandler;
 
     class SettingsObserver extends ContentObserver {
@@ -186,7 +184,6 @@ public class NavigationBarView extends LinearLayout {
         mHandler=new Handler();
 
         mNaviAdd = findViewById(R.id.navibarAdd);
-
         mNaviBackground = findViewById(R.id.navibarBackground);
         mSoftButtons = (ViewGroup)findViewById(R.id.navbuttons);
 

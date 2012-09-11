@@ -101,7 +101,6 @@ public class SurfaceView extends View {
     MyWindow mWindow;
     final Rect mVisibleInsets = new Rect();
     final Rect mWinFrame = new Rect();
-    final Rect mSystemInsets = new Rect();
     final Rect mContentInsets = new Rect();
     final Configuration mConfiguration = new Configuration();
     
@@ -218,17 +217,7 @@ public class SurfaceView extends View {
     public void setVisibility(int visibility) {
         super.setVisibility(visibility);
         mViewVisibility = visibility == VISIBLE;
-        boolean newRequestedVisible = mWindowVisibility && mViewVisibility;
-        if (newRequestedVisible != mRequestedVisible) {
-            // our base class (View) invalidates the layout only when
-            // we go from/to the GONE state. However, SurfaceView needs
-            // to request a re-layout when the visibility changes at all.
-            // This is needed because the transparent region is computed
-            // as part of the layout phase, and it changes (obviously) when
-            // the visibility changes.
-            requestLayout();
-        }
-        mRequestedVisible = newRequestedVisible;
+        mRequestedVisible = mWindowVisibility && mViewVisibility;
         updateWindow(false, false);
     }
 
@@ -262,8 +251,8 @@ public class SurfaceView extends View {
             try {
                 DisplayMetrics metrics = getResources().getDisplayMetrics();
                 mLayout.x = metrics.widthPixels * 3;
-                mSession.relayout(mWindow, mWindow.mSeq, mLayout, mWidth, mHeight, VISIBLE, false,
-                        mWinFrame, mSystemInsets, mContentInsets, mVisibleInsets, mConfiguration, mSurface);
+                mSession.relayout(mWindow, mLayout, mWidth, mHeight, VISIBLE, false,
+                        mWinFrame, mContentInsets, mVisibleInsets, mConfiguration, mSurface);
             } catch (RemoteException e) {
                 // Ignore
             } finally {
@@ -296,12 +285,8 @@ public class SurfaceView extends View {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int width = mRequestedWidth >= 0
-                ? resolveSizeAndState(mRequestedWidth, widthMeasureSpec, 0)
-                : getDefaultSize(0, widthMeasureSpec);
-        int height = mRequestedHeight >= 0
-                ? resolveSizeAndState(mRequestedHeight, heightMeasureSpec, 0)
-                : getDefaultSize(0, heightMeasureSpec);
+        int width = getDefaultSize(mRequestedWidth, widthMeasureSpec);
+        int height = getDefaultSize(mRequestedHeight, heightMeasureSpec);
         setMeasuredDimension(width, height);
     }
     
@@ -491,7 +476,7 @@ public class SurfaceView extends View {
                     mWindow = new MyWindow(this);
                     mLayout.type = mWindowType;
                     mLayout.gravity = Gravity.LEFT|Gravity.TOP;
-                    mSession.addWithoutInputChannel(mWindow, mWindow.mSeq, mLayout,
+                    mSession.addWithoutInputChannel(mWindow, mLayout,
                             mVisible ? VISIBLE : GONE, mContentInsets);
                 }
                 
@@ -512,8 +497,8 @@ public class SurfaceView extends View {
                     mDrawingStopped = !visible;
     
                     final int relayoutResult = mSession.relayout(
-                        mWindow, mWindow.mSeq, mLayout, mWidth, mHeight,
-                            visible ? VISIBLE : GONE, false, mWinFrame, mSystemInsets, mContentInsets,
+                        mWindow, mLayout, mWidth, mHeight,
+                            visible ? VISIBLE : GONE, false, mWinFrame, mContentInsets,
                             mVisibleInsets, mConfiguration, mSurface);
                     if ((relayoutResult&WindowManagerImpl.RELAYOUT_FIRST_TIME) != 0) {
                         mReportDrawNeeded = true;
@@ -631,7 +616,7 @@ public class SurfaceView extends View {
             mSurfaceView = new WeakReference<SurfaceView>(surfaceView);
         }
 
-        public void resized(int w, int h, Rect systemInsets, Rect contentInsets,
+        public void resized(int w, int h, Rect coveredInsets,
                 Rect visibleInsets, boolean reportDraw, Configuration newConfig) {
             SurfaceView surfaceView = mSurfaceView.get();
             if (surfaceView != null) {
@@ -821,4 +806,3 @@ public class SurfaceView extends View {
         }
     };
 }
-

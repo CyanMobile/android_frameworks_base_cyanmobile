@@ -21,8 +21,6 @@ import com.android.internal.view.IInputContext;
 import com.android.internal.view.IInputMethodClient;
 
 import android.content.res.Configuration;
-import android.os.IRemoteCallback;
-import android.graphics.Point;
 import android.view.IApplicationToken;
 import android.view.IOnKeyguardExitResult;
 import android.view.IRotationWatcher;
@@ -53,10 +51,7 @@ interface IWindowManager
     IWindowSession openSession(in IInputMethodClient client,
             in IInputContext inputContext);
     boolean inputMethodClientHasFocus(IInputMethodClient client);
-
-    void getDisplaySize(out Point size);
-    int getMaximumSizeDimension();
-
+    
     // These can only be called when injecting events to your own window,
     // or by holding the INJECT_EVENTS permission.  These methods may block
     // until pending input events are finished being dispatched even when 'sync' is false.
@@ -78,7 +73,7 @@ interface IWindowManager
     void setAppOrientation(IApplicationToken token, int requestedOrientation);
     int getAppOrientation(IApplicationToken token);
     void setFocusedApp(IBinder token, boolean moveFocusNow);
-    void prepareAppTransition(int transit, boolean alwaysKeepCurrent);
+    void prepareAppTransition(int transit);
     int getPendingAppTransition();
     void overridePendingAppTransition(String packageName, int enterAnim, int exitAnim);
     void executeAppTransition();
@@ -166,14 +161,4 @@ interface IWindowManager
      * Lock the device immediately.
      */
     void lockNow();
-
-    /**
-     * Called by the status bar to notify Views of changes to System UI visiblity.
-     */
-    void statusBarVisibilityChanged(int visibility);
-
-    /**
-     * Block until all windows the window manager knows about have been drawn.
-     */
-    void waitForWindowDrawn(IBinder token, in IRemoteCallback callback);
 }

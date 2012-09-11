@@ -293,21 +293,6 @@ public final class Settings {
             "android.settings.INPUT_METHOD_SETTINGS";
 
     /**
-     * Activity Action: Show a dialog to select input method.
-     * <p>
-     * In some cases, a matching Activity may not exist, so ensure you
-     * safeguard against this.
-     * <p>
-     * Input: Nothing.
-     * <p>
-     * Output: Nothing.
-     * @hide
-     */
-    @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)
-    public static final String ACTION_SHOW_INPUT_METHOD_PICKER =
-            "android.settings.SHOW_INPUT_METHOD_PICKER";
-
-    /**
      * Activity Action: Show settings to manage the user input dictionary.
      * <p>
      * In some cases, a matching Activity may not exist, so ensure you
@@ -5877,21 +5862,6 @@ public final class Settings {
          * @hide
          */
         public static final String ENABLE_PERMISSIONS_MANAGEMENT = "enable_permissions_management";
-
-        /**
-         * The user's preferred "dream" (interactive screensaver) component.
-         *
-         * This component will be launched by the PhoneWindowManager after the user's chosen idle
-         * timeout (specified by {@link #DREAM_TIMEOUT}).
-         * @hide
-         */
-        public static final String DREAM_COMPONENT = "dream_component";
-
-        /**
-         * The delay before a "dream" is started (set to 0 to disable).
-         * @hide
-         */
-        public static final String DREAM_TIMEOUT = "dream_timeout";
 
         /**
          * @hide

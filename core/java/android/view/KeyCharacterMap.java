@@ -385,7 +385,7 @@ public class KeyCharacterMap
     
     public static boolean[] deviceHasKeys(int[] keyCodes) {
         boolean[] ret = new boolean[keyCodes.length];
-        IWindowManager wm = Display.getWindowManager();
+        IWindowManager wm = IWindowManager.Stub.asInterface(ServiceManager.getService("window"));
         try {
             wm.hasKeys(keyCodes, ret);
         } catch (RemoteException e) {

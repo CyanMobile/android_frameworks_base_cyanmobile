@@ -103,7 +103,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.view.IWindowManager;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.WindowManagerImpl;
@@ -124,6 +123,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
+//import com.android.systemui.statusbar.RecentApps;
 
 public class StatusBarService extends Service implements CommandQueue.Callbacks {
     static final String TAG = "StatusBarService";
@@ -175,7 +175,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     // last theme that was applied in order to detect theme change (as opposed
     // to some other configuration change).
     CustomTheme mCurrentTheme;
-    IWindowManager mWindowManager;
 
     // icons
     LinearLayout mIcons;
@@ -306,9 +305,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     // for disabling the status bar
     int mDisabled = 0;
-
-    // tracking calls to View.setSystemUiVisibility()
-    int mSystemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE;
 
     // tracking for the last visible power widget id so hide toggle works properly
     int mLastPowerToggle = 1;
@@ -510,8 +506,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     public void onCreate() {
         // First set up our views and stuff.
         mDisplay = ((WindowManager)getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        mWindowManager = IWindowManager.Stub.asInterface(
-                ServiceManager.getService(Context.WINDOW_SERVICE));
         CustomTheme currentTheme = getResources().getConfiguration().customTheme;
         if (currentTheme != null) {
             mCurrentTheme = (CustomTheme)currentTheme.clone();
@@ -538,7 +532,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mCommandQueue = new CommandQueue(this, iconList);
         mBarService = IStatusBarService.Stub.asInterface(
                 ServiceManager.getService(Context.STATUS_BAR_SERVICE));
-        int[] switches = new int[2];
+        boolean[] switches = new boolean[1];
         try {
             mBarService.registerStatusBar(mCommandQueue, iconList, notificationKeys, notifications,
                         switches);
@@ -546,8 +540,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             // If the system process isn't there we're doomed anyway.
         }
 
-        setSystemUiVisibility(switches[0], 0xffffffff);
-        setIMEVisible(switches[1] != 0);
+        setIMEVisible(switches[0]);
 
         // Set up the initial icon state
         int N = iconList.size();
@@ -662,15 +655,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mNavigationBarView = (NavigationBarView)View.inflate(context, R.layout.navigation_bar, null);
         mNaviBarContainer = (FrameLayout)mNavigationBarView.findViewById(R.id.navibarBackground);
-        mStatusBarView.setOnSystemUiVisibilityChangeListener(
-                    new View.OnSystemUiVisibilityChangeListener() {
-                        @Override
-                        public void onSystemUiVisibilityChange(int visibility) {
-                            Slog.d(TAG, "systemUi: " + visibility);
-                            boolean hide = (0 != (visibility & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION));
-                            mNavigationBarView.setHidden(hide);
-                        }
-                    });
 
         mBackLogoLayout = (BackLogo)mStatusBarView.findViewById(R.id.backlogo);
 
@@ -715,10 +699,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background_black));
             break;
           case 2 : // semi transparent
-            mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.statusbar_background_semi));
+            mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background_semi));
             break;
           case 3 : // gradient
-            mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.statusbar_background_gradient));
+            mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background_gradient));
             break;
           case 4 : // user defined argb hex color
             mNaviBarContainer.setBackgroundColor(naviBarColor);
@@ -726,10 +710,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
           case 5 : // transparent
             break;
           case 6 : // BackLogo
-            Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/navb_background"));
-            Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
-            Drawable bgrImage = new BitmapDrawable(bitmapImage);
-            mNaviBarContainer.setBackgroundDrawable(bgrImage);
+               Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/navb_background"));
+               Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
+               Drawable bgrImage = new BitmapDrawable(bitmapImage);
+               mNaviBarContainer.setBackgroundDrawable(bgrImage);
             break;
         }
 
@@ -795,7 +779,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mBottomScrollView = (ScrollView)mExpandedView.findViewById(R.id.bottomScroll);
         mNotificationLinearLayout = (LinearLayout)mExpandedView.findViewById(R.id.notificationLinearLayout);
         mBottomNotificationLinearLayout = (LinearLayout)mExpandedView.findViewById(R.id.bottomNotificationLinearLayout);
-	    mMusicToggleButton = (ImageView)mExpandedView.findViewById(R.id.music_toggle_button);
+	mMusicToggleButton = (ImageView)mExpandedView.findViewById(R.id.music_toggle_button);
         mMusicToggleButton.setOnClickListener(mMusicToggleButtonListener);
         mCenterClockex = (LinearLayout)mExpandedView.findViewById(R.id.centerClockex);
         mCenterIconex = (SignalClusterView)mExpandedView.findViewById(R.id.centerIconex);
@@ -1331,10 +1315,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 sideways ? size : 0,
                 WindowManager.LayoutParams.TYPE_NAVIGATION_BAR,
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                    0
+                    | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                    | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                     | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
                     | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                    | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                     | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
                 mPixelFormat);
 
@@ -1352,7 +1337,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                  navSizeval, mContext.getResources().getDisplayMetrics());
         return navSizepx;
     }
-
+	
     private int getStatBarSize() {
         int statSizeval = Settings.System.getInt(mContext.getContentResolver(),
              Settings.System.STATUSBAR_STATS_SIZE, 25);
@@ -1402,6 +1387,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 mPixelFormat);
         lp.gravity = Gravity.TOP | Gravity.FILL_HORIZONTAL;
         lp.setTitle("StatusBar");
+        lp.windowAnimations = com.android.internal.R.style.Animation_StatusBar;
+
         WindowManagerImpl.getDefault().addView(view, lp);
 
         //mRecentApps.setupRecentApps();
@@ -2284,41 +2271,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         return false;
     }
 
-    @Override // CommandQueue
-    public void setSystemUiVisibility(int vis, int mask) {
-        final int oldVal = mSystemUiVisibility;
-        final int newVal = (oldVal&~mask) | (vis&mask);
-        final int diff = newVal ^ oldVal;
-
-        if (diff != 0) {
-            mSystemUiVisibility = newVal;
-                if (0 != (diff & View.SYSTEM_UI_FLAG_LOW_PROFILE)) {
-                final boolean lightsOut = (0 != (vis & View.SYSTEM_UI_FLAG_LOW_PROFILE));
-                if (lightsOut) {
-                    animateCollapse();
-                }
-                if (mNavigationBarView != null) {
-                    mNavigationBarView.setHidden(lightsOut);
-                }
-            }
-        }
-    }
-
-    public void setLightsOn(boolean on) {
-        if (on) {
-            setSystemUiVisibility(0, View.SYSTEM_UI_FLAG_LOW_PROFILE);
-        } else {
-            setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE, View.SYSTEM_UI_FLAG_LOW_PROFILE);
-        }
-    }
-
-    private void notifyUiVisibilityChanged() {
-        try {
-            mWindowManager.statusBarVisibilityChanged(mSystemUiVisibility);
-        } catch (RemoteException ex) {
-        }	
-    }
-
     private class Launcher implements View.OnClickListener {
         private PendingIntent mIntent;
         private String mPkg;
@@ -2526,6 +2478,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         /// ---------- Tracking View --------------
         pixelFormat = PixelFormat.TRANSLUCENT;
+
         lp = new WindowManager.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -2534,6 +2487,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                 | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM,
                 pixelFormat);
+
         lp.gravity = Gravity.TOP | Gravity.FILL_HORIZONTAL;
         lp.setTitle("TrackingView");
         lp.y = mTrackingPosition;

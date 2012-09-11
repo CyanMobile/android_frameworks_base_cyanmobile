@@ -1219,14 +1219,6 @@ public class StatusBarPolicy {
             mSmsDialog = d;
     }
 
-    public View.OnClickListener mCallButtonListener = new View.OnClickListener() {
-	public void onClick(View v) {
-	   String number = callerName;
-           Intent dialIntent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + callerName));
-           mContext.startActivity(dialIntent);
-	}
-    };
-
     private final void updateCallState(int state) {
         mPhoneState = state;
         if (false) {

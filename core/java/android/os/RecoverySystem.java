@@ -357,11 +357,20 @@ public class RecoverySystem {
     }
 
     /**
-     * Reboot into the recovery system to wipe the /cache partition.
+     * Reboot into the recovery system to wipe the /data partition and toggle
+     * Encrypted File Systems on/off.
+     * @param extras to add to the RECOVERY_COMPLETED intent after rebooting.
      * @throws IOException if something goes wrong.
+     *
+     * @hide
      */
-    public static void rebootWipeCache(Context context) throws IOException {
-        bootCommand(context, "--wipe_cache");
+    public static void rebootToggleEFS(Context context, boolean efsEnabled)
+        throws IOException {
+        if (efsEnabled) {
+            bootCommand(context, "--set_encrypted_filesystem=on");
+        } else {
+            bootCommand(context, "--set_encrypted_filesystem=off");
+        }
     }
 
     /**

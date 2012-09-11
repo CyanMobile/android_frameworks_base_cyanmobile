@@ -844,7 +844,7 @@ void InputDispatcher::dispatchEventToCurrentInputTargetsLocked(nsecs_t currentTi
 void InputDispatcher::resetTargetsLocked() {
     mCurrentInputTargetsValid = false;
     mCurrentInputTargets.clear();
-    resetANRTimeoutsLocked();
+    mInputTargetWaitCause = INPUT_TARGET_WAIT_CAUSE_NONE;
 }
 
 void InputDispatcher::commitTargetsLocked() {

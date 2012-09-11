@@ -492,7 +492,7 @@ public abstract class ContentResolver {
             try {
                 AssetFileDescriptor fd = provider.openAssetFile(uri, mode);
                 if(fd == null) {
-                    // The provider will be released by the finally{} clause
+                    releaseProvider(provider);
                     return null;
                 }
                 ParcelFileDescriptor pfd = new ParcelFileDescriptorInner(

@@ -41,7 +41,6 @@ public class CheckedTextView extends TextView implements Checkable {
     private Drawable mCheckMarkDrawable;
     private int mBasePaddingRight;
     private int mCheckMarkWidth;
-    private boolean mNeedRequestlayout;
 
     private static final int[] CHECKED_STATE_SET = {
         R.attr.state_checked
@@ -124,7 +123,6 @@ public class CheckedTextView extends TextView implements Checkable {
             mCheckMarkDrawable.setCallback(null);
             unscheduleDrawable(mCheckMarkDrawable);
         }
-        mNeedRequestlayout = (d != mCheckMarkDrawable);
         if (d != null) {
             d.setCallback(this);
             d.setVisible(getVisibility() == VISIBLE, false);
@@ -169,9 +167,9 @@ public class CheckedTextView extends TextView implements Checkable {
             
             int right = getWidth();
             checkMarkDrawable.setBounds(
-                    right - mCheckMarkWidth - mBasePaddingRight,
-                    y,
-                    right - mBasePaddingRight,
+                    right - mCheckMarkWidth - mBasePaddingRight, 
+                    y, 
+                    right - mBasePaddingRight, 
                     y + height);
             checkMarkDrawable.draw(canvas);
         }

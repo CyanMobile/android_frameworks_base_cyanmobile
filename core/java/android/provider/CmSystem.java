@@ -217,7 +217,7 @@ public final class CmSystem {
 		case 4:
                     return Blade;
                 default:
-                    return Holo;
+                    return Bubble;
             }
         }
 
@@ -236,7 +236,7 @@ public final class CmSystem {
 		case Blade:
                     return 4;
                 default:
-                    return 3;
+                    return 1;
             }
         }
     }

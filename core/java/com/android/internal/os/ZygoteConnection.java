@@ -761,7 +761,6 @@ class ZygoteConnection {
     private boolean handleParentProc(int pid,
             FileDescriptor[] descriptors, Arguments parsedArgs) {
 
-        boolean usingWrapper = false;
         if(pid > 0) {
             // Try to move the new child into the peer's process group.
             try {
@@ -789,7 +788,6 @@ class ZygoteConnection {
 
         try {
             mSocketOutStream.writeInt(pid);
-            mSocketOutStream.writeBoolean(usingWrapper);
         } catch (IOException ex) {
             Log.e(TAG, "Error reading from command socket", ex);
             return true;

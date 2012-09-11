@@ -489,6 +489,7 @@ public final class ShutdownThread extends Thread {
             } else if (mRebootSafeMode) {
                 SystemProperties.set( "persist.sys.safe_mode","1");
             }
+
             // normal reboot
             try {
                 Power.reboot(reason);

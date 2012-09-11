@@ -681,20 +681,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
             }
         }
     }
-
-    /**
-     * @hide
-     */
-    @Override
-    public void makeOptionalFitsSystemWindows() {
-        super.makeOptionalFitsSystemWindows();
-        final int count = mChildrenCount;
-        final View[] children = mChildren;
-        for (int i = 0; i < count; i++) {
-            children[i].makeOptionalFitsSystemWindows();
-        }
-    }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -751,60 +738,18 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
      * {@inheritDoc}
      */
     public void recomputeViewAttributes(View child) {
-        if (mAttachInfo != null && !mAttachInfo.mRecomputeGlobalAttributes) {
-            ViewParent parent = mParent;
-            if (parent != null) parent.recomputeViewAttributes(this);
-        }
+        ViewParent parent = mParent;
+        if (parent != null) parent.recomputeViewAttributes(this);
     }
 
     @Override
-    public void dispatchWindowSystemUiVisiblityChanged(int visible) {
-        super.dispatchWindowSystemUiVisiblityChanged(visible);
-
+    void dispatchCollectViewAttributes(int visibility) {
+        visibility |= mViewFlags&VISIBILITY_MASK;
+        super.dispatchCollectViewAttributes(visibility);
         final int count = mChildrenCount;
         final View[] children = mChildren;
-        for (int i=0; i <count; i++) {
-            final View child = children[i];
-            child.dispatchWindowSystemUiVisiblityChanged(visible);
-        }
-    }
-
-    @Override
-    public void dispatchSystemUiVisibilityChanged(int visible) {
-        super.dispatchSystemUiVisibilityChanged(visible);
-
-        final int count = mChildrenCount;
-        final View[] children = mChildren;	
-        for (int i=0; i <count; i++) {
-            final View child = children[i];
-            child.dispatchSystemUiVisibilityChanged(visible);
-        }
-    }
-
-    @Override
-    boolean updateLocalSystemUiVisibility(int localValue, int localChanges) {
-        boolean changed = super.updateLocalSystemUiVisibility(localValue, localChanges);
-
-        final int count = mChildrenCount;
-        final View[] children = mChildren;
-        for (int i=0; i <count; i++) {
-            final View child = children[i];
-            changed |= child.updateLocalSystemUiVisibility(localValue, localChanges);
-        }
-        return changed;
-    }
-
-    @Override
-    void dispatchCollectViewAttributes(AttachInfo attachInfo, int visibility) {
-        if ((visibility & VISIBILITY_MASK) == VISIBLE) {
-            super.dispatchCollectViewAttributes(attachInfo, visibility);
-            final int count = mChildrenCount;
-            final View[] children = mChildren;
-            for (int i = 0; i < count; i++) {
-                final View child = children[i];
-                child.dispatchCollectViewAttributes(attachInfo,
-                        visibility | (child.mViewFlags&VISIBILITY_MASK));
-            }
+        for (int i = 0; i < count; i++) {
+            children[i].dispatchCollectViewAttributes(visibility);
         }
     }
 
@@ -1175,12 +1120,11 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
     @Override
     void dispatchAttachedToWindow(AttachInfo info, int visibility) {
         super.dispatchAttachedToWindow(info, visibility);
+        visibility |= mViewFlags & VISIBILITY_MASK;
         final int count = mChildrenCount;
         final View[] children = mChildren;
         for (int i = 0; i < count; i++) {
-            final View child = children[i];
-            child.dispatchAttachedToWindow(info,
-                    visibility | (child.mViewFlags&VISIBILITY_MASK));
+            children[i].dispatchAttachedToWindow(info, visibility);
         }
     }
 
@@ -1981,24 +1925,6 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
     }
 
     /**
-     * @hide
-     */
-    protected void onViewAdded(View child) {
-        if (mOnHierarchyChangeListener != null) {
-            mOnHierarchyChangeListener.onChildViewAdded(this, child);
-        }
-    }
-
-    /**
-     * @hide
-     */
-    protected void onViewRemoved(View child) {
-        if (mOnHierarchyChangeListener != null) {
-            mOnHierarchyChangeListener.onChildViewRemoved(this, child);
-        }
-    }
-
-    /**
      * Adds a view during layout. This is useful if in your onLayout() method,
      * you need to add more views (as does the list view for example).
      *
@@ -2089,7 +2015,9 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
             ai.mKeepScreenOn = lastKeepOn;
         }
 
-        onViewAdded(child);
+        if (mOnHierarchyChangeListener != null) {
+            mOnHierarchyChangeListener.onChildViewAdded(this, child);
+        }
 
         if ((child.mViewFlags & DUPLICATE_PARENT_STATE) == DUPLICATE_PARENT_STATE) {
             mGroupFlags |= FLAG_NOTIFY_CHILDREN_ON_DRAWABLE_STATE_CHANGE;
@@ -2273,7 +2201,9 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
            view.dispatchDetachedFromWindow();
         }
 
-        onViewRemoved(view);
+        if (mOnHierarchyChangeListener != null) {
+            mOnHierarchyChangeListener.onChildViewRemoved(this, view);
+        }
 
         needGlobalAttributesUpdate(false);
 
@@ -2285,6 +2215,8 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
     }
 
     private void removeViewsInternal(int start, int count) {
+        final OnHierarchyChangeListener onHierarchyChangeListener = mOnHierarchyChangeListener;
+        final boolean notifyListener = onHierarchyChangeListener != null;
         final View focused = mFocused;
         final boolean detach = mAttachInfo != null;
         View clearChildFocus = null;
@@ -2308,7 +2240,9 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
 
             needGlobalAttributesUpdate(false);
 
-            onViewRemoved(view);
+            if (notifyListener) {
+                onHierarchyChangeListener.onChildViewRemoved(this, view);
+            }
         }
 
         removeFromArray(start, count);
@@ -2346,6 +2280,8 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
         final View[] children = mChildren;
         mChildrenCount = 0;
 
+        final OnHierarchyChangeListener listener = mOnHierarchyChangeListener;
+        final boolean notify = listener != null;
         final View focused = mFocused;
         final boolean detach = mAttachInfo != null;
         View clearChildFocus = null;
@@ -2366,7 +2302,9 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
                view.dispatchDetachedFromWindow();
             }
 
-            onViewRemoved(view);
+            if (notify) {
+                listener.onChildViewRemoved(this, view);
+            }
 
             view.mParent = null;
             children[i] = null;
@@ -2401,7 +2339,9 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
             child.dispatchDetachedFromWindow();
         }
 
-        onViewRemoved(child);
+        if (mOnHierarchyChangeListener != null) {
+            mOnHierarchyChangeListener.onChildViewRemoved(this, child);
+        }
     }
 
     /**
@@ -2595,8 +2535,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
                 final int left = mLeft;
                 final int top = mTop;
 
-                if ((mGroupFlags & FLAG_CLIP_CHILDREN) != FLAG_CLIP_CHILDREN ||
-                        dirty.intersect(0, 0, mRight - left, mBottom - top) ||
+                if (dirty.intersect(0, 0, mRight - left, mBottom - top) ||
                         (mPrivateFlags & DRAW_ANIMATION) == DRAW_ANIMATION) {
                     mPrivateFlags &= ~DRAWING_CACHE_VALID;
 
@@ -2611,12 +2550,8 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
                 location[CHILD_LEFT_INDEX] = mLeft;
                 location[CHILD_TOP_INDEX] = mTop;
 
-                if ((mGroupFlags & FLAG_CLIP_CHILDREN) == FLAG_CLIP_CHILDREN) {
-                    dirty.set(0, 0, mRight - mLeft, mBottom - mTop);
-                } else {
-                    // in case the dirty rect extends outside the bounds of this container
-                    dirty.union(0, 0, mRight - mLeft, mBottom - mTop);
-                }
+                dirty.set(0, 0, mRight - location[CHILD_LEFT_INDEX],
+                        mBottom - location[CHILD_TOP_INDEX]);
 
                 return mParent;
             }
@@ -3545,7 +3480,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
      * not scroll should generally override this method and return false.
      */
     public boolean shouldDelayChildPressedState() {
-        return true;	
+        return true;
     }
 
     /**
@@ -3845,4 +3780,3 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
         }
     }
 }
-

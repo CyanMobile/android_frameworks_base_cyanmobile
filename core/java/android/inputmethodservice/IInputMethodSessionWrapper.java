@@ -31,6 +31,7 @@ import android.view.MotionEvent;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.InputMethodSession;
+import android.view.inputmethod.EditorInfo;
 
 class IInputMethodSessionWrapper extends IInputMethodSession.Stub
         implements HandlerCaller.Callback {

@@ -405,13 +405,6 @@ public abstract class ApplicationThreadNative extends Binder
             scheduleCrash(msg);
             return true;
         }
-
-        case SCHEDULE_TRIM_MEMORY_TRANSACTION: {
-            data.enforceInterface(IApplicationThread.descriptor);
-            int level = data.readInt();
-            scheduleTrimMemory(level);
-            return true;
-        }
         }
 
         return super.onTransact(code, data, reply, flags);
@@ -839,12 +832,5 @@ class ApplicationThreadProxy implements IApplicationThread {
         data.recycle();
         
     }
-
-    public void scheduleTrimMemory(int level) throws RemoteException {
-        Parcel data = Parcel.obtain();
-        data.writeInterfaceToken(IApplicationThread.descriptor);
-        data.writeInt(level);
-        mRemote.transact(SCHEDULE_TRIM_MEMORY_TRANSACTION, data, null,
-                IBinder.FLAG_ONEWAY);
-    }
 }
+

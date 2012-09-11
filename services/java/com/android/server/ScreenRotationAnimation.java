@@ -24,7 +24,9 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
+import android.util.DisplayMetrics;
 import android.util.Slog;
+import android.view.Display;
 import android.view.Surface;
 import android.view.SurfaceSession;
 import android.view.animation.Animation;
@@ -36,6 +38,7 @@ class ScreenRotationAnimation {
     static final boolean DEBUG = false;
 
     final Context mContext;
+    final Display mDisplay;
     Surface mSurface;
     int mWidth, mHeight;
 
@@ -51,13 +54,17 @@ class ScreenRotationAnimation {
     final Transformation mEnterTransformation = new Transformation();
     boolean mStarted;
 
+    final DisplayMetrics mDisplayMetrics = new DisplayMetrics();
     final Matrix mSnapshotInitialMatrix = new Matrix();
     final Matrix mSnapshotFinalMatrix = new Matrix();
     final float[] mTmpFloats = new float[9];
 
-    public ScreenRotationAnimation(Context context, SurfaceSession session,
-            boolean inTransaction, int originalWidth, int originalHeight, int originalRotation) {
+    public ScreenRotationAnimation(Context context, Display display, SurfaceSession session, boolean inTransaction) {
         mContext = context;
+        mDisplay = display;
+
+        display.getMetrics(mDisplayMetrics);
+
         Bitmap screenshot = Surface.screenshot(0, 0);
 
         if (screenshot != null) {
@@ -67,14 +74,14 @@ class ScreenRotationAnimation {
             mHeight = screenshot.getHeight();
         } else {
             // Just in case.
-            mSnapshotRotation = originalRotation;
-            mWidth = originalWidth;
-            mHeight = originalHeight;
+            mSnapshotRotation = display.getRotation();
+            mWidth = mDisplayMetrics.widthPixels;
+            mHeight = mDisplayMetrics.heightPixels;
         }
 
-        mOriginalRotation = originalRotation;
-        mOriginalWidth = originalWidth;
-        mOriginalHeight = originalHeight;
+        mOriginalRotation = display.getRotation();
+        mOriginalWidth = mDisplayMetrics.widthPixels;
+        mOriginalHeight = mDisplayMetrics.heightPixels;
 
         if (!inTransaction) {
             if (WindowManagerService.SHOW_TRANSACTIONS) Slog.i(WindowManagerService.TAG,
@@ -91,7 +98,7 @@ class ScreenRotationAnimation {
                 Slog.w(TAG, "Unable to allocate freeze surface", e);
             }
 
-            setRotation(originalRotation);
+            setRotation(display.getRotation());
 
             if (mSurface != null) {
                 Rect dirty = new Rect(0, 0, mWidth, mHeight);
@@ -189,7 +196,7 @@ class ScreenRotationAnimation {
     /**
      * Returns true if animating.
      */
-    public boolean dismiss(long maxAnimationDuration, float animationScale, int finalWidth, int finalHeight) {
+    public boolean dismiss(long maxAnimationDuration, float animationScale) {
         // Figure out how the screen has moved from the original rotation.
         int delta = deltaRotation(mCurRotation, mOriginalRotation);
         if (false && delta == 0) {
@@ -228,12 +235,16 @@ class ScreenRotationAnimation {
                 break;
         }
 
+        mDisplay.getMetrics(mDisplayMetrics);
+
         // Initialize the animations.  This is a hack, redefining what "parent"
         // means to allow supplying the last and next size.  In this definition
         // "%p" is the original (let's call it "previous") size, and "%" is the
         // screen's current/new size.
-        mEnterAnimation.initialize(finalWidth, finalHeight, mOriginalWidth, mOriginalHeight);
-        mExitAnimation.initialize(finalWidth, finalHeight, mOriginalWidth, mOriginalHeight);
+        mEnterAnimation.initialize(mDisplayMetrics.widthPixels, mDisplayMetrics.heightPixels,
+                mOriginalWidth, mOriginalHeight);
+        mExitAnimation.initialize(mDisplayMetrics.widthPixels, mDisplayMetrics.heightPixels,
+                mOriginalWidth, mOriginalHeight);
         mStarted = false;
 
         mExitAnimation.restrictDuration(maxAnimationDuration);

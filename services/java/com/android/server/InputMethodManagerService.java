@@ -33,8 +33,6 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.ActivityManagerNative;
 import android.app.AlertDialog;
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -53,7 +51,6 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.database.ContentObserver;
-import android.graphics.BitmapFactory;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -120,7 +117,7 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
     final SettingsObserver mSettingsObserver;
     final IWindowManager mIWindowManager;
     final HandlerCaller mCaller;
-    WindowManagerService mWindowManagerService;
+
     final InputBindResult mNoBinding = new InputBindResult(null, null, -1);
 
     private StatusBarManagerService mStatusBar;
@@ -134,14 +131,6 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
 
     final TextUtils.SimpleStringSplitter mStringColonSplitter
             = new TextUtils.SimpleStringSplitter(':');
-
-    // Ongoing notification
-    private final NotificationManager mNotificationManager;
-    private final Notification mImeSwitcherNotification;
-    private final PendingIntent mImeSwitchPendingIntent;	
-    private final boolean mShowOngoingImeSwitcherForPhones;
-    private boolean mNotificationShown;
-    final Resources mRes;
 
     class SessionState {
         final ClientState client;
@@ -291,8 +280,6 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
      * Have we called mCurMethod.bindInput()?
      */
     boolean mBoundToMethod;
-
-    boolean mVisualIME;
 
     /**
      * Currently enabled session.  Only touched by service thread, not
@@ -466,7 +453,6 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
 
     public InputMethodManagerService(Context context) {
         mContext = context;
-        mRes = context.getResources();
         mHandler = new Handler(this);
         mIWindowManager = IWindowManager.Stub.asInterface(
                 ServiceManager.getService(Context.WINDOW_SERVICE));
@@ -475,21 +461,6 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 handleMessage(msg);
             }
         });
-
-        mNotificationManager = (NotificationManager)
-                mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-        mImeSwitcherNotification = new Notification();
-        mImeSwitcherNotification.icon = com.android.internal.R.drawable.ic_notification_ime_default;
-        mImeSwitcherNotification.when = 0;
-        mImeSwitcherNotification.flags = Notification.FLAG_ONGOING_EVENT;
-        mImeSwitcherNotification.tickerText = null;
-        mImeSwitcherNotification.defaults = 0; // please be quiet
-        mImeSwitcherNotification.sound = null;
-        mImeSwitcherNotification.vibrate = null;
-        Intent intent = new Intent(Settings.ACTION_SHOW_INPUT_METHOD_PICKER);
-        mImeSwitchPendingIntent = PendingIntent.getBroadcast(mContext, 0, intent, 0);
-        mShowOngoingImeSwitcherForPhones = mRes.getBoolean(
-                com.android.internal.R.bool.show_ongoing_ime_switcher);
 
         (new MyPackageMonitor()).register(mContext, true);
 
@@ -549,7 +520,6 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             }
         }
 
-        mNotificationShown = false;
         mSettingsObserver = new SettingsObserver(mHandler);
         updateFromSettingsLocked();
     }
@@ -915,10 +885,6 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
         if (mCurToken != null) {
             try {
                 if (DEBUG) Slog.v(TAG, "Removing window token: " + mCurToken);
-                if (mVisualIME) {
-                    // The current IME is shown. Hence an IME switch (transition) is happening.
-                    mWindowManagerService.saveLastInputMethodWindowForTransition();
-                }
                 mIWindowManager.removeWindowToken(mCurToken);
             } catch (RemoteException e) {
             }
@@ -1020,26 +986,6 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
 
             synchronized (mMethodMap) {
                 mStatusBar.setIMEVisible(visible);
-                mVisualIME = visible;
-                final boolean iconVisibility = visible;
-                if (iconVisibility && mShowOngoingImeSwitcherForPhones) {
-                    final PackageManager pm = mContext.getPackageManager();
-                    final CharSequence label = mMethodMap.get(mCurMethodId).loadLabel(pm);
-                    final CharSequence title = mRes.getText(
-                            com.android.internal.R.string.select_input_method);
-                    mImeSwitcherNotification.setLatestEventInfo(
-                            mContext, title, label, mImeSwitchPendingIntent);
-                    mNotificationManager.notify(
-                            com.android.internal.R.string.select_input_method,
-                            mImeSwitcherNotification);
-                    mNotificationShown = true;
-                } else {
-                    if (mNotificationShown) {
-                        mNotificationManager.cancel(
-                                com.android.internal.R.string.select_input_method);
-                        mNotificationShown = false;
-                    }
-                }
             }
         } finally {
             Binder.restoreCallingIdentity(ident);

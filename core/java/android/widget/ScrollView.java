@@ -155,7 +155,7 @@ public class ScrollView extends FrameLayout {
     }
 
     @Override
-    public boolean shouldDelayChildPressedState() {	
+    public boolean shouldDelayChildPressedState() {  
         return true;
     }
 

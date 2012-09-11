@@ -87,7 +87,6 @@ public class PopupWindow {
     private boolean mClippingEnabled = true;
     private boolean mSplitTouchEnabled;
     private boolean mLayoutInScreen;
-    private boolean mLayoutInsetDecor = true;
 
     private OnTouchListener mTouchInterceptor;
     
@@ -381,11 +380,11 @@ public class PopupWindow {
 
         mContentView = contentView;
 
-        if (mContext == null && mContentView != null) {
+        if (mContext == null) {
             mContext = mContentView.getContext();
         }
 
-        if (mWindowManager == null && mContentView != null) {
+        if (mWindowManager == null) {
             mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
         }
     }
@@ -622,22 +621,6 @@ public class PopupWindow {
      */
     public void setLayoutInScreenEnabled(boolean enabled) {
         mLayoutInScreen = enabled;
-    }
-
-    /**
-     * Allows the popup window to force the flag
-     * {@link WindowManager.LayoutParams#FLAG_LAYOUT_INSET_DECOR}, overriding default behavior.
-     * This will cause the popup to inset its content to account for system windows overlaying
-     * the screen, such as the status bar.
-     *
-     * <p>This will often be combined with {@link #setLayoutInScreenEnabled(boolean)}.
-     *
-     * @param enabled true if the popup's views should inset content to account for system windows,
-     *                the way that decor views behave for full-screen windows.
-     * @hide
-     */
-    public void setLayoutInsetDecor(boolean enabled) {
-        mLayoutInsetDecor = enabled;	
     }
 
     /**
@@ -920,10 +903,7 @@ public class PopupWindow {
      * @param p the layout parameters of the popup's content view
      */
     private void invokePopup(WindowManager.LayoutParams p) {
-        if (mContext != null) {
-            p.packageName = mContext.getPackageName();
-        }
-        mPopupView.setFitsSystemWindows(mLayoutInsetDecor);
+        p.packageName = mContext.getPackageName();
         mWindowManager.addView(mPopupView, p);
     }
 
@@ -993,9 +973,6 @@ public class PopupWindow {
         }
         if (mLayoutInScreen) {
             curFlags |= WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
-        }
-        if (mLayoutInsetDecor) {
-            curFlags |= WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR;
         }
         return curFlags;
     }

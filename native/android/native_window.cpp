@@ -59,7 +59,8 @@ int32_t ANativeWindow_getFormat(ANativeWindow* window) {
 
 int32_t ANativeWindow_setBuffersGeometry(ANativeWindow* window, int32_t width,
         int32_t height, int32_t format) {
-    return native_window_set_buffers_geometry(window, width, height, format);
+    native_window_set_buffers_geometry(window, width, height, format);
+    return 0;
 }
 
 int32_t ANativeWindow_lock(ANativeWindow* window, ANativeWindow_Buffer* outBuffer,
