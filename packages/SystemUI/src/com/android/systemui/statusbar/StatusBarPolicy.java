@@ -1167,9 +1167,7 @@ public class StatusBarPolicy {
 
             AlertDialog.Builder b = new AlertDialog.Builder(mContext);
                 b.setCancelable(false);
-                b.setTitle(R.string.smscall_popup);
                 b.setView(v);
-                b.setIcon(android.R.drawable.ic_dialog_alert);
                 b.setPositiveButton("Reply",
                             new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {

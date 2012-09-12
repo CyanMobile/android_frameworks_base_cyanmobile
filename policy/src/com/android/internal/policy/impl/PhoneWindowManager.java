@@ -1743,6 +1743,22 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+    private int getNavBarSize() {
+        int navSizeval = Settings.System.getInt(mContext.getContentResolver(),
+             Settings.System.STATUSBAR_NAVI_SIZE, 25);
+        int navSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                 navSizeval, mContext.getResources().getDisplayMetrics());
+        return (mNaviShow && mNaviShowAll) ? navSizepx : 0;
+    }
+
+    private int getStatBarSize() {
+        int statSizeval = Settings.System.getInt(mContext.getContentResolver(),
+             Settings.System.STATUSBAR_STATS_SIZE, 25);
+        int statSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                 statSizeval, mContext.getResources().getDisplayMetrics());
+        return statSizepx;
+    }
+
     /** {@inheritDoc} */
     public void beginLayoutLw(int displayWidth, int displayHeight) {
         mUnrestrictedScreenLeft = mUnrestrictedScreenTop = 0;
@@ -1769,11 +1785,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         if (mStatusBar != null) {
             if (mNavigationBar != null) {
                 final boolean navVisible = (mNavigationBar.isVisibleLw() && mNaviShow && mNaviShowAll);
-                int navSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_NAVI_SIZE, 25);
-                int navSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                     navSizeval, mContext.getResources().getDisplayMetrics());
-                final int mNavigationBarHeight = navSizepx;
+                final int mNavigationBarHeight = getNavBarSize();
                     mTmpNavigationFrame.set(0, displayHeight-mNavigationBarHeight,
                             displayWidth, displayHeight);
                     if (navVisible) {
@@ -1788,11 +1800,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
             if (DEBUG_LAYOUT) Log.i(TAG, "mNavigationBar frame: " + mTmpNavigationFrame);
             if(mBottomBar && !mNaviShow){
-                int statSizeval = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_STATS_SIZE, 25);
-                int statSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                     statSizeval, mContext.getResources().getDisplayMetrics());
-                final int statusbar_height = statSizepx;
+                final int statusbar_height = getStatBarSize();
                 //setting status bar's top, to bottom of the screen, minus status bar height
                 pf.top = df.top = vf.top = (displayHeight-statusbar_height);
             }

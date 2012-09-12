@@ -1299,16 +1299,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         Resources res = mContext.getResources();
         final boolean sideways = 
-            ((Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.SHOW_NAVI_BUTTONS, 1) == 1) && (Settings.System.getInt(mContext.getContentResolver(),
+            (mNaviShow && (Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.NAVI_BUTTONS, 1) == 1));
         final int size = getNavBarSize();
-
-	int mPixelFormat = PixelFormat.TRANSLUCENT;
-        if (Settings.System.getInt(mContext.getContentResolver(), Settings.System.TRANSPARENT_NAVI_BAR, 0) != 0) {
-          // transparent navbar enabled?
-          mPixelFormat = PixelFormat.TRANSLUCENT;
-        }
 
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -1320,7 +1313,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
                     | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                     | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
-                mPixelFormat);
+                PixelFormat.TRANSLUCENT);
 
         lp.setTitle("NavigationBar");
         lp.gravity = Gravity.BOTTOM | Gravity.FILL_HORIZONTAL;
@@ -1334,9 +1327,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
              Settings.System.STATUSBAR_NAVI_SIZE, 25);
         int navSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                  navSizeval, mContext.getResources().getDisplayMetrics());
-        return navSizepx;
+        return mNaviShow ? navSizepx : 0;
     }
-	
+
     private int getStatBarSize() {
         int statSizeval = Settings.System.getInt(mContext.getContentResolver(),
              Settings.System.STATUSBAR_STATS_SIZE, 25);
@@ -1371,19 +1364,13 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         final View view = mStatusBarContainer;
 
-	int mPixelFormat = PixelFormat.TRANSLUCENT;
-        if (Settings.System.getInt(mContext.getContentResolver(), Settings.System.TRANSPARENT_STATUS_BAR, 0) != 0) {
-          // transparent statusbar enabled?
-          mPixelFormat = PixelFormat.TRANSLUCENT;
-        }
-
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 height,
                 WindowManager.LayoutParams.TYPE_STATUS_BAR,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                     | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING,
-                mPixelFormat);
+                PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.TOP | Gravity.FILL_HORIZONTAL;
         lp.setTitle("StatusBar");
         lp.windowAnimations = com.android.internal.R.style.Animation_StatusBar;
@@ -2504,16 +2491,13 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     void onTrackingViewAttached() {
         WindowManager.LayoutParams lp;
-        int pixelFormat;
         Drawable bg;
-        int expheightSizepx = getNavBarSize();
         /// ---------- Expanded View --------------
-        pixelFormat = PixelFormat.TRANSLUCENT;
-
-        final int disph = mBottomBar ? mDisplay.getHeight() : (mDisplay.getHeight()-expheightSizepx);
+        int mPixelFormat = PixelFormat.TRANSLUCENT;
+        final int disph = mBottomBar ? mDisplay.getHeight() : (mDisplay.getHeight()-getNavBarSize());
         lp = mExpandedDialog.getWindow().getAttributes();
         lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
-        lp.height = mBottomBar ? getExpandedHeight() : (getExpandedHeight()-expheightSizepx);
+        lp.height = mBottomBar ? getExpandedHeight() : (getExpandedHeight()-getNavBarSize());
         lp.x = 0;
         mTrackingPosition = lp.y = (mBottomBar ? disph : -disph); // sufficiently large positive
         lp.type = WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL;
@@ -2522,11 +2506,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                 | WindowManager.LayoutParams.FLAG_DITHER
                 | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-        lp.format = pixelFormat;
+        lp.format = mPixelFormat;
         lp.gravity = Gravity.TOP | Gravity.FILL_HORIZONTAL;
         lp.setTitle("StatusBarExpanded");
         mExpandedDialog.getWindow().setAttributes(lp);
-        mExpandedDialog.getWindow().setFormat(pixelFormat);
+        mExpandedDialog.getWindow().setFormat(mPixelFormat);
         mExpandedParams = lp;
 
         mExpandedDialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
@@ -2715,9 +2699,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     void updateExpandedHeight() {
-        int mexpheightSizepx = getNavBarSize();
         if (mExpandedView != null) {
-            mExpandedParams.height = mBottomBar ? getExpandedHeight() : (getExpandedHeight()-mexpheightSizepx);
+            mExpandedParams.height = mBottomBar ? getExpandedHeight() : (getExpandedHeight()-getNavBarSize());
             mExpandedDialog.getWindow().setAttributes(mExpandedParams);
         }
     }
