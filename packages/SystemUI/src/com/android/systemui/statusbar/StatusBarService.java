@@ -322,9 +322,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private int mStatusBarCarrierLogo;
     private int mStatusBarClock;
     private boolean mShowDate = true;
-    private boolean mShowNotif;
+    private boolean mShowNotif = true;
     private boolean mFirstis = true;
-    private boolean mNaviShow;
+    private boolean mNaviShow = true;
     private boolean mStatusBarReverse = false;
     private boolean mStatusBarTab = false;
     private boolean LogoStatusBar = false;
@@ -1288,6 +1288,14 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     }
 
+    private int getNavBarSize() {
+        int navSizeval = Settings.System.getInt(mContext.getContentResolver(),
+             Settings.System.STATUSBAR_NAVI_SIZE, 25);
+        int navSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                 navSizeval, mContext.getResources().getDisplayMetrics());
+        return mNaviShow ? navSizepx : 0;
+    }
+
     // For small-screen devices (read: phones) that lack hardware navigation buttons
     private void addNavigationBar() {
         mNavigationBarView.reorient();
@@ -1320,14 +1328,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         lp.windowAnimations = 0;
 
         return lp;
-    }
-
-    private int getNavBarSize() {
-        int navSizeval = Settings.System.getInt(mContext.getContentResolver(),
-             Settings.System.STATUSBAR_NAVI_SIZE, 25);
-        int navSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                 navSizeval, mContext.getResources().getDisplayMetrics());
-        return mNaviShow ? navSizepx : 0;
     }
 
     private int getStatBarSize() {
