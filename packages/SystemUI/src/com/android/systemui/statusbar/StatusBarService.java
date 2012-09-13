@@ -322,7 +322,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private int mStatusBarCarrierLogo;
     private int mStatusBarClock;
     private boolean mShowDate = false;
-    private boolean mShowNotif = true;
+    private boolean mShowNotif = false;
     private boolean mFirstis = true;
     private boolean mNaviShow = true;
     private boolean mStatusBarReverse = false;
@@ -615,22 +615,39 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mIconSize = IconSizepx;
 
         //Check for compact carrier layout and apply if enabled
-        mStatusBarCarrier = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.STATUS_BAR_CARRIER, 6);
-        mStatusBarClock = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.STATUS_BAR_CLOCK, 1);
-        mStatusBarCarrierLogo = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.CARRIER_LOGO, 0);
-        mStatusBarReverse = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.STATUS_BAR_REVERSE, 0) == 1;
-        mStatusBarTab = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4;
-        mShowCmBatteryStatusBar = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.STATUS_BAR_BATTERY, 0) == 5;
-        LogoStatusBar = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.CARRIER_LOGO_STATUS_BAR, 0) == 1;
-        mClockColor = Settings.System.getInt(getContentResolver(),
-                                                Settings.System.STATUS_BAR_CLOCKCOLOR, 1);
+            mStatusBarCarrier = Settings.System.getInt(getContentResolver(),
+                    Settings.System.STATUS_BAR_CARRIER, 6);
+            mStatusBarClock = Settings.System.getInt(getContentResolver(),
+                    Settings.System.STATUS_BAR_CLOCK, 1);
+            mStatusBarCarrierLogo = Settings.System.getInt(getContentResolver(),
+                    Settings.System.CARRIER_LOGO, 0);
+            mStatusBarReverse = (Settings.System.getInt(getContentResolver(),
+                    Settings.System.STATUS_BAR_REVERSE, 0) == 1);
+            mShowCmBatteryStatusBar = (Settings.System.getInt(getContentResolver(),
+                    Settings.System.STATUS_BAR_BATTERY, 0) == 5);
+            mShowDate = (Settings.System.getInt(getContentResolver(),
+                    Settings.System.STATUS_BAR_DATE, 0) == 1);
+            mShowNotif = (Settings.System.getInt(getContentResolver(),
+                    Settings.System.STATUS_BAR_NOTIF, 1) == 1);
+            mShowCmBatterySideBar = (Settings.System.getInt(getContentResolver(),
+                Settings.System.STATUS_BAR_BATTERY, 0) == 4);
+            mHasSoftButtons = (Settings.System.getInt(getContentResolver(),
+                    Settings.System.USE_SOFT_BUTTONS, 0) == 1);
+            LogoStatusBar = (Settings.System.getInt(getContentResolver(),
+                    Settings.System.CARRIER_LOGO_STATUS_BAR, 0) == 1);
+            shouldTick = (Settings.System.getInt(getContentResolver(),
+                    Settings.System.STATUS_BAR_INTRUDER_ALERT, 1) == 1);
+            mClockColor = (Settings.System.getInt(getContentResolver(),
+                    Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF38FF00));
+            mStatusBarTab = (Settings.System.getInt(getContentResolver(),
+                    Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4);
+            mNaviShow = (Settings.System.getInt(getContentResolver(),
+                    Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
+            autoBrightness = Settings.System.getInt(
+                    getContentResolver(), Settings.System.SCREEN_BRIGHTNESS_MODE, 0) ==
+                    Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
+            mBrightnessControl = !autoBrightness && Settings.System.getInt(
+                    getContentResolver(), Settings.System.STATUS_BAR_BRIGHTNESS_TOGGLE, 0) == 1;
 
         if (!mStatusBarTab) {
             mExpandedView = (ExpandedView)View.inflate(context,
@@ -1666,7 +1683,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         parent.addView(row, viewIndex);
         // Add the icon.
         final int iconIndex = chooseIconIndex(isOngoing, viewIndex);
-        mNotificationIcons.addView(iconView, iconIndex);
+        if (mShowNotif) {
+            mNotificationIcons.addView(iconView, iconIndex);
+        }
         return iconView;
     }
 
@@ -1931,7 +1950,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mTrackingView.setVisibility(View.GONE);
         mExpandedView.setVisibility(View.GONE);
 
-        if ((mDisabled & StatusBarManager.DISABLE_NOTIFICATION_ICONS) == 0) {
+        if ((mDisabled & StatusBarManager.DISABLE_NOTIFICATION_ICONS) == 0 && mShowNotif) {
             setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);
         }
         if (mDateView.getVisibility() == View.VISIBLE) {
@@ -2538,7 +2557,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 	if (visible) {
             setNotificationIconVisibility(false, com.android.internal.R.anim.fade_out);
         } else {
-            setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);
+            if (mShowNotif) {
+                setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);
+            }
         }
     }
 
