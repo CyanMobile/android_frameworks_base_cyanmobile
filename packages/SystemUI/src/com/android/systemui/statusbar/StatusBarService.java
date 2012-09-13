@@ -321,7 +321,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private int mStatusBarCarrier;
     private int mStatusBarCarrierLogo;
     private int mStatusBarClock;
-    private boolean mShowDate = true;
+    private boolean mShowDate = false;
     private boolean mShowNotif = true;
     private boolean mFirstis = true;
     private boolean mNaviShow = true;
@@ -1781,7 +1781,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 }
             } else {
                 if (SPEW) Slog.d(TAG, "DISABLE_NOTIFICATION_ICONS: no");
-                if (!mExpandedVisible) {
+                if (!mExpandedVisible && mShowNotif) {
                     setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);
                 }
             }
@@ -2537,7 +2537,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
 	if (visible) {
             setNotificationIconVisibility(false, com.android.internal.R.anim.fade_out);
-        } else if (mShowNotif) {
+        } else {
             setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);
         }
     }
@@ -2581,7 +2581,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     void setNotificationIconVisibility(boolean visible, int anim) {
         int old = mNotificationIcons.getVisibility();
         int v = visible ? (mShowNotif ? View.VISIBLE : View.INVISIBLE) : View.INVISIBLE;
-        if (old != v) {
+        if ((old != v) && mShowNotif) {
            if (mStatusBarCarrierLogo == 2 && mStatusBarReverse) {
                mNotificationIcons.setVisibility(View.INVISIBLE);
                mNotificationIcons.startAnimation(loadAnim(anim, null));
@@ -2746,7 +2746,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 }
             } else {
                 Slog.d(TAG, "DISABLE_NOTIFICATION_ICONS: no");
-                if (!mExpandedVisible) {
+                if (!mExpandedVisible && mShowNotif) {
                     setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);
                 }
             }
