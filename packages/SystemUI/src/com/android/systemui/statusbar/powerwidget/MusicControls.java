@@ -124,7 +124,7 @@ public class MusicControls extends FrameLayout {
         ContentResolver resolver = mContext.getContentResolver();
 
         mClockColor = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_CARRIERCOLOR, 0xFF33B5E5));
+                Settings.System.STATUS_BAR_CARRIERCOLOR, 0xFF38FF00));
 
         mPauseIcon = (ImageButton) findViewById(R.id.musicControlPause);
         mPlayIcon = (ImageButton) findViewById(R.id.musicControlPlay);

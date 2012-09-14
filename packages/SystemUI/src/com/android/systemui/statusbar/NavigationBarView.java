@@ -27,6 +27,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.PorterDuff.Mode;
 import android.content.res.Resources;
 import android.util.AttributeSet;
 import android.view.Display;
@@ -113,6 +114,7 @@ public class NavigationBarView extends LinearLayout {
     private int mShowBack;
     private int mShowSearch;
     private int mShowQuicker;
+    private int mOverColor;
     private boolean mLongPressBackKills;
     private boolean mInputShow;
     private Bitmap mCustomHomeIcon;
@@ -147,6 +149,8 @@ public class NavigationBarView extends LinearLayout {
                     Settings.System.getUriFor(Settings.System.NAVI_BUTTON_SHOW_QUICKER), false, this);
             resolver.registerContentObserver(
                     Settings.Secure.getUriFor(Settings.Secure.KILL_APP_LONGPRESS_BACK), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.OVERSCROLL_COLOR), false, this);
             onChange(true);
         }
 
@@ -170,6 +174,8 @@ public class NavigationBarView extends LinearLayout {
                     Settings.System.NAVI_BUTTON_SHOW_QUICKER, 4);
             mLongPressBackKills = (Settings.Secure.getInt(resolver,
                     Settings.Secure.KILL_APP_LONGPRESS_BACK, 0) == 1);
+            mOverColor = Settings.System.getInt(resolver,
+                    Settings.System.OVERSCROLL_COLOR, 0xFF38FF00);
             updateNaviButtons();
         }
     }
@@ -486,25 +492,29 @@ public class NavigationBarView extends LinearLayout {
                         simulateKeypress(KeyEvent.KEYCODE_HOME);
                         updateNaviButtons();
                         mHomeButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetHome, 70);
+                        mHomeButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetHome, 80);
                       } else if(mShowHome == 4) {
                         if(DEBUG) Slog.i(TAG, "Menu clicked");
                         simulateKeypress(KeyEvent.KEYCODE_MENU);
                         updateNaviButtons();
                         mHomeButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetHome, 70);
+                        mHomeButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetHome, 80);
                       } else if(mShowHome == 2) {
                         if(DEBUG) Slog.i(TAG, "Back clicked");
                         simulateKeypress(KeyEvent.KEYCODE_BACK);
                         updateNaviButtons();
                         mHomeButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetHome, 70);
+                        mHomeButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetHome, 80);
                       } else if(mShowHome == 3) {
                         if(DEBUG) Slog.i(TAG, "Search clicked");
                         simulateKeypress(KeyEvent.KEYCODE_SEARCH);
                         updateNaviButtons();
                         mHomeButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetHome, 70);
+                        mHomeButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetHome, 80);
                       } else if(mShowHome == 5) {
                         if(DEBUG) Slog.i(TAG, "Quick clicked");
                         if (mShowVol) {
@@ -514,7 +524,8 @@ public class NavigationBarView extends LinearLayout {
                         }
                         updateNaviButtons();
                         mHomeButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetHome, 70);
+                        mHomeButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetHome, 80);
                       } else if(mShowHome == 6) {
                             boolean mCustomHomeAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
                                     Settings.System.USE_CUSTOM_HOME_APP_TOGGLE, 0) == 1);
@@ -525,7 +536,8 @@ public class NavigationBarView extends LinearLayout {
                             }
                         updateNaviButtons();
                         mHomeButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetHome, 70);
+                        mHomeButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetHome, 80);
                       }
                     }
                 }
@@ -570,25 +582,29 @@ public class NavigationBarView extends LinearLayout {
                         simulateKeypress(KeyEvent.KEYCODE_HOME);
                         updateNaviButtons();
                         mMenuButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetMenu, 70);
+                        mMenuButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetMenu, 80);
                       } else if(mShowMenu == 4) {
                         if(DEBUG) Slog.i(TAG, "Menu clicked");
                         simulateKeypress(KeyEvent.KEYCODE_MENU);
                         updateNaviButtons();
                         mMenuButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetMenu, 70);
+                        mMenuButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetMenu, 80);
                       } else if(mShowMenu == 2) {
                         if(DEBUG) Slog.i(TAG, "Back clicked");
                         simulateKeypress(KeyEvent.KEYCODE_BACK);
                         updateNaviButtons();
                         mMenuButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetMenu, 70);
+                        mMenuButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetMenu, 80);
                       } else if(mShowMenu == 3) {
                         if(DEBUG) Slog.i(TAG, "Search clicked");
                         simulateKeypress(KeyEvent.KEYCODE_SEARCH);
                         updateNaviButtons();
                         mMenuButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetMenu, 70);
+                        mMenuButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetMenu, 80);
                       } else if(mShowMenu == 5) {
                         if(DEBUG) Slog.i(TAG, "Quick clicked");
                         if (mShowVol) {
@@ -598,7 +614,8 @@ public class NavigationBarView extends LinearLayout {
                         }
                         updateNaviButtons();
                         mMenuButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetMenu, 70);
+                        mMenuButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetMenu, 80);
                       } else if(mShowMenu == 6) {
                             boolean mCustomMenuAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
                                     Settings.System.USE_CUSTOM_MENU_APP_TOGGLE, 0) == 1);
@@ -609,7 +626,8 @@ public class NavigationBarView extends LinearLayout {
                             }
                         updateNaviButtons();
                         mMenuButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetMenu, 70);
+                        mMenuButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetMenu, 80);
                       }
                     }
                 }
@@ -654,25 +672,29 @@ public class NavigationBarView extends LinearLayout {
                         simulateKeypress(KeyEvent.KEYCODE_HOME);
                         updateNaviButtons();
                         mBackButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetBack, 70);
+                        mBackButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetBack, 80);
                       } else if(mShowBack == 4) {
                         if(DEBUG) Slog.i(TAG, "Menu clicked");
                         simulateKeypress(KeyEvent.KEYCODE_MENU);
                         updateNaviButtons();
                         mBackButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetBack, 70);
+                        mBackButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetBack, 80);
                       } else if(mShowBack == 2) {
                         if(DEBUG) Slog.i(TAG, "Back clicked");
                         simulateKeypress(KeyEvent.KEYCODE_BACK);
                         updateNaviButtons();
                         mBackButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetBack, 70);
+                        mBackButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetBack, 80);
                       } else if(mShowBack == 3) {
                         if(DEBUG) Slog.i(TAG, "Search clicked");
                         simulateKeypress(KeyEvent.KEYCODE_SEARCH);
                         updateNaviButtons();
                         mBackButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetBack, 70);
+                        mBackButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetBack, 80);
                       } else if(mShowBack == 5) {
                         if(DEBUG) Slog.i(TAG, "Quick clicked");
                         if (mShowVol) {
@@ -682,7 +704,8 @@ public class NavigationBarView extends LinearLayout {
                         }
                         updateNaviButtons();
                         mBackButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetBack, 70);
+                        mBackButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetBack, 80);
                       } else if(mShowBack == 6) {
                             boolean mCustomBackAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
                                     Settings.System.USE_CUSTOM_BACK_APP_TOGGLE, 0) == 1);
@@ -693,7 +716,8 @@ public class NavigationBarView extends LinearLayout {
                             }
                         updateNaviButtons();
                         mBackButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetBack, 70);
+                        mBackButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetBack, 80);
                       }
                     }
                 }
@@ -738,25 +762,29 @@ public class NavigationBarView extends LinearLayout {
                         simulateKeypress(KeyEvent.KEYCODE_HOME);
                         updateNaviButtons();
                         mSearchButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetSearch, 70);
+                        mSearchButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetSearch, 80);
                       } else if(mShowSearch == 4) {
                         if(DEBUG) Slog.i(TAG, "Menu clicked");
                         simulateKeypress(KeyEvent.KEYCODE_MENU);
                         updateNaviButtons();
                         mSearchButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetSearch, 70);
+                        mSearchButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetSearch, 80);
                       } else if(mShowSearch == 2) {
                         if(DEBUG) Slog.i(TAG, "Back clicked");
                         simulateKeypress(KeyEvent.KEYCODE_BACK);
                         updateNaviButtons();
                         mSearchButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetSearch, 70);
+                        mSearchButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetSearch, 80);
                       } else if(mShowSearch == 3) {
                         if(DEBUG) Slog.i(TAG, "Search clicked");
                         simulateKeypress(KeyEvent.KEYCODE_SEARCH);
                         updateNaviButtons();
                         mSearchButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetSearch, 70);
+                        mSearchButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetSearch, 80);
                       } else if(mShowSearch == 5) {
                         if(DEBUG) Slog.i(TAG, "Quick clicked");
                         if (mShowVol) {
@@ -766,7 +794,8 @@ public class NavigationBarView extends LinearLayout {
                         }
                         updateNaviButtons();
                         mSearchButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetSearch, 70);
+                        mSearchButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetSearch, 80);
                       } else if(mShowSearch == 6) {
                             boolean mCustomSearchAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
                                     Settings.System.USE_CUSTOM_NAVISEARCH_APP_TOGGLE, 0) == 1);
@@ -777,7 +806,8 @@ public class NavigationBarView extends LinearLayout {
                             }
                         updateNaviButtons();
                         mSearchButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetSearch, 70);
+                        mSearchButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetSearch, 80);
                       }
                     }
                 }
@@ -820,7 +850,8 @@ public class NavigationBarView extends LinearLayout {
                         if(DEBUG) Slog.i(TAG, "VolUp clicked");
                         simulateKeypress(KeyEvent.KEYCODE_VOLUME_UP);
                         mVolUpButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetVolUp, 70);
+                        mVolUpButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetVolUp, 80);
                     }
                 }
             );
@@ -831,7 +862,8 @@ public class NavigationBarView extends LinearLayout {
                         if(DEBUG) Slog.i(TAG, "VolDown clicked");
                         simulateKeypress(KeyEvent.KEYCODE_VOLUME_DOWN);
                         mVolDownButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetVolDown, 70);
+                        mVolDownButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetVolDown, 80);
                     }
                 }
             );
@@ -844,25 +876,29 @@ public class NavigationBarView extends LinearLayout {
                         simulateKeypress(KeyEvent.KEYCODE_HOME);
                         updateNaviButtons();
                         mQuickButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetQuick, 70);
+                        mQuickButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetQuick, 80);
                       } else if(mShowQuicker == 3) {
                         if(DEBUG) Slog.i(TAG, "Menu clicked");
                         simulateKeypress(KeyEvent.KEYCODE_MENU);
                         updateNaviButtons();
                         mQuickButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetQuick, 70);
+                        mQuickButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetQuick, 80);
                       } else if(mShowQuicker == 1) {
                         if(DEBUG) Slog.i(TAG, "Back clicked");
                         simulateKeypress(KeyEvent.KEYCODE_BACK);
                         updateNaviButtons();
                         mQuickButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetQuick, 70);
+                        mQuickButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetQuick, 80);
                       } else if(mShowQuicker == 2) {
                         if(DEBUG) Slog.i(TAG, "Search clicked");
                         simulateKeypress(KeyEvent.KEYCODE_SEARCH);
                         updateNaviButtons();
                         mQuickButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetQuick, 70);
+                        mQuickButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetQuick, 80);
                       } else if(mShowQuicker == 4) {
                         if(DEBUG) Slog.i(TAG, "Quick clicked");
                         if (mShowVol) {
@@ -872,7 +908,8 @@ public class NavigationBarView extends LinearLayout {
                         }
                         updateNaviButtons();
                         mQuickButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetQuick, 70);
+                        mQuickButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetQuick, 80);
                       } else if(mShowQuicker == 5) {
                             boolean mCustomQuickerAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
                                     Settings.System.USE_CUSTOM_QUICK_APP_TOGGLE, 0) == 1);
@@ -883,7 +920,8 @@ public class NavigationBarView extends LinearLayout {
                             }
                         updateNaviButtons();
                         mQuickButton.setBackgroundResource(R.drawable.navibar_touch);
-                        mHandler.postDelayed(mResetQuick, 70);
+                        mQuickButton.setColorFilter(mOverColor, Mode.MULTIPLY);
+                        mHandler.postDelayed(mResetQuick, 80);
                       }
                     }
                 }
@@ -1093,8 +1131,7 @@ public class NavigationBarView extends LinearLayout {
                         Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
                         Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_apps);
                         int jogWidth = jogBmp.getWidth();
-                        int sqSide = (int) (jogWidth / Math.sqrt(2));
-                        mCustomHomeIcon = Bitmap.createScaledBitmap(iconBmp, sqSide, sqSide, true);
+                        mCustomHomeIcon = Bitmap.createScaledBitmap(iconBmp, jogWidth, jogWidth, true);
                 }
             } catch (URISyntaxException e) {
             }
@@ -1111,8 +1148,7 @@ public class NavigationBarView extends LinearLayout {
                         Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
                         Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_apps);
                         int jogWidth = jogBmp.getWidth();
-                        int sqSide = (int) (jogWidth / Math.sqrt(2));
-                        mCustomMenuIcon = Bitmap.createScaledBitmap(iconBmp, sqSide, sqSide, true);
+                        mCustomMenuIcon = Bitmap.createScaledBitmap(iconBmp, jogWidth, jogWidth, true);
                 }
             } catch (URISyntaxException e) {
             }
@@ -1129,8 +1165,7 @@ public class NavigationBarView extends LinearLayout {
                         Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
                         Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_apps);
                         int jogWidth = jogBmp.getWidth();
-                        int sqSide = (int) (jogWidth / Math.sqrt(2));
-                        mCustomBackIcon = Bitmap.createScaledBitmap(iconBmp, sqSide, sqSide, true);
+                        mCustomBackIcon = Bitmap.createScaledBitmap(iconBmp, jogWidth, jogWidth, true);
                 }
             } catch (URISyntaxException e) {
             }
@@ -1147,8 +1182,7 @@ public class NavigationBarView extends LinearLayout {
                         Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
                         Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_apps);
                         int jogWidth = jogBmp.getWidth();
-                        int sqSide = (int) (jogWidth / Math.sqrt(2));
-                        mCustomSearchIcon = Bitmap.createScaledBitmap(iconBmp, sqSide, sqSide, true);
+                        mCustomSearchIcon = Bitmap.createScaledBitmap(iconBmp, jogWidth, jogWidth, true);
                 }
             } catch (URISyntaxException e) {
             }
@@ -1165,8 +1199,7 @@ public class NavigationBarView extends LinearLayout {
                         Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
                         Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_apps);
                         int jogWidth = jogBmp.getWidth();
-                        int sqSide = (int) (jogWidth / Math.sqrt(2));
-                        mCustomQuickIcon = Bitmap.createScaledBitmap(iconBmp, sqSide, sqSide, true);
+                        mCustomQuickIcon = Bitmap.createScaledBitmap(iconBmp, jogWidth, jogWidth, true);
                 }
             } catch (URISyntaxException e) {
             }
@@ -1177,9 +1210,11 @@ public class NavigationBarView extends LinearLayout {
         public void run() {
             if(mShowHome == 1) {
                mHomeButton.setImageBitmap(null);
+               mHomeButton.clearColorFilter();
                mHomeButton.setBackgroundResource(R.drawable.ic_sysbar_home);
             } else if(mShowHome == 2) {
                mHomeButton.setImageBitmap(null);
+               mHomeButton.clearColorFilter();
                if (mInputShow) {
                    mHomeButton.setBackgroundResource(R.drawable.ic_sysbar_voldown);
                } else {
@@ -1187,14 +1222,18 @@ public class NavigationBarView extends LinearLayout {
                }
             } else if(mShowHome == 3) {
                mHomeButton.setImageBitmap(null);
+               mHomeButton.clearColorFilter();
                mHomeButton.setBackgroundResource(R.drawable.ic_sysbar_search);
             } else if(mShowHome == 4) {
                mHomeButton.setImageBitmap(null);
+               mHomeButton.clearColorFilter();
                mHomeButton.setBackgroundResource(R.drawable.ic_sysbar_menu);
             } else if(mShowHome == 5) {
                mHomeButton.setImageBitmap(null);
+               mHomeButton.clearColorFilter();
                mHomeButton.setBackgroundResource(R.drawable.ic_sysbar_quickna);
             } else if(mShowHome == 6) {
+               mHomeButton.clearColorFilter();
                boolean mCustomHomeAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
                         Settings.System.USE_CUSTOM_HOME_APP_TOGGLE, 0) == 1);
 
@@ -1207,6 +1246,7 @@ public class NavigationBarView extends LinearLayout {
                mHomeButton.setBackgroundResource(R.drawable.ic_sysbar_nihil);
             } else {
                mHomeButton.setImageBitmap(null);
+               mHomeButton.clearColorFilter();
                mHomeButton.setBackgroundResource(R.drawable.ic_sysbar_apps);
             }
         }
@@ -1216,9 +1256,11 @@ public class NavigationBarView extends LinearLayout {
         public void run() {
             if(mShowBack == 1) {
                mBackButton.setImageBitmap(null);
+               mBackButton.clearColorFilter();
                mBackButton.setBackgroundResource(R.drawable.ic_sysbar_home);
             } else if(mShowBack == 2) {
                mBackButton.setImageBitmap(null);
+               mBackButton.clearColorFilter();
                if (mInputShow) {
                    mBackButton.setBackgroundResource(R.drawable.ic_sysbar_voldown);
                } else {
@@ -1226,14 +1268,18 @@ public class NavigationBarView extends LinearLayout {
                }
             } else if(mShowBack == 3) {
                mBackButton.setImageBitmap(null);
+               mBackButton.clearColorFilter();
                mBackButton.setBackgroundResource(R.drawable.ic_sysbar_search);
             } else if(mShowBack == 4) {
                mBackButton.setImageBitmap(null);
+               mBackButton.clearColorFilter();
                mBackButton.setBackgroundResource(R.drawable.ic_sysbar_menu);
             } else if(mShowBack == 5) {
                mBackButton.setImageBitmap(null);
+               mBackButton.clearColorFilter();
                mBackButton.setBackgroundResource(R.drawable.ic_sysbar_quickna);
             } else if(mShowBack == 6) {
+               mBackButton.clearColorFilter();
                boolean mCustomBackAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
                         Settings.System.USE_CUSTOM_BACK_APP_TOGGLE, 0) == 1);
 
@@ -1246,6 +1292,7 @@ public class NavigationBarView extends LinearLayout {
                mBackButton.setBackgroundResource(R.drawable.ic_sysbar_nihil);
             } else {
                mBackButton.setImageBitmap(null);
+               mBackButton.clearColorFilter();
                mBackButton.setBackgroundResource(R.drawable.ic_sysbar_apps);
             }
         }
@@ -1255,9 +1302,11 @@ public class NavigationBarView extends LinearLayout {
         public void run() {
             if(mShowSearch == 1) {
                mSearchButton.setImageBitmap(null);
+               mSearchButton.clearColorFilter();
                mSearchButton.setBackgroundResource(R.drawable.ic_sysbar_home);
             } else if(mShowSearch == 2) {
                mSearchButton.setImageBitmap(null);
+               mSearchButton.clearColorFilter();
                if (mInputShow) {
                    mSearchButton.setBackgroundResource(R.drawable.ic_sysbar_voldown);
                } else {
@@ -1265,14 +1314,18 @@ public class NavigationBarView extends LinearLayout {
                }
             } else if(mShowSearch == 3) {
                mSearchButton.setImageBitmap(null);
+               mSearchButton.clearColorFilter();
                mSearchButton.setBackgroundResource(R.drawable.ic_sysbar_search);
             } else if(mShowSearch == 4) {
                mSearchButton.setImageBitmap(null);
+               mSearchButton.clearColorFilter();
                mSearchButton.setBackgroundResource(R.drawable.ic_sysbar_menu);
             } else if(mShowSearch == 5) {
                mSearchButton.setImageBitmap(null);
+               mSearchButton.clearColorFilter();
                mSearchButton.setBackgroundResource(R.drawable.ic_sysbar_quickna);
             } else if(mShowSearch == 6) {
+               mSearchButton.clearColorFilter();
                boolean mCustomSearchAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
                         Settings.System.USE_CUSTOM_NAVISEARCH_APP_TOGGLE, 0) == 1);
 
@@ -1285,6 +1338,7 @@ public class NavigationBarView extends LinearLayout {
                mSearchButton.setBackgroundResource(R.drawable.ic_sysbar_nihil);
             } else {
                mSearchButton.setImageBitmap(null);
+               mSearchButton.clearColorFilter();
                mSearchButton.setBackgroundResource(R.drawable.ic_sysbar_apps);
             }
         }
@@ -1294,9 +1348,11 @@ public class NavigationBarView extends LinearLayout {
         public void run() {
             if(mShowMenu == 1) {
                mMenuButton.setImageBitmap(null);
+               mMenuButton.clearColorFilter();
                mMenuButton.setBackgroundResource(R.drawable.ic_sysbar_home);
             } else if(mShowMenu == 2) {
                mMenuButton.setImageBitmap(null);
+               mMenuButton.clearColorFilter();
                if (mInputShow) {
                    mMenuButton.setBackgroundResource(R.drawable.ic_sysbar_voldown);
                } else {
@@ -1304,14 +1360,18 @@ public class NavigationBarView extends LinearLayout {
                }
             } else if(mShowMenu == 3) {
                mMenuButton.setImageBitmap(null);
+               mMenuButton.clearColorFilter();
                mMenuButton.setBackgroundResource(R.drawable.ic_sysbar_search);
             } else if(mShowMenu == 4) {
                mMenuButton.setImageBitmap(null);
+               mMenuButton.clearColorFilter();
                mMenuButton.setBackgroundResource(R.drawable.ic_sysbar_menu);
             } else if(mShowMenu == 5) {
                mMenuButton.setImageBitmap(null);
+               mMenuButton.clearColorFilter();
                mMenuButton.setBackgroundResource(R.drawable.ic_sysbar_quickna);
             } else if(mShowMenu == 6) {
+               mMenuButton.clearColorFilter();
                boolean mCustomMenuAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
                         Settings.System.USE_CUSTOM_MENU_APP_TOGGLE, 0) == 1);
 
@@ -1324,6 +1384,7 @@ public class NavigationBarView extends LinearLayout {
                mMenuButton.setBackgroundResource(R.drawable.ic_sysbar_nihil);
             } else {
                mMenuButton.setImageBitmap(null);
+               mMenuButton.clearColorFilter();
                mMenuButton.setBackgroundResource(R.drawable.ic_sysbar_apps);
             }
         }
@@ -1333,9 +1394,11 @@ public class NavigationBarView extends LinearLayout {
         public void run() {
             if(mShowQuicker == 0) {
                mQuickButton.setImageBitmap(null);
+               mQuickButton.clearColorFilter();
                mQuickButton.setBackgroundResource(R.drawable.ic_sysbar_home);
             } else if(mShowQuicker == 1) {
                mQuickButton.setImageBitmap(null);
+               mQuickButton.clearColorFilter();
                if (mInputShow) {
                    mQuickButton.setBackgroundResource(R.drawable.ic_sysbar_voldown);
                } else {
@@ -1343,14 +1406,18 @@ public class NavigationBarView extends LinearLayout {
                }
             } else if(mShowQuicker == 2) {
                mQuickButton.setImageBitmap(null);
+               mQuickButton.clearColorFilter();
                mQuickButton.setBackgroundResource(R.drawable.ic_sysbar_search);
             } else if(mShowQuicker == 3) {
                mQuickButton.setImageBitmap(null);
+               mQuickButton.clearColorFilter();
                mQuickButton.setBackgroundResource(R.drawable.ic_sysbar_menu);
             } else if(mShowQuicker == 4) {
                mQuickButton.setImageBitmap(null);
+               mQuickButton.clearColorFilter();
                mQuickButton.setBackgroundResource(R.drawable.ic_sysbar_quickna);
             } else if(mShowQuicker == 5) {
+               mQuickButton.clearColorFilter();
                boolean mCustomQuickerAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
                         Settings.System.USE_CUSTOM_QUICK_APP_TOGGLE, 0) == 1);
 
@@ -1363,6 +1430,7 @@ public class NavigationBarView extends LinearLayout {
                mQuickButton.setBackgroundResource(R.drawable.ic_sysbar_nihil);
             } else {
                mQuickButton.setImageBitmap(null);
+               mQuickButton.clearColorFilter();
                mQuickButton.setBackgroundResource(R.drawable.ic_sysbar_apps);
             }
         }
@@ -1370,12 +1438,14 @@ public class NavigationBarView extends LinearLayout {
 
     Runnable mResetVolUp = new Runnable() {
         public void run() {
+            mVolUpButton.clearColorFilter();
             mVolUpButton.setBackgroundResource(R.drawable.ic_sysbar_volup);
         }
     };
 
     Runnable mResetVolDown = new Runnable() {
         public void run() {
+            mVolDownButton.clearColorFilter();
             mVolDownButton.setBackgroundResource(R.drawable.ic_sysbar_voldown);
         }
     };

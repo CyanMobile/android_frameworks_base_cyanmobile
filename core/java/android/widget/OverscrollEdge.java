@@ -42,7 +42,7 @@ public class OverscrollEdge extends EdgeGlow{
         if (mContext.get()!=null){
             Resources res = mContext.get().getResources();
             mOverscrollColor = Settings.System.getInt(mContext.get().getContentResolver(),
-                    Settings.System.OVERSCROLL_COLOR,0);
+                    Settings.System.OVERSCROLL_COLOR, 0xFF38FF00);
             if (mOverscrollColor!=mCurrentColor){
                 mCurrentColor = mOverscrollColor;
                 if (mOverscrollColor != 0){

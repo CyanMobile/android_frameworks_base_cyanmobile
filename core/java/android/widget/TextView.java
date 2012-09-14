@@ -1635,7 +1635,7 @@ public class TextView extends View implements ViewTreeObserver.OnPreDrawListener
                                               TextAppearance_textColor);
         if (colors != null) {
             setTextColor(Settings.System.getInt(resolver,
-                Settings.System.TEXT_FULLOFCOLOR, 0xFF33B5E5));
+                Settings.System.TEXT_FULLOFCOLOR, 0xFF38FF00));
         }
 
         ts = appearance.getDimensionPixelSize(com.android.internal.R.styleable.

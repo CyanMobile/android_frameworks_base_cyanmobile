@@ -392,6 +392,9 @@
     <!-- label for statusbar toggle in options dialog -->
     <string name="global_actions_statusbar_status">Expanded desktop</string>
 
+    <!-- label for navbar toggle in options dialog -->
+    <string name="global_actions_navbar_status">Navigator</string>
+
     <!-- Displayed to the user to tell them that they have started up the phone in "safe mode" -->
     <string name="safeMode">Safe mode</string>
 

@@ -120,6 +120,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
     private SinglePressAction mExtendedDesk;
 
+    private SinglePressAction mNaviDesk;
+
     private ProfileChooseAction mProfile;
 
     private boolean mExtendPmShowHome;
@@ -131,6 +133,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private boolean mEnableHibernateToggle;
     private boolean mEnableSilentToggle;
     private boolean mEnableExtendToggle;
+    private boolean mEnableNaviToggle;
     private boolean mEnableAirplaneToggle;
     private boolean mEnableProfileToggle;
 
@@ -165,6 +168,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                     Settings.System.getUriFor(Settings.System.POWER_DIALOG_SHOW_SILENT), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.POWER_DIALOG_SHOW_EXTEND), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.POWER_DIALOG_SHOW_NAVI), false, this);
             onChange(true);
         }
 
@@ -174,7 +179,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_EXTEND_POWER_MENU) ? 1 : 0);
             mExtendPm = (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.EXTEND_PM, defValue) == 1);
+                    Settings.System.EXTEND_PM, 0) == 1);
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_POWER_MENU_HOME) ? 1 : 0);
             mExtendPmShowHome = (Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.EXTEND_PM_SHOW_HOME, defValue) == 1);
@@ -187,19 +192,21 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         mEnablePowerSaverToggle = (Settings.Secure.getInt(mContext.getContentResolver(),
                 Settings.Secure.POWER_DIALOG_SHOW_POWER_SAVER, 0) == 1);
         mEnableScreenshotToggle = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.POWER_DIALOG_SHOW_SCREENSHOT, 0) == 1);
+                Settings.System.POWER_DIALOG_SHOW_SCREENSHOT, 1) == 1);
         mEnableHibernateToggle = (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.POWER_DIALOG_SHOW_HIBERNATE, 1) == 1);
         mEnableSuspendToggle = (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.POWER_DIALOG_SHOW_SUSPEND, 1) == 1);
         mEnableAirplaneToggle = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.POWER_DIALOG_SHOW_AIRPLANE, 0) == 1);
+                Settings.System.POWER_DIALOG_SHOW_AIRPLANE, 1) == 1);
         mEnableProfileToggle = (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.POWER_DIALOG_SHOW_PROFILE, 0) == 1);
         mEnableSilentToggle = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.POWER_DIALOG_SHOW_SILENT, 0) == 1);
+                Settings.System.POWER_DIALOG_SHOW_SILENT, 1) == 1);
         mEnableExtendToggle = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.POWER_DIALOG_SHOW_EXTEND, 0) == 1);
+                Settings.System.POWER_DIALOG_SHOW_EXTEND, 1) == 1);
+        mEnableNaviToggle = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.POWER_DIALOG_SHOW_NAVI, 1) == 1);
         }
     }
 
@@ -503,6 +510,26 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
           }
        };
 
+       mNaviDesk = new SinglePressAction(
+                        com.android.internal.R.drawable.ic_menu_view,
+                        R.string.global_actions_navbar_status) {
+
+          public void onPress() {
+              Settings.System.putInt(mContext.getContentResolver(),
+                    Settings.System.NAVI_BUTTONS,
+              Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.NAVI_BUTTONS, 1) == 1 ? 0 : 1);
+          }
+
+          public boolean showDuringKeyguard() {
+             return true;
+          }
+
+          public boolean showBeforeProvisioning() {
+             return true;
+          }
+       };
+
         mItems = new ArrayList<Action>();                
 
         mAdapter = new MyAdapter();
@@ -603,6 +630,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         mItems.remove(mPowerSaverOn);
         mItems.remove(mScreenshot);
         mItems.remove(mExtendedDesk);
+        mItems.remove(mNaviDesk);
         mItems.remove(mSilentModeToggle);
 
         if(mExtendPm){
@@ -648,6 +676,10 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
         if (mEnableExtendToggle && !mItems.contains(mExtendedDesk)) {
            mItems.add(mExtendedDesk);
+        };
+
+        if (mEnableNaviToggle && !mItems.contains(mNaviDesk)) {
+           mItems.add(mNaviDesk);
         };
 
         if (mEnableSilentToggle && !mItems.contains(mSilentModeToggle)) {
