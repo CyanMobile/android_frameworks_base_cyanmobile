@@ -1928,7 +1928,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         pf.left = df.left = mRestrictedScreenLeft;
                         pf.top = df.top = mRestrictedScreenTop;
                         pf.right = df.right = mRestrictedScreenLeft+mRestrictedScreenWidth;
-                        pf.bottom = df.bottom = mRestrictedScreenTop+mRestrictedScreenHeight;
+                        pf.bottom = df.bottom = hasNavBar ? mDockBottom : mRestrictedScreenTop+mRestrictedScreenHeight;
                     }
                     if ((sim & SOFT_INPUT_MASK_ADJUST) != SOFT_INPUT_ADJUST_RESIZE) {
                         cf.left = mDockLeft;
