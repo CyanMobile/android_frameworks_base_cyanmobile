@@ -150,7 +150,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private static final int MSG_HIDE_INTRUDER = 1003;
 
     // will likely move to a resource or other tunable param at some point
-    private static final int INTRUDER_ALERT_DECAY_MS = 4000;
+    private static final int INTRUDER_ALERT_DECAY_MS = 3000;
 
     StatusBarPolicy mIconPolicy;
 
@@ -231,7 +231,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     WindowManager.LayoutParams mTrackingParams;
     int mTrackingPosition; // the position of the top of the tracking view.
     private boolean mPanelSlightlyVisible;
-    private StatusBarNotification mCurrentlyIntrudingNotification;
 
     // the power widget
     PowerWidget mPowerWidget;
@@ -1439,11 +1438,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     public void addNotification(IBinder key, StatusBarNotification notification) {
-        StatusBarIconView iconView = addNotificationViews(key, notification);
-        if (iconView == null) return;
 
         boolean shouldTicker = true;
-
         if (notification.notification.fullScreenIntent != null) {
             shouldTicker = false;
             Slog.d(TAG, "Notification has fullScreenIntent; sending fullScreenIntent");
@@ -1453,38 +1449,39 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             }
         }
 
+        StatusBarIconView iconView = addNotificationViews(key, notification);
+        if (iconView == null) return;
+
         if (shouldTicker) {
             if (!shouldTick) {
-                if (mCurrentlyIntrudingNotification == null) {
-                    tick(notification);
-                }
+                tick(notification);
             } else {
-                ImageView alertIcon = (ImageView) mIntruderAlertView.findViewById(R.id.alertIcon);
-                TextView alertText = (TextView) mIntruderAlertView.findViewById(R.id.alertText);
-                alertIcon.setImageDrawable(StatusBarIconView.getIcon(
-                    alertIcon.getContext(), 
-                    iconView.getStatusBarIcon()));
-                alertText.setText(notification.notification.tickerText);
-
-                View button = mIntruderAlertView.findViewById(R.id.intruder_alert_content);
-                button.setOnClickListener(
-                    new Launcher(notification.notification.contentIntent,
-                        notification.pkg, notification.tag, notification.id));
-
-                mCurrentlyIntrudingNotification = notification;
-
-                mHandler.sendEmptyMessage(MSG_SHOW_INTRUDER);
-
-                mHandler.removeMessages(MSG_HIDE_INTRUDER);
-                if (INTRUDER_ALERT_DECAY_MS > 0) {
-                    mHandler.sendEmptyMessageDelayed(MSG_HIDE_INTRUDER, INTRUDER_ALERT_DECAY_MS);
-                }
+                IntroducerView(notification);
             }
         }
 
         // Recalculate the position of the sliding windows and the titles.
         setAreThereNotifications();
         updateExpandedViewPos(EXPANDED_LEAVE_ALONE);
+    }
+
+    private void IntroducerView(StatusBarNotification notification) {
+        ImageView alertIcon = (ImageView) mIntruderAlertView.findViewById(R.id.alertIcon);
+        TextView alertText = (TextView) mIntruderAlertView.findViewById(R.id.alertText);
+        alertIcon.setImageDrawable(StatusBarIconView.getIcon(
+                    alertIcon.getContext(),
+                    new StatusBarIcon(notification.pkg, notification.notification.icon, notification.notification.iconLevel, 0)));
+        alertText.setText(notification.notification.tickerText);
+
+        View button = mIntruderAlertView.findViewById(R.id.intruder_alert_content);
+        button.setOnClickListener(
+              new Launcher(notification.notification.contentIntent,
+                        notification.pkg, notification.tag, notification.id));
+
+        mHandler.sendEmptyMessage(MSG_SHOW_INTRUDER);
+        mHandler.removeMessages(MSG_HIDE_INTRUDER);
+        mHandler.sendEmptyMessageDelayed(MSG_HIDE_INTRUDER, INTRUDER_ALERT_DECAY_MS);
+
     }
 
     public void updateNotification(IBinder key, StatusBarNotification notification) {
@@ -1564,21 +1561,15 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     oldEntry.notification.notification.tickerText)) {
             if (!shouldTick) {
                 tick(notification);
+            } else {
+                mHandler.sendEmptyMessage(MSG_HIDE_INTRUDER);
+                IntroducerView(notification);
             }
         }
 
         // Recalculate the position of the sliding windows and the titles.
         setAreThereNotifications();
         updateExpandedViewPos(EXPANDED_LEAVE_ALONE);
-
-        // See if we need to update the intruder.
-        if (oldNotification == mCurrentlyIntrudingNotification) {
-            // XXX: this is a hack for Alarms. The real implementation will need to *update* 
-            // the intruder.
-            if ((notification.notification.fullScreenIntent == null) && shouldTick) { // TODO(dsandler): consistent logic with add()
-                mHandler.sendEmptyMessage(MSG_HIDE_INTRUDER);
-            }
-        }
     }
 
     public void removeNotification(IBinder key) {
@@ -1592,10 +1583,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             // Recalculate the position of the sliding windows and the titles.
             setAreThereNotifications();
             updateExpandedViewPos(EXPANDED_LEAVE_ALONE);
-
-            if ((old == mCurrentlyIntrudingNotification) && shouldTick) {
-                mHandler.sendEmptyMessage(MSG_HIDE_INTRUDER);
-            }
         }
     }
 
@@ -1851,22 +1838,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     break;
                 case MSG_HIDE_INTRUDER:
                     setIntruderAlertVisibility(false);
-                    mCurrentlyIntrudingNotification = null;
                     break;
             }
-        }
-    }
-
-    public void dismissIntruder() {
-        if (mCurrentlyIntrudingNotification == null) return;
-
-        try {
-            mBarService.onNotificationClear(
-                    mCurrentlyIntrudingNotification.pkg,
-                    mCurrentlyIntrudingNotification.tag, 
-                    mCurrentlyIntrudingNotification.id);
-        } catch (android.os.RemoteException ex) {
-            // oh well
         }
     }
 
@@ -2941,9 +2914,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     private void setIntruderAlertVisibility(boolean vis) {
         mIntruderAlertView.setVisibility(vis ? View.VISIBLE : View.GONE);
-        //if (!vis) {
-        //    dismissIntruder();
-        //}
     }
 
     /**
