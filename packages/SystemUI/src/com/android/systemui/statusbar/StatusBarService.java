@@ -2941,9 +2941,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     private void setIntruderAlertVisibility(boolean vis) {
         mIntruderAlertView.setVisibility(vis ? View.VISIBLE : View.GONE);
-        if (!vis) {
-            dismissIntruder();
-        }
+        //if (!vis) {
+        //    dismissIntruder();
+        //}
     }
 
     /**
