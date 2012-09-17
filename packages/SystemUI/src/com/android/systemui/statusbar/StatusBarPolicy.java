@@ -124,6 +124,8 @@ public class StatusBarPolicy {
     private String callNumber = null;
     private String callerName = null;
     private String inboxMessage = null;
+    private Bitmap contactImage = null;
+    private String inboxDate = null;
     private int smsCount = 0;
     private long messageId = 0;
 
@@ -1150,6 +1152,7 @@ public class StatusBarPolicy {
         callNumber = SmsHelper.getSmsNumber(mContext);
         callerName = SmsHelper.getName(mContext, callNumber);
         inboxMessage = SmsHelper.getSmsBody(mContext);
+        inboxDate = SmsHelper.getDate(mContext, 0);
         messageId = SmsHelper.getSmsId(mContext);
         View v = View.inflate(mContext, R.layout.smscall_widget, null);
 
@@ -1158,14 +1161,14 @@ public class StatusBarPolicy {
         mSmsBody = (TextView) v.findViewById(R.id.smsmessage);
         mTimeStamp = (TextView) v.findViewById(R.id.smstime);
 
-        Bitmap contactImage = SmsHelper.getContactPicture(
+        contactImage = SmsHelper.getContactPicture(
                 mContext, callNumber);
         if (contactImage != null) {
             mContactPicture.setImageBitmap(contactImage);
         }
         mContactName.setText(callerName);
         mSmsBody.setText(inboxMessage);
-        mTimeStamp.setText(SmsHelper.getDate(mContext, 0));
+        mTimeStamp.setText(inboxDate);
 
             AlertDialog.Builder b = new AlertDialog.Builder(mContext);
                 b.setCancelable(false);
@@ -1176,9 +1179,11 @@ public class StatusBarPolicy {
                                Intent isms = new Intent(Intent.ACTION_MAIN);
                                isms.setClassName("com.android.mms",
                                           "com.android.mms.ui.QuickReplyBox");
+                               isms.putExtra("avatars", contactImage);
                                isms.putExtra("numbers", callNumber);
-                               isms.putExtra("name", callerName);
+                               isms.putExtra("names", callerName);
                                isms.putExtra("inmessage", inboxMessage);
+                               isms.putExtra("indate", inboxDate);
                                isms.putExtra("id", messageId);
                                isms.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             mContext.startActivity(isms);
