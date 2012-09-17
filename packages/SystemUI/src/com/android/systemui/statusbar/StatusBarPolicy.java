@@ -123,6 +123,7 @@ public class StatusBarPolicy {
     private TextView mTimeStamp;
     private String callNumber = null;
     private String callerName = null;
+    private String inboxMessage = null;
     private int smsCount = 0;
     private long messageId = 0;
 
@@ -1148,6 +1149,7 @@ public class StatusBarPolicy {
         smsCount = SmsHelper.getUnreadSmsCount(mContext);
         callNumber = SmsHelper.getSmsNumber(mContext);
         callerName = SmsHelper.getName(mContext, callNumber);
+        inboxMessage = SmsHelper.getSmsBody(mContext);
         messageId = SmsHelper.getSmsId(mContext);
         View v = View.inflate(mContext, R.layout.smscall_widget, null);
 
@@ -1162,13 +1164,13 @@ public class StatusBarPolicy {
             mContactPicture.setImageBitmap(contactImage);
         }
         mContactName.setText(callerName);
-        mSmsBody.setText(SmsHelper.getSmsBody(mContext));
+        mSmsBody.setText(inboxMessage);
         mTimeStamp.setText(SmsHelper.getDate(mContext, 0));
 
             AlertDialog.Builder b = new AlertDialog.Builder(mContext);
                 b.setCancelable(false);
                 b.setView(v);
-                b.setPositiveButton("Reply",
+                b.setPositiveButton("QuickReply",
                             new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
                                Intent isms = new Intent(Intent.ACTION_MAIN);
@@ -1176,6 +1178,7 @@ public class StatusBarPolicy {
                                           "com.android.mms.ui.QuickReplyBox");
                                isms.putExtra("numbers", callNumber);
                                isms.putExtra("name", callerName);
+                               isms.putExtra("inmessage", inboxMessage);
                                isms.putExtra("id", messageId);
                                isms.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             mContext.startActivity(isms);

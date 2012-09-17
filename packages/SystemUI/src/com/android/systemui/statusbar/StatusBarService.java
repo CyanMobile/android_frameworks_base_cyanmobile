@@ -1031,6 +1031,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         setAreThereNotifications();
         mDateView.setVisibility(View.INVISIBLE);
         showClock(Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_CLOCK, 1) != 0);
+        mVelocityTracker = VelocityTracker.obtain();
     }
     
     private void updateColors() {
@@ -2007,8 +2008,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     void stopTracking() {
         mTracking = false;
-        mVelocityTracker.recycle();
-        mVelocityTracker = null;
+        mVelocityTracker.clear();
     }
 
     void incrementAnim() {
@@ -2049,7 +2049,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     void prepareTracking(int y, boolean opening) {
         mTracking = true;
-        mVelocityTracker = VelocityTracker.obtain();
+        mVelocityTracker.clear();
         if (opening) {
             mAnimAccel = 40000.0f;
             mAnimVel = 200;
@@ -2169,11 +2169,61 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
+    private void brightnessControl(MotionEvent event)
+    {
+        if (mBrightnessControl)
+        {
+            final int statusBarSize = getStatBarSize();
+            final int action = event.getAction();
+            final int x = (int)event.getRawX();
+            final int y = (int)event.getRawY();
+            if (action == MotionEvent.ACTION_DOWN) {
+                mLinger = 0;
+                mInitialTouchX = x;
+                mInitialTouchY = y;
+                mHandler.removeCallbacks(mLongPressBrightnessChange);
+                mHandler.postDelayed(mLongPressBrightnessChange,
+                        BRIGHTNESS_CONTROL_LONG_PRESS_TIMEOUT);
+            } else if (action == MotionEvent.ACTION_MOVE) {
+                int minY = statusBarSize + mCloseView.getHeight();
+                if (mBottomBar)
+                    minY = mDisplay.getHeight() - statusBarSize - mCloseView.getHeight();
+                if ((!mBottomBar && y < minY) ||
+                        (mBottomBar && y > minY)) {
+                    mVelocityTracker.computeCurrentVelocity(1000);
+                    float yVel = mVelocityTracker.getYVelocity();
+                    if (yVel < 0) {
+                        yVel = -yVel;
+                    }
+                    if (yVel < 50.0f) {
+                        if (mLinger > BRIGHTNESS_CONTROL_LINGER_THRESHOLD) {
+                            adjustBrightness(x);
+                        } else {
+                            mLinger++;
+                        }
+                    }
+                    int touchSlop = ViewConfiguration.get(mContext).getScaledTouchSlop();
+                    if (Math.abs(x - mInitialTouchX) > touchSlop ||
+                            Math.abs(y - mInitialTouchY) > touchSlop) {
+                        mHandler.removeCallbacks(mLongPressBrightnessChange);
+                    }
+                } else {
+                    mHandler.removeCallbacks(mLongPressBrightnessChange);
+                }
+            } else if (action == MotionEvent.ACTION_UP) {
+                mHandler.removeCallbacks(mLongPressBrightnessChange);
+                mLinger = 0;
+            }
+        }
+    }
+
     boolean interceptTouchEvent(MotionEvent event) {
         if (SPEW) {
             Slog.d(TAG, "Touch: rawY=" + event.getRawY() + " event=" + event + " mDisabled="
                 + mDisabled);
         }
+
+        brightnessControl(event);
 
         if ((mDisabled & StatusBarManager.DISABLE_EXPAND) != 0) {
             return false;
@@ -2188,9 +2238,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         final int y = (int)event.getRawY();
         final int x = (int)event.getRawX();
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            mLinger = 0;
-            mInitialTouchX = x;
-            mInitialTouchY = y;
             if (!mExpanded) {
                 mViewDelta = mBottomBar ? mDisplay.getHeight() - y : statusBarSize - y;
             } else {
@@ -2221,11 +2268,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     mVelocityTracker.addMovement(event);
                 }
             }
-            if (mTracking && mBrightnessControl) {
-                mHandler.removeCallbacks(mLongPressBrightnessChange);
-                mHandler.postDelayed(mLongPressBrightnessChange,
-                        BRIGHTNESS_CONTROL_LONG_PRESS_TIMEOUT);
-            }
         } else if (mTracking) {
             mVelocityTracker.addMovement(event);
             int minY = statusBarSize + mCloseView.getHeight();
@@ -2234,35 +2276,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             if (event.getAction() == MotionEvent.ACTION_MOVE) {
                 if ((!mBottomBar && mAnimatingReveal && y < minY) ||
                         (mBottomBar && mAnimatingReveal && y > minY)) {
-                     if (mBrightnessControl){
-                         mVelocityTracker.computeCurrentVelocity(1000);
-                         float yVel = mVelocityTracker.getYVelocity();
-                         if (yVel < 0) {
-                             yVel = -yVel;
-                         }
-                         if (yVel < 50.0f) {
-                             if (mLinger > BRIGHTNESS_CONTROL_LINGER_THRESHOLD) {
-                                 adjustBrightness(x);
-                             } else {
-                                 mLinger++;
-                             }
-                         } else {
-                             mLinger = 0;
-                         }
-                         int touchSlop = ViewConfiguration.get(mContext).getScaledTouchSlop();
-                         if (Math.abs(x - mInitialTouchX) > touchSlop ||
-                                Math.abs(y - mInitialTouchY) > touchSlop) {
-                            mHandler.removeCallbacks(mLongPressBrightnessChange);
-                         }
-                     }
+                     // nothing
                 } else  {
-                    mHandler.removeCallbacks(mLongPressBrightnessChange);
                     mAnimatingReveal = false;
                     updateExpandedViewPos(y + (mBottomBar ? -mViewDelta : mViewDelta));
                 }
             } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                mHandler.removeCallbacks(mLongPressBrightnessChange);
-                mLinger = 0;
                 mVelocityTracker.computeCurrentVelocity(1000);
 
                 float yVel = mVelocityTracker.getYVelocity();
