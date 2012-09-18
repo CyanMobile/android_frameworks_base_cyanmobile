@@ -72,6 +72,12 @@
         android:background="@color/carrier_label_text_color"
         android:paddingBottom="4dp"
         android:paddingTop="4dp" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dip"
+        android:background="@color/carrier_label_text_color"
+        android:paddingBottom="4dp"
+        android:paddingTop="4dp" />
 
     <ScrollView
         android:layout_width="match_parent"
@@ -97,5 +103,30 @@
             android:textColor="?android:attr/textColorPrimaryInverse"
             android:textColorLink="?android:attr/textColorPrimaryInverse" />
     </ScrollView>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dip"
+        android:background="@color/carrier_label_text_color"
+        android:paddingBottom="4dp"
+        android:paddingTop="4dp" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dip"
+        android:background="@color/carrier_label_text_color"
+        android:paddingBottom="4dp"
+        android:paddingTop="4dp" />
+    <Button
+      android:id="@+id/calls_button"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      style="?android:attr/buttonStyle"
+      android:layout_gravity="center_vertical"
+      android:text="@string/callings" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dip"
+        android:background="@color/carrier_label_text_color"
+        android:paddingBottom="4dp"
+        android:paddingTop="4dp" />
 </LinearLayout>
 

@@ -98,4 +98,5 @@
     <string name="switch_autorot_text">AutoRotate</string>
     <string name="smscall_popup">Message Info</string>
     <string name="weather_fetch_failure">Fetch failed</string>
+    <string name="callings">Make a Call</string>
 </resources>

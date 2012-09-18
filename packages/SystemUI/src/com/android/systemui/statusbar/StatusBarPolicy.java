@@ -58,6 +58,7 @@ import android.util.Slog;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.WindowManagerImpl;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -121,6 +122,7 @@ public class StatusBarPolicy {
     private TextView mContactName;
     private TextView mSmsBody;
     private TextView mTimeStamp;
+    private Button mCallsButton;
     private String callNumber = null;
     private String callerName = null;
     private String inboxMessage = null;
@@ -1160,6 +1162,17 @@ public class StatusBarPolicy {
         mContactName = (TextView) v.findViewById(R.id.contactname);
         mSmsBody = (TextView) v.findViewById(R.id.smsmessage);
         mTimeStamp = (TextView) v.findViewById(R.id.smstime);
+        mCallsButton = (Button) v.findViewById(R.id.calls_button);
+        mCallsButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+               Intent dialIntent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + callNumber));
+               dialIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+               mContext.startActivity(dialIntent);
+               if (mSmsDialog != null) {
+                   mSmsDialog.dismiss();
+               }
+            }
+        });
 
         contactImage = SmsHelper.getContactPicture(
                 mContext, callNumber);
