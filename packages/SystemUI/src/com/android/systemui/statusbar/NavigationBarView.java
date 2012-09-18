@@ -1129,8 +1129,8 @@ public class NavigationBarView extends LinearLayout {
                 ActivityInfo ai = i.resolveActivityInfo(pm,PackageManager.GET_ACTIVITIES);
                 if (ai != null) {
                         Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
-                        Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_apps);
-                        int jogWidth = jogBmp.getWidth();
+                        Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_menu);
+                        int jogWidth = (jogBmp.getWidth() + jogBmp.getHeight());
                         mCustomHomeIcon = Bitmap.createScaledBitmap(iconBmp, jogWidth, jogWidth, true);
                 }
             } catch (URISyntaxException e) {
@@ -1146,8 +1146,8 @@ public class NavigationBarView extends LinearLayout {
                 ActivityInfo ai = i.resolveActivityInfo(pm,PackageManager.GET_ACTIVITIES);
                 if (ai != null) {
                         Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
-                        Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_apps);
-                        int jogWidth = jogBmp.getWidth();
+                        Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_menu);
+                        int jogWidth = (jogBmp.getWidth() + jogBmp.getHeight());
                         mCustomMenuIcon = Bitmap.createScaledBitmap(iconBmp, jogWidth, jogWidth, true);
                 }
             } catch (URISyntaxException e) {
@@ -1163,8 +1163,8 @@ public class NavigationBarView extends LinearLayout {
                 ActivityInfo ai = i.resolveActivityInfo(pm,PackageManager.GET_ACTIVITIES);
                 if (ai != null) {
                         Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
-                        Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_apps);
-                        int jogWidth = jogBmp.getWidth();
+                        Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_menu);
+                        int jogWidth = (jogBmp.getWidth() + jogBmp.getHeight());
                         mCustomBackIcon = Bitmap.createScaledBitmap(iconBmp, jogWidth, jogWidth, true);
                 }
             } catch (URISyntaxException e) {
@@ -1180,8 +1180,8 @@ public class NavigationBarView extends LinearLayout {
                 ActivityInfo ai = i.resolveActivityInfo(pm,PackageManager.GET_ACTIVITIES);
                 if (ai != null) {
                         Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
-                        Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_apps);
-                        int jogWidth = jogBmp.getWidth();
+                        Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_menu);
+                        int jogWidth = (jogBmp.getWidth() + jogBmp.getHeight());
                         mCustomSearchIcon = Bitmap.createScaledBitmap(iconBmp, jogWidth, jogWidth, true);
                 }
             } catch (URISyntaxException e) {
@@ -1197,8 +1197,8 @@ public class NavigationBarView extends LinearLayout {
                 ActivityInfo ai = i.resolveActivityInfo(pm,PackageManager.GET_ACTIVITIES);
                 if (ai != null) {
                         Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
-                        Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_apps);
-                        int jogWidth = jogBmp.getWidth();
+                        Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_menu);
+                        int jogWidth = (jogBmp.getWidth() + jogBmp.getHeight());
                         mCustomQuickIcon = Bitmap.createScaledBitmap(iconBmp, jogWidth, jogWidth, true);
                 }
             } catch (URISyntaxException e) {
