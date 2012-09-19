@@ -21,6 +21,8 @@ import com.android.internal.view.IInputContext;
 import com.android.internal.view.IInputMethodClient;
 
 import android.content.res.Configuration;
+import android.os.IBinder;
+import android.os.IRemoteCallback;
 import android.view.IApplicationToken;
 import android.view.IOnKeyguardExitResult;
 import android.view.IRotationWatcher;
@@ -161,4 +163,9 @@ interface IWindowManager
      * Lock the device immediately.
      */
     void lockNow();
+
+    /**
+     * Block until the given window has been drawn to the screen.
+     */
+    void waitForWindowDrawn(IBinder token, in IRemoteCallback callback);
 }

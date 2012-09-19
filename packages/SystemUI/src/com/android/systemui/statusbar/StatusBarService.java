@@ -2265,11 +2265,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
                 if (expandedHit || collapsedHit) {
                     prepareTracking(y, !mExpanded);// opening if we're not already fully visible
-                    mVelocityTracker.addMovement(event);
+                    trackMovement(event);
                 }
             }
         } else if (mTracking) {
-            mVelocityTracker.addMovement(event);
+            trackMovement(event);
             int minY = statusBarSize + mCloseView.getHeight();
             if (mBottomBar)
                 minY = mDisplay.getHeight() - statusBarSize - mCloseView.getHeight();
@@ -2300,11 +2300,21 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     vel = -vel;
                 }
 
-                performFling((int)event.getRawY(), vel, false);
+                performFling(y + mViewDelta, vel, false);
             }
 
         }
         return false;
+    }
+
+    private void trackMovement(MotionEvent event) {
+        // Add movement to velocity tracker using raw screen X and Y coordinates instead
+        // of window coordinates because the window frame may be moving at the same time.
+        float deltaX = event.getRawX() - event.getX();
+        float deltaY = event.getRawY() - event.getY();
+        event.offsetLocation(deltaX, deltaY);
+        mVelocityTracker.addMovement(event);
+        event.offsetLocation(-deltaX, -deltaY);
     }
 
     private class Launcher implements View.OnClickListener {

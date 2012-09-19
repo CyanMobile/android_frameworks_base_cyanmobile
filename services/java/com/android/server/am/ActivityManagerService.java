@@ -1609,8 +1609,8 @@ public final class ActivityManagerService extends ActivityManagerNative
         }
         if (app.conProviders.size() > 0) {
             for (ContentProviderRecord cpr : app.conProviders.keySet()) {
-                if (cpr.app != null && cpr.app.lruSeq != mLruSeq) {
-                    updateLruProcessInternalLocked(cpr.app, false,
+                if (cpr.proc != null && cpr.proc.lruSeq != mLruSeq) {
+                    updateLruProcessInternalLocked(cpr.proc, false,
                             updateActivityTime, i+1);
                 }
             }
@@ -3216,19 +3216,34 @@ public final class ActivityManagerService extends ActivityManagerNative
         boolean didSomething = killPackageProcessesLocked(name, uid, -100,
                 callerWillRestart, doit);
         
-        for (i=mMainStack.mHistory.size()-1; i>=0; i--) {
+        TaskRecord lastTask = null;
+        for (i=0; i<mMainStack.mHistory.size(); i++) {
             ActivityRecord r = (ActivityRecord)mMainStack.mHistory.get(i);
-            if (r.packageName.equals(name)) {
+            final boolean samePackage = r.packageName.equals(name);
+            if ((samePackage || r.task == lastTask)
+                     && (r.app == null || !r.app.persistent)) {
                 if (!doit) {
+                    if (r.finishing) {
+                        // If this activity is just finishing, then it is not
+                        // interesting as far as something to stop.
+                        continue;
+                    }
                     return true;
                 }
                 didSomething = true;
                 Slog.i(TAG, "  Force finishing activity " + r);
-                if (r.app != null) {
-                    r.app.removed = true;
+                if (samePackage) {
+                    if (r.app != null) {
+                        r.app.removed = true;
+                    }
+                    r.app = null;
                 }
-                r.app = null;
-                r.stack.finishActivityLocked(r, i, Activity.RESULT_CANCELED, null, "uninstall");
+                lastTask = r.task;
+
+                if (r.stack.finishActivityLocked(r, i, Activity.RESULT_CANCELED,
+                        null, "force-stop")) {
+                    i--;
+                }
             }
         }
 
@@ -3252,7 +3267,24 @@ public final class ActivityManagerService extends ActivityManagerNative
         for (i=0; i<N; i++) {
             bringDownServiceLocked(services.get(i), true);
         }
-        
+
+        ArrayList<ContentProviderRecord> providers = new ArrayList<ContentProviderRecord>();
+        for (ContentProviderRecord provider : mProvidersByClass.values()) {
+            if (provider.info.packageName.equals(name)
+                    && (provider.proc == null || !provider.proc.persistent)) {
+                if (!doit) {
+                    return true;
+                }
+                didSomething = true;
+                providers.add(provider);
+            }
+        }
+
+        N = providers.size();
+        for (i=0; i<N; i++) {
+            removeDyingProviderLocked(null, providers.get(i));
+        }
+
         if (doit) {
             if (purgeCache) {
                 AttributeCache ac = AttributeCache.instance();
@@ -3262,6 +3294,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
             if (mBooted) {
                 mMainStack.resumeTopActivityLocked(null);
+                mMainStack.scheduleIdleLocked();
             }
         }
         
@@ -5108,7 +5141,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     (ProviderInfo)providers.get(i);
                 ContentProviderRecord cpr = mProvidersByClass.get(cpi.name);
                 if (cpr == null) {
-                    cpr = new ContentProviderRecord(cpi, app.info);
+                    cpr = new ContentProviderRecord(cpi, app.info, comp);
                     mProvidersByClass.put(cpi.name, cpr);
                 }
                 app.pubProviders.put(cpi.name, cpr);
@@ -5258,32 +5291,32 @@ public final class ActivityManagerService extends ActivityManagerNative
                 // return it right away.
                 final boolean countChanged = incProviderCount(r, cpr);
                 if (countChanged) {
-                    if (cpr.app != null && r.setAdj <= ProcessList.PERCEPTIBLE_APP_ADJ) {
+                    if (cpr.proc != null && r.setAdj <= ProcessList.PERCEPTIBLE_APP_ADJ) {
                         // If this is a perceptible app accessing the provider,
                         // make sure to count it as being accessed and thus
                         // back up on the LRU list.  This is good because
                         // content providers are often expensive to start.
-                        updateLruProcessLocked(cpr.app, false, true);
+                        updateLruProcessLocked(cpr.proc, false, true);
                     }
                 }
 
-                if (cpr.app != null) {
+                if (cpr.proc != null) {
                     if (false) {
                         if (cpr.name.flattenToShortString().equals(
                                 "com.android.providers.calendar/.CalendarProvider2")) {
                             Slog.v(TAG, "****************** KILLING "
                                 + cpr.name.flattenToShortString());
-                           Process.killProcess(cpr.app.pid);
+                           Process.killProcess(cpr.proc.pid);
                         }
                     }
 
-                    boolean success = updateOomAdjLocked(cpr.app);
+                    boolean success = updateOomAdjLocked(cpr.proc);
                     if (DEBUG_PROVIDER) Slog.i(TAG, "Adjust success: " + success);
                     // NOTE: there is still a race here where a signal could be
                     // pending on the process even though we managed to update its
                     // adj level.  Not sure what to do about this, but at least
                     // the race is now smaller.
-                    if (!success || !Process.isAlive(cpr.app.pid)) {
+                    if (!success || !Process.isAlive(cpr.proc.pid)) {
                         // Uh oh...  it looks like the provider's process
                         // has been killed on us.  We need to wait for a new
                         // process to be started, and make sure its death
@@ -5293,7 +5326,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                                 + " is crashing; detaching " + r);
                         boolean lastRef = decProviderCount(r, cpr);
                         if (!success) {
-                            appDiedLocked(cpr.app, cpr.app.pid, cpr.app.thread);
+                            appDiedLocked(cpr.proc, cpr.proc.pid, cpr.proc.thread);
                         }
                         if (!lastRef) {
                             // This wasn't the last ref our process had on
@@ -5346,7 +5379,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                                     + cpi.name);
                             return null;
                         }
-                        cpr = new ContentProviderRecord(cpi, ai);
+                        cpr = new ContentProviderRecord(cpi, ai, comp);
                     } catch (RemoteException ex) {
                         // pm is in same process, this will never happen.
                     }
@@ -5470,7 +5503,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             if (DEBUG_PROVIDER) Slog.v(TAG, "Removing provider requested by "
                     + r.info.processName + " from process "
                     + localCpr.appInfo.processName);
-            if (localCpr.app == r) {
+            if (localCpr.proc == r) {
                 //should not happen. taken care of as a local provider
                 Slog.w(TAG, "removeContentProvider called on local provider: "
                         + cpr.info.name + " in process " + r.processName);
@@ -5544,7 +5577,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     }
                     synchronized (dst) {
                         dst.provider = src.provider;
-                        dst.app = r;
+                        dst.proc = r;
                         dst.notifyAll();
                     }
                     updateOomAdjLocked(r);
@@ -8276,7 +8309,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             cpr.notifyAll();
         }
         
-        mProvidersByClass.remove(cpr.info.name);
+        mProvidersByClass.remove(cpr.name);
         String names[] = cpr.info.authority.split(";");
         for (int j = 0; j < names.length; j++) {
             mProvidersByName.remove(names[j]);
@@ -8290,9 +8323,9 @@ public final class ActivityManagerService extends ActivityManagerNative
                     && capp.pid != MY_PID) {
                 Slog.i(TAG, "Kill " + capp.processName
                         + " (pid " + capp.pid + "): provider " + cpr.info.name
-                        + " in dying process " + proc.processName);
+                        + " in dying process " + (proc != null ? proc.processName : "??"));
                 EventLog.writeEvent(EventLogTags.AM_KILL, capp.pid,
-                        capp.processName, capp.setAdj, "dying provider " + proc.processName);
+                        capp.processName, capp.setAdj, "dying provider " + cpr.name.toShortString());
                 Process.killProcess(capp.pid);
             }
         }
@@ -8347,7 +8380,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             while (it.hasNext()) {
                 ContentProviderRecord cpr = it.next();
                 cpr.provider = null;
-                cpr.app = null;
+                cpr.proc = null;
 
                 // See if someone is waiting for this provider...  in which
                 // case we don't remove it, but just let it restart.

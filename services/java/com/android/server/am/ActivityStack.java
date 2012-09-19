@@ -798,9 +798,7 @@ public class ActivityStack {
                         // then give up on things going idle and start clearing
                         // them out.
                         if (DEBUG_PAUSE) Slog.v(TAG, "To many pending stops, forcing idle");
-                        Message msg = Message.obtain();
-                        msg.what = IDLE_NOW_MSG;
-                        mHandler.sendMessage(msg);
+                        scheduleIdleLocked();
                     }
                 }
             } else {
@@ -2721,6 +2719,12 @@ public class ActivityStack {
         return stops;
     }
 
+    final void scheduleIdleLocked() {
+        Message msg = Message.obtain();
+        msg.what = IDLE_NOW_MSG;	
+        mHandler.sendMessage(msg);	
+    }
+
     final void activityIdleInternal(IBinder token, boolean fromTimeout,
             Configuration config) {
         if (localLOGV) Slog.v(TAG, "Activity idle: " + token);
@@ -2780,7 +2784,7 @@ public class ActivityStack {
 
                 //Slog.i(TAG, "IDLE: mBooted=" + mBooted + ", fromTimeout=" + fromTimeout);
                 if (mMainStack) {
-                    if (!mService.mBooted && !fromTimeout) {
+                    if (!mService.mBooted) {
                         mService.mBooted = true;
                         enableScreen = true;
                     }
@@ -3030,9 +3034,7 @@ public class ActivityStack {
                     // If we already have a few activities waiting to stop,
                     // then give up on things going idle and start clearing
                     // them out.
-                    Message msg = Message.obtain();
-                    msg.what = IDLE_NOW_MSG;
-                    mHandler.sendMessage(msg);
+                    scheduleIdleLocked();
                 }
             }
             r.state = ActivityState.STOPPING;

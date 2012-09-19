@@ -36,6 +36,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.PowerManager;
 import android.os.RemoteException;
 import android.util.Log;
 import android.util.LogPrinter;
@@ -641,7 +642,9 @@ public abstract class WallpaperService extends Service {
             mSession = ViewRoot.getWindowSession(getMainLooper());
             
             mWindow.setSession(mSession);
-            
+
+            mScreenOn = ((PowerManager)getSystemService(Context.POWER_SERVICE)).isScreenOn();
+
             IntentFilter filter = new IntentFilter();
             filter.addAction(Intent.ACTION_SCREEN_ON);
             filter.addAction(Intent.ACTION_SCREEN_OFF);

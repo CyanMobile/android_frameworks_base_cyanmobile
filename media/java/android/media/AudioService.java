@@ -349,6 +349,8 @@ public class AudioService extends IAudioService.Stub {
         intentFilter.addAction(Intent.ACTION_DOCK_EVENT);
         intentFilter.addAction(BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED);
         intentFilter.addAction(ACTION_FM_STATE_CHANGED);
+        intentFilter.addAction(Intent.ACTION_SCREEN_ON);
+        intentFilter.addAction(Intent.ACTION_SCREEN_OFF);
         context.registerReceiver(mReceiver, intentFilter);
 
         ThemeUtils.registerThemeChangeReceiver(context, new BroadcastReceiver() {
@@ -2135,6 +2137,10 @@ public class AudioService extends IAudioService.Stub {
                }
            } else if (action.equals(ACTION_FM_STATE_CHANGED)) {
                mFmActive = intent.getBooleanExtra("active", false);
+           } else if (action.equals(Intent.ACTION_SCREEN_ON)) {
+               AudioSystem.setParameters("screen_state=on");
+           } else if (action.equals(Intent.ACTION_SCREEN_OFF)) {
+               AudioSystem.setParameters("screen_state=off");
            } else if (SystemProperties.OMAP_ENHANCEMENT && action.equals(ACTION_FMTX_PLUG)) {
                int state = intent.getIntExtra("state",0);
 

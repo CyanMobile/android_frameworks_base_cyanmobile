@@ -692,15 +692,24 @@ public interface WindowManagerPolicy {
      */
     public void screenTurnedOff(int why);
 
+    public interface ScreenOnListener {
+        void onScreenOn();
+    };
+
     /**
      * Called after the screen turns on.
      */
-    public void screenTurnedOn();
+    public void screenTurningOn(ScreenOnListener screenOnListener);
 
     /**
-     * Return whether the screen is currently on.
+     * Return whether the screen is about to turn on or is currently on.
      */
-    public boolean isScreenOn();
+    public boolean isScreenOnEarly();
+
+    /**
+     * Return whether the screen is fully turned on.
+     */
+    public boolean isScreenOnFully();
 
     /**
      * Tell the policy that the lid switch has changed state.
@@ -767,6 +776,12 @@ public interface WindowManagerPolicy {
      * Called when the system is mostly done booting.
      */
     public void systemReady();
+
+    /**
+     * Called when the system is done booting to the point where the
+     * user can start interacting with it.
+     */
+    public void systemBooted();
 
     /**
      * Show boot time message to the user.

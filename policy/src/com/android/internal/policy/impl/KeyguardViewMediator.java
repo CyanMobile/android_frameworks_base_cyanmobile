@@ -147,8 +147,16 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
      */
     private static final int KEYGUARD_DONE_DRAWING_TIMEOUT_MS = 2000;
 
+    /** The stream type that the lock sounds are tied to. */
+    private static final int MASTER_STREAM_TYPE = AudioManager.STREAM_RING;
+    /** Minimum volume for lock sounds, as a ratio of max MASTER_STREAM_TYPE */
+    final float MIN_LOCK_VOLUME = 0.05f;
+    /** Maximum volume for lock sounds, as a ratio of max MASTER_STREAM_TYPE */
+    final float MAX_LOCK_VOLUME = 0.4f;
+
     private Context mContext;
     private AlarmManager mAlarmManager;
+    private AudioManager mAudioManager;
     private StatusBarManager mStatusBarManager;
     private boolean mShowLockIcon;
     private boolean mShowingLockIcon;
@@ -238,6 +246,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
     private int mLockSoundId;
     private int mUnlockSoundId;
     private int mLockSoundStreamId;
+    private int mMasterStreamMaxVolume;
 
     private KeyguardUpdateMonitor mUpdateMonitor;
 
@@ -485,12 +494,12 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
     /**
      * Let's us know the screen was turned on.
      */
-    public void onScreenTurnedOn() {
+    public void onScreenTurnedOn(KeyguardViewManager.ShowListener showListener) {
         synchronized (this) {
             mScreenOn = true;
             mDelayedShowingSequence++;
             if (DEBUG) Log.d(TAG, "onScreenTurnedOn, seq = " + mDelayedShowingSequence);
-            notifyScreenOnLocked();
+            notifyScreenOnLocked(showListener);
         }
     }
 
@@ -746,9 +755,10 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
      * @see #onScreenTurnedOn()
      * @see #handleNotifyScreenOn
      */
-    private void notifyScreenOnLocked() {
+    private void notifyScreenOnLocked(KeyguardViewManager.ShowListener showListener) {
         if (DEBUG) Log.d(TAG, "notifyScreenOnLocked");
-        mHandler.sendEmptyMessage(NOTIFY_SCREEN_ON);
+        Message msg = mHandler.obtainMessage(NOTIFY_SCREEN_ON, showListener);
+        mHandler.sendMessage(msg);
     }
 
     /**
@@ -802,6 +812,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
             case ABSENT:
                 // only force lock screen in case of missing sim if user hasn't
                 // gone through setup wizard
+              synchronized (this) {
                 if (!mUpdateMonitor.isDeviceProvisioned()) {
                     if (!isShowing()) {
                         if (DEBUG) Log.d(TAG, "INTENT_VALUE_ICC_ABSENT and keygaurd isn't showing, we need "
@@ -811,9 +822,11 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                         resetStateLocked();
                     }
                 }
+              }
                 break;
             case PIN_REQUIRED:
             case PUK_REQUIRED:
+              synchronized (this) {
                 if (!isShowing()) {
                     if (DEBUG) Log.d(TAG, "INTENT_VALUE_ICC_LOCKED and keygaurd isn't showing, we need "
                             + "to show the keyguard so the user can enter their sim pin");
@@ -821,12 +834,14 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                 } else {
                     resetStateLocked();
                 }
-
+              }
                 break;
             case READY:
+              synchronized (this) {
                 if (isShowing()) {
                     resetStateLocked();
                 }
+              }
                 break;
         }
     }
@@ -880,6 +895,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                     // regardless if the unlock screen is to be shown (any
                     // pending events for unlocks are canceled if the lock
                     // screen keyguard has been discharged by the user).
+                  synchronized (KeyguardViewMediator.this) {
                     if (mDelayedShowingSequence == sequence || handlerMessage == SHOW_SECURITY) {
                         // Don't play lockscreen SFX if the screen went off due
                         // to timeout.
@@ -887,10 +903,11 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
 
                         doKeyguard(handlerMessage);
                     }
+                  }
                 }
             } else if (TelephonyManager.ACTION_PHONE_STATE_CHANGED.equals(action)) {
                 mPhoneState = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
-
+              synchronized (KeyguardViewMediator.this) {
                 if (TelephonyManager.EXTRA_STATE_IDLE.equals(mPhoneState)  // call ending
                         && !mScreenOn                           // screen off
                         && mExternallyEnabled) {                // not disabled by any app
@@ -903,6 +920,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                             + "keyguard is showing");
                     doKeyguard(SHOW_SECURITY);
                 }
+              }
             }
         }
     };
@@ -1049,7 +1067,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                     handleNotifyScreenOff();
                     return;
                 case NOTIFY_SCREEN_ON:
-                    handleNotifyScreenOn();
+                    handleNotifyScreenOn((KeyguardViewManager.ShowListener)msg.obj);
                     return;
                 case WAKE_WHEN_READY:
                     handleWakeWhenReady(msg.arg1);
@@ -1067,7 +1085,9 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                     handleSetHidden(msg.arg1 != 0);
                     break;
                 case KEYGUARD_TIMEOUT:
+                  synchronized (KeyguardViewMediator.this) {
                     doKeyguard(SHOW_SECURITY);
+                  }
                     break;
                 case SHOW_SLIDE:
                     handleShow(SHOW_SLIDE);
@@ -1137,13 +1157,33 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
         }
 
         final ContentResolver cr = mContext.getContentResolver();
-        if (Settings.System.getInt(cr, Settings.System.LOCKSCREEN_SOUNDS_ENABLED, 1) == 1)
-        {
+        if (Settings.System.getInt(cr, Settings.System.LOCKSCREEN_SOUNDS_ENABLED, 1) == 1) {
             final int whichSound = locked
                 ? mLockSoundId
                 : mUnlockSoundId;
             mLockSounds.stop(mLockSoundStreamId);
-            mLockSoundStreamId = mLockSounds.play(whichSound, 1.0f, 1.0f, 1, 0, 1.0f);
+            // Init mAudioManager
+            if (mAudioManager == null) {
+                mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+                if (mAudioManager == null) return;
+                mMasterStreamMaxVolume = mAudioManager.getStreamMaxVolume(MASTER_STREAM_TYPE);
+            }
+            // If the stream is muted, don't play the sound
+            if (mAudioManager.isStreamMute(MASTER_STREAM_TYPE)) return;
+
+            // Adjust the lock sound volume from a minimum of MIN_LOCK_VOLUME to a maximum
+            // of MAX_LOCK_VOLUME, relative to the maximum level of the MASTER_STREAM_TYPE volume.
+            float lockSoundVolume;
+            int masterStreamVolume = mAudioManager.getStreamVolume(MASTER_STREAM_TYPE);
+            if (masterStreamVolume == 0) {
+                return;
+            } else {
+                lockSoundVolume = MIN_LOCK_VOLUME + (MAX_LOCK_VOLUME - MIN_LOCK_VOLUME)
+                        * ((float) masterStreamVolume / mMasterStreamMaxVolume);
+            }
+
+            mLockSoundStreamId = mLockSounds.play(whichSound, lockSoundVolume, lockSoundVolume, 1,
+                    0, 1.0f);
         }
     }
 
@@ -1327,13 +1367,13 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
      * Handle message sent by {@link #notifyScreenOnLocked()}
      * @see #NOTIFY_SCREEN_ON
      */
-    private void handleNotifyScreenOn() {
+    private void handleNotifyScreenOn(KeyguardViewManager.ShowListener showListener) {
         synchronized (KeyguardViewMediator.this) {
             if (DEBUG) Log.d(TAG, "handleNotifyScreenOn");
             Message msg = mHandler.obtainMessage(TIMEOUT, mWakelockSequence, 0);
             mHandler.removeMessages(TIMEOUT);
             mHandler.sendMessageDelayed(msg, AWAKE_INTERVAL_DEFAULT_KEYBOARD_OPEN_MS);
-            mKeyguardViewManager.onScreenTurnedOn();
+            mKeyguardViewManager.onScreenTurnedOn(showListener);
         }
     }
     private BroadcastReceiver mMusicReceiver = new BroadcastReceiver() {

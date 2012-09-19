@@ -673,4 +673,6 @@
     <bool name="config_symKeyShowsImePicker">true</bool>
     <bool name="config_fmSeparateVolumeControl">false</bool>
 
+    <!-- Minimum screen brightness allowed by the power manager. -->
+    <integer name="config_screenBrightnessDim">20</integer>
 </resources>

@@ -90,6 +90,13 @@ class BatteryService extends Binder {
     // This should probably be exposed in the API, though it's not critical
     private static final int BATTERY_PLUGGED_NONE = 0;
 
+    /** The stream type that the lock sounds are tied to. */
+    private static final int MASTER_STREAM_TYPE = AudioManager.STREAM_RING;
+    /** Minimum volume for lock sounds, as a ratio of max MASTER_STREAM_TYPE */
+    final float MIN_LOCK_VOLUME = 0.05f;
+    /** Maximum volume for lock sounds, as a ratio of max MASTER_STREAM_TYPE */
+    final float MAX_LOCK_VOLUME = 0.4f;
+
     private final Context mContext;
     private final IBatteryStats mBatteryStats;
 
@@ -130,12 +137,14 @@ class BatteryService extends Binder {
 
     private boolean mSentLowBatteryBroadcast = false;
     private boolean mSentFullBatteryBroadcast = false;
-    
+
+    private AudioManager mAudioManager;
     private SoundPool mChargingSounds;
     private int mChargingSoundsId;
     private int mDischargingSoundsId;
     private int mChargingSoundStreamId;
     private int mDischargingSoundStreamId;
+    private int mMasterStreamMaxVolume;
 
     public BatteryService(Context context) {
         mContext = context;
@@ -415,13 +424,33 @@ class BatteryService extends Binder {
         }
 
         ContentResolver cr = mContext.getContentResolver();
-        if (Settings.System.getInt(cr, Settings.System.POWER_SOUNDS_ENABLED, 1) == 1)
-        {
+        if (Settings.System.getInt(cr, Settings.System.POWER_SOUNDS_ENABLED, 1) == 1) {
             int whichSound = locked
                 ? mChargingSoundsId
                 : mDischargingSoundsId;
             mChargingSounds.stop(mChargingSoundStreamId);
-            mChargingSoundStreamId = mChargingSounds.play(whichSound, 1.0f, 1.0f, 1, 0, 1.0f);
+            // Init mAudioManager
+            if (mAudioManager == null) {
+                mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+                if (mAudioManager == null) return;
+                mMasterStreamMaxVolume = mAudioManager.getStreamMaxVolume(MASTER_STREAM_TYPE);
+            }
+            // If the stream is muted, don't play the sound
+            if (mAudioManager.isStreamMute(MASTER_STREAM_TYPE)) return;
+
+            // Adjust the lock sound volume from a minimum of MIN_LOCK_VOLUME to a maximum
+            // of MAX_LOCK_VOLUME, relative to the maximum level of the MASTER_STREAM_TYPE volume.
+            float chargeSoundVolume;
+            int masterStreamVolume = mAudioManager.getStreamVolume(MASTER_STREAM_TYPE);
+            if (masterStreamVolume == 0) {
+                return;
+            } else {
+                chargeSoundVolume = MIN_LOCK_VOLUME + (MAX_LOCK_VOLUME - MIN_LOCK_VOLUME)
+                        * ((float) masterStreamVolume / mMasterStreamMaxVolume);
+            }
+
+            mChargingSoundStreamId = mChargingSounds.play(whichSound, chargeSoundVolume, chargeSoundVolume, 1,
+                        0, 1.0f);
         }
     }
 

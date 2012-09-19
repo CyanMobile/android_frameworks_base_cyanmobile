@@ -42,8 +42,10 @@ import android.database.ContentObserver;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.IRemoteCallback;
 import android.os.LocalPowerManager;
 import android.os.Looper;
 import android.os.PowerManager;
@@ -241,6 +243,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     Handler mHandler;
 
     boolean mSystemReady;
+    boolean mSystemBooted;
     boolean mLidOpen;
     int mUiMode = Configuration.UI_MODE_TYPE_NORMAL;
     int mDockMode = Intent.EXTRA_DOCK_STATE_UNDOCKED;
@@ -254,7 +257,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     boolean mDeskDockEnablesAccelerometer;
     int mLidKeyboardAccessibility;
     int mLidNavigationAccessibility;
-    boolean mScreenOn = false;
+    boolean mScreenOnEarly = false;
+    boolean mScreenOnFully = false;
     int mScreenOffReason;
     boolean mOrientationSensorEnabled = false;
     int mCurrentAppOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
@@ -526,11 +530,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
         //Could have been invoked due to screen turning on or off or
         //change of the currently visible window's orientation
-        if (localLOGV) Log.v(TAG, "Screen status="+mScreenOn+
+        if (localLOGV) Log.v(TAG, "Screen status="+mScreenOnEarly+
                 ", current orientation="+mCurrentAppOrientation+
                 ", SensorEnabled="+mOrientationSensorEnabled);
         boolean disable = true;
-        if (mScreenOn) {
+        if (mScreenOnEarly) {
             if (needSensorRunningLp()) {
                 disable = false;
                 //enable listener if not already enabled
@@ -901,6 +905,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mSafeModeEnabledVibePattern = getLongIntArray(mContext.getResources(),
                 com.android.internal.R.array.config_safeModeEnabledVibePattern);
         mVirtualKeyUpVibePattern = loadHaptic(HapticFeedbackConstants.VIRTUAL_RELEASED);
+
+        // Match current screen state.
+        if (mPowerManager.isScreenOn()) {
+            screenTurningOn(null);
+        } else {
+            screenTurnedOff(WindowManagerPolicy.OFF_BECAUSE_OF_USER);
+        }
+
     }
 
     public void updateSettings() {
@@ -2344,6 +2356,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                                         mKeyguardMediator.isShowingAndNotHidden() :
                                         mKeyguardMediator.isShowing());
 
+        if (!mSystemBooted) {
+            // If we have not yet booted, don't let key events do anything.
+            return 0;
+        }
+
         if (false) {
             Log.d(TAG, "interceptKeyTq keycode=" + keyCode
                   + " screenIsOn=" + isScreenOn + " keyguardActive=" + keyguardActive);
@@ -2709,9 +2726,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     /** {@inheritDoc} */
     public void screenTurnedOff(int why) {
         EventLog.writeEvent(70000, 0);
+        synchronized (mLock) {
+            mScreenOnEarly = false;
+            mScreenOnFully = false;
+        }
         mKeyguardMediator.onScreenTurnedOff(why);
         synchronized (mLock) {
-            mScreenOn = false;
             mScreenOffReason = why;
             updateOrientationListenerLp();
             updateLockScreenTimeout();
@@ -2719,11 +2739,46 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     /** {@inheritDoc} */
-    public void screenTurnedOn() {
+    public void screenTurningOn(final ScreenOnListener screenOnListener) {
         EventLog.writeEvent(70000, 1);
-        mKeyguardMediator.onScreenTurnedOn();
+        if (false) {
+            RuntimeException here = new RuntimeException("here");
+            here.fillInStackTrace();
+            Slog.i(TAG, "Screen turning on...", here);
+        }
+        if (screenOnListener != null) {
+            mKeyguardMediator.onScreenTurnedOn(new KeyguardViewManager.ShowListener() {
+                @Override public void onShown(IBinder windowToken) {
+                    if (windowToken != null) {
+                        try {
+                            mWindowManager.waitForWindowDrawn(windowToken,
+                                    new IRemoteCallback.Stub() {
+                                @Override public void sendResult(Bundle data) {
+                                    Slog.i(TAG, "Lock screen displayed!");
+                                    screenOnListener.onScreenOn();
+                                    synchronized (mLock) {
+                                        mScreenOnFully = true;
+                                    }
+                                }
+                            });
+                        } catch (RemoteException e) {
+                        }
+                    } else {
+                        Slog.i(TAG, "No lock screen!");
+                        screenOnListener.onScreenOn();
+                        synchronized (mLock) {
+                            mScreenOnFully = true;
+                        }
+                    }
+                }
+            });
+        } else {
+            synchronized (mLock) {
+                mScreenOnFully = true;
+            }	
+        }
         synchronized (mLock) {
-            mScreenOn = true;
+            mScreenOnEarly = true;
             // since the screen turned on, assume we don't enable play-pause again
             // unless they turn it off and music is still playing.  this is done to
             // prevent the camera button from starting playback if playback wasn't
@@ -2735,8 +2790,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     /** {@inheritDoc} */
-    public boolean isScreenOn() {
-        return mScreenOn;
+    public boolean isScreenOnEarly() {
+        return mScreenOnEarly;
+    }
+
+    /** {@inheritDoc} */
+    public boolean isScreenOnFully() {
+        return mScreenOnFully;
     }
 
     /** {@inheritDoc} */
@@ -2965,6 +3025,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+    /** {@inheritDoc} */
+    public void systemBooted() {
+        synchronized (mLock) {
+            mSystemBooted = true;
+        }
+    }
+
     ProgressDialog mBootMsgDialog = null;
 
     /** {@inheritDoc} */
@@ -3034,7 +3101,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     private void updateLockScreenTimeout() {
         synchronized (mScreenLockTimeout) {
-            boolean enable = (mAllowLockscreenWhenOn && mScreenOn && mKeyguardMediator.isSecure());
+            boolean enable = (mAllowLockscreenWhenOn && mScreenOnEarly && mKeyguardMediator.isSecure());
             if (mLockScreenTimerActive != enable) {
                 if (enable) {
                     if (localLOGV) Log.v(TAG, "setting lockscreen timer");
@@ -3232,7 +3299,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     public boolean allowKeyRepeat() {
         // disable key repeat when screen is off
-        return mScreenOn;
+        return mScreenOnEarly;
     }
 
     /*

@@ -518,8 +518,13 @@ public class LockPatternKeyguardView extends KeyguardViewBase {
     public void onScreenTurnedOn() {
         Log.d(TAG, "onScreenTurnedOn()");
         mScreenOn = true;
+        show();
+    }
+
+    @Override
+    public void show() {
         if (mMode == Mode.LockScreen) {
-           ((KeyguardScreen) mLockScreen).onResume();
+            ((KeyguardScreen) mLockScreen).onResume();
         } else {
             ((KeyguardScreen) mUnlockScreen).onResume();
         }

@@ -20,6 +20,7 @@ import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.IRemoteCallback;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.view.IWindow;
@@ -83,6 +84,10 @@ public final class BridgeWindow implements IWindow {
 
     public void dispatchSystemUiVisibilityChanged(int visibility) {
         // pass for now.
+    }
+
+    public void waitForWindowDrawn(IBinder token, IRemoteCallback callback) {
+        // TODO Auto-generated method stub
     }
 
     public IBinder asBinder() {
