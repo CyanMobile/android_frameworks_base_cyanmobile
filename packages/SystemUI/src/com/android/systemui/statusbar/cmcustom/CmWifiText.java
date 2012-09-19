@@ -134,7 +134,7 @@ public class CmWifiText extends TextView {
                 Settings.System.STATUS_BAR_CM_WIFI_TEXT, STYLE_HIDE);
 
         int mCarrierSizeval = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.STATUSBAR_ICON_FONT_SIZE, 10);
+                Settings.System.STATUSBAR_ICON_FONT_SIZE, 11);
         int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, getContext().getResources().getDisplayMetrics());
         mCarrierSize = CarrierSizepx;
 

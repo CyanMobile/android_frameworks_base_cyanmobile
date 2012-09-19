@@ -159,7 +159,7 @@ public class CarrierLabelBottom extends TextView {
         mCarrierColor = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_CARRIERCOLOR, 0xFF38FF00));
         int mCarrierSizeval = Settings.System.getInt(resolver,
-                Settings.System.STATUSBAR_CARRIER_FONT_SIZE, 10);
+                Settings.System.STATUSBAR_CARRIER_FONT_SIZE, 11);
         int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, mContext.getResources().getDisplayMetrics());
         mCarrierSize = CarrierSizepx;
     }

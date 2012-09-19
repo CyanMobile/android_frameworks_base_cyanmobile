@@ -138,7 +138,7 @@ public final class DateView extends TextView {
         ContentResolver resolver = mContext.getContentResolver();
 
         int mCarrierSizeval = Settings.System.getInt(resolver,
-                Settings.System.STATUSBAR_ICON_FONT_SIZE, 10);
+                Settings.System.STATUSBAR_ICON_FONT_SIZE, 25);
         int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, mContext.getResources().getDisplayMetrics());
         mCarrierSize = CarrierSizepx;
 

@@ -165,7 +165,7 @@ public class CenterCarrierLabelStatusBar extends TextView {
         mStatusBarCarrierCenter = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_CARRIER, 6) == 2);
         int mCarrierSizeval = Settings.System.getInt(resolver,
-                Settings.System.STATUSBAR_CARRIER_FONT_SIZE, 10);
+                Settings.System.STATUSBAR_CARRIER_FONT_SIZE, 11);
         int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, mContext.getResources().getDisplayMetrics());
         mCarrierSize = CarrierSizepx;
     }
