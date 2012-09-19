@@ -6054,6 +6054,8 @@ public class WindowManagerService extends IWindowManager.Stub
     // -------------------------------------------------------------
 
     private final class WindowState implements WindowManagerPolicy.WindowState {
+        WindowManagerService mService;
+
         final Session mSession;
         final IWindow mClient;
         WindowToken mToken;

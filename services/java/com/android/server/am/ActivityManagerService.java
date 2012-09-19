@@ -5141,7 +5141,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     (ProviderInfo)providers.get(i);
                 ContentProviderRecord cpr = mProvidersByClass.get(cpi.name);
                 if (cpr == null) {
-                    cpr = new ContentProviderRecord(cpi, app.info, comp);
+                    cpr = new ContentProviderRecord(cpi, app.info);
                     mProvidersByClass.put(cpi.name, cpr);
                 }
                 app.pubProviders.put(cpi.name, cpr);
@@ -5379,7 +5379,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                                     + cpi.name);
                             return null;
                         }
-                        cpr = new ContentProviderRecord(cpi, ai, comp);
+                        cpr = new ContentProviderRecord(cpi, ai);
                     } catch (RemoteException ex) {
                         // pm is in same process, this will never happen.
                     }

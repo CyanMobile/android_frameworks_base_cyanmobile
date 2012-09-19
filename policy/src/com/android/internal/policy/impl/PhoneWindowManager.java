@@ -731,7 +731,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
      */
     Runnable mHsetHookLongPress = new Runnable() {
         public void run() {
-            if (mScreenOn) return;
+            if (mScreenOnFully) return;
             mHsetRepeats++;
             long eventtime = SystemClock.uptimeMillis();
             Intent downIntent = new Intent(Intent.ACTION_MEDIA_BUTTON, null);

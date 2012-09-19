@@ -1634,9 +1634,15 @@ public class TextView extends View implements ViewTreeObserver.OnPreDrawListener
         colors = appearance.getColorStateList(com.android.internal.R.styleable.
                                               TextAppearance_textColor);
         if (colors != null) {
-            setTextColor((Settings.System.getInt(resolver,
-                Settings.System.TEXT_GLOBALOFCOLOR, 0) != 1) ? colors : (Settings.System.getInt(resolver,
-                Settings.System.TEXT_FULLOFCOLOR, 0xFF38FF00)));
+            boolean ColDisabled = (Settings.System.getInt(resolver,
+                Settings.System.TEXT_GLOBALOFCOLOR, 0) != 1);
+            int ColFixed = (Settings.System.getInt(resolver,
+                Settings.System.TEXT_FULLOFCOLOR, 0xFF38FF00));
+            if (ColDisabled) {
+                setTextColor(colors);
+            } else {
+                setTextColor(ColFixed);
+            }
         }
 
         ts = appearance.getDimensionPixelSize(com.android.internal.R.styleable.

@@ -435,8 +435,6 @@ class BatteryService extends Binder {
                 if (mAudioManager == null) return;
                 mMasterStreamMaxVolume = mAudioManager.getStreamMaxVolume(MASTER_STREAM_TYPE);
             }
-            // If the stream is muted, don't play the sound
-            if (mAudioManager.isStreamMute(MASTER_STREAM_TYPE)) return;
 
             // Adjust the lock sound volume from a minimum of MIN_LOCK_VOLUME to a maximum
             // of MAX_LOCK_VOLUME, relative to the maximum level of the MASTER_STREAM_TYPE volume.

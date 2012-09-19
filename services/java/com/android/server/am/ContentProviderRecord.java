@@ -36,11 +36,11 @@ class ContentProviderRecord extends ContentProviderHolder {
     ProcessRecord launchingApp; // if non-null, waiting for this app to be launched.
     String stringName;
     
-    public ContentProviderRecord(ProviderInfo _info, ApplicationInfo ai, ComponentName _name) {
+    public ContentProviderRecord(ProviderInfo _info, ApplicationInfo ai) {
         super(_info);
         uid = ai.uid;
         appInfo = ai;
-        name = _name;
+        name = new ComponentName(_info.packageName, _info.name);
         noReleaseNeeded = uid == 0 || uid == Process.SYSTEM_UID;
     }
 
