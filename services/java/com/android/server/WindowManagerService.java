@@ -6054,8 +6054,6 @@ public class WindowManagerService extends IWindowManager.Stub
     // -------------------------------------------------------------
 
     private final class WindowState implements WindowManagerPolicy.WindowState {
-        WindowManagerService mService;
-
         final Session mSession;
         final IWindow mClient;
         WindowToken mToken;
@@ -7096,19 +7094,11 @@ public class WindowManagerService extends IWindowManager.Stub
          * mPolicyVisibility.  Ungh.
          */
         public boolean isVisibleOrBehindKeyguardLw() {
-            if (mRootToken.waitingToShow &&
-                mService.mNextAppTransition != WindowManagerPolicy.TRANSIT_UNSET) {
-                return false;
-            }
             final AppWindowToken atoken = mAppToken;
-            final boolean animating = atoken != null
-                ? (atoken.animation != null) : false;
-            return mSurface != null && !mDestroying && !mExiting
+            return mSurface != null && !mAttachedHidden
                     && (atoken == null ? mPolicyVisibility : !atoken.hiddenRequested)
                     && (mOrientationChanging || (!mDrawPending && !mCommitDrawPending))
-                    && ((!mAttachedHidden && mViewVisibility == View.VISIBLE
-                                && !mRootToken.hidden)
-                        || mAnimation != null || animating);
+                    && !mExiting && !mDestroying;
         }
 
         /**
