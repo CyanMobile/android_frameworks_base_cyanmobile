@@ -8309,7 +8309,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             cpr.notifyAll();
         }
         
-        mProvidersByClass.remove(cpr.name);
+        mProvidersByClass.remove(cpr.info.name);
         String names[] = cpr.info.authority.split(";");
         for (int j = 0; j < names.length; j++) {
             mProvidersByName.remove(names[j]);
@@ -8323,9 +8323,9 @@ public final class ActivityManagerService extends ActivityManagerNative
                     && capp.pid != MY_PID) {
                 Slog.i(TAG, "Kill " + capp.processName
                         + " (pid " + capp.pid + "): provider " + cpr.info.name
-                        + " in dying process " + (proc != null ? proc.processName : "??"));
+                        + " in dying process " + proc.processName);
                 EventLog.writeEvent(EventLogTags.AM_KILL, capp.pid,
-                        capp.processName, capp.setAdj, "dying provider " + cpr.name.toShortString());
+                        capp.processName, capp.setAdj, "dying provider " + proc.processName);
                 Process.killProcess(capp.pid);
             }
         }

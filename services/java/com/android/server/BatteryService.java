@@ -436,6 +436,8 @@ class BatteryService extends Binder {
                 mMasterStreamMaxVolume = mAudioManager.getStreamMaxVolume(MASTER_STREAM_TYPE);
             }
 
+            if (mAudioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE) return;
+
             // Adjust the lock sound volume from a minimum of MIN_LOCK_VOLUME to a maximum
             // of MAX_LOCK_VOLUME, relative to the maximum level of the MASTER_STREAM_TYPE volume.
             float chargeSoundVolume;
