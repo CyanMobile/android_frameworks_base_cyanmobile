@@ -46,6 +46,7 @@ import android.database.ContentObserver;
 import android.graphics.Color;
 import android.hardware.usb.UsbManager;
 import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Build;
@@ -101,6 +102,11 @@ public class NotificationManagerService extends INotificationManager.Stub
     private static final long[] DEFAULT_VIBRATE_PATTERN = {0, 250, 250, 250};
 
     private static final int DEFAULT_STREAM_TYPE = AudioManager.STREAM_NOTIFICATION;
+
+    private static final int TONE_INCALL_NOTIFICATION_MAX_LENGTH = 1000;
+
+    private ToneGenerator mInCallToneGenerator;
+    private final Object mInCallToneGeneratorLock = new Object();
 
     final Context mContext;
     Context mUiContext;
@@ -531,6 +537,19 @@ public class NotificationManagerService extends INotificationManager.Stub
                     }
                 } else {
                     updateNotificationPulse();
+                }
+                synchronized (mInCallToneGeneratorLock) {
+                    if (mInCall) {
+                        if (mInCallToneGenerator == null) {
+                            mInCallToneGenerator = new ToneGenerator(
+                                    AudioManager.STREAM_VOICE_CALL, ToneGenerator.MAX_VOLUME);
+                        }
+                    } else {
+                        if (mInCallToneGenerator != null) {
+                            mInCallToneGenerator.release();
+                            mInCallToneGenerator = null;
+                        }
+                    }
                 }
             } else if (action.equals(ACTION_UPDATE_LED)) {
                 updateRGBLights();
@@ -1187,6 +1206,9 @@ public class NotificationManagerService extends INotificationManager.Stub
                     (notification.defaults & Notification.DEFAULT_SOUND) != 0;
                 if (!(inQuietHours && mQuietHoursMute)
                         && (useDefaultSound || notification.sound != null)) {
+                  if (mInCall) {
+                    playInCallNotification();
+                  } else {
                     Uri uri;
                     if (useDefaultSound) {
                         uri = Settings.System.DEFAULT_NOTIFICATION_URI;
@@ -1226,8 +1248,9 @@ public class NotificationManagerService extends INotificationManager.Stub
                             Binder.restoreCallingIdentity(identity);
                         }
                     }
+                   }
                 }
-
+              if (!mInCall) {
                 // vibrate
                 final boolean useDefaultVibrate =
                     (notification.defaults & Notification.DEFAULT_VIBRATE) != 0;
@@ -1243,6 +1266,7 @@ public class NotificationManagerService extends INotificationManager.Stub
                                                         : notification.vibrate,
                               ((notification.flags & Notification.FLAG_INSISTENT) != 0) ? 0: -1);
                 }
+               }
             }
 
             // light
@@ -1347,6 +1371,26 @@ public class NotificationManagerService extends INotificationManager.Stub
 
         return true;
     }
+
+    private void playInCallNotification() {
+       new Thread() {
+           @Override
+           public void run() {
+               // If toneGenerator creation fails, just continue the call
+               // without playing the notification sound.
+               try {
+                   synchronized (mInCallToneGeneratorLock) {
+                      if (mInCallToneGenerator != null) {
+                          mInCallToneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP2,
+                                  TONE_INCALL_NOTIFICATION_MAX_LENGTH);
+                      }
+                   }
+               } catch (RuntimeException e) {
+                   Log.w(TAG, "Exception from ToneGenerator: " + e);
+               }
+           }
+       }.start();
+   }
 
     private void sendAccessibilityEvent(Notification notification, CharSequence packageName) {
         AccessibilityManager manager = AccessibilityManager.getInstance(mContext);

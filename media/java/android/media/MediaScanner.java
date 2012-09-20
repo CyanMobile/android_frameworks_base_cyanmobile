@@ -659,16 +659,23 @@ public class MediaScanner
         private Uri endFile(FileCacheEntry entry, boolean ringtones, boolean notifications,
                 boolean alarms, boolean music, boolean podcasts)
                 throws RemoteException {
+            ContentValues values = toValues();
             // update database
             Uri tableUri;
             boolean isAudio = MediaFile.isAudioFileType(mFileType);
             boolean isVideo = MediaFile.isVideoFileType(mFileType);
             boolean isImage = MediaFile.isImageFileType(mFileType);
+            boolean clearThumbMagic = false;
             if (isVideo) {
+                values.put(Video.Media.MINI_THUMB_MAGIC, 0);
+                clearThumbMagic = true;
                 tableUri = mVideoUri;
             } else if (isImage) {
+                values.put(Images.Media.MINI_THUMB_MAGIC, 0);
+                clearThumbMagic = true;
                 tableUri = mImagesUri;
             } else if (isAudio) {
+                clearThumbMagic = true;
                 tableUri = mAudioUri;
             } else {
                 // don't add file to database if not audio, video or image
@@ -686,7 +693,6 @@ public class MediaScanner
                 mAlbumArtist = mArtist;
             }
 
-            ContentValues values = toValues();
             String title = values.getAsString(MediaStore.MediaColumns.TITLE);
             if (title == null || TextUtils.isEmpty(title.trim())) {
                 title = values.getAsString(MediaStore.MediaColumns.DATA);
@@ -792,6 +798,9 @@ public class MediaScanner
             } else {
                 // updated file
                 result = ContentUris.withAppendedId(tableUri, rowId);
+                if (!clearThumbMagic) {
+		    values.remove(MediaStore.MediaColumns.DATA);
+                }
                 mMediaProvider.update(result, values, null, null);
             }
             if (mProcessGenres && mGenre != null && isAudio) {

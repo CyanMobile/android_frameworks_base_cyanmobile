@@ -1343,6 +1343,7 @@ class PackageManagerService extends IPackageManager.Stub {
                 }
 
             }
+            permReader.close();
         } catch (XmlPullParserException e) {
             Slog.w(TAG, "Got execption parsing permissions.", e);
         } catch (IOException e) {
@@ -2263,9 +2264,11 @@ class PackageManagerService extends IPackageManager.Stub {
                     // remove things that have it.
                     action = null;
                 }
-                ComponentName comp = sintent.getComponent();
+
                 ResolveInfo ri = null;
                 ActivityInfo ai = null;
+
+                ComponentName comp = sintent.getComponent();
                 if (comp == null) {
                     ri = resolveIntent(
                         sintent,
@@ -2567,8 +2570,8 @@ class PackageManagerService extends IPackageManager.Stub {
                 final String packageName = keys[i++];
 
                 ApplicationInfo ai = null;
+                final PackageSetting ps = mSettings.mPackages.get(packageName);
                 if (listUninstalled) {
-                    final PackageSetting ps = mSettings.mPackages.get(packageName);
                     if (ps != null) {
                         ai = generateApplicationInfoFromSettingsLP(ps.name, flags);
                     }
@@ -2822,6 +2825,7 @@ class PackageManagerService extends IPackageManager.Stub {
             updatedPkg = mSettings.mDisabledSysPackages.get(
                     ps != null ? ps.name : pkg.packageName);
         }
+        boolean updatedPkgBetter = false;
         // First check if this is a system package that may involve an update
         if (updatedPkg != null && (parseFlags&PackageParser.PARSE_IS_SYSTEM) != 0) {
             if (ps != null && !ps.codePath.equals(scanFile)) {
@@ -2853,8 +2857,13 @@ class PackageManagerService extends IPackageManager.Stub {
                             + " better than installed " + ps.versionCode);
                     InstallArgs args = new FileInstallArgs(ps.codePathString,
                             ps.resourcePathString, ps.nativeLibraryPathString);
-                    args.cleanUpResourcesLI();
-                    mSettings.enableSystemPackageLP(ps.name);
+                    synchronized (mInstaller) {
+                        args.cleanUpResourcesLI();
+                    }
+                    synchronized (mPackages) {
+                        mSettings.enableSystemPackageLP(ps.name);
+                    }
+                    updatedPkgBetter = true;
                 }
             }
         }
@@ -2876,7 +2885,7 @@ class PackageManagerService extends IPackageManager.Stub {
 
         String codePath = null;
         String resPath = null;
-        if ((parseFlags & PackageParser.PARSE_FORWARD_LOCK) != 0) {
+        if ((parseFlags & PackageParser.PARSE_FORWARD_LOCK) != 0 && !updatedPkgBetter) {
             if (ps != null && ps.resourcePathString != null) {
                 resPath = ps.resourcePathString;
             } else {
@@ -2934,6 +2943,20 @@ class PackageManagerService extends IPackageManager.Stub {
         return true;
     }
 
+    /**
+     * Enforces that only the system UID or root's UID can call a method exposed
+     * via Binder.
+     *
+     * @param message used as message if SecurityException is thrown
+     * @throws SecurityException if the caller is not system or root
+     */
+    private static final void enforceSystemOrRoot(String message) {
+        final int uid = Binder.getCallingUid();
+        if (uid != Process.SYSTEM_UID && uid != 0) {
+            throw new SecurityException(message);
+        }
+    }
+
     public void performBootDexOpt() {
         ArrayList<PackageParser.Package> pkgs = null;
         synchronized (mPackages) {
@@ -2966,6 +2989,8 @@ class PackageManagerService extends IPackageManager.Stub {
     }
 
     public boolean performDexOpt(String packageName) {
+        enforceSystemOrRoot("Only the system can request dexopt be performed");
+
         if (!mNoDexOpt) {
             return false;
         }
@@ -7637,6 +7662,8 @@ class PackageManagerService extends IPackageManager.Stub {
     }
 
     public void enterSafeMode() {
+        enforceSystemOrRoot("Only the system can request entering safe mode");
+
         if (!mSystemReady) {
             mSafeMode = true;
         }

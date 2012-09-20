@@ -578,6 +578,18 @@ public class ZygoteInit {
 
     public static void main(String argv[]) {
         try {
+
+            // If requested, start system server directly from Zygote
+            if (argv.length != 2) {
+                throw new RuntimeException(argv[0] + USAGE_STRING);
+            }
+
+            if (argv[1].equals("true")) {
+                startSystemServer();
+            } else if (!argv[1].equals("false")) {
+                throw new RuntimeException(argv[0] + USAGE_STRING);
+            }
+
             VMRuntime.getRuntime().setMinimumHeapSize(5 * 1024 * 1024);
 
             // Start profiling the zygote initialization.
@@ -597,17 +609,6 @@ public class ZygoteInit {
 
             // Do an initial gc to clean up after startup
             gc();
-
-            // If requested, start system server directly from Zygote
-            if (argv.length != 2) {
-                throw new RuntimeException(argv[0] + USAGE_STRING);
-            }
-
-            if (argv[1].equals("true")) {
-                startSystemServer();
-            } else if (!argv[1].equals("false")) {
-                throw new RuntimeException(argv[0] + USAGE_STRING);
-            }
 
             Log.i(TAG, "Accepting command socket connections");
 
