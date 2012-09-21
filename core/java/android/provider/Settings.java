@@ -1491,6 +1491,18 @@ public final class Settings {
          */
         public static final String NAVI_BAR_COLOR = "navi_bar_color";
 
+        /**
+         * Sets overicon color
+         * @hide
+         */
+        public static final String OVERICON_COLOR = "overicon_color";
+
+        /**
+         * enable/disable overicon color
+         * @hide
+         */
+        public static final String ENABLE_OVERICON_COLOR = "enable_overicon_color";
+
 	/**
          * Transparent notification bar
          *

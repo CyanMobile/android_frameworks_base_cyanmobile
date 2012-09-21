@@ -75,6 +75,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.PorterDuff.Mode;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
@@ -1043,6 +1044,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mDateColor = Settings.System.getInt(resolver, Settings.System.COLOR_DATE, mDateColor);
         mDateView.setTextColor(mDateColor);
+        mSettingsIconButton.setColorFilter(mDateColor, Mode.MULTIPLY);
 
         mButtonText = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_CLEAR_BUTTON, mButtonText);
 
