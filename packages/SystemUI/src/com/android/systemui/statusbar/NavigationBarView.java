@@ -1098,7 +1098,13 @@ public class NavigationBarView extends LinearLayout {
             mVolDownButton.setVisibility(View.GONE);
         }
 
-        if (mOverColorEnable) {
+        if (!mOverColorEnable) {
+            mHomeButton.clearColorFilter();
+            mMenuButton.clearColorFilter();
+            mBackButton.clearColorFilter();
+            mSearchButton.clearColorFilter();
+            mQuickButton.clearColorFilter();
+        } else {
           if(mShowHome == 6)
             mHomeButton.clearColorFilter();
 
