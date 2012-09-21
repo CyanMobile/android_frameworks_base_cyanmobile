@@ -147,7 +147,7 @@ public class CmBatteryTextExp extends TextView {
                 Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF38FF00));
 
         int mCarrierSizeval = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.STATUSBAR_ICON_FONT_SIZE, 25);
+                Settings.System.STATUSBAR_ICON_FONT_SIZE, 11);
         int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, getContext().getResources().getDisplayMetrics());
         mCarrierSize = CarrierSizepx;
 
