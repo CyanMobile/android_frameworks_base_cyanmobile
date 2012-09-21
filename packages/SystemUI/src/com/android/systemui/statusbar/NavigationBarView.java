@@ -185,8 +185,8 @@ public class NavigationBarView extends LinearLayout {
                     Settings.System.NAVI_BUTTON_SHOW_QUICKER, 4);
             mLongPressBackKills = (Settings.Secure.getInt(resolver,
                     Settings.Secure.KILL_APP_LONGPRESS_BACK, 0) == 1);
-            mOverColorEnable = (Settings.Secure.getInt(resolver,
-                    Settings.Secure.ENABLE_OVERICON_COLOR, 1) == 1);
+            mOverColorEnable = (Settings.System.getInt(resolver,
+                    Settings.System.ENABLE_OVERICON_COLOR, 1) == 1);
             mOverColor = Settings.System.getInt(resolver,
                     Settings.System.OVERICON_COLOR, 0xFF38FF00);
             updateNaviButtons();
