@@ -3209,6 +3209,13 @@ public final class Settings {
         public static final String REVERSE_VOLUME_BEHAVIOR = "reverse_volume_behavior";
 
         /**
+         * enable/disable the volume button remapping behavior
+         * default: 0
+         * @hide
+         */
+        public static final String VOLUME_REMAP_BEHAVIOR = "volume_remap_behavior";
+
+        /**
          * Action to be executed on long-press-volume-plus while screen on
          * 0: none / default action
          * >0: action defined in arrays.xml of CMParts

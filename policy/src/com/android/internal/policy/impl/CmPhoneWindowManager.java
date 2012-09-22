@@ -50,6 +50,7 @@ public class CmPhoneWindowManager extends PhoneWindowManager implements OnPressL
     private int mUnhideKeyCode;
     // variables connected to volume key remapping
     private boolean mRevVolBehavior;
+    private boolean mVolRemapBehavior;
     private int mLongVolPlusAction;
     private int mLongVolMinusAction;
     private int mVolBothAction;
@@ -86,6 +87,8 @@ public class CmPhoneWindowManager extends PhoneWindowManager implements OnPressL
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.REVERSE_VOLUME_BEHAVIOR), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.VOLUME_REMAP_BEHAVIOR), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.LONG_VOLP_ACTION), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.LONG_VOLM_ACTION), false, this);
@@ -105,6 +108,8 @@ public class CmPhoneWindowManager extends PhoneWindowManager implements OnPressL
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_REVERSE_VOLUME_BEHAVIOR) ? 1 : 0);
             mRevVolBehavior = (Settings.System.getInt(resolver,
                     Settings.System.REVERSE_VOLUME_BEHAVIOR, defValue) == 1);
+            mVolRemapBehavior = (Settings.System.getInt(resolver,
+                    Settings.System.VOLUME_REMAP_BEHAVIOR, 0) == 1);
             defValue=CmSystem.getDefaultInt(mContext, CmSystem.CM_DEFAULT_REMAPPED_LONG_VOL_UP_INDEX);
             mLongVolPlusAction = Settings.System.getInt(resolver,
                     Settings.System.LONG_VOLP_ACTION, defValue);
@@ -185,19 +190,14 @@ public class CmPhoneWindowManager extends PhoneWindowManager implements OnPressL
         if(isScreenOn && hasHandledUnhideButton(keyCode, down))
             return ACTION_NOTHING;
 
-        return super.interceptKeyBeforeQueueing(whenNanos, action, flags, keyCode, scanCode, policyFlags, isScreenOn);
-
-        // cm71 nightlies: will be re-enabled to replace PhoneWindowManager's crappy volume handling
-        /*        // update the volume Trackers
-        if(!isInjected && (keyCode==KeyEvent.KEYCODE_VOLUME_DOWN || keyCode==KeyEvent.KEYCODE_VOLUME_UP)){
-            mVolDownTracker.track(keyCode, down);
-            mVolUpTracker.track(keyCode, down);
+        if (mVolRemapBehavior) {
+            if(!isInjected && (keyCode==KeyEvent.KEYCODE_VOLUME_DOWN || keyCode==KeyEvent.KEYCODE_VOLUME_UP)){
+               mVolDownTracker.track(keyCode, down);
+               mVolUpTracker.track(keyCode, down);
+            }
         }
 
-        if(keyguardActive || !isScreenOn)
-            return super.interceptKeyBeforeQueueing(whenNanos, action, flags, keyCode, scanCode, policyFlags, isScreenOn);
-
-        return super.interceptKeyBeforeQueueing(whenNanos, action, flags, keyCode, scanCode, policyFlags, isScreenOn);*/
+        return super.interceptKeyBeforeQueueing(whenNanos, action, flags, keyCode, scanCode, policyFlags, isScreenOn);
     }
 
     private boolean hasHandledUnhideButton(int keyCode, boolean down){
