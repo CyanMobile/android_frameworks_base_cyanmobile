@@ -942,7 +942,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
 
         mSettingsButton = (View)mTrackingView.findViewById(R.id.settingUp);
-        mSettingsButton.setOnClickListener(mSettingsButtonListener);
+        mSettingsButton.setOnLongClickListener(mSettingsButtonListener);
 
         mCarrierLabelBottomLayout = (CarrierLabelBottom) mTrackingView.findViewById(R.id.carrierlabel_bottom);
         mPowerWidgetBottom = (PowerWidgetBottom) mTrackingView.findViewById(R.id.exp_power_stat);
@@ -1323,17 +1323,25 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 mNavigationBarView, getNavigationBarLayoutParams());
     }
 
-    private WindowManager.LayoutParams getNavigationBarLayoutParams() {
+    private void repositionNavigationBar() {
+        mNavigationBarView.reorient();
+        WindowManagerImpl.getDefault().updateViewLayout(
+                mNavigationBarView, getNavigationBarLayoutParams());
+    }
 
+    private WindowManager.LayoutParams getNavigationBarLayoutParams() {
+        final int rotation = mDisplay.getRotation();
         Resources res = mContext.getResources();
         final boolean sideways = 
             (mNaviShow && (Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.NAVI_BUTTONS, 1) == 1));
+        final boolean anotherways = 
+            (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270);
         final int size = getNavBarSize();
 
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                sideways ? size : 0,
+                sideways ? (anotherways ? size : ViewGroup.LayoutParams.MATCH_PARENT) : 0,
+                sideways ? (anotherways ? ViewGroup.LayoutParams.MATCH_PARENT : size) : 0,
                 WindowManager.LayoutParams.TYPE_NAVIGATION_BAR,
                     0
                     | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
@@ -1344,7 +1352,19 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 PixelFormat.TRANSLUCENT);
 
         lp.setTitle("NavigationBar");
-        lp.gravity = Gravity.BOTTOM | Gravity.FILL_HORIZONTAL;
+        switch (rotation) {
+            case Surface.ROTATION_90:
+                // device has been turned 90deg counter-clockwise
+                lp.gravity = Gravity.RIGHT | Gravity.FILL_VERTICAL;
+                break;
+            case Surface.ROTATION_270:
+                // device has been turned 90deg clockwise
+                lp.gravity = Gravity.RIGHT | Gravity.FILL_VERTICAL;
+                break;
+            default:
+                lp.gravity = Gravity.BOTTOM | Gravity.FILL_HORIZONTAL;
+                break;
+        }
         lp.windowAnimations = 0;
 
         return lp;
@@ -2850,8 +2870,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     };
 
-    private View.OnClickListener mSettingsButtonListener = new View.OnClickListener() {
-        public void onClick(View v) {
+    private View.OnLongClickListener mSettingsButtonListener = new View.OnLongClickListener() {
+        public boolean onLongClick(View v) {
             if (Settings.System.getInt(getContentResolver(),
                       Settings.System.ENABLE_SETTING_BUTTON, 0) == 1) {
                 if (mFirstis) {
@@ -2862,12 +2882,15 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     mFirstis = true;
                 }
                 animateCollapse();
+                return true;
             } else if (Settings.System.getInt(getContentResolver(),
                       Settings.System.ENABLE_SETTING_BUTTON, 0) == 2) {
                 WeatherPopup weatherWindow = new WeatherPopup(v);
                 weatherWindow.showLikeQuickAction();
+                return true;
             } else {
                 animateCollapse();
+                return true;
             }
         }
     };
@@ -2938,6 +2961,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                         clockLeft.invalidate();
                     }
                 }
+                repositionNavigationBar();
                 updateResources();
             }
         }

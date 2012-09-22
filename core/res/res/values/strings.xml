@@ -521,6 +521,13 @@
       messages without your confirmation.</string>
 
     <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
+    <string name="permlab_sendSmsNoConfirmation">send SMS messages with no confirmation</string>
+    <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
+    <string name="permdesc_sendSmsNoConfirmation">Allows application to send SMS
+      messages. Malicious applications may cost you money by sending
+      messages without your confirmation.</string>
+
+    <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
     <string name="permlab_readSms">read SMS or MMS</string>
     <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
     <string name="permdesc_readSms">Allows application to read

@@ -273,6 +273,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private boolean mNaviShow;
     private boolean mNaviShowAll;
     private boolean mNaviShowAll2;
+    private boolean mNavRotate;
     int mPointerLocationMode = 0;
     int mBackKillTimeout;
 
@@ -1783,6 +1784,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mDockRight = mContentRight = mCurRight = displayWidth;
         mDockBottom = mContentBottom = mCurBottom = displayHeight;
         mDockLayer = 0x10000000;
+        mNavRotate = (mNaviShowAll && (displayWidth > displayHeight));
 
          // start with the current dock rect, which will be (0,0,displayWidth,displayHeight)
          final Rect pf = mTmpParentFrame;
@@ -1798,17 +1800,26 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             if (mNavigationBar != null) {
                 final boolean navVisible = (mNavigationBar.isVisibleLw() && mNaviShow && mNaviShowAll);
                 final int mNavigationBarHeight = getNavBarSize();
-                    mTmpNavigationFrame.set(0, displayHeight-mNavigationBarHeight,
+                    mTmpNavigationFrame.set((mNavRotate ? (displayWidth-mNavigationBarHeight) : 0),
+                            (mNavRotate ? 0 : (displayHeight-mNavigationBarHeight)),
                             displayWidth, displayHeight);
                     if (navVisible) {
-                        mDockBottom = mContentBottom = mCurBottom = mTmpNavigationFrame.top;
+                        if (mNavRotate) {
+                            mDockRight = mContentRight = mCurRight = mTmpNavigationFrame.left;
+                        } else {
+                            mDockBottom = mContentBottom = mCurBottom = mTmpNavigationFrame.top;
+                        }
                     } else {
-                        mTmpNavigationFrame.offset(0, mNavigationBarHeight);
+                        mTmpNavigationFrame.offset((mNavRotate ? mNavigationBarHeight : 0), (mNavRotate ? 0 : mNavigationBarHeight));
                     }
                 mNavigationBar.computeFrameLw(mTmpNavigationFrame, mTmpNavigationFrame,
                                         mTmpNavigationFrame, mTmpNavigationFrame);
             } else {
-                mDockBottom = mContentBottom = mCurBottom = displayHeight;
+                if (mNavRotate) {
+                    mDockRight = mContentRight = mCurRight = displayWidth;
+                } else {
+                    mDockBottom = mContentBottom = mCurBottom = displayHeight;
+                }
             }
             if (DEBUG_LAYOUT) Log.i(TAG, "mNavigationBar frame: " + mTmpNavigationFrame);
             if(mBottomBar && !mNaviShow){
@@ -1906,7 +1917,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         final Rect df = mTmpDisplayFrame;
         final Rect cf = mTmpContentFrame;
         final Rect vf = mTmpVisibleFrame;
-        
+        final boolean mNavForceRotate = mNavRotate;
         final boolean hasNavBar = (mNaviShow && mNaviShowAll);
 
         if (attrs.type == TYPE_INPUT_METHOD) {
@@ -1934,13 +1945,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             || attrs.type == TYPE_STATUS_BAR_SUB_PANEL) {
                         pf.left = df.left = mUnrestrictedScreenLeft;
                         pf.top = df.top = mUnrestrictedScreenTop;
-                        pf.right = df.right = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
-                        pf.bottom = df.bottom = hasNavBar ? mDockBottom : mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
+                        pf.right = df.right = (hasNavBar && mNavForceRotate) ? mDockRight : mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
+                        pf.bottom = df.bottom = (hasNavBar && !mNavForceRotate) ? mDockBottom : mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
                     } else {
                         pf.left = df.left = mRestrictedScreenLeft;
                         pf.top = df.top = mRestrictedScreenTop;
-                        pf.right = df.right = mRestrictedScreenLeft+mRestrictedScreenWidth;
-                        pf.bottom = df.bottom = hasNavBar ? mDockBottom : mRestrictedScreenTop+mRestrictedScreenHeight;
+                        pf.right = df.right = (hasNavBar && mNavForceRotate) ? mDockRight : mRestrictedScreenLeft+mRestrictedScreenWidth;
+                        pf.bottom = df.bottom = (hasNavBar && !mNavForceRotate) ? mDockBottom : mRestrictedScreenTop+mRestrictedScreenHeight;
                     }
                     if ((sim & SOFT_INPUT_MASK_ADJUST) != SOFT_INPUT_ADJUST_RESIZE) {
                         cf.left = mDockLeft;
@@ -1966,9 +1977,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     pf.left = df.left = cf.left = mUnrestrictedScreenLeft;
                     pf.top = df.top = cf.top = mUnrestrictedScreenTop;
                     pf.right = df.right = cf.right
-                            = mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
+                            = (hasNavBar && mNavForceRotate) ? mDockRight : mUnrestrictedScreenLeft+mUnrestrictedScreenWidth;
                     pf.bottom = df.bottom = cf.bottom
-                            = hasNavBar ? mDockBottom : mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
+                            = (hasNavBar && !mNavForceRotate) ? mDockBottom : mUnrestrictedScreenTop+mUnrestrictedScreenHeight;
                 } else if (attrs.type == TYPE_SECURE_SYSTEM_OVERLAY) {
                     // Fullscreen secure system overlays get what they ask for.
                     pf.left = df.left = mUnrestrictedScreenLeft;

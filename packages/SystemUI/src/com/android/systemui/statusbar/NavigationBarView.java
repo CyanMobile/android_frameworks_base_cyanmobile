@@ -56,7 +56,7 @@ import com.android.systemui.statusbar.popups.QuickAction;
 import com.android.systemui.R;
 
 public class NavigationBarView extends LinearLayout {
-
+    final Display mDisplay;
     private static final boolean DEBUG = false;
     private static final String TAG = "NavigationBarView";
 
@@ -131,8 +131,23 @@ public class NavigationBarView extends LinearLayout {
     private Bitmap mVolUpIcon;
     private Bitmap mVolDownIcon;
     private Bitmap mTouchIcon;
+    private Bitmap mHomeIconNorm;
+    private Bitmap mMenuIconNorm;
+    private Bitmap mBackIconNorm;
+    private Bitmap mSearchIconNorm;
+    private Bitmap mQuickIconNorm;
+    private Bitmap mVolUpIconNorm;
+    private Bitmap mVolDownIconNorm;
+    private Bitmap mHomeIconRot;
+    private Bitmap mMenuIconRot;
+    private Bitmap mBackIconRot;
+    private Bitmap mSearchIconRot;
+    private Bitmap mQuickIconRot;
+    private Bitmap mVolUpIconRot;
+    private Bitmap mVolDownIconRot;
     boolean mVisible = true;
     boolean mHidden = false;
+    boolean mForceRotate = false;
     Handler mHandler;
 
     class SettingsObserver extends ContentObserver {
@@ -195,6 +210,7 @@ public class NavigationBarView extends LinearLayout {
 
     public NavigationBarView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        mDisplay = ((WindowManager)context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
     }
 
     @Override
@@ -229,6 +245,13 @@ public class NavigationBarView extends LinearLayout {
             runIconVolUp();
             runIconVolDown();
             runIconTouch();
+            runIconHomeRot();
+            runIconMenuRot();
+            runIconBackRot();
+            runIconSearchRot();
+            runIconQuickRot();
+            runIconVolUpRot();
+            runIconVolDownRot();
 	    ActionItem appItem = new ActionItem(ID_APPLICATION, "Application");
 	    ActionItem dispItem = new ActionItem(ID_DISPLAY, "Display");
             ActionItem inpItem = new ActionItem(ID_INPUT, "Input");
@@ -566,19 +589,19 @@ public class NavigationBarView extends LinearLayout {
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowHome == 4) {
+                          } else if(mShowHome == 4 && !mForceRotate) {
                              quickActionss.show(v);
 			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowHome == 2) {
+                          } else if(mShowHome == 2 && !mForceRotate) {
                              quickActionmm.show(v);
 			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowHome == 3) {
+                          } else if(mShowHome == 3 && !mForceRotate) {
                              quickActionrr.show(v);
 			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowHome == 5) {
+                          } else if(mShowHome == 5 && !mForceRotate) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
@@ -650,19 +673,19 @@ public class NavigationBarView extends LinearLayout {
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowMenu == 4) {
+                          } else if(mShowMenu == 4 && !mForceRotate) {
                              quickActionss.show(v);
 			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowMenu == 2) {
+                          } else if(mShowMenu == 2 && !mForceRotate) {
                              quickActionmm.show(v);
 			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowMenu == 3) {
+                          } else if(mShowMenu == 3 && !mForceRotate) {
                              quickActionrr.show(v);
 			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowMenu == 5) {
+                          } else if(mShowMenu == 5 && !mForceRotate) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
@@ -734,19 +757,19 @@ public class NavigationBarView extends LinearLayout {
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowBack == 4) {
+                          } else if(mShowBack == 4 && !mForceRotate) {
                              quickActionss.show(v);
 			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowBack == 2) {
+                          } else if(mShowBack == 2 && !mForceRotate) {
                              quickActionmm.show(v);
 			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowBack == 3) {
+                          } else if(mShowBack == 3 && !mForceRotate) {
                              quickActionrr.show(v);
 			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowBack == 5) {
+                          } else if(mShowBack == 5 && !mForceRotate) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
@@ -818,19 +841,19 @@ public class NavigationBarView extends LinearLayout {
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowSearch == 4) {
+                          } else if(mShowSearch == 4 && !mForceRotate) {
                              quickActionss.show(v);
 			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowSearch == 2) {
+                          } else if(mShowSearch == 2 && !mForceRotate) {
                              quickActionmm.show(v);
 			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowSearch == 3) {
+                          } else if(mShowSearch == 3 && !mForceRotate) {
                              quickActionrr.show(v);
 			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowSearch == 5) {
+                          } else if(mShowSearch == 5 && !mForceRotate) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
@@ -924,19 +947,19 @@ public class NavigationBarView extends LinearLayout {
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowQuicker == 3) {
+                          } else if(mShowQuicker == 3 && !mForceRotate) {
                              quickActionss.show(v);
 			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowQuicker == 1) {
+                          } else if(mShowQuicker == 1 && !mForceRotate) {
                              quickActionmm.show(v);
 			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowQuicker == 2) {
+                          } else if(mShowQuicker == 2 && !mForceRotate) {
                              quickActionrr.show(v);
 			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowQuicker == 4) {
+                          } else if(mShowQuicker == 4 && !mForceRotate) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
@@ -967,6 +990,8 @@ public class NavigationBarView extends LinearLayout {
         }
 
     public void reorient() {
+         final int rot = mDisplay.getRotation();
+         mForceRotate = (rot == Surface.ROTATION_90 || rot == Surface.ROTATION_270);
          ContentResolver resolver = mContext.getContentResolver();
          mNVShow = (Settings.System.getInt(resolver,
                     Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
@@ -976,6 +1001,14 @@ public class NavigationBarView extends LinearLayout {
         } else {
            mNaviAdd.setVisibility(View.GONE);
         }
+
+        mHomeIcon = mForceRotate ? mHomeIconRot : mHomeIconNorm;
+        mMenuIcon = mForceRotate ? mMenuIconRot : mMenuIconNorm;
+        mBackIcon = mForceRotate ? mBackIconRot : mBackIconNorm;
+        mSearchIcon = mForceRotate ? mSearchIconRot : mSearchIconNorm;
+        mQuickIcon = mForceRotate ? mQuickIconRot : mQuickIconNorm;
+        mVolUpIcon = mForceRotate ? mVolUpIconRot : mVolUpIconNorm;
+        mVolDownIcon = mForceRotate ? mVolDownIconRot : mVolDownIconNorm;
         updateNaviButtons();
     }
 
@@ -1151,7 +1184,7 @@ public class NavigationBarView extends LinearLayout {
                 ActivityInfo ai = i.resolveActivityInfo(pm,PackageManager.GET_ACTIVITIES);
                 if (ai != null) {
                         Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
-                        Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_home);
+                        Bitmap jogBmp = mHomeIcon;
                         int jogWidth = jogBmp.getWidth();
                         int sqSide = (int) (jogWidth / Math.sqrt(2));
                         mCustomHomeIcon = Bitmap.createScaledBitmap(iconBmp, sqSide, sqSide, true);
@@ -1169,7 +1202,7 @@ public class NavigationBarView extends LinearLayout {
                 ActivityInfo ai = i.resolveActivityInfo(pm,PackageManager.GET_ACTIVITIES);
                 if (ai != null) {
                         Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
-                        Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_home);
+                        Bitmap jogBmp = mHomeIcon;
                         int jogWidth = jogBmp.getWidth();
                         int sqSide = (int) (jogWidth / Math.sqrt(2));
                         mCustomMenuIcon = Bitmap.createScaledBitmap(iconBmp, sqSide, sqSide, true);
@@ -1187,7 +1220,7 @@ public class NavigationBarView extends LinearLayout {
                 ActivityInfo ai = i.resolveActivityInfo(pm,PackageManager.GET_ACTIVITIES);
                 if (ai != null) {
                         Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
-                        Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_home);
+                        Bitmap jogBmp = mHomeIcon;
                         int jogWidth = jogBmp.getWidth();
                         int sqSide = (int) (jogWidth / Math.sqrt(2));
                         mCustomBackIcon = Bitmap.createScaledBitmap(iconBmp, sqSide, sqSide, true);
@@ -1205,7 +1238,7 @@ public class NavigationBarView extends LinearLayout {
                 ActivityInfo ai = i.resolveActivityInfo(pm,PackageManager.GET_ACTIVITIES);
                 if (ai != null) {
                         Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
-                        Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_home);
+                        Bitmap jogBmp = mHomeIcon;
                         int jogWidth = jogBmp.getWidth();
                         int sqSide = (int) (jogWidth / Math.sqrt(2));
                         mCustomSearchIcon = Bitmap.createScaledBitmap(iconBmp, sqSide, sqSide, true);
@@ -1223,7 +1256,7 @@ public class NavigationBarView extends LinearLayout {
                 ActivityInfo ai = i.resolveActivityInfo(pm,PackageManager.GET_ACTIVITIES);
                 if (ai != null) {
                         Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
-                        Bitmap jogBmp = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_home);
+                        Bitmap jogBmp = mHomeIcon;
                         int jogWidth = jogBmp.getWidth();
                         int sqSide = (int) (jogWidth / Math.sqrt(2));
                         mCustomQuickIcon = Bitmap.createScaledBitmap(iconBmp, sqSide, sqSide, true);
@@ -1235,42 +1268,77 @@ public class NavigationBarView extends LinearLayout {
 
     private void runIconHome() {
         Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_home);
-        mHomeIcon = asIcon;
+        mHomeIconNorm = asIcon;
     }
 
     private void runIconMenu() {
         Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_menu);
-        mMenuIcon = asIcon;
+        mMenuIconNorm = asIcon;
     }
 
     private void runIconBack() {
         Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_back);
-        mBackIcon = asIcon;
+        mBackIconNorm = asIcon;
     }
 
     private void runIconSearch() {
         Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_search);
-        mSearchIcon = asIcon;
+        mSearchIconNorm = asIcon;
     }
 
     private void runIconQuick() {
         Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_quickna);
-        mQuickIcon = asIcon;
+        mQuickIconNorm = asIcon;
     }
 
     private void runIconVolUp() {
         Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_volup);
-        mVolUpIcon = asIcon;
+        mVolUpIconNorm = asIcon;
     }
 
     private void runIconVolDown() {
         Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_voldown);
-        mVolDownIcon = asIcon;
+        mVolDownIconNorm = asIcon;
     }
 
     private void runIconTouch() {
         Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.navibar_touch);
         mTouchIcon = asIcon;
+    }
+
+    private void runIconHomeRot() {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_homerot);
+        mHomeIconRot = asIcon;
+    }
+
+    private void runIconMenuRot() {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_menurot);
+        mMenuIconRot = asIcon;
+    }
+
+    private void runIconBackRot() {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_backrot);
+        mBackIconRot = asIcon;
+    }
+
+    private void runIconSearchRot() {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_searchrot);
+        mSearchIconRot = asIcon;
+    }
+
+    private void runIconQuickRot() {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_quicknarot);
+        mQuickIconRot = asIcon;
+    }
+
+    private void runIconVolUpRot() {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_voluprot);
+        mVolUpIconRot = asIcon;
+    }
+
+    private void runIconVolDownRot() {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_voldownrot);
+        mVolDownIconRot = asIcon;
     }
 
     Runnable mResetHome = new Runnable() {
