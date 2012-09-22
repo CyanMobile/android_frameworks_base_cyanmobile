@@ -1763,7 +1763,7 @@ class PowerManagerService extends IPowerManager.Stub
             Slog.i(TAG, "Set screen state: " + on, e);
         }
         if (on) {
-            if ((mPowerState & SCREEN_ON_BIT) == 0 || mSkippedScreenOn) {
+            if (mInitialized && ((mPowerState & SCREEN_ON_BIT) == 0 || mSkippedScreenOn)) {
                 // If we are turning the screen state on, but the screen
                 // light is currently off, then make sure that we set the
                 // light at this point to 0.  This is the case where we are
@@ -2123,12 +2123,14 @@ class PowerManagerService extends IPowerManager.Stub
             } finally {
                 Binder.restoreCallingIdentity(identity);
             }
-            mScreenBrightness.setTargetLocked(brightness, steps,
+            if (!mSkippedScreenOn) {
+                mScreenBrightness.setTargetLocked(brightness, steps,
                     INITIAL_SCREEN_BRIGHTNESS, nominalCurrentValue);
-            if (DEBUG_SCREEN_ON) {
-                RuntimeException e = new RuntimeException("here");
-                e.fillInStackTrace();
-                Slog.i(TAG, "Setting screen brightness: " + brightness, e);
+                if (DEBUG_SCREEN_ON) {
+                    RuntimeException e = new RuntimeException("here");
+                    e.fillInStackTrace();
+                    Slog.i(TAG, "Setting screen brightness: " + brightness, e);
+                }
             }
         }
 
@@ -2802,8 +2804,10 @@ class PowerManagerService extends IPowerManager.Stub
                 }
 
                 if (mAutoBrightessEnabled && mScreenBrightnessOverride < 0 && !mAlwaysOnAndDimmed) {
-                    mScreenBrightness.setTargetLocked(lcdValue, AUTOBRIGHTNESS_ANIM_STEPS,
+                    if (!mSkippedScreenOn) {
+                        mScreenBrightness.setTargetLocked(lcdValue, AUTOBRIGHTNESS_ANIM_STEPS,
                             INITIAL_SCREEN_BRIGHTNESS, (int)mScreenBrightness.curValue);
+                    }
                     mLastLcdValue = value;
                 }
                 if (mButtonBrightnessOverride < 0) {
@@ -3609,6 +3613,7 @@ class PowerManagerService extends IPowerManager.Stub
     }
 
     SensorEventListener mLightListener = new SensorEventListener() {
+        @Override
         public void onSensorChanged(SensorEvent event) {
             synchronized (mLocks) {
                 // ignore light sensor while screen is turning off
@@ -3620,6 +3625,7 @@ class PowerManagerService extends IPowerManager.Stub
             }
         }
 
+        @Override
         public void onAccuracyChanged(Sensor sensor, int accuracy) {
             // ignore
         }

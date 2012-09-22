@@ -166,7 +166,7 @@ bool InputWindow::isTrustedOverlay() const {
 InputDispatcher::InputDispatcher(const sp<InputDispatcherPolicyInterface>& policy) :
     mPolicy(policy),
     mPendingEvent(NULL), mAppSwitchDueTime(LONG_LONG_MAX),
-    mDispatchEnabled(true), mDispatchFrozen(false),
+    mDispatchEnabled(false), mDispatchFrozen(false),
     mFocusedWindow(NULL),
     mFocusedApplication(NULL),
     mCurrentInputTargetsValid(false),

@@ -126,7 +126,6 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
      */
     protected static final int AWAKE_INTERVAL_DEFAULT_MS = 5000;
 
-
     /**
      * The default amount of time we stay awake (used for all key input) when
      * the keyboard is open
@@ -150,9 +149,9 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
     /** The stream type that the lock sounds are tied to. */
     private static final int MASTER_STREAM_TYPE = AudioManager.STREAM_RING;
     /** Minimum volume for lock sounds, as a ratio of max MASTER_STREAM_TYPE */
-    final float MIN_LOCK_VOLUME = 0.05f;
+    final float MIN_LOCK_VOLUME = 0.1f;
     /** Maximum volume for lock sounds, as a ratio of max MASTER_STREAM_TYPE */
-    final float MAX_LOCK_VOLUME = 0.4f;
+    final float MAX_LOCK_VOLUME = 0.6f;
 
     private Context mContext;
     private AlarmManager mAlarmManager;
@@ -240,14 +239,6 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
     // the properties of the keyguard
     private KeyguardViewProperties mKeyguardViewProperties;
 
-    private LockPatternUtils mLockPatternUtils;
-
-    private SoundPool mLockSounds;
-    private int mLockSoundId;
-    private int mUnlockSoundId;
-    private int mLockSoundStreamId;
-    private int mMasterStreamMaxVolume;
-
     private KeyguardUpdateMonitor mUpdateMonitor;
 
     private boolean mKeyboardOpen = false;
@@ -267,6 +258,13 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
      * the keyguard.
      */
     private boolean mWaitingUntilKeyguardVisible = false;
+    private LockPatternUtils mLockPatternUtils;
+
+    private SoundPool mLockSounds;
+    private int mLockSoundId;
+    private int mUnlockSoundId;
+    private int mLockSoundStreamId;
+    private int mMasterStreamMaxVolume;
 
     private static String mArtist = null;
     private static String mTrack = null;
@@ -301,7 +299,6 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
         context.registerReceiver(mBroadCastReceiver, filter);
         mAlarmManager = (AlarmManager) context
                 .getSystemService(Context.ALARM_SERVICE);
-
         mCallback = (CmPhoneWindowManager)callback;
 
         mUpdateMonitor = new KeyguardUpdateMonitor(context);
@@ -309,9 +306,8 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
         mUpdateMonitor.registerSimStateCallback(this);
 
         mLockPatternUtils = new LockPatternUtils(mContext);
-
-        mKeyguardViewProperties = new LockPatternKeyguardViewProperties(mLockPatternUtils,
-                mUpdateMonitor);
+        mKeyguardViewProperties
+                = new LockPatternKeyguardViewProperties(mLockPatternUtils, mUpdateMonitor);
 
         mKeyguardViewManager = new KeyguardViewManager(
                 context, WindowManagerImpl.getDefault(), this,
@@ -319,16 +315,15 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
 
         mUserPresentIntent = new Intent(Intent.ACTION_USER_PRESENT);
         mUserPresentIntent.addFlags(Intent.FLAG_RECEIVER_REPLACE_PENDING
-                    | Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
+                | Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
 
         final ContentResolver cr = mContext.getContentResolver();
+        mShowLockIcon = (Settings.System.getInt(cr, Settings.System.SHOW_STATUS_BAR_LOCK, 0) == 1);
 
         IntentFilter iF = new IntentFilter();
         iF.addAction("com.android.music.metachanged");
         iF.addAction("com.android.music.playstatechanged");
         mContext.registerReceiver(mMusicReceiver, iF);
-
-        mShowLockIcon = (Settings.System.getInt(cr, Settings.System.SHOW_STATUS_BAR_LOCK, 0) == 1);
 
         mLockSounds = new SoundPool(1, AudioManager.STREAM_SYSTEM, 0);
         String soundPath = Settings.System.getString(cr, Settings.System.LOCK_SOUND);
@@ -369,6 +364,12 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
             mScreenOn = false;
             if (DEBUG) Log.d(TAG, "onScreenTurnedOff(" + why + ")");
 
+            // Lock immediately based on setting if secure (user has a pin/pattern/password).
+            // This also "locks" the device when not secure to provide easy access to the
+            // camera while preventing unwanted input.
+            final boolean lockImmediately =
+                mLockPatternUtils.getPowerButtonInstantlyLocks() || !mLockPatternUtils.isSecure();
+
             if (mExitSecureCallback != null) {
                 if (DEBUG) Log.d(TAG, "pending exit secure callback cancelled");
                 mExitSecureCallback.onKeyguardExitResult(false);
@@ -383,7 +384,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                 }
                 resetStateLocked();
             } else if (why == WindowManagerPolicy.OFF_BECAUSE_OF_TIMEOUT
-                    || why == WindowManagerPolicy.OFF_BECAUSE_OF_USER) {
+                    || (why == WindowManagerPolicy.OFF_BECAUSE_OF_USER && !lockImmediately)) {
                 final ContentResolver cr = mContext.getContentResolver();
 
                 mShowLockIcon = (Settings.System.getInt(cr, Settings.System.SHOW_STATUS_BAR_LOCK, 0) == 1);
@@ -499,7 +500,9 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
             mScreenOn = true;
             mDelayedShowingSequence++;
             if (DEBUG) Log.d(TAG, "onScreenTurnedOn, seq = " + mDelayedShowingSequence);
-            notifyScreenOnLocked(showListener);
+            if (showListener != null) {
+                notifyScreenOnLocked(showListener);
+            }
         }
     }
 
@@ -618,6 +621,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
         synchronized (KeyguardViewMediator.this) {
             if (mHidden != isHidden) {
                 mHidden = isHidden;
+                updateActivityLockScreenState();
                 adjustUserActivityLocked();
                 adjustStatusBarLocked();
             }
@@ -640,13 +644,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
      * was suppressed by an app that disabled the keyguard or we haven't been provisioned yet.
      */
     public boolean isInputRestricted() {
-        if (mShowing) {
-            return true;
-        }
-        if (mExternallyEnabled && mNeedToReshowWhenReenabled) {
-            return true;
-        }
-        return !mUpdateMonitor.isDeviceProvisioned();
+        return mShowing || (mExternallyEnabled && mNeedToReshowWhenReenabled) || !mUpdateMonitor.isDeviceProvisioned();
     }
 
     /**
@@ -669,55 +667,62 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
      * Enable the keyguard if the settings are appropriate.
      */
     private void doKeyguard(int handlerMessage) {
-        synchronized (this) {
-            // override lockscreen if selected in tablet tweaks
-            int defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_DISABLE_LOCKSCREEN) ? 1 : 0);
-            boolean disableLockscreen=(Settings.System.getInt(mContext.getContentResolver(),
+
+        // if the keyguard is already showing, don't bother
+        if (mKeyguardViewManager.isShowing()) {
+            if (DEBUG) Log.d(TAG, "doKeyguard: not showing because it is already showing");
+            return;
+        }
+
+        // override lockscreen if selected in tablet tweaks
+        int defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_DISABLE_LOCKSCREEN) ? 1 : 0);
+        boolean disableLockscreen=(Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.LOCKSCREEN_DISABLED, defValue) == 1);
 
-            // if the setup wizard hasn't run yet, don't show
-            final boolean requireSim = !SystemProperties.getBoolean("keyguard.no_require_sim",
-                    false);
-            final boolean provisioned = mUpdateMonitor.isDeviceProvisioned();
-            final IccCard.State state = mUpdateMonitor.getSimState();
-            final boolean lockedOrMissing = state.isPinLocked()
-                    || ((state == IccCard.State.ABSENT) && requireSim);
+        // if the setup wizard hasn't run yet, don't show
+        final boolean requireSim = !SystemProperties.getBoolean("keyguard.no_require_sim",
+                false);
+        final boolean provisioned = mUpdateMonitor.isDeviceProvisioned();
+        final IccCard.State state = mUpdateMonitor.getSimState();
+        final boolean lockedOrMissing = state.isPinLocked()
+                || ((state == IccCard.State.ABSENT)
+                && requireSim);
 
-            if (!lockedOrMissing && !provisioned) {
-                if (DEBUG) Log.d(TAG, "doKeyguard: not showing because device isn't provisioned"
-                        + " and the sim is not locked or missing");
-                return;
-            }
+        if (!lockedOrMissing && !provisioned) {
+            if (DEBUG) Log.d(TAG, "doKeyguard: not showing because device isn't provisioned"
+                    + " and the sim is not locked or missing");
+            return;
+        }
 
-            // if another app is disabling us, don't show
-            if (!mExternallyEnabled && !state.isPinLocked()) {
-                if (DEBUG) Log.d(TAG, "doKeyguard: not showing because externally disabled");
+        // if another app is disabling us, don't show
+        if (!mExternallyEnabled && !state.isPinLocked()) {
+            if (DEBUG) Log.d(TAG, "doKeyguard: not showing because externally disabled");
+            // note: we *should* set mNeedToReshowWhenReenabled=true here, but that makes
+            // for an occasional ugly flicker in this situation:
+            // 1) receive a call with the screen on (no keyguard) or make a call
+            // 2) screen times out
+            // 3) user hits key to turn screen back on
+            // instead, we reenable the keyguard when we know the screen is off and the call
+            // ends (see the broadcast receiver below)
+            // TODO: clean this up when we have better support at the window manager level
+            // for apps that wish to be on top of the keyguard
+            return;
+        }
 
-                // note: we *should* set mNeedToReshowWhenReenabled=true here, but that makes
-                // for an occasional ugly flicker in this situation:
-                // 1) receive a call with the screen on (no keyguard) or make a call
-                // 2) screen times out
-                // 3) user hits key to turn screen back on
-                // instead, we reenable the keyguard when we know the screen is off and the call
-                // ends (see the broadcast receiver below)
-                // TODO: clean this up when we have better support at the window manager level
-                // for apps that wish to be on top of the keyguard
-                return;
-            }
-
-            if (!disableLockscreen || state.isPinLocked()) {
-                if (DEBUG)
-                    Log.d(TAG, "doKeyguard: showing the applicable keyguard screen");
-                showLocked(handlerMessage);
-            }
-
-            // if the current profile has disabled us, don't show
+        // if the current profile has disabled us, don't show
+        Profile profile = mProfileManager.getActiveProfile();
+        if (profile != null) {
             if (!lockedOrMissing
-                   && mProfileManager.getActiveProfile().getScreenLockMode() == Profile.LockMode.DISABLE) {
+                    && profile.getScreenLockMode() == Profile.LockMode.DISABLE) {
                 if (DEBUG) Log.d(TAG, "doKeyguard: not showing because of profile override");
-                   return;
-                }
+                return;
             }
+        }
+
+        if (!disableLockscreen || state.isPinLocked()) {
+            if (DEBUG) Log.d(TAG, "doKeyguard: showing the applicable keyguard screen");
+            showLocked(handlerMessage);
+        }
     }
 
     /**
@@ -769,7 +774,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
      * @see #onWakeKeyWhenKeyguardShowingTq(int)
      */
     private void wakeWhenReadyLocked(int keyCode) {
-        if (true || DBG_WAKE) Log.d(TAG, "wakeWhenReadyLocked(" + keyCode + ")");
+        if (DBG_WAKE) Log.d(TAG, "wakeWhenReadyLocked(" + keyCode + ")");
 
         /**
          * acquire the handoff lock that will keep the cpu running.  this will
@@ -812,36 +817,37 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
             case ABSENT:
                 // only force lock screen in case of missing sim if user hasn't
                 // gone through setup wizard
-              synchronized (this) {
-                if (!mUpdateMonitor.isDeviceProvisioned()) {
+                synchronized (this) {
+                    if (!mUpdateMonitor.isDeviceProvisioned()) {
+                        if (!isShowing()) {
+                            if (DEBUG) Log.d(TAG, "ICC_ABSENT isn't showing,"
+                                    + " we need to show the keyguard since the "
+                                    + "device isn't provisioned yet.");
+                            doKeyguard(SHOW_SECURITY);
+                        } else {
+                            resetStateLocked();
+                        }
+                    }
+                }
+                break;
+            case PIN_REQUIRED:
+            case PUK_REQUIRED:
+                synchronized (this) {
                     if (!isShowing()) {
-                        if (DEBUG) Log.d(TAG, "INTENT_VALUE_ICC_ABSENT and keygaurd isn't showing, we need "
-                             + "to show the keyguard since the device isn't provisioned yet.");
+                        if (DEBUG) Log.d(TAG, "INTENT_VALUE_ICC_LOCKED and keygaurd isn't showing, "
+                                + "we need to show keyguard so user can enter their sim pin");
                         doKeyguard(SHOW_SECURITY);
                     } else {
                         resetStateLocked();
                     }
                 }
-              }
-                break;
-            case PIN_REQUIRED:
-            case PUK_REQUIRED:
-              synchronized (this) {
-                if (!isShowing()) {
-                    if (DEBUG) Log.d(TAG, "INTENT_VALUE_ICC_LOCKED and keygaurd isn't showing, we need "
-                            + "to show the keyguard so the user can enter their sim pin");
-                    doKeyguard(SHOW_SECURITY);
-                } else {
-                    resetStateLocked();
-                }
-              }
                 break;
             case READY:
-              synchronized (this) {
-                if (isShowing()) {
-                    resetStateLocked();
+                synchronized (this) {
+                    if (isShowing()) {
+                        resetStateLocked();
+                    }
                 }
-              }
                 break;
         }
     }
@@ -870,9 +876,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                     if (mShowing) {
                         mEnableUnlockScreenUponScreenOff = true;
                         mSuppressNextLockSound = true;
-                        if (DEBUG)
-                            Log.d(TAG,
-                                    "Screen was on when handling action; will go to unlock screen upon screenoff");
+                        if (DEBUG) Log.d(TAG, "Screen was on when handling action; will go to unlock screen upon screenoff");
                     }
                 } else {
                     int nextDelay = intent.getIntExtra("nextDelay", 0);
@@ -907,20 +911,21 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                 }
             } else if (TelephonyManager.ACTION_PHONE_STATE_CHANGED.equals(action)) {
                 mPhoneState = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
-              synchronized (KeyguardViewMediator.this) {
-                if (TelephonyManager.EXTRA_STATE_IDLE.equals(mPhoneState)  // call ending
-                        && !mScreenOn                           // screen off
-                        && mExternallyEnabled) {                // not disabled by any app
 
-                    // note: this is a way to gracefully reenable the keyguard when the call
-                    // ends and the screen is off without always reenabling the keyguard
-                    // each time the screen turns off while in call (and having an occasional ugly
-                    // flicker while turning back on the screen and disabling the keyguard again).
-                    if (DEBUG) Log.d(TAG, "screen is off and call ended, let's make sure the "
-                            + "keyguard is showing");
-                    doKeyguard(SHOW_SECURITY);
+                synchronized (KeyguardViewMediator.this) {
+                   if (TelephonyManager.EXTRA_STATE_IDLE.equals(mPhoneState)  // call ending
+                           && !mScreenOn                           // screen off
+                           && mExternallyEnabled) {                // not disabled by any app
+
+                        // note: this is a way to gracefully reenable the keyguard when the call
+                        // ends and the screen is off without always reenabling the keyguard
+                        // each time the screen turns off while in call (and having an occasional ugly
+                        // flicker while turning back on the screen and disabling the keyguard again).
+                        if (DEBUG) Log.d(TAG, "screen is off and call ended, let's make sure the "
+                                + "keyguard is showing");
+                        doKeyguard(SHOW_SECURITY);
+                    }
                 }
-              }
             }
         }
     };
@@ -952,6 +957,13 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
         }
     }
 
+    /**
+     * When the keyguard is showing we ignore some keys that might otherwise typically
+     * be considered wake keys.  We filter them out here.
+     *
+     * {@link KeyEvent#KEYCODE_POWER} is notably absent from this list because it
+     * is always considered a wake key.
+     */
     private boolean isWakeKeyWhenKeyguardShowing(int keyCode) {
         switch (keyCode) {
             case KeyEvent.KEYCODE_VOLUME_UP:
@@ -976,8 +988,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
 
     /** {@inheritDoc} */
     public void pokeWakelock() {
-        pokeWakelock(mKeyboardOpen ?
-                AWAKE_INTERVAL_DEFAULT_KEYBOARD_OPEN_MS : AWAKE_INTERVAL_DEFAULT_MS);
+        pokeWakelock(mKeyboardOpen ? AWAKE_INTERVAL_DEFAULT_KEYBOARD_OPEN_MS : AWAKE_INTERVAL_DEFAULT_MS);
     }
 
     /** {@inheritDoc} */
@@ -1085,9 +1096,9 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                     handleSetHidden(msg.arg1 != 0);
                     break;
                 case KEYGUARD_TIMEOUT:
-                  synchronized (KeyguardViewMediator.this) {
-                    doKeyguard(SHOW_SECURITY);
-                  }
+                    synchronized (KeyguardViewMediator.this) {
+                        doKeyguard(SHOW_SECURITY);
+                    }
                     break;
                 case SHOW_SLIDE:
                     handleShow(SHOW_SLIDE);
@@ -1168,7 +1179,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                 if (mAudioManager == null) return;
                 mMasterStreamMaxVolume = mAudioManager.getStreamMaxVolume(MASTER_STREAM_TYPE);
             }
-
+            // If the stream is muted, don't play the sound
             if (mAudioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE) return;
 
             // Adjust the lock sound volume from a minimum of MIN_LOCK_VOLUME to a maximum
@@ -1187,6 +1198,14 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
         }
     }
 
+    private void updateActivityLockScreenState() {
+        try {
+            ActivityManagerNative.getDefault().setLockScreenShown(
+                    mShowing && !mHidden);
+        } catch (RemoteException e) {
+        }
+    }
+
     /**
      * Handle message sent by {@link #showLocked}.
      */
@@ -1194,8 +1213,6 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
         synchronized (KeyguardViewMediator.this) {
             if (DEBUG) Log.d(TAG, "handleShow");
             if (!mSystemReady) return;
-
-            playSounds(true);
 
             ShowMode showMode = ShowMode.KeepCurrentState;
             switch (handlerMessage) {
@@ -1214,12 +1231,17 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
             }
             mKeyguardViewManager.show(showMode);
             mShowing = true;
+            updateActivityLockScreenState();
             adjustUserActivityLocked();
             adjustStatusBarLocked();
             try {
                 ActivityManagerNative.getDefault().closeSystemDialogs("lock");
             } catch (RemoteException e) {
             }
+
+            // Do this at the end to not slow down display of the keyguard.
+            playSounds(true);
+
             mShowKeyguardWakeLock.release();
         }
     }
@@ -1244,6 +1266,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
 
             mKeyguardViewManager.hide();
             mShowing = false;
+            updateActivityLockScreenState();
             adjustUserActivityLocked();
             adjustStatusBarLocked();
         }
@@ -1284,17 +1307,22 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
                 }
             }
 
+            // Disable aspects of the system/status/navigation bars that must not be re-enabled by
+            // windows that appear on top, ever
             int flags = StatusBarManager.DISABLE_NONE;
-            if (mShowing && !mHidden) {
-                // showing lockscreen exclusively; disable various extra
-                // statusbar components.
-                flags |= StatusBarManager.DISABLE_NAVIGATION;
-                flags |= StatusBarManager.DISABLE_CLOCK;
+            if (mShowing) {
+                if (!mHidden) {
+                    // showing lockscreen exclusively; disable various extra
+                    // statusbar components.
+                    flags |= StatusBarManager.DISABLE_NAVIGATION;
+                    flags |= StatusBarManager.DISABLE_CLOCK;
+                }
+                if (isSecure()) {
+                    // showing secure lockscreen; disable expanding.
+                    flags |= StatusBarManager.DISABLE_EXPAND;
+                }
             }
-            if (mShowing && isSecure()) {
-                // showing secure lockscreen; disable expanding.
-                flags |= StatusBarManager.DISABLE_EXPAND;
-            }
+
             mStatusBarManager.disable(flags);
         }
     }
@@ -1348,6 +1376,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
             if (DEBUG) Log.d(TAG, "handleVerifyUnlock");
             mKeyguardViewManager.verifyUnlock();
             mShowing = true;
+            updateActivityLockScreenState();
         }
     }
 
@@ -1358,7 +1387,6 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
     private void handleNotifyScreenOff() {
         synchronized (KeyguardViewMediator.this) {
             if (DEBUG) Log.d(TAG, "handleNotifyScreenOff");
-            mHandler.removeMessages(TIMEOUT);
             mKeyguardViewManager.onScreenTurnedOff();
         }
     }
@@ -1370,14 +1398,10 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
     private void handleNotifyScreenOn(KeyguardViewManager.ShowListener showListener) {
         synchronized (KeyguardViewMediator.this) {
             if (DEBUG) Log.d(TAG, "handleNotifyScreenOn");
-            Message msg = mHandler.obtainMessage(TIMEOUT, mWakelockSequence, 0);
-            mHandler.removeMessages(TIMEOUT);
-            mHandler.sendMessageDelayed(msg, AWAKE_INTERVAL_DEFAULT_KEYBOARD_OPEN_MS);
             mKeyguardViewManager.onScreenTurnedOn(showListener);
         }
     }
     private BroadcastReceiver mMusicReceiver = new BroadcastReceiver() {
-
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -1406,5 +1430,3 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
         return mAlbumId;
     }
 }
-
-

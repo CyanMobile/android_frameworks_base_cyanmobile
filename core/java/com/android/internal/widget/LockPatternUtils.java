@@ -105,6 +105,8 @@ public class LockPatternUtils {
     private final static String LOCK_FINGER_ENABLED = "lockscreen.lockfingerenabled";
     public final static String PASSWORD_TYPE_KEY = "lockscreen.password_type";
 
+    public final static String LOCKSCREEN_POWER_BUTTON_INSTANTLY_LOCKS = "lockscreen.power_button_instantly_locks";
+
     private final Context mContext;
     private final ContentResolver mContentResolver;
     private DevicePolicyManager mDevicePolicyManager;
@@ -268,7 +270,7 @@ public class LockPatternUtils {
      * @return True if the user has ever chosen a pattern.
      */
     public boolean isPatternEverChosen() {
-        return getBoolean(PATTERN_EVER_CHOSEN_KEY);
+        return getBoolean(PATTERN_EVER_CHOSEN_KEY, false);
     }
 
     /**
@@ -570,7 +572,7 @@ public class LockPatternUtils {
      * @return Whether the lock pattern is enabled.
      */
     public boolean isLockPatternEnabled() {
-        return getBoolean(Settings.Secure.LOCK_PATTERN_ENABLED)
+        return getBoolean(Settings.Secure.LOCK_PATTERN_ENABLED, false)
                 && getLong(PASSWORD_TYPE_KEY, DevicePolicyManager.PASSWORD_QUALITY_SOMETHING)
                         == DevicePolicyManager.PASSWORD_QUALITY_SOMETHING;
     }
@@ -579,7 +581,7 @@ public class LockPatternUtils {
      * @return Whether the lock finger is enabled.
      */
     public boolean isLockFingerEnabled() {
-        return getBoolean(LOCK_FINGER_ENABLED)
+        return getBoolean(LOCK_FINGER_ENABLED, false)
                 && getLong(PASSWORD_TYPE_KEY, 0)
                         == DevicePolicyManager.PASSWORD_QUALITY_FINGER;
     }
@@ -607,7 +609,7 @@ public class LockPatternUtils {
      * @return Whether the visible pattern is enabled.
      */
     public boolean isVisiblePatternEnabled() {
-        return getBoolean(Settings.Secure.LOCK_PATTERN_VISIBLE);
+        return getBoolean(Settings.Secure.LOCK_PATTERN_VISIBLE, false);
     }
 
     /**
@@ -621,7 +623,7 @@ public class LockPatternUtils {
      * @return Whether tactile feedback for the pattern is enabled.
      */
     public boolean isTactileFeedbackEnabled() {
-        return getBoolean(Settings.Secure.LOCK_PATTERN_TACTILE_FEEDBACK_ENABLED);
+        return getBoolean(Settings.Secure.LOCK_PATTERN_TACTILE_FEEDBACK_ENABLED, false);
     }
 
     /**
@@ -742,7 +744,7 @@ public class LockPatternUtils {
      *   attempts.
      */
     public boolean isPermanentlyLocked() {
-        return getBoolean(LOCKOUT_PERMANENT_KEY);
+        return getBoolean(LOCKOUT_PERMANENT_KEY, false);
     }
 
     /**
@@ -1005,5 +1007,13 @@ public class LockPatternUtils {
             // What can we do?
         }
         return false;
+    }
+
+    public void setPowerButtonInstantlyLocks(boolean enabled) {
+        setBoolean(LOCKSCREEN_POWER_BUTTON_INSTANTLY_LOCKS, enabled);
+    }
+
+    public boolean getPowerButtonInstantlyLocks() {
+        return getBoolean(LOCKSCREEN_POWER_BUTTON_INSTANTLY_LOCKS, true);
     }
 }

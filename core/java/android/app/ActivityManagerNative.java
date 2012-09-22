@@ -959,6 +959,13 @@ public abstract class ActivityManagerNative extends Binder implements IActivityM
             return true;
         }
 
+        case SET_LOCK_SCREEN_SHOWN_TRANSACTION: {
+            data.enforceInterface(IActivityManager.descriptor);
+            setLockScreenShown(data.readInt() != 0);
+            reply.writeNoException();
+            return true;
+        }
+
         case SET_DEBUG_APP_TRANSACTION: {
             data.enforceInterface(IActivityManager.descriptor);
             String pn = data.readString();
@@ -2460,6 +2467,17 @@ class ActivityManagerProxy implements IActivityManager
         Parcel reply = Parcel.obtain();
         data.writeInterfaceToken(IActivityManager.descriptor);
         mRemote.transact(WAKING_UP_TRANSACTION, data, reply, 0);
+        reply.readException();
+        data.recycle();
+        reply.recycle();
+    }
+    public void setLockScreenShown(boolean shown) throws RemoteException
+    {
+        Parcel data = Parcel.obtain();
+        Parcel reply = Parcel.obtain();
+        data.writeInterfaceToken(IActivityManager.descriptor);
+        data.writeInt(shown ? 1 : 0);
+        mRemote.transact(SET_LOCK_SCREEN_SHOWN_TRANSACTION, data, reply, 0);
         reply.readException();
         data.recycle();
         reply.recycle();

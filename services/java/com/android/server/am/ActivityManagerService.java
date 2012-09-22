@@ -712,6 +712,16 @@ public final class ActivityManagerService extends ActivityManagerNative
     boolean mSleeping = false;
 
     /**
+     * State of external calls telling us if the device is asleep.
+     */
+    boolean mWentToSleep = false;
+
+    /**
+     * State of external call telling us if the lock screen is shown.
+     */
+    boolean mLockScreenShown = false;
+
+    /**
      * Set if we are shutting down the system, similar to sleeping.
      */
     boolean mShuttingDown = false;
@@ -3631,6 +3641,10 @@ public final class ActivityManagerService extends ActivityManagerNative
         EventLog.writeEvent(EventLogTags.BOOT_PROGRESS_ENABLE_SCREEN,
                 SystemClock.uptimeMillis());
         mWindowManager.enableScreenAfterBoot();
+
+        synchronized (this) {
+            updateEventDispatchingLocked();
+        }
     }
 
     public void showBootMessage(final CharSequence msg, final boolean always) {
@@ -5727,21 +5741,30 @@ public final class ActivityManagerService extends ActivityManagerNative
     }
 
     public void goingToSleep() {
+        if (checkCallingPermission(android.Manifest.permission.DEVICE_POWER)
+                != PackageManager.PERMISSION_GRANTED) {
+            throw new SecurityException("Requires permission "
+                    + android.Manifest.permission.DEVICE_POWER);
+        }
+
         synchronized(this) {
-            mSleeping = true;
-            mWindowManager.setEventDispatching(false);
+            mWentToSleep = true;
+            updateEventDispatchingLocked();
 
-            if (mMainStack.mResumedActivity != null) {
-                mMainStack.pauseIfSleepingLocked();
-            } else {
-                Slog.w(TAG, "goingToSleep with no resumed activity!");
+            if (!mSleeping) {
+                mSleeping = true;
+                if (mMainStack.mResumedActivity != null) {
+                    mMainStack.pauseIfSleepingLocked();
+                } else {
+                    Slog.w(TAG, "goingToSleep with no resumed activity!");
+                }
+
+                // Initialize the wake times of all processes.
+                checkExcessivePowerUsageLocked(false);
+                mHandler.removeMessages(CHECK_EXCESSIVE_WAKE_LOCKS_MSG);
+                Message nmsg = mHandler.obtainMessage(CHECK_EXCESSIVE_WAKE_LOCKS_MSG);
+                mHandler.sendMessageDelayed(nmsg, POWER_CHECK_DELAY);
             }
-
-            // Initialize the wake times of all processes.
-            checkExcessivePowerUsageLocked(false);
-            mHandler.removeMessages(CHECK_EXCESSIVE_WAKE_LOCKS_MSG);
-            Message nmsg = mHandler.obtainMessage(CHECK_EXCESSIVE_WAKE_LOCKS_MSG);
-            mHandler.sendMessageDelayed(nmsg, POWER_CHECK_DELAY);
         }
     }
 
@@ -5756,7 +5779,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         
         synchronized(this) {
             mShuttingDown = true;
-            mWindowManager.setEventDispatching(false);
+            updateEventDispatchingLocked();
 
             if (mMainStack.mResumedActivity != null) {
                 mMainStack.pauseIfSleepingLocked();
@@ -5782,15 +5805,47 @@ public final class ActivityManagerService extends ActivityManagerNative
         
         return timedout;
     }
-    
+
+    private void comeOutOfSleepIfNeededLocked() {
+        if (!mWentToSleep && !mLockScreenShown) {
+            if (mSleeping) {
+                mSleeping = false;
+                mMainStack.resumeTopActivityLocked(null);
+            }
+        }
+    }
+
     public void wakingUp() {
+        if (checkCallingPermission(android.Manifest.permission.DEVICE_POWER)
+                != PackageManager.PERMISSION_GRANTED) {
+            throw new SecurityException("Requires permission "
+                    + android.Manifest.permission.DEVICE_POWER);
+        }
+
         synchronized(this) {
             if (mMainStack.mGoingToSleep.isHeld()) {
                 mMainStack.mGoingToSleep.release();
             }
-            mWindowManager.setEventDispatching(true);
-            mSleeping = false;
-            mMainStack.resumeTopActivityLocked(null);
+            mWentToSleep = false;
+            updateEventDispatchingLocked();
+            comeOutOfSleepIfNeededLocked();
+        }
+    }
+
+    private void updateEventDispatchingLocked() {
+        mWindowManager.setEventDispatching(mBooted && !mWentToSleep && !mShuttingDown);
+    }
+
+    public void setLockScreenShown(boolean shown) {
+        if (checkCallingPermission(android.Manifest.permission.DEVICE_POWER)
+                != PackageManager.PERMISSION_GRANTED) {
+            throw new SecurityException("Requires permission "
+                    + android.Manifest.permission.DEVICE_POWER);
+        }
+
+        synchronized(this) {
+            mLockScreenShown = shown;
+            comeOutOfSleepIfNeededLocked();
         }
     }
 
@@ -7525,7 +7580,13 @@ public final class ActivityManagerService extends ActivityManagerNative
         }
         pw.println("  mConfiguration: " + mConfiguration);
         pw.println("  mConfigWillChange: " + mMainStack.mConfigWillChange);
-        pw.println("  mSleeping=" + mSleeping + " mShuttingDown=" + mShuttingDown);
+        if (mSleeping || mWentToSleep || mLockScreenShown) {
+            pw.println("  mSleeping=" + mSleeping + " mWentToSleep=" + mWentToSleep
+                    + " mLockScreenShown " + mLockScreenShown);
+        }
+        if (mShuttingDown) {
+            pw.println("  mShuttingDown=" + mShuttingDown);
+        }
         if (mDebugApp != null || mOrigDebugApp != null || mDebugTransient
                 || mOrigWaitForDebugger) {
             pw.println("  mDebugApp=" + mDebugApp + "/orig=" + mOrigDebugApp

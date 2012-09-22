@@ -4598,7 +4598,7 @@ public class WindowManagerService extends IWindowManager.Stub
                     //Slog.i(TAG, "******* TELLING SURFACE FLINGER WE ARE BOOTED!");
                     Parcel data = Parcel.obtain();
                     data.writeInterfaceToken("android.ui.ISurfaceComposer");
-                    surfaceFlinger.transact(IBinder.FIRST_CALL_TRANSACTION,
+                    surfaceFlinger.transact(IBinder.FIRST_CALL_TRANSACTION, // BOOT_FINISHED
                                             data, null, 0);
                     data.recycle();
                 }
@@ -5310,7 +5310,9 @@ public class WindowManagerService extends IWindowManager.Stub
         private boolean mInputDispatchFrozen;
         
         // When true, input dispatch proceeds normally.  Otherwise all events are dropped.
-        private boolean mInputDispatchEnabled = true;
+        // Initially false, so that input does not get dispatched until boot is finished at
+        // which point the ActivityManager will enable dispatching.
+        private boolean mInputDispatchEnabled;
 
         // Temporary list of windows information to provide to the input dispatcher.
         private InputWindowList mTempInputWindows = new InputWindowList();
@@ -5629,7 +5631,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
     public void setEventDispatching(boolean enabled) {
         if (!checkCallingPermission(android.Manifest.permission.MANAGE_APP_TOKENS,
-                "resumeKeyDispatching()")) {
+                "setEventDispatching()")) {
             throw new SecurityException("Requires MANAGE_APP_TOKENS permission");
         }
 
