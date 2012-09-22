@@ -1338,10 +1338,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         final boolean anotherways = 
             (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270);
         final int size = getNavBarSize();
+        final int oldsize = getStatBarSize();
 
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                sideways ? (anotherways ? size : ViewGroup.LayoutParams.MATCH_PARENT) : 0,
-                sideways ? (anotherways ? ViewGroup.LayoutParams.MATCH_PARENT : size) : 0,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                sideways ? (anotherways ? oldsize : size) : 0,
                 WindowManager.LayoutParams.TYPE_NAVIGATION_BAR,
                     0
                     | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
@@ -1352,19 +1353,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 PixelFormat.TRANSLUCENT);
 
         lp.setTitle("NavigationBar");
-        switch (rotation) {
-            case Surface.ROTATION_90:
-                // device has been turned 90deg counter-clockwise
-                lp.gravity = Gravity.RIGHT | Gravity.FILL_VERTICAL;
-                break;
-            case Surface.ROTATION_270:
-                // device has been turned 90deg clockwise
-                lp.gravity = Gravity.RIGHT | Gravity.FILL_VERTICAL;
-                break;
-            default:
-                lp.gravity = Gravity.BOTTOM | Gravity.FILL_HORIZONTAL;
-                break;
-        }
+        lp.gravity = Gravity.BOTTOM | Gravity.FILL_HORIZONTAL;
         lp.windowAnimations = 0;
 
         return lp;

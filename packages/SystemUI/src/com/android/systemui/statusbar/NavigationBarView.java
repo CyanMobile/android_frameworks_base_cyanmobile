@@ -589,19 +589,19 @@ public class NavigationBarView extends LinearLayout {
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowHome == 4 && !mForceRotate) {
+                          } else if(mShowHome == 4) {
                              quickActionss.show(v);
 			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowHome == 2 && !mForceRotate) {
+                          } else if(mShowHome == 2) {
                              quickActionmm.show(v);
 			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowHome == 3 && !mForceRotate) {
+                          } else if(mShowHome == 3) {
                              quickActionrr.show(v);
 			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowHome == 5 && !mForceRotate) {
+                          } else if(mShowHome == 5) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
@@ -673,19 +673,19 @@ public class NavigationBarView extends LinearLayout {
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowMenu == 4 && !mForceRotate) {
+                          } else if(mShowMenu == 4) {
                              quickActionss.show(v);
 			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowMenu == 2 && !mForceRotate) {
+                          } else if(mShowMenu == 2) {
                              quickActionmm.show(v);
 			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowMenu == 3 && !mForceRotate) {
+                          } else if(mShowMenu == 3) {
                              quickActionrr.show(v);
 			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowMenu == 5 && !mForceRotate) {
+                          } else if(mShowMenu == 5) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
@@ -757,19 +757,19 @@ public class NavigationBarView extends LinearLayout {
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowBack == 4 && !mForceRotate) {
+                          } else if(mShowBack == 4) {
                              quickActionss.show(v);
 			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowBack == 2 && !mForceRotate) {
+                          } else if(mShowBack == 2) {
                              quickActionmm.show(v);
 			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowBack == 3 && !mForceRotate) {
+                          } else if(mShowBack == 3) {
                              quickActionrr.show(v);
 			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowBack == 5 && !mForceRotate) {
+                          } else if(mShowBack == 5) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
@@ -841,19 +841,19 @@ public class NavigationBarView extends LinearLayout {
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowSearch == 4 && !mForceRotate) {
+                          } else if(mShowSearch == 4) {
                              quickActionss.show(v);
 			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowSearch == 2 && !mForceRotate) {
+                          } else if(mShowSearch == 2) {
                              quickActionmm.show(v);
 			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowSearch == 3 && !mForceRotate) {
+                          } else if(mShowSearch == 3) {
                              quickActionrr.show(v);
 			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowSearch == 5 && !mForceRotate) {
+                          } else if(mShowSearch == 5) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
@@ -947,19 +947,19 @@ public class NavigationBarView extends LinearLayout {
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowQuicker == 3 && !mForceRotate) {
+                          } else if(mShowQuicker == 3) {
                              quickActionss.show(v);
 			     quickActionss.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowQuicker == 1 && !mForceRotate) {
+                          } else if(mShowQuicker == 1) {
                              quickActionmm.show(v);
 			     quickActionmm.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowQuicker == 2 && !mForceRotate) {
+                          } else if(mShowQuicker == 2) {
                              quickActionrr.show(v);
 			     quickActionrr.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
-                          } else if(mShowQuicker == 4 && !mForceRotate) {
+                          } else if(mShowQuicker == 4) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
@@ -1159,6 +1159,8 @@ public class NavigationBarView extends LinearLayout {
         mHandler.postDelayed(mResetBack, 10);
         mHandler.postDelayed(mResetSearch, 10);
         mHandler.postDelayed(mResetQuick, 10);
+        mHandler.postDelayed(mResetVolUp, 10);
+        mHandler.postDelayed(mResetVolDown, 10);
     }
 
     private void runCustomApp(String uri) {
