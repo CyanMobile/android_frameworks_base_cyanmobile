@@ -2366,7 +2366,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
                   drawable = bgrColor;
                   break;
                 case 2 : // user image
-                  Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmappbackgroundchooser/files/totalapp_background"));
+                  Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/aps_background"));
                   Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
                   Drawable bgrImage = new BitmapDrawable(bitmapImage);
                   drawable = bgrImage;

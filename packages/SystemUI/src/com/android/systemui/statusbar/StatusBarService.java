@@ -925,7 +925,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                   mNotificationBackgroundView.setBackgroundDrawable(getResources().getDrawable(R.drawable.status_bar_special));
                   break;
               case 5 : // user selected background image
-                  Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmbackgroundchooser/files/nb_background"));
+                  Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/nb_background"));
                   Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
                   Drawable bgrImage = new BitmapDrawable(bitmapImage);
                   mNotificationBackgroundView.setBackgroundDrawable(bgrImage);
@@ -1373,12 +1373,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
+                WindowManager.LayoutParams.NAVIGATION_BAR_PANEL_LAYER,
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                     | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                    | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
                     | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                    | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                    | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM,
+                    | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.TOP | Gravity.FILL_HORIZONTAL;
         lp.y += height * 1.5; // FIXME
