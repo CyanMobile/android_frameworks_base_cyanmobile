@@ -114,6 +114,9 @@ class PowerManagerService extends IPowerManager.Stub
     // How long to wait to debounce light sensor changes.
     private static final int LIGHT_SENSOR_DELAY = 2000;
 
+    // light sensor events rate in microseconds
+    private static final int LIGHT_SENSOR_RATE = 1000000;
+
     // For debouncing the proximity sensor.
     private static final int PROXIMITY_SENSOR_DELAY = 1000;
 
@@ -319,7 +322,8 @@ class PowerManagerService extends IPowerManager.Stub
     
     private native void nativeInit();
     private native void nativeSetPowerState(boolean screenOn, boolean screenBright);
-    private native void nativeStartSurfaceFlingerAnimation(int mode);
+    private native void nativeStartSurfaceFlingerOffAnimation(int mode);
+    private native void nativeStartSurfaceFlingerOnAnimation(int mode);
 
     /*
     static PrintStream mLog;
@@ -529,14 +533,14 @@ class PowerManagerService extends IPowerManager.Stub
 
                 if (mContext.getResources().getBoolean(
                            com.android.internal.R.bool.config_enableScreenAnimation)) {
-                    mElectronBeamAnimationOn = Settings.System.getInt(mContext.getContentResolver(),
-                                ELECTRON_BEAM_ANIMATION_ON,
+                    mElectronBeamAnimationOn = (Settings.System.getInt(mContext.getContentResolver(),
+                                ELECTRON_BEAM_ANIMATION_ON, 0) != 0) &&
                                 mContext.getResources().getBoolean(
-                                        com.android.internal.R.bool.config_enableScreenOnAnimation) ? 1 : 0) == 1;
-                    mElectronBeamAnimationOff = Settings.System.getInt(mContext.getContentResolver(),
-                                ELECTRON_BEAM_ANIMATION_OFF,
+                                        com.android.internal.R.bool.config_enableScreenOnAnimation);
+                    mElectronBeamAnimationOff = (Settings.System.getInt(mContext.getContentResolver(),
+                                ELECTRON_BEAM_ANIMATION_OFF, 1) != 0) &&
                                 mContext.getResources().getBoolean(
-                                        com.android.internal.R.bool.config_enableScreenOffAnimation) ? 1 : 0) == 1;
+                                        com.android.internal.R.bool.config_enableScreenOffAnimation);
                 }
 
                 mAnimationSetting = 0;
@@ -1061,7 +1065,7 @@ class PowerManagerService extends IPowerManager.Stub
                 mWakeLockState = mLocks.gatherState();
                 // goes in the middle to reduce flicker
                 if ((wl.flags & PowerManager.ON_AFTER_RELEASE) != 0) {
-                    userActivity(SystemClock.uptimeMillis(), -1, false, OTHER_EVENT, false);
+                    userActivity(SystemClock.uptimeMillis(), -1, false, OTHER_EVENT, false, true);
                 }
                 setPowerState(mWakeLockState | mUserState);
             }
@@ -1785,6 +1789,11 @@ class PowerManagerService extends IPowerManager.Stub
                     mKeyboardLight.turnOff();
                     lightFilterStop();
                     resetLastLightValues();
+                    // clear current value so we will update based on the new conditions
+                    // when the sensor is reenabled.
+                    mLightSensorValue = -1;
+                    // reset our highest light sensor value when the screen turns off
+                    mHighestLightSensorValue = -1;
                 }
                 else if (!mAutoBrightessEnabled && SystemProperties.getBoolean(
                     "ro.hardware.respect_als", false)) {
@@ -2207,6 +2216,8 @@ class PowerManagerService extends IPowerManager.Stub
         float curValue;
         float delta;
         boolean animating;
+        Handler mElectronBeamOnHandler;
+        HandlerThread mElectronBeamOnHandlerThread;
 
         BrightnessState(int m) {
             mask = m;
@@ -2303,31 +2314,82 @@ class PowerManagerService extends IPowerManager.Stub
             }
         }
 
+        void jumpToTarget() {
+            if (mSpew) Slog.d(TAG, "jumpToTarget targetValue=" + targetValue + ": " + mask);
+                setLightBrightness(mask, targetValue);
+                final int tv = targetValue;
+                curValue = tv;
+                targetValue = -1;
+        }
+
         public void run() {
-            // Check for the electron beam for fully on/off transitions.
-            // Otherwise, allow it to fade the brightness as normal.
-            final boolean electrifying = animating &&
-                ((mElectronBeamAnimationOff && targetValue == Power.BRIGHTNESS_OFF) ||
-                 (mElectronBeamAnimationOn && (int)curValue == Power.BRIGHTNESS_OFF));
-            if (mAnimateScreenLights && !electrifying) {
-                synchronized (mLocks) {
+            synchronized (mLocks) {
+                final boolean turningOn = animating && (int)curValue == Power.BRIGHTNESS_OFF;
+                final boolean turningOff = animating && targetValue == Power.BRIGHTNESS_OFF;
+                // Check for the electron beam for fully on/off transitions.
+                // Otherwise, allow it to fade the brightness as normal.
+                final boolean electrifying =
+                        ((mElectronBeamAnimationOff && turningOff) ||
+                         (mElectronBeamAnimationOn && turningOn));
+                if (!electrifying && (mAnimateScreenLights || !turningOff)) {
                     long now = SystemClock.uptimeMillis();
                     boolean more = mScreenBrightness.stepLocked();
                     if (more) {
                         mScreenOffHandler.postAtTime(this, now+(1000/60));
                     }
-                }
-            } else {
-                synchronized (mLocks) {
-                    if (electrifying) {
-                        // It's pretty scary to hold mLocks for this long, and we should
-                        // redesign this, but it works for now.
-                        nativeStartSurfaceFlingerAnimation(
-                                mScreenOffReason == WindowManagerPolicy.OFF_BECAUSE_OF_PROX_SENSOR
-                                ? 0 : mAnimationSetting);
+                } else {
+                    // It's pretty scary to hold mLocks for this long, and we should
+                    // redesign this, but it works for now.
+                    if (turningOff) {
+                        if (electrifying) {
+                            nativeStartSurfaceFlingerOffAnimation(
+                                    mScreenOffReason == WindowManagerPolicy.OFF_BECAUSE_OF_PROX_SENSOR
+                                    ? 0 : mAnimationSetting);
+                        }
+                        mScreenBrightness.jumpToTargetLocked();
+                    } else if (turningOn) {
+                        if (electrifying) {
+                            int delay = 100;
+                            if(delay>0) {
+                                startElectronBeamDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        startElectronBeamOnAnimation();
+                                        synchronized(mElectronBeamOnHandler) {
+                                            mElectronBeamOnHandler.notifyAll();
+                                        }
+                                    }
+                                },delay);
+                            } else {
+                                startElectronBeamOnAnimation();
+                            }
+                        } else {
+                            mScreenBrightness.jumpToTargetLocked();
+                        }
                     }
-                    mScreenBrightness.jumpToTargetLocked();
                 }
+            }
+        }
+
+        private void startElectronBeamOnAnimation() {
+            jumpToTarget();
+            nativeStartSurfaceFlingerOnAnimation(mAnimationSetting);
+            mScreenBrightness.animating = false;
+        }
+
+        private void startElectronBeamDelayed(Runnable animation, int delay) {
+            mElectronBeamOnHandlerThread = new HandlerThread("PowerManagerService.mScreenBrightness.mElectronBeamOnHandlerThread");
+            mElectronBeamOnHandlerThread.start();
+            mElectronBeamOnHandler = new Handler(mElectronBeamOnHandlerThread.getLooper());
+            mElectronBeamOnHandler.postDelayed(animation,delay);
+            try {
+                synchronized(mElectronBeamOnHandler) {
+                    mElectronBeamOnHandler.wait();
+                }
+            } catch (InterruptedException e) {
+                Slog.d(TAG,"mElectronBeamOnHandler.wait() interrupted");
+                Slog.d(TAG,Log.getStackTraceString(e));
+                e.printStackTrace();
             }
         }
     }
@@ -2435,7 +2497,7 @@ class PowerManagerService extends IPowerManager.Stub
 
     public void userActivityWithForce(long time, boolean noChangeLights, boolean force) {
         mContext.enforceCallingOrSelfPermission(android.Manifest.permission.DEVICE_POWER, null);
-        userActivity(time, -1, noChangeLights, OTHER_EVENT, force);
+        userActivity(time, -1, noChangeLights, OTHER_EVENT, force, false);
     }
 
     public void userActivity(long time, boolean noChangeLights) {
@@ -2448,15 +2510,15 @@ class PowerManagerService extends IPowerManager.Stub
             return;
         }
 
-        userActivity(time, -1, noChangeLights, OTHER_EVENT, false);
+        userActivity(time, -1, noChangeLights, OTHER_EVENT, false, false);
     }
 
     public void userActivity(long time, boolean noChangeLights, int eventType) {
-        userActivity(time, -1, noChangeLights, eventType, false);
+        userActivity(time, -1, noChangeLights, eventType, false, false);
     }
 
     public void userActivity(long time, boolean noChangeLights, int eventType, boolean force) {
-        userActivity(time, -1, noChangeLights, eventType, force);
+        userActivity(time, -1, noChangeLights, eventType, force, false);
     }
 
     /*
@@ -2466,11 +2528,11 @@ class PowerManagerService extends IPowerManager.Stub
     public void clearUserActivityTimeout(long now, long timeout) {
         mContext.enforceCallingOrSelfPermission(android.Manifest.permission.DEVICE_POWER, null);
         Slog.i(TAG, "clearUserActivity for " + timeout + "ms from now");
-        userActivity(now, timeout, false, OTHER_EVENT, false);
+        userActivity(now, timeout, false, OTHER_EVENT, false, false);
     }
 
     private void userActivity(long time, long timeoutOverride, boolean noChangeLights,
-            int eventType, boolean force) {
+            int eventType, boolean force, boolean ignoreIfScreenOff) {
 
         if (((mPokey & POKE_LOCK_IGNORE_CHEEK_EVENTS) != 0)
                 && (eventType == CHEEK_EVENT)) {
@@ -2510,6 +2572,11 @@ class PowerManagerService extends IPowerManager.Stub
             // ignore user activity if we are in the process of turning off the screen
             if (isScreenTurningOffLocked()) {
                 Slog.d(TAG, "ignoring user activity while turning off screen");
+                return;
+            }
+            // ignore if the caller doesn't want this to allow the screen to turn
+            // on, and the screen is currently off.
+            if (ignoreIfScreenOff && (mPowerState & SCREEN_ON_BIT) == 0) {
                 return;
             }
             // Disable proximity sensor if if user presses power key while we are in the
@@ -3472,20 +3539,16 @@ class PowerManagerService extends IPowerManager.Stub
         }
         if (mSensorManager != null && mLightSensorEnabled != enable) {
             mLightSensorEnabled = enable;
+            // clear previous values so we will adjust to current brightness when
+            // auto-brightness is reenabled
+            mHighestLightSensorValue = -1;
+            mLightSensorValue = -1;
             // clear calling identity so sensor manager battery stats are accurate
             long identity = Binder.clearCallingIdentity();
             try {
                 if (enable) {
-                    // reset our highest value when reenabling
-                    mHighestLightSensorValue = -1;
-                    // force recompute of backlight values
-                    if (mLightSensorValue >= 0) {
-                        int value = (int)mLightSensorValue;
-                        mLightSensorValue = -1;
-                        handleLightSensorValue(value);
-                    }
                     mSensorManager.registerListener(mLightListener, mLightSensor,
-                            SensorManager.SENSOR_DELAY_NORMAL);
+                            LIGHT_SENSOR_RATE);
                 } else {
                     lightFilterStop();
                     mSensorManager.unregisterListener(mLightListener);
