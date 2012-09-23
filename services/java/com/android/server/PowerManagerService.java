@@ -63,6 +63,7 @@ import android.util.Slog;
 import android.view.WindowManagerPolicy;
 import static android.provider.Settings.System.DIM_SCREEN;
 import static android.provider.Settings.System.ELECTRON_BEAM_ANIMATION_ON;
+import static android.provider.Settings.System.ELECTRON_BEAM_ANIMATION_ON_DELAY;
 import static android.provider.Settings.System.ELECTRON_BEAM_ANIMATION_OFF;
 import static android.provider.Settings.System.SCREEN_BRIGHTNESS;
 import static android.provider.Settings.System.SCREEN_BRIGHTNESS_MODE;
@@ -2361,7 +2362,7 @@ class PowerManagerService extends IPowerManager.Stub
                                             mElectronBeamOnHandler.notifyAll();
                                         }
                                     }
-                                },delay);
+                                },mElectronBeamAnimationOnDelay);
                             } else {
                                 startElectronBeamOnAnimation();
                             }
