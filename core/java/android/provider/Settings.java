@@ -1484,12 +1484,20 @@ public final class Settings {
         public static final String TRANSPARENT_BACKGROUND_FULL = "transparent_background_full";
 
         /**
-         * The color to render the status bar background
+         * The color to render the navi bar background
          * hex value including alpha
          * default: ff000000
          * @hide
          */
         public static final String NAVI_BAR_COLOR = "navi_bar_color";
+
+        /**
+         * The color to render the power widget background
+         * hex value including alpha
+         * default: ff000000
+         * @hide
+         */
+        public static final String PWR_CRR_COLOR = "pwr_crr_color";
 
         /**
          * Sets overicon color
@@ -1504,11 +1512,18 @@ public final class Settings {
         public static final String ENABLE_OVERICON_COLOR = "enable_overicon_color";
 
 	/**
-         * Transparent notification bar
+         * Transparent navi bar
          *
          * @hide
          */
         public static final String TRANSPARENT_NAVI_BAR = "transparent_navi_bar";
+
+	/**
+         * Transparent power widget
+         *
+         * @hide
+         */
+        public static final String TRANSPARENT_PWR_CRR = "transparent_pwr_crr";
 
 	/**
          * Transparent notification bar

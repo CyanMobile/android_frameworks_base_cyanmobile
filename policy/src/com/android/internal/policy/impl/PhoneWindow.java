@@ -2367,9 +2367,13 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
                   break;
                 case 2 : // user image
                   Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/aps_background"));
-                  Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
-                  Drawable bgrImage = new BitmapDrawable(bitmapImage);
-                  drawable = bgrImage;
+                  if (savedImage != null) {
+                      Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
+                      Drawable bgrImage = new BitmapDrawable(bitmapImage);
+                      drawable = bgrImage;
+                  } else {
+                      drawable = getContext().getResources().getDrawable(mBackgroundResource);
+                  }
                   break;
                }
             }

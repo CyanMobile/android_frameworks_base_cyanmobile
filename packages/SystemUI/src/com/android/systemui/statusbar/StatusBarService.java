@@ -698,11 +698,15 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
           case 5 : // transparent
             break;
           case 6 : // transparent and BackLogo
-            mStatusBarView.setBackgroundDrawable(getResources().getDrawable(R.drawable.status_bar_transparent_background));
+               mStatusBarView.setBackgroundDrawable(getResources().getDrawable(R.drawable.status_bar_transparent_background));
                Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/bc_background"));
-               Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
-               Drawable bgrImage = new BitmapDrawable(bitmapImage);
-               mBackLogoLayout.setBackgroundDrawable(bgrImage);
+               if (savedImage != null) {
+                   Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
+                   Drawable bgrImage = new BitmapDrawable(bitmapImage);
+                   mBackLogoLayout.setBackgroundDrawable(bgrImage);
+               } else {
+                   mBackLogoLayout.setBackgroundDrawable(getResources().getDrawable(R.drawable.statusbar_background_semi));
+               }
             break;
         }
 
@@ -729,9 +733,13 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             break;
           case 6 : // BackLogo
                Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/navb_background"));
-               Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
-               Drawable bgrImage = new BitmapDrawable(bitmapImage);
-               mNaviBarContainer.setBackgroundDrawable(bgrImage);
+               if (savedImage != null) {
+                   Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
+                   Drawable bgrImage = new BitmapDrawable(bitmapImage);
+                   mNaviBarContainer.setBackgroundDrawable(bgrImage);
+               } else {
+                   mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background_black));
+               }
             break;
         }
 
@@ -793,6 +801,18 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mCompactClearButton = (TextView)mExpandedView.findViewById(R.id.compact_clear_all_button);
         mCompactClearButton.setOnClickListener(mClearButtonListener);
         mPowerAndCarrier = (LinearLayout)mExpandedView.findViewById(R.id.power_and_carrier);
+        int transPowerAndCarrier = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_PWR_CRR, 0);
+        int PowerAndCarrierColor = Settings.System.getInt(getContentResolver(), Settings.System.PWR_CRR_COLOR, 0xFF38FF00);
+        switch (transPowerAndCarrier) {
+          case 0 : // theme, leave alone
+            mPowerAndCarrier.setBackgroundDrawable(getResources().getDrawable(R.drawable.title_bar_portrait));
+            break;
+          case 1 : // user defined argb hex color
+            mPowerAndCarrier.setBackgroundColor(PowerAndCarrierColor);
+            break;
+          case 2 : // transparent
+            break;
+        }
         mScrollView = (ScrollView)mExpandedView.findViewById(R.id.scroll);
         mBottomScrollView = (ScrollView)mExpandedView.findViewById(R.id.bottomScroll);
         mNotificationLinearLayout = (LinearLayout)mExpandedView.findViewById(R.id.notificationLinearLayout);
@@ -926,9 +946,13 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                   break;
               case 5 : // user selected background image
                   Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/nb_background"));
-                  Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
-                  Drawable bgrImage = new BitmapDrawable(bitmapImage);
-                  mNotificationBackgroundView.setBackgroundDrawable(bgrImage);
+                  if (savedImage != null) {
+                      Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
+                      Drawable bgrImage = new BitmapDrawable(bitmapImage);
+                      mNotificationBackgroundView.setBackgroundDrawable(bgrImage);
+                  } else {
+                      mNotificationBackgroundView.setBackgroundDrawable(getResources().getDrawable(R.drawable.status_bar_special));
+                  }
                   break;
         }
 
@@ -1373,7 +1397,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.NAVIGATION_BAR_PANEL_LAYER,
+                WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL,
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                     | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                     | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
