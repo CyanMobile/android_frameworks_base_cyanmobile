@@ -24,6 +24,7 @@ import android.app.IActivityManager;
 import android.app.IInstrumentationWatcher;
 import android.app.Instrumentation;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.IIntentReceiver;
 import android.content.Intent;
 import android.net.Uri;
@@ -104,9 +105,58 @@ public class Am {
             runProfile();
         } else if (op.equals("monitor")) {
             runMonitor();
+        } else if (op.equals("display-size")) {
+            runDisplaySize();
         } else {
             throw new IllegalArgumentException("Unknown command: " + op);
         }
+    }
+
+    private void runDisplaySize() throws Exception {
+        String size = nextArgRequired();
+        int m, n;
+        if ("reset".equals(size)) {
+            m = n = -1;
+        } else {
+            int div = size.indexOf('x');
+            if (div <= 0 || div >= (size.length()-1)) {
+                System.err.println("Error: bad size " + size);
+                showUsage();
+                return;
+            }
+            String mstr = size.substring(0, div);
+            String nstr = size.substring(div+1);
+            try {
+                m = Integer.parseInt(mstr);
+                n = Integer.parseInt(nstr);
+            } catch (NumberFormatException e) {
+                System.err.println("Error: bad number " + e);
+                showUsage();
+                return;
+            }
+        }
+
+        if (m < n) {
+            int tmp = m;
+            m = n;
+            n = tmp;
+        }
+
+        IWindowManager wm = IWindowManager.Stub.asInterface(ServiceManager.checkService(
+                Context.WINDOW_SERVICE));
+        if (wm == null) {
+            System.err.println(NO_SYSTEM_ERROR_CODE);
+            throw new AndroidException("Can't connect to window manager; is the system running?");
+        }
+
+        try {
+            if (m >= 0 && n >= 0) {
+                wm.setForcedDisplaySize(m, n);
+            } else {
+                wm.clearForcedDisplaySize();
+            }
+        } catch (RemoteException e) {
+       }
     }
 
     private Intent makeIntent() throws URISyntaxException {
@@ -899,6 +949,8 @@ public class Am {
                 "\n" +
                 "    start monitoring: am monitor [--gdb <port>]\n" +
                 "        --gdb: start gdbserv on the given port at crash/ANR\n" +
+                "\n" +
+                "    override display size: am display-size [reset|MxN]\n" +
                 "\n" +
                 "    <INTENT> specifications include these flags:\n" +
                 "        [-a <ACTION>] [-d <DATA_URI>] [-t <MIME_TYPE>]\n" +

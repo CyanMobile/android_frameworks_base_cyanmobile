@@ -384,6 +384,12 @@ public interface WindowManagerPolicy {
             LocalPowerManager powerManager);
 
     /**
+     * Called by window manager once it has the initial, default native
+     * display dimensions.
+     */
+    public void setInitialDisplaySize(int width, int height);
+
+    /**
      * Check permissions when adding a window.
      * 
      * @param attrs The window's LayoutParams. 
@@ -743,6 +749,24 @@ public interface WindowManagerPolicy {
      * @see android.app.KeyguardManager#exitKeyguardSecurely(android.app.KeyguardManager.OnKeyguardExitResult)
      */
     void exitKeyguardSecurely(OnKeyguardExitResult callback);
+
+    /**
+     * isKeyguardLocked
+     *
+     * Return whether the keyguard is currently locked.
+     *
+     * @return true if in keyguard is locked.
+     */
+    public boolean isKeyguardLocked();
+
+    /**
+     * isKeyguardSecure
+     *
+     * Return whether the keyguard requires a password to unlock.
+     *
+     * @return true if in keyguard is secure.
+     */
+    public boolean isKeyguardSecure();
 
     /**
      * inKeyguardRestrictedKeyInputMode

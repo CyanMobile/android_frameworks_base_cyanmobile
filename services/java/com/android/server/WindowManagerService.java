@@ -192,6 +192,16 @@ public class WindowManagerService extends IWindowManager.Stub
      */
     static final int WINDOW_LAYER_MULTIPLIER = 5;
 
+    /**
+     * Layer at which to put the rotation freeze snapshot.
+     */
+    static final int FREEZE_LAYER = (TYPE_LAYER_MULTIPLIER * 200) + 1;
+
+    /**
+     * Layer at which to put the mask for emulated screen sizes.
+     */
+    static final int MASK_LAYER = TYPE_LAYER_MULTIPLIER * 200;
+
     /** The maximum length we will accept for a loaded animation duration:
      * this is 10 seconds.
      */
@@ -411,6 +421,8 @@ public class WindowManagerService extends IWindowManager.Stub
     boolean mShowingBootMessages = false;
     int mInitialDisplayWidth = 0;
     int mInitialDisplayHeight = 0;
+    int mBaseDisplayWidth = 0;
+    int mBaseDisplayHeight = 0;
     int mRotation = 0;
     int mRequestedRotation = 0;
     int mForcedAppOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
@@ -1864,7 +1876,18 @@ public class WindowManagerService extends IWindowManager.Stub
                 mDisplay = wm.getDefaultDisplay();
                 mInitialDisplayWidth = mDisplay.getWidth();
                 mInitialDisplayHeight = mDisplay.getHeight();
+                int rot = mDisplay.getRotation();
+                if (rot == Surface.ROTATION_90 || rot == Surface.ROTATION_270) {
+                    // If the screen is currently rotated, we need to swap the
+                    // initial width and height to get the true natural values.
+                    int tmp = mInitialDisplayWidth;
+                    mInitialDisplayWidth = mInitialDisplayHeight;
+                    mInitialDisplayHeight = tmp;
+                }
+                mBaseDisplayWidth = mInitialDisplayWidth;
+                mBaseDisplayHeight = mInitialDisplayHeight;
                 mInputManager.setDisplaySize(0, mDisplay.getRealWidth(), mDisplay.getRealHeight());
+                mPolicy.setInitialDisplaySize(mInitialDisplayWidth, mInitialDisplayHeight);
                 reportNewConfig = true;
             }
 
@@ -3155,36 +3178,44 @@ public class WindowManagerService extends IWindowManager.Stub
         long ident = Binder.clearCallingIdentity();
         
         synchronized(mWindowMap) {
-            if (updateOrientationFromAppTokensLocked(false)) {
-                if (freezeThisOneIfNeeded != null) {
-                    AppWindowToken wtoken = findAppWindowToken(
-                            freezeThisOneIfNeeded);
-                    if (wtoken != null) {
-                        startAppFreezingScreenLocked(wtoken,
-                                ActivityInfo.CONFIG_ORIENTATION);
-                    }
-                }
-                config = computeNewConfigurationLocked();
-                
-            } else if (currentConfig != null) {
-                // No obvious action we need to take, but if our current
-                // state mismatches the activity manager's, update it,
-                // disregarding font scale, which should remain set to
-                // the value of the previous configuration.
-                mTempConfiguration.setToDefaults();
-                mTempConfiguration.fontScale = currentConfig.fontScale;
-                if (computeNewConfigurationLocked(mTempConfiguration)) {
-                    if (currentConfig.diff(mTempConfiguration) != 0) {
-                        mWaitingForConfig = true;
-                        mLayoutNeeded = true;
-                        startFreezingDisplayLocked(false);
-                        config = new Configuration(mTempConfiguration);
-                    }
-                }
-            }
+            config = updateOrientationFromAppTokensLocked(currentConfig,
+                    freezeThisOneIfNeeded);
         }
         
         Binder.restoreCallingIdentity(ident);
+        return config;
+    }
+
+    private Configuration updateOrientationFromAppTokensLocked(
+            Configuration currentConfig, IBinder freezeThisOneIfNeeded) {
+        Configuration config = null;
+
+        if (updateOrientationFromAppTokensLocked(false)) {
+            if (freezeThisOneIfNeeded != null) {
+                AppWindowToken wtoken = findAppWindowToken(
+                        freezeThisOneIfNeeded);
+                if (wtoken != null) {
+                    startAppFreezingScreenLocked(wtoken,
+                            ActivityInfo.CONFIG_ORIENTATION);
+                }
+            }
+            config = computeNewConfigurationLocked();
+        } else if (currentConfig != null) {
+            // No obvious action we need to take, but if our current
+            // state mismatches the activity manager's, update it,
+            // disregarding font scale, which should remain set to
+            // the value of the previous configuration.
+            mTempConfiguration.setToDefaults();
+            mTempConfiguration.fontScale = currentConfig.fontScale;
+            if (computeNewConfigurationLocked(mTempConfiguration)) {
+                if (currentConfig.diff(mTempConfiguration) != 0) {
+                    mWaitingForConfig = true;
+                    mLayoutNeeded = true;
+                    startFreezingDisplayLocked(false);
+                    config = new Configuration(mTempConfiguration);
+                }
+            }
+        }
         return config;
     }
 
@@ -4311,6 +4342,14 @@ public class WindowManagerService extends IWindowManager.Stub
         return mPolicy.inKeyguardRestrictedKeyInputMode();
     }
 
+    public boolean isKeyguardLocked() {
+        return mPolicy.isKeyguardLocked();
+    }
+
+    public boolean isKeyguardSecure() {
+        return mPolicy.isKeyguardSecure();
+    }
+
     public void closeSystemDialogs(String reason) {
         synchronized(mWindowMap) {
             for (int i=mWindows.size()-1; i>=0; i--) {
@@ -5214,8 +5253,8 @@ public class WindowManagerService extends IWindowManager.Stub
         // Use the effective "visual" dimensions based on current rotation
         final boolean rotated = (mRotation == Surface.ROTATION_90
                 || mRotation == Surface.ROTATION_270);
-        final int dw = rotated ? mInitialDisplayHeight : mInitialDisplayWidth;
-        final int dh = rotated ? mInitialDisplayWidth : mInitialDisplayHeight;
+        final int dw = rotated ? mBaseDisplayHeight : mBaseDisplayWidth;
+        final int dh = rotated ? mBaseDisplayWidth : mBaseDisplayHeight;
 
         int orientation = Configuration.ORIENTATION_SQUARE;
         if (dw < dh) {
@@ -8434,6 +8473,54 @@ public class WindowManagerService extends IWindowManager.Stub
         synchronized(mWindowMap) {
             size.x = mInitialDisplayWidth;
             size.y = mInitialDisplayHeight;
+        }
+    }
+
+    public void setForcedDisplaySize(int longDimen, int shortDimen) {
+        synchronized(mWindowMap) {
+            int width, height;
+            if (mInitialDisplayWidth < mInitialDisplayHeight) {
+                width = shortDimen < mInitialDisplayWidth
+                        ? shortDimen : mInitialDisplayWidth;
+                height = longDimen < mInitialDisplayHeight
+                        ? longDimen : mInitialDisplayHeight;
+            } else {
+                width = longDimen < mInitialDisplayWidth
+                        ? longDimen : mInitialDisplayWidth;
+                height = shortDimen < mInitialDisplayHeight
+                        ? shortDimen : mInitialDisplayHeight;
+            }
+            setForcedDisplaySizeLocked(width, height);
+        }
+    }
+
+    private void setForcedDisplaySizeLocked(int width, int height) {
+        mBaseDisplayWidth = width;
+        mBaseDisplayHeight = height;
+
+        mPolicy.setInitialDisplaySize(mBaseDisplayWidth, mBaseDisplayHeight);
+        mLayoutNeeded = true;
+
+        boolean configChanged = updateOrientationFromAppTokensLocked(false);
+        mTempConfiguration.setToDefaults();
+        mTempConfiguration.fontScale = mCurConfiguration.fontScale;
+        if (computeNewConfigurationLocked(mTempConfiguration)) {
+            if (mCurConfiguration.diff(mTempConfiguration) != 0) {
+                configChanged = true;
+            }
+        }
+
+        if (configChanged) {
+            mWaitingForConfig = true;
+            startFreezingDisplayLocked(false);
+            mH.sendEmptyMessage(H.SEND_NEW_CONFIGURATION);
+        }
+        performLayoutAndPlaceSurfacesLocked();
+    }
+
+    public void clearForcedDisplaySize() {
+        synchronized(mWindowMap) {
+            setForcedDisplaySizeLocked(mInitialDisplayWidth, mInitialDisplayHeight);
         }
     }
 

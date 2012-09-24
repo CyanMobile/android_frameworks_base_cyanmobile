@@ -3162,6 +3162,18 @@ public final class Settings {
         public static final String NAVI_BUTTON_SHOW_QUICKER = "navi_button_show_quicker";
 
         /**
+         * Enable/disable reverse rotations.
+         * @hide
+         */
+        public static final String REVERSE_ROTATIONS = "reverse_rotations";
+
+        /**
+         * Enable/disable display custom size.
+         * @hide
+         */
+        public static final String DISPLAY_CUSTOM_SIZES = "display_custom_sizes";
+
+        /**
          * Whether to override fullscreen so statusbar always visible
          * 0: default behavior - fullscreen hides status bar
          * 1: override fullscreen.

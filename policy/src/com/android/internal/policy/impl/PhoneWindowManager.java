@@ -275,6 +275,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private boolean mNaviShowAll2;
     private boolean mPowerNavBar;
     private boolean mNavRotate;
+    private boolean mReverseRotate;
     int mPointerLocationMode = 0;
     int mBackKillTimeout;
 
@@ -358,10 +359,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // (See Settings.Secure.INCALL_POWER_BUTTON_BEHAVIOR.)
     int mIncallPowerBehavior;
 
-    int mLandscapeRotation = -1; // default landscape rotation
-    int mSeascapeRotation = -1; // "other" landscape rotation, 180 degrees from mLandscapeRotation
-    int mPortraitRotation = -1; // default portrait rotation
-    int mUpsideDownRotation = -1; // "other" portrait rotation
+    int mLandscapeRotation = 0;  // default landscape rotation
+    int mSeascapeRotation = 0;   // "other" landscape rotation, 180 degrees from mLandscapeRotation
+    int mPortraitRotation = 0;   // default portrait rotation
+    int mUpsideDownRotation = 0; // "other" portrait rotation
 
     // Nothing to see here, move along...
     int mFancyRotationAnimation;
@@ -429,6 +430,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.STATUSBAR_STATS_SIZE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUSBAR_NAVI_SIZE), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.REVERSE_ROTATIONS), false, this);
             updateSettings();
         }
 
@@ -935,6 +938,34 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     }
 
+    public void setInitialDisplaySize(int width, int height) {
+        if (width > height) {
+            if (mReverseRotate) {
+                mPortraitRotation = Surface.ROTATION_0;
+                mLandscapeRotation = Surface.ROTATION_90;
+                mUpsideDownRotation = Surface.ROTATION_180;
+                mSeascapeRotation = Surface.ROTATION_270;
+            } else {
+                mPortraitRotation = Surface.ROTATION_90;
+                mLandscapeRotation = Surface.ROTATION_0;
+                mUpsideDownRotation = Surface.ROTATION_270;
+                mSeascapeRotation = Surface.ROTATION_180;
+            }
+        } else {
+            if (mReverseRotate) {
+                mPortraitRotation = Surface.ROTATION_90;
+                mLandscapeRotation = Surface.ROTATION_0;
+                mUpsideDownRotation = Surface.ROTATION_270;
+                mSeascapeRotation = Surface.ROTATION_180;
+            } else {
+                mPortraitRotation = Surface.ROTATION_0;
+                mLandscapeRotation = Surface.ROTATION_90;
+                mUpsideDownRotation = Surface.ROTATION_180;
+                mSeascapeRotation = Surface.ROTATION_270;
+            }
+        }
+    }
+
     public void updateSettings() {
         ContentResolver resolver = mContext.getContentResolver();
         boolean updateRotation = false;
@@ -980,6 +1011,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.NAVI_BUTTON_SHOW_SEARCH, 3) != 7) &&
                     (Settings.System.getInt(resolver,
                     Settings.System.NAVI_BUTTON_SHOW_QUICKER, 4) != 6);
+            mReverseRotate = (Settings.System.getInt(resolver,
+                    Settings.System.REVERSE_ROTATIONS, 0) == 1);
             int accelerometerDefault = Settings.System.getInt(resolver,
                     Settings.System.ACCELEROMETER_ROTATION, DEFAULT_ACCELEROMETER_ROTATION);
             if (mAccelerometerDefault != accelerometerDefault) {
@@ -2861,6 +2894,16 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     /** {@inheritDoc} */
+    public boolean isKeyguardLocked() {
+        return keyguardOn();
+    }
+
+    /** {@inheritDoc} */
+    public boolean isKeyguardSecure() {
+        return mKeyguardMediator.isSecure();
+    }
+
+    /** {@inheritDoc} */
     public boolean inKeyguardRestrictedKeyInputMode() {
         if (mKeyguardMediator == null) return false;
         return mKeyguardMediator.isInputRestricted();
@@ -2885,23 +2928,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     public int rotationForOrientationLw(int orientation, int lastRotation,
             boolean displayEnabled) {
-
-        if (mPortraitRotation < 0) {
-            // Initialize the rotation angles for each orientation once.
-            Display d = ((WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE))
-                    .getDefaultDisplay();
-            if (d.getWidth() > d.getHeight()) {
-                mPortraitRotation = Surface.ROTATION_90;
-                mLandscapeRotation = Surface.ROTATION_0;
-                mUpsideDownRotation = Surface.ROTATION_270;
-                mSeascapeRotation = Surface.ROTATION_180;
-            } else {
-                mPortraitRotation = Surface.ROTATION_0;
-                mLandscapeRotation = Surface.ROTATION_90;
-                mUpsideDownRotation = Surface.ROTATION_180;
-                mSeascapeRotation = Surface.ROTATION_270;
-            }
-        }
 
         synchronized (mLock) {
             switch (orientation) {
