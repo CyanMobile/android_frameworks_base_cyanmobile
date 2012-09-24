@@ -2048,10 +2048,10 @@ status_t SurfaceFlinger::electronBeamOnAnimationImplLocked()
     glDisable(GL_SCISSOR_TEST);
 
     GLfloat vtx[8];
-    const GLfloat texCoords[4][2] = { {0,0}, {0,v}, {u,v}, {u,0} };
+    const GLfloat texCoords[4][2] = { {0,v}, {0,0}, {u,0}, {u,v} };
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, tname);
-    glTexEnvx(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glTexEnvx(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexCoordPointer(2, GL_FLOAT, 0, texCoords);
@@ -2108,7 +2108,7 @@ status_t SurfaceFlinger::electronBeamOnAnimationImplLocked()
     };
 
     // the full animation is 12 frames
-    int nbFrames = 12;
+    int nbFrames = 8;
     s_curve_interpolator itr(nbFrames, 7.5f);
     s_curve_interpolator itg(nbFrames, 8.0f);
     s_curve_interpolator itb(nbFrames, 8.5f);
@@ -2126,6 +2126,7 @@ status_t SurfaceFlinger::electronBeamOnAnimationImplLocked()
         hw.flip(screenBounds);
     }
 
+    nbFrames = 4;
     v_stretch vverts(hw_w, hw_h);
 
     glMatrixMode(GL_TEXTURE);
