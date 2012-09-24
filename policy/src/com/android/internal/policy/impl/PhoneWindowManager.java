@@ -584,7 +584,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     private final Runnable mPowerLongPress = new Runnable() {
         public void run() {
-            if (!mPowerKeyHandled) {
+            if (!mPowerKeyHandled && mPowerNavBar) {
                 mPowerKeyHandled = true;
                 performHapticFeedbackLw(null, HapticFeedbackConstants.LONG_PRESS, false);
                 sendCloseSystemWindows(SYSTEM_DIALOG_REASON_GLOBAL_ACTIONS);
@@ -2590,9 +2590,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             Log.w(TAG, "ITelephony threw RemoteException", ex);
                         }
                     }
-                    if (mPowerNavBar) {
-                        interceptPowerKeyDown(!isScreenOn || hungUp);
-                    }
+                    interceptPowerKeyDown(!isScreenOn || hungUp);
                 } else {
                     if (interceptPowerKeyUp(canceled)) {
                         if ((mEndcallBehavior
@@ -2642,9 +2640,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             Log.w(TAG, "ITelephony threw RemoteException", ex);
                         }
                     }
-                    if (mPowerNavBar) {
-                        interceptPowerKeyDown(!isScreenOn || hungUp);
-                    }
+                    interceptPowerKeyDown(!isScreenOn || hungUp);
                 } else {
                     mPowerDownTriggered = false;
                     if (interceptPowerKeyUp(canceled)) {
