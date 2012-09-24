@@ -273,6 +273,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private boolean mNaviShow;
     private boolean mNaviShowAll;
     private boolean mNaviShowAll2;
+    private boolean mPowerNavBar;
     private boolean mNavRotate;
     int mPointerLocationMode = 0;
     int mBackKillTimeout;
@@ -414,10 +415,20 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.SYSTEMUI_STATUSBAR_VISIBILITY), false, this);
             resolver.registerContentObserver(Settings.Secure.getUriFor(
                     Settings.Secure.KILL_APP_LONGPRESS_BACK), false, this);
-            resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.STATUSBAR_STATS_SIZE), false, this);
-            resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.STATUSBAR_NAVI_SIZE), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAVI_BUTTON_SHOW_HOME), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAVI_BUTTON_SHOW_MENU), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAVI_BUTTON_SHOW_BACK), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAVI_BUTTON_SHOW_SEARCH), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAVI_BUTTON_SHOW_QUICKER), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUSBAR_STATS_SIZE), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUSBAR_NAVI_SIZE), false, this);
             updateSettings();
         }
 
@@ -579,6 +590,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 sendCloseSystemWindows(SYSTEM_DIALOG_REASON_GLOBAL_ACTIONS);
                 showGlobalActionsDialog();
             }
+        }
+    };
+
+    Runnable mPowerNavBarLongPress = new Runnable() {
+        public void run() {
+            performHapticFeedbackLw(null, HapticFeedbackConstants.LONG_PRESS, false);
+            sendCloseSystemWindows(SYSTEM_DIALOG_REASON_GLOBAL_ACTIONS);
+            showGlobalActionsDialog();
         }
     };
 
@@ -951,6 +970,16 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.NAVI_BUTTONS, 1) == 1);
             mNaviShowAll2 = (Settings.System.getInt(resolver,
                     Settings.System.NAVI_BUTTONS, 1) == 2);
+            mPowerNavBar = (Settings.System.getInt(resolver,
+                    Settings.System.NAVI_BUTTON_SHOW_HOME, 1) != 7) &&
+                    (Settings.System.getInt(resolver,
+                    Settings.System.NAVI_BUTTON_SHOW_MENU, 4) != 7) &&
+                    (Settings.System.getInt(resolver,
+                    Settings.System.NAVI_BUTTON_SHOW_BACK, 2) != 7) &&
+                    (Settings.System.getInt(resolver,
+                    Settings.System.NAVI_BUTTON_SHOW_SEARCH, 3) != 7) &&
+                    (Settings.System.getInt(resolver,
+                    Settings.System.NAVI_BUTTON_SHOW_QUICKER, 4) != 6);
             int accelerometerDefault = Settings.System.getInt(resolver,
                     Settings.System.ACCELEROMETER_ROTATION, DEFAULT_ACCELEROMETER_ROTATION);
             if (mAccelerometerDefault != accelerometerDefault) {
@@ -2561,7 +2590,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             Log.w(TAG, "ITelephony threw RemoteException", ex);
                         }
                     }
-                    interceptPowerKeyDown(!isScreenOn || hungUp);
+                    if (mPowerNavBar) {
+                        interceptPowerKeyDown(!isScreenOn || hungUp);
+                    }
                 } else {
                     if (interceptPowerKeyUp(canceled)) {
                         if ((mEndcallBehavior
@@ -2611,7 +2642,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             Log.w(TAG, "ITelephony threw RemoteException", ex);
                         }
                     }
-                    interceptPowerKeyDown(!isScreenOn || hungUp);
+                    if (mPowerNavBar) {
+                        interceptPowerKeyDown(!isScreenOn || hungUp);
+                    }
                 } else {
                     mPowerDownTriggered = false;
                     if (interceptPowerKeyUp(canceled)) {

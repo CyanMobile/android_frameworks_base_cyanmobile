@@ -55,6 +55,7 @@ public class CmStatusBarView extends StatusBarView {
     //virtual button presses - double defined in StatusBarView and PhoneWindowManager
     public static final int KEYCODE_VIRTUAL_HOME_LONG=KeyEvent.getMaxKeyCode()+1;
     public static final int KEYCODE_VIRTUAL_BACK_LONG=KeyEvent.getMaxKeyCode()+2;
+    public static final int KEYCODE_VIRTUAL_POWER_LONG=KeyEvent.getMaxKeyCode()+3;
 
     //set up statusbar buttons - quiet a lot for that awesome design!
     ViewGroup mSoftButtons;

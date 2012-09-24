@@ -45,6 +45,7 @@ public class CmPhoneWindowManager extends PhoneWindowManager implements OnPressL
     //virtual button presses - double defined in StatusBarView and PhoneWindowManager
     public static final int KEYCODE_VIRTUAL_HOME_LONG=KeyEvent.getMaxKeyCode()+1;
     public static final int KEYCODE_VIRTUAL_BACK_LONG=KeyEvent.getMaxKeyCode()+2;
+    public static final int KEYCODE_VIRTUAL_POWER_LONG=KeyEvent.getMaxKeyCode()+3;
 
     // variables connected to soft buttons
     private int mUnhideKeyCode;
@@ -182,6 +183,11 @@ public class CmPhoneWindowManager extends PhoneWindowManager implements OnPressL
         if(keyCode==KEYCODE_VIRTUAL_BACK_LONG){
             if(!down)
                 mHandler.post(mBackLongPress);
+            return ACTION_NOTHING;
+        }
+        if(keyCode==KEYCODE_VIRTUAL_POWER_LONG){
+            if(!down)
+                mHandler.post(mPowerNavBarLongPress);
             return ACTION_NOTHING;
         }
 

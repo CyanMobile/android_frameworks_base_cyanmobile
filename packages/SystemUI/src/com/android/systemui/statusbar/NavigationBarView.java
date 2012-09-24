@@ -62,6 +62,7 @@ public class NavigationBarView extends LinearLayout {
 
     public static final int KEYCODE_VIRTUAL_HOME_LONG=KeyEvent.getMaxKeyCode()+1;
     public static final int KEYCODE_VIRTUAL_BACK_LONG=KeyEvent.getMaxKeyCode()+2;
+    public static final int KEYCODE_VIRTUAL_POWER_LONG=KeyEvent.getMaxKeyCode()+3;
 
     private static final int ID_APPLICATION = 1;
     private static final int ID_DISPLAY = 2;
@@ -92,6 +93,7 @@ public class NavigationBarView extends LinearLayout {
     private static final int ID_ADWLAUNCHER = 27;
     private static final int ID_BACKILL = 28;
     private static final int ID_SCREENSHOT = 29;
+    private static final int ID_POWERMENU = 30;
 
     View mNaviBackground;
     View mNaviAdd;
@@ -123,6 +125,7 @@ public class NavigationBarView extends LinearLayout {
     private Bitmap mCustomBackIcon;
     private Bitmap mCustomSearchIcon;
     private Bitmap mCustomQuickIcon;
+    private Bitmap mPowerIcon;
     private Bitmap mHomeIcon;
     private Bitmap mMenuIcon;
     private Bitmap mBackIcon;
@@ -131,6 +134,7 @@ public class NavigationBarView extends LinearLayout {
     private Bitmap mVolUpIcon;
     private Bitmap mVolDownIcon;
     private Bitmap mTouchIcon;
+    private Bitmap mPowerIconNorm;
     private Bitmap mHomeIconNorm;
     private Bitmap mMenuIconNorm;
     private Bitmap mBackIconNorm;
@@ -138,6 +142,7 @@ public class NavigationBarView extends LinearLayout {
     private Bitmap mQuickIconNorm;
     private Bitmap mVolUpIconNorm;
     private Bitmap mVolDownIconNorm;
+    private Bitmap mPowerIconRot;
     private Bitmap mHomeIconRot;
     private Bitmap mMenuIconRot;
     private Bitmap mBackIconRot;
@@ -237,6 +242,7 @@ public class NavigationBarView extends LinearLayout {
         }
 
         if (mNVShow) {
+            runIconPower();
             runIconHome();
             runIconMenu();
             runIconBack();
@@ -245,6 +251,7 @@ public class NavigationBarView extends LinearLayout {
             runIconVolUp();
             runIconVolDown();
             runIconTouch();
+            runIconPowerRot();
             runIconHomeRot();
             runIconMenuRot();
             runIconBackRot();
@@ -497,11 +504,13 @@ public class NavigationBarView extends LinearLayout {
 
             ActionItem bckItem = new ActionItem(ID_BACKILL, "KillAll app");
             ActionItem sscItem = new ActionItem(ID_SCREENSHOT, "Screenshots");
+            ActionItem pwrItem = new ActionItem(ID_POWERMENU, "Power menu");
 
             final QuickAction quickActionmm = new QuickAction(getContext(), QuickAction.VERTICAL);
 
             quickActionmm.addActionItem(bckItem);
             quickActionmm.addActionItem(sscItem);
+            quickActionmm.addActionItem(pwrItem);
 
 		quickActionmm.setOnActionItemClickListener(new QuickAction.OnActionItemClickListener() {			
 			@Override
@@ -517,6 +526,8 @@ public class NavigationBarView extends LinearLayout {
 				} else if (actionId == ID_SCREENSHOT) {
                                     Intent intent = new Intent("android.intent.action.SCREENSHOT");
                                     getContext().sendBroadcast(intent);
+                                } else if (actionId == ID_POWERMENU) {
+                                    simulateKeypress(KEYCODE_VIRTUAL_POWER_LONG);
 				}
 			}
 		});
@@ -576,6 +587,12 @@ public class NavigationBarView extends LinearLayout {
                         updateNaviButtons();
                         mHomeButton.setImageBitmap(mTouchIcon);
                         mHandler.postDelayed(mResetHome, 80);
+                      } else if(mShowHome == 7) {
+                        if(DEBUG) Slog.i(TAG, "Power clicked");
+                        simulateKeypress(KeyEvent.KEYCODE_POWER);
+                        updateNaviButtons();
+                        mHomeButton.setImageBitmap(mTouchIcon);
+                        mHandler.postDelayed(mResetHome, 80);
                       }
                     }
                 }
@@ -604,6 +621,9 @@ public class NavigationBarView extends LinearLayout {
                           } else if(mShowHome == 5) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowHome == 7) {
+                             simulateKeypress(KEYCODE_VIRTUAL_POWER_LONG);
                              return true;
                           } else {
                              return false;
@@ -660,6 +680,12 @@ public class NavigationBarView extends LinearLayout {
                         updateNaviButtons();
                         mMenuButton.setImageBitmap(mTouchIcon);
                         mHandler.postDelayed(mResetMenu, 80);
+                      } else if(mShowMenu == 7) {
+                        if(DEBUG) Slog.i(TAG, "Power clicked");
+                        simulateKeypress(KeyEvent.KEYCODE_POWER);
+                        updateNaviButtons();
+                        mMenuButton.setImageBitmap(mTouchIcon);
+                        mHandler.postDelayed(mResetMenu, 80);
                       }
                     }
                 }
@@ -688,6 +714,9 @@ public class NavigationBarView extends LinearLayout {
                           } else if(mShowMenu == 5) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowMenu == 7) {
+                             simulateKeypress(KEYCODE_VIRTUAL_POWER_LONG);
                              return true;
                           } else {
                              return false;
@@ -744,6 +773,12 @@ public class NavigationBarView extends LinearLayout {
                         updateNaviButtons();
                         mBackButton.setImageBitmap(mTouchIcon);
                         mHandler.postDelayed(mResetBack, 80);
+                      } else if(mShowBack == 7) {
+                        if(DEBUG) Slog.i(TAG, "Power clicked");
+                        simulateKeypress(KeyEvent.KEYCODE_POWER);
+                        updateNaviButtons();
+                        mBackButton.setImageBitmap(mTouchIcon);
+                        mHandler.postDelayed(mResetBack, 80);
                       }
                     }
                 }
@@ -772,6 +807,9 @@ public class NavigationBarView extends LinearLayout {
                           } else if(mShowBack == 5) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowBack == 7) {
+                             simulateKeypress(KEYCODE_VIRTUAL_POWER_LONG);
                              return true;
                           } else {
                              return false;
@@ -828,6 +866,12 @@ public class NavigationBarView extends LinearLayout {
                         updateNaviButtons();
                         mSearchButton.setImageBitmap(mTouchIcon);
                         mHandler.postDelayed(mResetSearch, 80);
+                      } else if(mShowSearch == 7) {
+                        if(DEBUG) Slog.i(TAG, "Power clicked");
+                        simulateKeypress(KeyEvent.KEYCODE_POWER);
+                        updateNaviButtons();
+                        mSearchButton.setImageBitmap(mTouchIcon);
+                        mHandler.postDelayed(mResetSearch, 80);
                       }
                     }
                 }
@@ -856,6 +900,9 @@ public class NavigationBarView extends LinearLayout {
                           } else if(mShowSearch == 5) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowSearch == 7) {
+                             simulateKeypress(KEYCODE_VIRTUAL_POWER_LONG);
                              return true;
                           } else {
                              return false;
@@ -934,6 +981,12 @@ public class NavigationBarView extends LinearLayout {
                         updateNaviButtons();
                         mQuickButton.setImageBitmap(mTouchIcon);
                         mHandler.postDelayed(mResetQuick, 80);
+                      } else if(mShowQuicker == 6) {
+                        if(DEBUG) Slog.i(TAG, "Power clicked");
+                        simulateKeypress(KeyEvent.KEYCODE_POWER);
+                        updateNaviButtons();
+                        mQuickButton.setImageBitmap(mTouchIcon);
+                        mHandler.postDelayed(mResetQuick, 80);
                       }
                     }
                 }
@@ -962,6 +1015,9 @@ public class NavigationBarView extends LinearLayout {
                           } else if(mShowQuicker == 4) {
                              quickAction.show(v);
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
+                             return true;
+                          } else if(mShowQuicker == 6) {
+                             simulateKeypress(KEYCODE_VIRTUAL_POWER_LONG);
                              return true;
                           } else {
                              return false;
@@ -1002,6 +1058,7 @@ public class NavigationBarView extends LinearLayout {
            mNaviAdd.setVisibility(View.GONE);
         }
 
+        mPowerIcon = mForceRotate ? mPowerIconRot : mPowerIconNorm;
         mHomeIcon = mForceRotate ? mHomeIconRot : mHomeIconNorm;
         mMenuIcon = mForceRotate ? mMenuIconRot : mMenuIconNorm;
         mBackIcon = mForceRotate ? mBackIconRot : mBackIconNorm;
@@ -1268,6 +1325,11 @@ public class NavigationBarView extends LinearLayout {
         }
     }
 
+    private void runIconPower() {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_power);
+        mPowerIconNorm = asIcon;
+    }
+
     private void runIconHome() {
         Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_home);
         mHomeIconNorm = asIcon;
@@ -1306,6 +1368,11 @@ public class NavigationBarView extends LinearLayout {
     private void runIconTouch() {
         Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.navibar_touch);
         mTouchIcon = asIcon;
+    }
+
+    private void runIconPowerRot() {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_powerrot);
+        mPowerIconRot = asIcon;
     }
 
     private void runIconHomeRot() {
@@ -1372,6 +1439,8 @@ public class NavigationBarView extends LinearLayout {
                     if (mCustomHomeIcon != null)
                         mHomeButton.setImageBitmap(mCustomHomeIcon);
                }
+            } else if(mShowHome == 7) {
+               mHomeButton.setImageBitmap(mPowerIcon);
             } else {
                mHomeButton.setImageBitmap(null);
             }
@@ -1407,6 +1476,8 @@ public class NavigationBarView extends LinearLayout {
                     if (mCustomBackIcon != null)
                         mBackButton.setImageBitmap(mCustomBackIcon);
                }
+            } else if(mShowBack == 7) {
+               mBackButton.setImageBitmap(mPowerIcon);
             } else {
                mBackButton.setImageBitmap(null);
             }
@@ -1442,6 +1513,8 @@ public class NavigationBarView extends LinearLayout {
                     if (mCustomSearchIcon != null)
                         mSearchButton.setImageBitmap(mCustomSearchIcon);
                }
+            } else if(mShowSearch == 7) {
+               mSearchButton.setImageBitmap(mPowerIcon);
             } else {
                mSearchButton.setImageBitmap(null);
             }
@@ -1477,6 +1550,8 @@ public class NavigationBarView extends LinearLayout {
                     if (mCustomMenuIcon != null)
                         mMenuButton.setImageBitmap(mCustomMenuIcon);
                }
+            } else if(mShowMenu == 7) {
+               mMenuButton.setImageBitmap(mPowerIcon);
             } else {
                mMenuButton.setImageBitmap(null);
             }
@@ -1512,6 +1587,8 @@ public class NavigationBarView extends LinearLayout {
                     if (mCustomQuickIcon != null)
                         mQuickButton.setImageBitmap(mCustomQuickIcon);
                }
+            } else if(mShowQuicker == 6) {
+               mQuickButton.setImageBitmap(mPowerIcon);
             } else {
                mQuickButton.setImageBitmap(null);
             }
