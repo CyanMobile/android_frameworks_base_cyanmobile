@@ -2129,6 +2129,11 @@ status_t SurfaceFlinger::electronBeamOnAnimationImplLocked()
     nbFrames = 4;
     v_stretch vverts(hw_w, hw_h);
 
+    glMatrixMode(GL_TEXTURE);
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
     for (int i=nbFrames-1 ; i>=0 ; i--) {
@@ -2156,6 +2161,13 @@ status_t SurfaceFlinger::electronBeamOnAnimationImplLocked()
         vverts(vtx, vb);
         glColorMask(0,0,1,1);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+        // draw the white highlight (we use the last vertices)
+        glDisable(GL_TEXTURE_2D);
+        glColorMask(1,1,1,1);
+        glColor4f(vg, vg, vg, 1);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
         hw.flip(screenBounds);
     }
 
