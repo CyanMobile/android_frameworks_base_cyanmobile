@@ -1567,6 +1567,14 @@ public final class Settings {
          */
         public static final String STATUS_BAR_CLOCKCOLOR = "status_bar_clockcolor";
 
+        /**
+         * The color to render the status bar closedrag
+         * hex value including alpha
+         * default: ffffff00
+         * @hide
+         */
+        public static final String STATUS_BAR_SETTINGSCOLOR = "status_bar_settingscolor";
+
 	/**
          * Whether to enable change global color
          * 0: don't change
@@ -3318,6 +3326,21 @@ public final class Settings {
          * @hide
          */
         public static final String STATUSBAR_NAVI_SIZE = "statusbar_navi_size";
+
+        /**
+         * @hide
+         */
+        public static final String STATUSBAR_EXPANDED_SIZE = "statusbar_expanded_size";
+
+        /**
+         * @hide
+         */
+        public static final String STATUSBAR_TINY_EXPANDED = "statusbar_tiny_expanded";
+
+        /**
+         * @hide
+         */
+        public static final String STATUSBAR_MORE_EXPANDED = "statusbar_more_expanded";
 
         /**
          * @hide

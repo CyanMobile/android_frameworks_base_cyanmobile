@@ -83,6 +83,18 @@
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:textColor="@color/carrier_label_text_color"
                 />
+
+        <TextView android:id="@+id/clear_old_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:textSize="14sp"
+                android:text="@string/status_bar_clear_all_button"
+                style="?android:attr/buttonStyle"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:background="@android:drawable/btn_default_small"
+            />
         </LinearLayout>
     <LinearLayout
         android:id="@+id/centerClockex"
@@ -121,14 +133,14 @@
             />
 
         <TextView android:id="@+id/clear_all_button"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:textSize="14sp"
                 android:text="@string/status_bar_clear_all_button"
                 style="?android:attr/buttonStyle"
-                android:paddingLeft="5dp"
-                android:paddingRight="5dp"
+                android:paddingLeft="2dp"
+                android:paddingRight="2dp"
                 android:background="@android:drawable/btn_default_small"
             />
      </LinearLayout>

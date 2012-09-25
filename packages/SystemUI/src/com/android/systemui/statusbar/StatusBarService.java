@@ -202,8 +202,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     // top bar
     TextView mNoNotificationsTitle;
     TextView mClearButton;
+    TextView mClearOldButton;
     TextView mCompactClearButton;
-    ViewGroup mClearButtonParent;
     CmBatteryMiniIcon mCmBatteryMiniIcon;
     // drag bar
     CloseDragHandle mCloseView;
@@ -287,6 +287,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     int mNotifyTicker = 0xFF38FF00;
     int mNotifyLatest = 0xFF38FF00;
     int mNotifyOngoing = 0xFF38FF00;
+    int mSettingsColor = 0xFF38FF00;
 
     // Tracking finger for opening/closing.
     int mEdgeBorder; // corresponds to R.dimen.status_bar_edge_ignore
@@ -333,6 +334,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private boolean LogoStatusBar = false;
     private boolean mShowCmBatteryStatusBar = false;
     private boolean mShowCmBatterySideBar = false;
+    private boolean mTinyExpanded = true;
+    private boolean mMoreExpanded = true;
 
     // tracks changes to settings, so status bar is moved to top/bottom
     // as soon as cmparts setting is changed
@@ -378,11 +381,19 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_CLOCKCOLOR), false, this);
             resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.STATUS_BAR_SETTINGSCOLOR), false, this);
+            resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUSBAR_STATS_SIZE), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUSBAR_ICONS_SIZE), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUSBAR_NAVI_SIZE), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.STATUSBAR_EXPANDED_SIZE), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.STATUSBAR_TINY_EXPANDED), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.STATUSBAR_MORE_EXPANDED), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.COLOR_DATE), false, this);
             resolver.registerContentObserver(
@@ -456,10 +467,16 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.STATUS_BAR_INTRUDER_ALERT, 1) == 1);
             mClockColor = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF38FF00));
+            mSettingsColor = (Settings.System.getInt(resolver,
+                    Settings.System.STATUS_BAR_SETTINGSCOLOR, mSettingsColor));
             mStatusBarTab = (Settings.System.getInt(resolver,
                     Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4);
             mNaviShow = (Settings.System.getInt(resolver,
                     Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
+            mTinyExpanded = (Settings.System.getInt(resolver,
+                    Settings.System.STATUSBAR_TINY_EXPANDED, 1) == 1);
+            mMoreExpanded = (Settings.System.getInt(resolver,
+                    Settings.System.STATUSBAR_MORE_EXPANDED, 1) == 1);
             autoBrightness = Settings.System.getInt(
                     resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, 0) ==
                     Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
@@ -642,10 +659,16 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.STATUS_BAR_INTRUDER_ALERT, 1) == 1);
             mClockColor = (Settings.System.getInt(getContentResolver(),
                     Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF38FF00));
+            mSettingsColor = (Settings.System.getInt(getContentResolver(),
+                    Settings.System.STATUS_BAR_SETTINGSCOLOR, mSettingsColor));
             mStatusBarTab = (Settings.System.getInt(getContentResolver(),
                     Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4);
             mNaviShow = (Settings.System.getInt(getContentResolver(),
                     Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
+            mTinyExpanded = (Settings.System.getInt(getContentResolver(),
+                    Settings.System.STATUSBAR_TINY_EXPANDED, 1) == 1);
+            mMoreExpanded = (Settings.System.getInt(getContentResolver(),
+                    Settings.System.STATUSBAR_TINY_EXPANDED, 1) == 1);
             autoBrightness = Settings.System.getInt(
                     getContentResolver(), Settings.System.SCREEN_BRIGHTNESS_MODE, 0) ==
                     Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
@@ -800,6 +823,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mNoNotificationsTitle = (TextView)mExpandedView.findViewById(R.id.noNotificationsTitle);
         mClearButton = (TextView)mExpandedView.findViewById(R.id.clear_all_button);
         mClearButton.setOnClickListener(mClearButtonListener);
+        mClearOldButton = (TextView)mExpandedView.findViewById(R.id.clear_old_button);
+        mClearOldButton.setOnClickListener(mClearButtonListener);
         mCompactClearButton = (TextView)mExpandedView.findViewById(R.id.compact_clear_all_button);
         mCompactClearButton.setOnClickListener(mClearButtonListener);
         mPowerAndCarrier = (LinearLayout)mExpandedView.findViewById(R.id.power_and_carrier);
@@ -1078,7 +1103,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         if (mStatusBarTab) {
             mCompactClearButton.setTextColor(mButtonText);
         } else {
-            mClearButton.setTextColor(mButtonText);
+            if (mMoreExpanded) {
+                mClearButton.setTextColor(mButtonText);
+            } else {
+                mClearOldButton.setTextColor(mButtonText);
+            }
         }
 
         mNotifyNone = Settings.System
@@ -1271,6 +1300,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mCarrierLogoLeftLayout.setVisibility(View.GONE);
             mCompactCarrierLayout.setVisibility(View.GONE);
             mMusicToggleButton.setVisibility(View.VISIBLE);
+        }
+        if (mMoreExpanded) {
+            mCenterClockex.setVisibility(View.VISIBLE);
+        } else {
+            mCenterClockex.setVisibility(View.GONE);
         }
     }
 
@@ -1769,13 +1803,19 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             if (mStatusBarTab) {
                 mCompactClearButton.setVisibility(View.VISIBLE); 
                 mClearButton.setVisibility(View.GONE);
+                mClearOldButton.setVisibility(View.GONE);
             } else {
                 mCompactClearButton.setVisibility(View.GONE);
-                mClearButton.setVisibility(View.VISIBLE);
+                if (mMoreExpanded) {
+                    mClearButton.setVisibility(View.VISIBLE);
+                } else {
+                    mClearOldButton.setVisibility(View.VISIBLE);
+                }
             }
         } else {
             mCompactClearButton.setVisibility(View.GONE);
             mClearButton.setVisibility(View.GONE);
+            mClearOldButton.setVisibility(View.GONE);
         }
 
         mOngoingTitle.setVisibility(ongoing ? View.VISIBLE : View.GONE);
@@ -2319,7 +2359,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     mAnimatingReveal = false;
                     updateExpandedViewPos(y + (mBottomBar ? -mViewDelta : mViewDelta));
                 }
-                mSettingsButton.setColorFilter(mDateColor, Mode.MULTIPLY);
+                mSettingsButton.setColorFilter(mSettingsColor, Mode.MULTIPLY);
             } else if (event.getAction() == MotionEvent.ACTION_UP) {
                 mVelocityTracker.computeCurrentVelocity(1000);
 
@@ -2572,7 +2612,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         pixelFormat = PixelFormat.TRANSLUCENT;
 
         lp = new WindowManager.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
+                mTinyExpanded ? getExpandedWidth() : ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL,
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
@@ -2580,7 +2620,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM,
                 pixelFormat);
 
-        lp.gravity = Gravity.TOP | Gravity.FILL_HORIZONTAL;
+        if (mTinyExpanded) {
+            lp.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+        } else {
+            lp.gravity = Gravity.TOP | Gravity.FILL_HORIZONTAL;
+        }
         lp.setTitle("TrackingView");
         lp.y = mTrackingPosition;
         mTrackingParams = lp;
@@ -2599,8 +2643,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         int mPixelFormat = PixelFormat.TRANSLUCENT;
         final int disph = mBottomBar ? mDisplay.getHeight() : (mDisplay.getHeight()-getNavBarSize());
         lp = mExpandedDialog.getWindow().getAttributes();
-        lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
-        lp.height = mBottomBar ? getExpandedHeight() : (getExpandedHeight()-getNavBarSize());
+        lp.width = mTinyExpanded ? getExpandedWidth() : ViewGroup.LayoutParams.MATCH_PARENT;
+        lp.height = mBottomBar ? getExpandedHeight() :
+                 (mTinyExpanded ? (getExpandedHeight()-(getNavBarSize()+getNavBarSize())) : (getExpandedHeight()-getNavBarSize()));
         lp.x = 0;
         mTrackingPosition = lp.y = (mBottomBar ? disph : -disph); // sufficiently large positive
         lp.type = WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL;
@@ -2610,7 +2655,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 | WindowManager.LayoutParams.FLAG_DITHER
                 | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         lp.format = mPixelFormat;
-        lp.gravity = Gravity.TOP | Gravity.FILL_HORIZONTAL;
+        if (mTinyExpanded) {
+            lp.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+        } else {
+            lp.gravity = Gravity.TOP | Gravity.FILL_HORIZONTAL;
+        }
         lp.setTitle("StatusBarExpanded");
         mExpandedDialog.getWindow().setAttributes(lp);
         mExpandedDialog.getWindow().setFormat(mPixelFormat);
@@ -2799,13 +2848,25 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
+    int getExpandedWidth() {
+        int expandedSizeval = Settings.System.getInt(mContext.getContentResolver(),
+             Settings.System.STATUSBAR_EXPANDED_SIZE, 40);
+        int expandedSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                 expandedSizeval, mContext.getResources().getDisplayMetrics());
+        return (mDisplay.getWidth()-expandedSizepx);
+    }
+
     int getExpandedHeight() {
         return (mDisplay.getHeight()-(mShowDate ? getStatBarSize() : 0)-mCloseView.getHeight());
     }
 
     void updateExpandedHeight() {
         if (mExpandedView != null) {
-            mExpandedParams.height = mBottomBar ? getExpandedHeight() : (getExpandedHeight()-getNavBarSize());
+            mExpandedParams.height = mBottomBar ? getExpandedHeight() :
+                   (mTinyExpanded ? (getExpandedHeight()-(getNavBarSize()+getNavBarSize())) : (getExpandedHeight()-getNavBarSize()));
+            if (mTinyExpanded) {
+                mExpandedParams.width = getExpandedWidth();
+            }
             mExpandedDialog.getWindow().setAttributes(mExpandedParams);
         }
     }
@@ -2891,7 +2952,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 v.getContext().startActivity(intent);
                 mHandler.postDelayed(new Runnable() {
                        public void run() {
-                           mSettingsIconButton.setColorFilter(mDateColor, Mode.MULTIPLY);
+                           mSettingsIconButton.setColorFilter(mSettingsColor, Mode.MULTIPLY);
                        }
                    }, 100);
                 animateCollapse();
