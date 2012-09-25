@@ -109,5 +109,18 @@
             android:background="@drawable/ic_sysbar_nihil"
             />
     </LinearLayout>
+
+    <RelativeLayout
+      android:layout_height="match_parent"
+      android:layout_width="match_parent">
+
+    <com.android.systemui.statusbar.batteries.CmBatteryNaviBarBottom
+        style="@style/StatusBar.BatteryBar"
+        android:layout_gravity="bottom"
+        android:layout_width="match_parent"
+        android:layout_height="1dip"
+        android:layout_alignParentBottom="true"
+        />
+    </RelativeLayout>
   </FrameLayout>
 </com.android.systemui.statusbar.NavigationBarView>

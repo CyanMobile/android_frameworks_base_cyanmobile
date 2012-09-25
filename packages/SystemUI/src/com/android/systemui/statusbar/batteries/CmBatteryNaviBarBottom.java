@@ -18,9 +18,9 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.widget.ProgressBar;
 
-public class CmBatteryNaviBar extends ProgressBar implements Animatable, Runnable {
+public class CmBatteryNaviBarBottom extends ProgressBar implements Animatable, Runnable {
 
-    private static final String TAG = CmBatteryNaviBar.class.getSimpleName();
+    private static final String TAG = CmBatteryNaviBarBottom.class.getSimpleName();
 
     // Total animation duration
     private static final int ANIM_DURATION = 5000; // 5 seconds
@@ -70,15 +70,15 @@ public class CmBatteryNaviBar extends ProgressBar implements Animatable, Runnabl
         }
     }
 
-    public CmBatteryNaviBar(Context context) {
+    public CmBatteryNaviBarBottom(Context context) {
         this(context, null);
     }
 
-    public CmBatteryNaviBar(Context context, AttributeSet attrs) {
+    public CmBatteryNaviBarBottom(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public CmBatteryNaviBar(Context context, AttributeSet attrs, int defStyle) {
+    public CmBatteryNaviBarBottom(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
         SettingsObserver observer = new SettingsObserver(mHandler);
@@ -134,9 +134,8 @@ public class CmBatteryNaviBar extends ProgressBar implements Animatable, Runnabl
 
     private void updateSettings() {
         ContentResolver resolver = mContext.getContentResolver();
-        mShowCmBatteryNaviBar = ((Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_BATTERY, 0) == 6) || (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_BATTERY, 0) == 7));
+        mShowCmBatteryNaviBar = (Settings.System.getInt(resolver,
+                Settings.System.STATUS_BAR_BATTERY, 0) == 7);
          mNVShow = (Settings.System.getInt(resolver,
                     Settings.System.NAVI_BUTTONS, 1) == 1);
         if (mShowCmBatteryNaviBar && mNVShow) {
