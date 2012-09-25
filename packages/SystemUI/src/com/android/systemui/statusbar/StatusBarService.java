@@ -73,8 +73,10 @@ import android.graphics.Rect;
 import android.graphics.BitmapFactory;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.NinePatchDrawable;
 import android.graphics.PorterDuff.Mode;
 import android.net.Uri;
 import android.os.Binder;
@@ -228,7 +230,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     // the tracker view
     TrackingView mTrackingView;
     View mNotificationBackgroundView;
-    View mSettingsButton;
+    ImageView mSettingsButton;
     WindowManager.LayoutParams mTrackingParams;
     int mTrackingPosition; // the position of the top of the tracking view.
     private boolean mPanelSlightlyVisible;
@@ -313,7 +315,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     // weather or not to show status bar on bottom
     boolean mBottomBar;
     boolean mButtonsLeft;
-    // boolean mNaviButtons;
+
     boolean mDeadZone;
     boolean mHasSoftButtons;
     boolean autoBrightness = false;
@@ -965,7 +967,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mNotifications.setVisibility(View.GONE);
         }
 
-        mSettingsButton = (View)mTrackingView.findViewById(R.id.settingUp);
+        mSettingsButton = (ImageView)mTrackingView.findViewById(R.id.settingUp);
+        mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_close_on, mDisplay.getWidth(), getStatBarSize(), context));
         mSettingsButton.setOnLongClickListener(mSettingsButtonListener);
 
         mCarrierLabelBottomLayout = (CarrierLabelBottom) mTrackingView.findViewById(R.id.carrierlabel_bottom);
@@ -2316,6 +2319,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     mAnimatingReveal = false;
                     updateExpandedViewPos(y + (mBottomBar ? -mViewDelta : mViewDelta));
                 }
+                mSettingsButton.setColorFilter(mDateColor, Mode.MULTIPLY);
             } else if (event.getAction() == MotionEvent.ACTION_UP) {
                 mVelocityTracker.computeCurrentVelocity(1000);
 
@@ -2336,6 +2340,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 }
 
                 performFling(y + mViewDelta, vel, false);
+                mHandler.postDelayed(new Runnable() {
+                       public void run() {
+                           mSettingsButton.clearColorFilter();
+                       }
+                   }, 100);
             }
 
         }
@@ -2875,13 +2884,35 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     private View.OnClickListener mSettingsIconButtonListener = new View.OnClickListener() {
         public void onClick(View v) {
+                mSettingsIconButton.clearColorFilter();
                 Intent intent = new Intent(Intent.ACTION_MAIN);
                 intent.setClassName("com.android.settings", "com.android.settings.MainSettings");
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 v.getContext().startActivity(intent);
+                mHandler.postDelayed(new Runnable() {
+                       public void run() {
+                           mSettingsIconButton.setColorFilter(mDateColor, Mode.MULTIPLY);
+                       }
+                   }, 100);
                 animateCollapse();
         }
     };
+
+    private static Bitmap getNinePatch(int id,int x, int y, Context context){
+        Bitmap bitmap = BitmapFactory.decodeResource(
+                context.getResources(), id);
+
+        byte[] chunk = bitmap.getNinePatchChunk();
+        NinePatchDrawable np_drawable = new NinePatchDrawable(bitmap,
+                chunk, new Rect(), null);
+        np_drawable.setBounds(0, 0,x, y);
+
+        Bitmap output_bitmap = Bitmap.createBitmap(x, y, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output_bitmap);
+        np_drawable.draw(canvas);
+
+        return output_bitmap;
+    }
 
     private View.OnLongClickListener mSettingsButtonListener = new View.OnLongClickListener() {
         public boolean onLongClick(View v) {

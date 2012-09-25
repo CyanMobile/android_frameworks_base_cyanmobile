@@ -134,6 +134,12 @@ public class PowerClock extends TextView {
         }
     }
 
+    @Override
+    protected int getSuggestedMinimumWidth() {
+        // makes the large background bitmap not force us to full width
+        return 0;
+    }
+
     private final BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {

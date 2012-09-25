@@ -59,7 +59,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
             android:scaleType="fitXY"
-            android:src="@drawable/status_bar_close_on"
+            android:background="@android:color/transparent"
             />
 
     </com.android.systemui.statusbar.CloseDragHandle>
