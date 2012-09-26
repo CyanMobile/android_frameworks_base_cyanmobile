@@ -201,7 +201,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     View mExpandedContents;
     // top bar
     TextView mNoNotificationsTitle;
-    TextView mClearButton;
+    ImageView mClearButton;
     TextView mClearOldButton;
     TextView mCompactClearButton;
     CmBatteryMiniIcon mCmBatteryMiniIcon;
@@ -821,7 +821,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mLatestTitle = (TextView)mExpandedView.findViewById(R.id.latestTitle);
         mLatestItems = (LinearLayout)mExpandedView.findViewById(R.id.latestItems);
         mNoNotificationsTitle = (TextView)mExpandedView.findViewById(R.id.noNotificationsTitle);
-        mClearButton = (TextView)mExpandedView.findViewById(R.id.clear_all_button);
+        mClearButton = (ImageView)mExpandedView.findViewById(R.id.clear_all_button);
         mClearButton.setOnClickListener(mClearButtonListener);
         mClearOldButton = (TextView)mExpandedView.findViewById(R.id.clear_old_button);
         mClearOldButton.setOnClickListener(mClearButtonListener);
@@ -1096,6 +1096,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mDateColor = Settings.System.getInt(resolver, Settings.System.COLOR_DATE, mDateColor);
         mDateView.setTextColor(mDateColor);
+        mClearButton.setColorFilter(mDateColor, Mode.MULTIPLY);
         mSettingsIconButton.setColorFilter(mDateColor, Mode.MULTIPLY);
 
         mButtonText = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_CLEAR_BUTTON, mButtonText);
@@ -1104,8 +1105,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mCompactClearButton.setTextColor(mButtonText);
         } else {
             if (mMoreExpanded) {
-                mClearButton.setTextColor(mButtonText);
-            } else {
                 mClearOldButton.setTextColor(mButtonText);
             }
         }
@@ -1802,7 +1801,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         if (mLatest.hasClearableItems()) {
             if (mStatusBarTab) {
                 mCompactClearButton.setVisibility(View.VISIBLE); 
-                mClearButton.setVisibility(View.GONE);
+                mClearButton.setVisibility(View.INVISIBLE);
                 mClearOldButton.setVisibility(View.GONE);
             } else {
                 mCompactClearButton.setVisibility(View.GONE);
@@ -1814,7 +1813,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             }
         } else {
             mCompactClearButton.setVisibility(View.GONE);
-            mClearButton.setVisibility(View.GONE);
+            mClearButton.setVisibility(View.INVISIBLE);
             mClearOldButton.setVisibility(View.GONE);
         }
 
@@ -2644,8 +2643,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         final int disph = mBottomBar ? mDisplay.getHeight() : (mDisplay.getHeight()-getNavBarSize());
         lp = mExpandedDialog.getWindow().getAttributes();
         lp.width = mTinyExpanded ? getExpandedWidth() : ViewGroup.LayoutParams.MATCH_PARENT;
-        lp.height = mBottomBar ? getExpandedHeight() :
-                 (mTinyExpanded ? (getExpandedHeight()-(getNavBarSize()+getNavBarSize())) : (getExpandedHeight()-getNavBarSize()));
+        lp.height = mBottomBar ? getExpandedHeight() : (getExpandedHeight()-getNavBarSize());
         lp.x = 0;
         mTrackingPosition = lp.y = (mBottomBar ? disph : -disph); // sufficiently large positive
         lp.type = WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL;
@@ -2862,8 +2860,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     void updateExpandedHeight() {
         if (mExpandedView != null) {
-            mExpandedParams.height = mBottomBar ? getExpandedHeight() :
-                   (mTinyExpanded ? (getExpandedHeight()-(getNavBarSize()+getNavBarSize())) : (getExpandedHeight()-getNavBarSize()));
+            mExpandedParams.height = mBottomBar ? getExpandedHeight() : (getExpandedHeight()-getNavBarSize());
             if (mTinyExpanded) {
                 mExpandedParams.width = getExpandedWidth();
             }
@@ -2934,11 +2931,17 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     private View.OnClickListener mClearButtonListener = new View.OnClickListener() {
         public void onClick(View v) {
+            mClearButton.clearColorFilter();
             try {
                 mBarService.onClearAllNotifications();
             } catch (RemoteException ex) {
                 // system process is dead if we're here.
             }
+            mHandler.postDelayed(new Runnable() {
+                       public void run() {
+                           mClearButton.setColorFilter(mSettingsColor, Mode.MULTIPLY);
+                       }
+                   }, 100);
             animateCollapse();
         }
     };
