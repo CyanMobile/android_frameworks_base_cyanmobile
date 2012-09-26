@@ -4328,23 +4328,11 @@ public class WebView extends AbsoluteLayout
 
         // special CALL handling when cursor node's href is "tel:XXX"
         if (keyCode == KeyEvent.KEYCODE_CALL && nativeHasCursorNode()) {
-            final String text = nativeCursorText();
+            String text = nativeCursorText();
             if (!nativeCursorIsTextInput() && text != null
                     && text.startsWith(SCHEME_TEL)) {
-                new AlertDialog.Builder(getContext())
-                        .setTitle("CyanMobile Warning!")
-                        .setMessage("This webpage wants to dial : "+text)
-                        .setPositiveButton("Allow", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int whichButton) {
-                                 Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse(text));
-                                 getContext().startActivity(intent);
-                            }
-                        })
-                        .setNegativeButton("Deny", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int whichButton) {
-                                dialog.dismiss();
-                            }
-                        }).show();
+                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse(text));
+                getContext().startActivity(intent);
                 return true;
             }
         }
