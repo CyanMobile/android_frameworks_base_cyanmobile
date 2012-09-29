@@ -962,13 +962,14 @@ public class StatusBarPolicy {
 
     private void onSmsDialog(Intent intent) {
         Handler hsms = new Handler();
+        setSmsInfo();
         final ContentResolver cr = mContext.getContentResolver();
         if ((Settings.System.getInt(cr, Settings.System.USE_POPUP_SMS, 1) == 1)
                        && mPhoneState == TelephonyManager.CALL_STATE_IDLE) {
             hsms.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    setSmsInfo();
+                    showSmsInfo();
                 }
             },1000);
         }
@@ -1148,14 +1149,19 @@ public class StatusBarPolicy {
     }
 
     private void setSmsInfo() {
-        closeLastSmsView();
-
         smsCount = SmsHelper.getUnreadSmsCount(mContext);
         callNumber = SmsHelper.getSmsNumber(mContext);
         callerName = SmsHelper.getName(mContext, callNumber);
         inboxMessage = SmsHelper.getSmsBody(mContext);
         inboxDate = SmsHelper.getDate(mContext, 0);
         messageId = SmsHelper.getSmsId(mContext);
+        contactImage = SmsHelper.getContactPicture(
+                mContext, callNumber);
+    }
+
+    private void showSmsInfo() {
+        closeLastSmsView();
+
         View v = View.inflate(mContext, R.layout.smscall_widget, null);
 
         mContactPicture = (ImageView) v.findViewById(R.id.contactpicture);
@@ -1174,8 +1180,6 @@ public class StatusBarPolicy {
             }
         });
 
-        contactImage = SmsHelper.getContactPicture(
-                mContext, callNumber);
         if (contactImage != null) {
             mContactPicture.setImageBitmap(contactImage);
         }
@@ -1240,6 +1244,7 @@ public class StatusBarPolicy {
 
     private final void updateCallState(int state) {
         mPhoneState = state;
+        setSmsInfo();
         if (false) {
             Slog.d(TAG, "mPhoneState=" + mPhoneState
                     + " mLowBatteryDialog=" + mLowBatteryDialog
