@@ -48,6 +48,7 @@ import android.os.RemoteCallback;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.util.Slog;
 import android.util.PrintWriterPrinter;
 import android.util.Printer;
@@ -84,7 +85,8 @@ public class DevicePolicyManagerService extends IDevicePolicyManager.Stub {
     int mFailedPasswordAttempts = 0;
     
     int mPasswordOwner = -1;
-    
+    long mLastMaximumTimeToLock = -1;
+
     final HashMap<ComponentName, ActiveAdmin> mAdminMap
             = new HashMap<ComponentName, ActiveAdmin>();
     final ArrayList<ActiveAdmin> mAdminList
@@ -498,15 +500,7 @@ public class DevicePolicyManagerService extends IDevicePolicyManager.Stub {
         
         validatePasswordOwnerLocked();
         
-        long timeMs = getMaximumTimeToLock(null);
-        if (timeMs <= 0) {
-            timeMs = Integer.MAX_VALUE;
-        }
-        try {
-            getIPowerManager().setMaximumScreenOffTimeount((int)timeMs);
-        } catch (RemoteException e) {
-            Slog.w(TAG, "Failure talking with power manager", e);
-        }
+        updateMaximumTimeToLockLocked();
     }
 
     static void validateQualityConstant(int quality) {
@@ -846,25 +840,36 @@ public class DevicePolicyManagerService extends IDevicePolicyManager.Stub {
                     DeviceAdminInfo.USES_POLICY_FORCE_LOCK);
             if (ap.maximumTimeToUnlock != timeMs) {
                 ap.maximumTimeToUnlock = timeMs;
-                
-                long ident = Binder.clearCallingIdentity();
-                try {
-                    saveSettingsLocked();
-                    
-                    timeMs = getMaximumTimeToLock(null);
-                    if (timeMs <= 0) {
-                        timeMs = Integer.MAX_VALUE;
-                    }
-                    
-                    try {
-                        getIPowerManager().setMaximumScreenOffTimeount((int)timeMs);
-                    } catch (RemoteException e) {
-                        Slog.w(TAG, "Failure talking with power manager", e);
-                    }
-                } finally {
-                    Binder.restoreCallingIdentity(ident);
-                }
+                saveSettingsLocked();
+                updateMaximumTimeToLockLocked();
             }
+        }
+    }
+
+    void updateMaximumTimeToLockLocked() {
+        long timeMs = getMaximumTimeToLock(null);	
+        if (mLastMaximumTimeToLock == timeMs) {
+            return;
+        }
+        long ident = Binder.clearCallingIdentity();
+        try {
+            if (timeMs <= 0) {
+                timeMs = Integer.MAX_VALUE;
+            } else {
+                // Make sure KEEP_SCREEN_ON is disabled, since that
+                // would allow bypassing of the maximum time to lock.
+                Settings.System.putInt(mContext.getContentResolver(),
+                        Settings.System.STAY_ON_WHILE_PLUGGED_IN, 0);
+            }
+        mLastMaximumTimeToLock = timeMs;
+
+            try {
+                getIPowerManager().setMaximumScreenOffTimeount((int)timeMs);
+            } catch (RemoteException e) {
+                Slog.w(TAG, "Failure talking with power manager", e);
+            }
+        } finally {
+            Binder.restoreCallingIdentity(ident);
         }
     }
     
