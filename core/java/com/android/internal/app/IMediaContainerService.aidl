@@ -30,4 +30,5 @@ interface IMediaContainerService {
     PackageInfoLite getMinimalPackageInfo(in Uri fileUri, int flags);
     boolean checkFreeStorage(boolean external, in Uri fileUri);
     ObbInfo getObbInfo(String filename);
+    void clearDirectory(in String directory);
 }

@@ -114,6 +114,10 @@ public abstract class SMSDispatcher extends Handler {
     /** New broadcast SMS */
     static final protected int EVENT_NEW_BROADCAST_SMS = 13;
 
+    /** Permission required to send SMS to short codes without user confirmation. */
+    private static final String SEND_SMS_NO_CONFIRMATION_PERMISSION =
+            "android.permission.SEND_SMS_NO_CONFIRMATION";
+
     protected Phone mPhone;
     protected Context mContext;
     protected ContentResolver mResolver;

@@ -59,6 +59,8 @@
 #define USER_BOOTANIMATION_FILE "/data/data/com.cyanogenmod.cmbootanimation/files/bootanimation.zip"
 #define USER_SHUTDOWNANIMATION_FILE "/data/data/com.cyanogenmod.cmshutdownanimation/files/shutdownanimation.zip"
 #define SYSTEM_SHUTDOWNANIMATION_FILE "/system/media/shutdownanimation.zip"
+#define EXIT_PROP_NAME "service.bootanim.exit"
+
 namespace android {
 
 // ---------------------------------------------------------------------------
@@ -333,6 +335,9 @@ bool BootAnimation::threadLoop()
         r = movie();
     }
 
+    // No need to force exit anymore
+    property_set(EXIT_PROP_NAME, "0");
+
     eglMakeCurrent(mDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     eglDestroyContext(mDisplay, mContext);
     eglDestroySurface(mDisplay, mSurface);
@@ -401,6 +406,8 @@ bool BootAnimation::android()
         const nsecs_t sleepTime = 83333 - ns2us(systemTime() - now);
         if (sleepTime > 0)
             usleep(sleepTime);
+
+        checkExit();
     } while (!exitPending());
 
     glDeleteTextures(1, &mAndroid[0].name);
@@ -408,6 +415,15 @@ bool BootAnimation::android()
     return false;
 }
 
+void BootAnimation::checkExit() {
+    // Allow surface flinger to gracefully request shutdown
+    char value[PROPERTY_VALUE_MAX];
+    property_get(EXIT_PROP_NAME, value, "0");
+    int exitnow = atoi(value);
+    if (exitnow) {
+        requestExit();
+    }
+}
 
 bool BootAnimation::movie()
 {
@@ -464,15 +480,17 @@ bool BootAnimation::movie()
         const char* l = line.string();
         int fps, width, height, count, pause;
         char path[256];
+        char pathType;
         if (sscanf(l, "%d %d %d", &width, &height, &fps) == 3) {
             //LOGD("> w=%d, h=%d, fps=%d", fps, width, height);
             animation.width = width;
             animation.height = height;
             animation.fps = fps;
         }
-        if (sscanf(l, "p %d %d %s", &count, &pause, path) == 3) {
-            //LOGD("> count=%d, pause=%d, path=%s", count, pause, path);
+        else if (sscanf(l, " %c %d %d %s", &pathType, &count, &pause, path) == 4) {
+            //LOGD("> type=%c, count=%d, pause=%d, path=%s", pathType, count, pause, path);
             Animation::Part part;
+            part.playUntilComplete = pathType == 'c';
             part.count = count;
             part.pause = pause;
             part.path = path;
@@ -538,7 +556,7 @@ bool BootAnimation::movie()
     Region clearReg(Rect(mWidth, mHeight));
     clearReg.subtractSelf(Rect(xc, yc, xc+animation.width, yc+animation.height));
 
-    for (int i=0 ; i<pcount && !exitPending() ; i++) {
+    for (int i=0 ; i<pcount ; i++) {
         const Animation::Part& part(animation.parts[i]);
         const size_t fcount = part.frames.size();
         // can be 1, 0, or not set
@@ -551,7 +569,11 @@ bool BootAnimation::movie()
         glBindTexture(GL_TEXTURE_2D, 0);
 
         for (int r=0 ; !part.count || r<part.count ; r++) {
-            for (int j=0 ; j<fcount && !exitPending(); j++) {
+            // Exit any non playuntil complete parts immediately
+            if(exitPending() && !part.playUntilComplete)
+                break;
+
+            for (int j=0 ; j<fcount && (!exitPending() || part.playUntilComplete) ; j++) {
                 const Animation::Frame& frame(part.frames[j]);
 
                 if (r > 0 && !noTextureCache) {
@@ -591,8 +613,15 @@ bool BootAnimation::movie()
                     usleep(wait);
                 if (noTextureCache)
                     glDeleteTextures(1, &frame.tid);
+
+                checkExit();
             }
+
             usleep(part.pause * ns2us(frameDuration));
+
+            // For infinite parts, we've now played them at least once, so perhaps exit
+            if(exitPending() && !part.count)
+                break;
         }
 
         // free the textures for this part

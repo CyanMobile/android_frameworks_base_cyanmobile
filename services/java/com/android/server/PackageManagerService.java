@@ -519,7 +519,6 @@ class PackageManagerService extends IPackageManager.Stub {
                         // Something seriously wrong. Bail out
                         Slog.e(TAG, "Cannot bind to media container service");
                         for (HandlerParams params : mPendingInstalls) {
-                            mPendingInstalls.remove(0);
                             // Indicate service bind error
                             params.serviceError();
                         }
@@ -571,7 +570,6 @@ class PackageManagerService extends IPackageManager.Stub {
                         if (!connectToService()) {
                             Slog.e(TAG, "Failed to bind to media container service");
                             for (HandlerParams params : mPendingInstalls) {
-                                mPendingInstalls.remove(0);
                                 // Indicate service bind error
                                 params.serviceError();
                             }
@@ -7137,6 +7135,76 @@ class PackageManagerService extends IPackageManager.Stub {
         return ret;
     }
 
+    private final class ClearStorageConnection implements ServiceConnection {
+        IMediaContainerService mContainerService;
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            synchronized (this) {
+                mContainerService = IMediaContainerService.Stub.asInterface(service);
+                notifyAll();
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+        }
+    }
+
+    private void clearExternalStorageDataSync(String packageName, boolean allData) {
+        final boolean mounted;
+        final String status = Environment.getExternalStorageState();
+
+        mounted = status.equals(Environment.MEDIA_MOUNTED)
+                    || status.equals(Environment.MEDIA_MOUNTED_READ_ONLY);
+
+        if (!mounted) {
+            return;
+        }
+
+        final Intent containerIntent = new Intent().setComponent(DEFAULT_CONTAINER_COMPONENT);
+        ClearStorageConnection conn = new ClearStorageConnection();
+        if (mContext.bindService(containerIntent, conn, Context.BIND_AUTO_CREATE)) {
+            try {
+                long timeout = SystemClock.uptimeMillis() + 5000;
+                synchronized (conn) {
+                    long now = SystemClock.uptimeMillis();
+                    while (conn.mContainerService == null && now < timeout) {
+                        try {
+                            conn.wait(timeout - now);
+                        } catch (InterruptedException e) {
+                        }
+                    }
+                }
+                if (conn.mContainerService == null) {
+                    return;
+                }
+                final File externalCacheDir = Environment
+                        .getExternalStorageAppCacheDirectory(packageName);
+                try {
+                    conn.mContainerService.clearDirectory(externalCacheDir.toString());
+                } catch (RemoteException e) {
+                }
+                if (allData) {
+                    final File externalDataDir = Environment
+                            .getExternalStorageAppDataDirectory(packageName);
+                    try {
+                        conn.mContainerService.clearDirectory(externalDataDir.toString());
+                    } catch (RemoteException e) {
+                    }
+                    final File externalMediaDir = Environment
+                            .getExternalStorageAppMediaDirectory(packageName);
+                    try {
+                        conn.mContainerService.clearDirectory(externalMediaDir.toString());
+                    } catch (RemoteException e) {
+                    }
+                }
+            } finally {
+                mContext.unbindService(conn);
+            }
+        }
+    }
+
     public void clearApplicationUserData(final String packageName,
             final IPackageDataObserver observer) {
         mContext.enforceCallingOrSelfPermission(
@@ -7149,6 +7217,7 @@ class PackageManagerService extends IPackageManager.Stub {
                 synchronized (mInstallLock) {
                     succeeded = clearApplicationUserDataLI(packageName);
                 }
+                clearExternalStorageDataSync(packageName, true);
                 if (succeeded) {
                     // invoke DeviceStorageMonitor's update method to clear any notifications
                     DeviceStorageMonitorService dsm = (DeviceStorageMonitorService)
@@ -7225,6 +7294,7 @@ class PackageManagerService extends IPackageManager.Stub {
                 synchronized (mInstallLock) {
                     succeded = deleteApplicationCacheFilesLI(packageName);
                 }
+                clearExternalStorageDataSync(packageName, false);
                 if(observer != null) {
                     try {
                         observer.onRemoveCompleted(packageName, succeded);
