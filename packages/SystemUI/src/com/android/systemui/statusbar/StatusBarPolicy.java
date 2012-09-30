@@ -123,13 +123,13 @@ public class StatusBarPolicy {
     private TextView mSmsBody;
     private TextView mTimeStamp;
     private Button mCallsButton;
-    private String callNumber = null;
-    private String callerName = null;
-    private String inboxMessage = null;
-    private Bitmap contactImage = null;
-    private String inboxDate = null;
-    private int smsCount = 0;
-    private long messageId = 0;
+    private String callNumber;
+    private String callerName;
+    private String inboxMessage;
+    private Bitmap contactImage;
+    private String inboxDate;
+    private int smsCount;
+    private long messageId;
 
     private boolean mBatteryShowLowOnEndCall = false;
     private boolean mBatteryShowFullOnEndCall = false;
@@ -962,14 +962,13 @@ public class StatusBarPolicy {
 
     private void onSmsDialog(Intent intent) {
         Handler hsms = new Handler();
-        setSmsInfo();
         final ContentResolver cr = mContext.getContentResolver();
         if ((Settings.System.getInt(cr, Settings.System.USE_POPUP_SMS, 1) == 1)
                        && mPhoneState == TelephonyManager.CALL_STATE_IDLE) {
             hsms.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    showSmsInfo();
+                    setSmsInfo(mContext);
                 }
             },1000);
         }
@@ -1148,15 +1147,26 @@ public class StatusBarPolicy {
         }
     }
 
-    private void setSmsInfo() {
-        smsCount = SmsHelper.getUnreadSmsCount(mContext);
-        callNumber = SmsHelper.getSmsNumber(mContext);
-        callerName = SmsHelper.getName(mContext, callNumber);
-        inboxMessage = SmsHelper.getSmsBody(mContext);
-        inboxDate = SmsHelper.getDate(mContext, 0);
-        messageId = SmsHelper.getSmsId(mContext);
+    private void setSmsInfo(Context context) {
+        smsCount = SmsHelper.getUnreadSmsCount(context);
+        callNumber = SmsHelper.getSmsNumber(context);
+        callerName = SmsHelper.getName(context, callNumber);
+        inboxMessage = SmsHelper.getSmsBody(context);
+        inboxDate = SmsHelper.getDate(context, 0);
+        messageId = SmsHelper.getSmsId(context);
         contactImage = SmsHelper.getContactPicture(
-                mContext, callNumber);
+                context, callNumber);
+        showSmsInfo();
+    }
+
+    private void resetSmsInfo() {
+        smsCount = 0;
+        callNumber = null;
+        callerName = null;
+        inboxMessage = null;
+        inboxDate = null;
+        messageId = 0;
+        contactImage = null;
     }
 
     private void showSmsInfo() {
@@ -1244,7 +1254,6 @@ public class StatusBarPolicy {
 
     private final void updateCallState(int state) {
         mPhoneState = state;
-        setSmsInfo();
         if (false) {
             Slog.d(TAG, "mPhoneState=" + mPhoneState
                     + " mLowBatteryDialog=" + mLowBatteryDialog
@@ -1297,6 +1306,7 @@ public class StatusBarPolicy {
             = new DialogInterface.OnDismissListener() {
         public void onDismiss(DialogInterface dialog) {
             mSmsDialog = null;
+            resetSmsInfo();
         }
     };
 

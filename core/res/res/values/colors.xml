@@ -96,6 +96,6 @@
     <color name="keyguard_text_color_soundoff">#ffffff</color>
     <color name="keyguard_text_color_soundon">#e69310</color>
     <color name="keyguard_text_color_decline">#fe0a5a</color>
-
+    <color name="color_default_cyanmobile">#ff38ff00</color>
 </resources>
 

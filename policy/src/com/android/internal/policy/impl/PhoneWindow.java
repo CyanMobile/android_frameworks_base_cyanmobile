@@ -2228,6 +2228,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
             setFlags(FLAG_FULLSCREEN, FLAG_FULLSCREEN&(~getForcedWindowFlags()));
         }
 
+        int defValuesColor = getContext().getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
         int transBackgroundAppss = Settings.System.getInt(getContext().getContentResolver(), Settings.System.TRANSPARENT_BACKGROUND_FULL, 0);
         if (transBackgroundAppss == 2) {
             setFlags(FLAG_SHOW_WALLPAPER, FLAG_SHOW_WALLPAPER&(~getForcedWindowFlags()));
@@ -2290,7 +2291,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
                             + Integer.toHexString(mFrameResource));
                 }
             }
-            mTextColor = a.getColor(com.android.internal.R.styleable.Window_textColor, 0xFF38FF00);
+            mTextColor = a.getColor(com.android.internal.R.styleable.Window_textColor, defValuesColor);
         }
 
         // Inflate the window decor.
@@ -2356,7 +2357,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
             Drawable drawable = mBackgroundDrawable;
             if (mBackgroundResource != 0) {
                 int transBackgroundApp = Settings.System.getInt(getContext().getContentResolver(), Settings.System.TRANSPARENT_BACKGROUND_APP, 0);
-                int backgroundAppColor = Settings.System.getInt(getContext().getContentResolver(), Settings.System.BACKGROUND_APP_COLOR, 0xFF38FF00);
+                int backgroundAppColor = Settings.System.getInt(getContext().getContentResolver(), Settings.System.BACKGROUND_APP_COLOR, defValuesColor);
               switch (transBackgroundApp) {
                 case 0 : // theme, leave alone
                   drawable = getContext().getResources().getDrawable(mBackgroundResource);

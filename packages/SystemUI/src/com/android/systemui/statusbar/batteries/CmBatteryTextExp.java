@@ -142,9 +142,9 @@ public class CmBatteryTextExp extends TextView {
     final void updateCmBatteryText(Intent intent) {
         style = Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.STATUS_BAR_BATTERY_STYLE, 0);
-
+        int defValuesColor = getContext().getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
         mClockColor = (Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF38FF00));
+                Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
 
         int mCarrierSizeval = Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.STATUSBAR_ICON_FONT_SIZE, 11);

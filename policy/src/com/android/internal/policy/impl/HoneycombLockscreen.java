@@ -183,6 +183,8 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
 
     private Bitmap[] mCustomRingAppIcons = new Bitmap[4];
 
+    private int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+
     private boolean mTrackballUnlockScreen = (Settings.System.getInt(mContext.getContentResolver(),
             Settings.System.TRACKBALL_UNLOCK_SCREEN, 0) == 1);
 
@@ -193,10 +195,10 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
             Settings.System.LOCKSCREEN_ALWAYS_BATTERY, 0) == 1);
 
     private int mClockColor = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_LOCKSCREENCOLOR, 0xFF38FF00)); // this value for color
+                Settings.System.STATUS_BAR_LOCKSCREENCOLOR, defValuesColor)); // this value for color
 
     private int mCarrierColor = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_CARRIERCOLOR, 0xFF38FF00)); // this value for color
+                Settings.System.STATUS_BAR_CARRIERCOLOR, defValuesColor)); // this value for color
 
     private boolean mLockCalendarAlarm = (Settings.System.getInt(mContext.getContentResolver(),
             Settings.System.LOCKSCREEN_CALENDAR_ALARM, 0) == 1);

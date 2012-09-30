@@ -134,10 +134,10 @@ public final class PowerDateView extends TextView {
 
     private void updateSettings(){
         ContentResolver resolver = mContext.getContentResolver();
-
+        int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
 	int mCColor = mClockColor;
 	mClockColor = (Settings.System.getInt(resolver,
-                Settings.System.COLOR_DATE, 0xFF38FF00));
+                Settings.System.COLOR_DATE, defValuesColor));
         mShowDate = (Settings.System.getInt(resolver, Settings.System.STATUS_BAR_DATE, 0) != 1);
 
            if (mAttached) {

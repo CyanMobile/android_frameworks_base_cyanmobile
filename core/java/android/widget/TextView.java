@@ -892,10 +892,10 @@ public class TextView extends View implements ViewTreeObserver.OnPreDrawListener
                 setEllipsize(TextUtils.TruncateAt.MARQUEE);
                 break;
         }
-
+        int defValuesColor = context.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
         setTextColor((textColor != null && (Settings.System.getInt(resolver,
                 Settings.System.TEXT_GLOBALOFCOLOR, 0) != 1)) ? textColor : ColorStateList.valueOf(Settings.System.getInt(resolver,
-                Settings.System.TEXT_FULLOFCOLOR, 0xFF38FF00)));
+                Settings.System.TEXT_FULLOFCOLOR, defValuesColor)));
         setHintTextColor(textColorHint);
         setLinkTextColor(textColorLink);
         if (textColorHighlight != 0) {
@@ -1636,8 +1636,9 @@ public class TextView extends View implements ViewTreeObserver.OnPreDrawListener
         if (colors != null) {
             boolean ColDisabled = (Settings.System.getInt(resolver,
                 Settings.System.TEXT_GLOBALOFCOLOR, 0) != 1);
+            int defValuesColor = context.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
             int ColFixed = (Settings.System.getInt(resolver,
-                Settings.System.TEXT_FULLOFCOLOR, 0xFF38FF00));
+                Settings.System.TEXT_FULLOFCOLOR, defValuesColor));
             if (ColDisabled) {
                 setTextColor(colors);
             } else {

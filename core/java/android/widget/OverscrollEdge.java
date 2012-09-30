@@ -41,8 +41,9 @@ public class OverscrollEdge extends EdgeGlow{
     public void updateOverscroll(){
         if (mContext.get()!=null){
             Resources res = mContext.get().getResources();
+            int defValuesColor = res.getInteger(com.android.internal.R.color.color_default_cyanmobile);
             mOverscrollColor = Settings.System.getInt(mContext.get().getContentResolver(),
-                    Settings.System.OVERSCROLL_COLOR, 0xFF38FF00);
+                    Settings.System.OVERSCROLL_COLOR, defValuesColor);
             if (mOverscrollColor!=mCurrentColor){
                 mCurrentColor = mOverscrollColor;
                 if (mOverscrollColor != 0){

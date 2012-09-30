@@ -675,4 +675,9 @@
 
     <!-- Minimum screen brightness allowed by the power manager. -->
     <integer name="config_screenBrightnessDim">20</integer>
+    <integer name="config_fontsize_default_cyanmobile">11</integer>
+    <integer name="config_iconsize_default_cyanmobile">25</integer>
+    <integer name="config_statbarsize_default_cyanmobile">25</integer>
+    <integer name="config_navibarsize_default_cyanmobile">25</integer>
+    <integer name="config_tinyexpsize_default_cyanmobile">40</integer>
 </resources>

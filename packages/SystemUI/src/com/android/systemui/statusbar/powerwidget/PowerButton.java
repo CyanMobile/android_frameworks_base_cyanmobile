@@ -84,11 +84,11 @@ public abstract class PowerButton {
             if (mIndicatorView != null) {
                 Context context = mIndicatorView.getContext();
                 ContentResolver cr = context.getContentResolver();
-
+                int defValuesColor = context.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
                 boolean visible = Settings.System.getInt(cr,
                         Settings.System.EXPANDED_HIDE_INDICATOR, 1) != 1;
                 int colorMaskBase = Settings.System.getInt(cr,
-                        Settings.System.EXPANDED_VIEW_WIDGET_COLOR, 0xFF38FF00);
+                        Settings.System.EXPANDED_VIEW_WIDGET_COLOR, defValuesColor);
                 int colorMask;
 
                 mIndicatorView.setVisibility(visible ? View.VISIBLE : View.GONE);

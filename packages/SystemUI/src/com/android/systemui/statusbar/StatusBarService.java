@@ -279,15 +279,15 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     // notfication color temp variables
     int mItemText = mBlackColor;
-    int mItemTime = 0xFF38FF00;
-    int mItemTitle = 0xFF38FF00;
-    int mDateColor = 0xFF38FF00;
+    int mItemTime;
+    int mItemTitle;
+    int mDateColor;
     int mButtonText = mBlackColor;
-    int mNotifyNone = 0xFF38FF00;
-    int mNotifyTicker = 0xFF38FF00;
-    int mNotifyLatest = 0xFF38FF00;
-    int mNotifyOngoing = 0xFF38FF00;
-    int mSettingsColor = 0xFF38FF00;
+    int mNotifyNone;
+    int mNotifyTicker;
+    int mNotifyLatest;
+    int mNotifyOngoing;
+    int mSettingsColor;
 
     // Tracking finger for opening/closing.
     int mEdgeBorder; // corresponds to R.dimen.status_bar_edge_ignore
@@ -433,6 +433,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         public void onChange(boolean selfChange) {
             ContentResolver resolver = mContext.getContentResolver();
             int defValue;
+            int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
 
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_BOTTOM_STATUS_BAR) ? 1 : 0);
             mBottomBar = (Settings.System.getInt(resolver,
@@ -466,9 +467,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             shouldTick = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_INTRUDER_ALERT, 1) == 1);
             mClockColor = (Settings.System.getInt(resolver,
-                    Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF38FF00));
+                    Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
             mSettingsColor = (Settings.System.getInt(resolver,
-                    Settings.System.STATUS_BAR_SETTINGSCOLOR, mSettingsColor));
+                    Settings.System.STATUS_BAR_SETTINGSCOLOR, defValuesColor));
             mStatusBarTab = (Settings.System.getInt(resolver,
                     Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4);
             mNaviShow = (Settings.System.getInt(resolver,
@@ -628,9 +629,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mTouchDispatcher = new ItemTouchDispatcher(this);
 
+        int defValuesColor = context.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+        int defValuesIconSize = context.getResources().getInteger(com.android.internal.R.integer.config_iconsize_default_cyanmobile);
         int mIconSizeval = Settings.System.getInt(context.getContentResolver(),
-                Settings.System.STATUSBAR_ICONS_SIZE, 25);
-
+                Settings.System.STATUSBAR_ICONS_SIZE, defValuesIconSize);
         int IconSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mIconSizeval, res.getDisplayMetrics());
         mIconSize = IconSizepx;
 
@@ -658,9 +660,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             shouldTick = (Settings.System.getInt(getContentResolver(),
                     Settings.System.STATUS_BAR_INTRUDER_ALERT, 1) == 1);
             mClockColor = (Settings.System.getInt(getContentResolver(),
-                    Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF38FF00));
+                    Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
             mSettingsColor = (Settings.System.getInt(getContentResolver(),
-                    Settings.System.STATUS_BAR_SETTINGSCOLOR, mSettingsColor));
+                    Settings.System.STATUS_BAR_SETTINGSCOLOR, defValuesColor));
             mStatusBarTab = (Settings.System.getInt(getContentResolver(),
                     Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4);
             mNaviShow = (Settings.System.getInt(getContentResolver(),
@@ -703,7 +705,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
 	// apply transparent status bar drawables
         int transStatusBar = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_STATUS_BAR, 0);
-        int statusBarColor = Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_COLOR, 0xFF38FF00);
+        int statusBarColor = Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_COLOR, defValuesColor);
         switch (transStatusBar) {
           case 0 : // theme, leave alone
             mStatusBarView.setBackgroundDrawable(getResources().getDrawable(R.drawable.statusbar_background));
@@ -737,7 +739,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         // apply transparent navi bar drawables
         int transNaviBar = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_NAVI_BAR, 0);
-        int naviBarColor = Settings.System.getInt(getContentResolver(), Settings.System.NAVI_BAR_COLOR, 0xFF38FF00);
+        int naviBarColor = Settings.System.getInt(getContentResolver(), Settings.System.NAVI_BAR_COLOR, defValuesColor);
         switch (transNaviBar) {
           case 0 : // theme, leave alone
             mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background));
@@ -829,7 +831,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mCompactClearButton.setOnClickListener(mClearButtonListener);
         mPowerAndCarrier = (LinearLayout)mExpandedView.findViewById(R.id.power_and_carrier);
         int transPowerAndCarrier = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_PWR_CRR, 0);
-        int PowerAndCarrierColor = Settings.System.getInt(getContentResolver(), Settings.System.PWR_CRR_COLOR, 0xFF38FF00);
+        int PowerAndCarrierColor = Settings.System.getInt(getContentResolver(), Settings.System.PWR_CRR_COLOR, defValuesColor);
         switch (transPowerAndCarrier) {
           case 0 : // theme, leave alone
             mPowerAndCarrier.setBackgroundDrawable(getResources().getDrawable(R.drawable.title_bar_portrait));
@@ -954,7 +956,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         // apply transparent notification background drawables
         int transNotificationBackground = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_NOTIFICATION_BACKGROUND, 0);
-        int notificationBackgroundColor = Settings.System.getInt(getContentResolver(), Settings.System.NOTIFICATION_BACKGROUND_COLOR, 0xFF38FF00);
+        int notificationBackgroundColor = Settings.System.getInt(getContentResolver(), Settings.System.NOTIFICATION_BACKGROUND_COLOR, defValuesColor);
         switch (transNotificationBackground) {
               case 0 : // theme, leave alone
                   mNotificationBackgroundView.setBackgroundDrawable(getResources().getDrawable(R.drawable.shade_bg));
@@ -1089,17 +1091,17 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     
     private void updateColors() {
         ContentResolver resolver = mContext.getContentResolver();
+        int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+        mItemText = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_ITEM_TEXT, mBlackColor);
+        mItemTime = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_ITEM_TIME, defValuesColor);
+        mItemTitle = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_ITEM_TITLE, defValuesColor);
 
-        mItemText = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_ITEM_TEXT, mItemText);
-        mItemTime = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_ITEM_TIME, mItemTime);
-        mItemTitle = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_ITEM_TITLE, mItemTitle);
-
-        mDateColor = Settings.System.getInt(resolver, Settings.System.COLOR_DATE, mDateColor);
+        mDateColor = Settings.System.getInt(resolver, Settings.System.COLOR_DATE, defValuesColor);
         mDateView.setTextColor(mDateColor);
         mClearButton.setColorFilter(mDateColor, Mode.MULTIPLY);
         mSettingsIconButton.setColorFilter(mDateColor, Mode.MULTIPLY);
 
-        mButtonText = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_CLEAR_BUTTON, mButtonText);
+        mButtonText = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_CLEAR_BUTTON, mBlackColor);
 
         if (mStatusBarTab) {
             mCompactClearButton.setTextColor(mButtonText);
@@ -1110,19 +1112,19 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
 
         mNotifyNone = Settings.System
-                .getInt(resolver, Settings.System.COLOR_NOTIFICATION_NONE, mNotifyNone);
+                .getInt(resolver, Settings.System.COLOR_NOTIFICATION_NONE, defValuesColor);
         mNoNotificationsTitle.setTextColor(mNotifyNone);
 
         mNotifyTicker = Settings.System
-                .getInt(resolver, Settings.System.COLOR_NOTIFICATION_TICKER_TEXT, mNotifyTicker);
+                .getInt(resolver, Settings.System.COLOR_NOTIFICATION_TICKER_TEXT, defValuesColor);
         mTickerText.updateColor(mNotifyTicker);
 
         mNotifyLatest = Settings.System
-                .getInt(resolver, Settings.System.COLOR_NOTIFICATION_LATEST, mNotifyLatest);
+                .getInt(resolver, Settings.System.COLOR_NOTIFICATION_LATEST, defValuesColor);
         mLatestTitle.setTextColor(mNotifyLatest);
 
         mNotifyOngoing = Settings.System
-                .getInt(resolver, Settings.System.COLOR_NOTIFICATION_ONGOING, mNotifyOngoing);
+                .getInt(resolver, Settings.System.COLOR_NOTIFICATION_ONGOING, defValuesColor);
         mOngoingTitle.setTextColor(mNotifyOngoing);    
     }
 
@@ -1369,8 +1371,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     private int getNavBarSize() {
+        int defValuesNaviSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_navibarsize_default_cyanmobile);
         int navSizeval = Settings.System.getInt(mContext.getContentResolver(),
-             Settings.System.STATUSBAR_NAVI_SIZE, 25);
+             Settings.System.STATUSBAR_NAVI_SIZE, defValuesNaviSize);
         int navSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                  navSizeval, mContext.getResources().getDisplayMetrics());
         return mNaviShow ? navSizepx : 0;
@@ -1420,8 +1423,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     private int getStatBarSize() {
+        int defValuesStatsSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_statbarsize_default_cyanmobile);
         int statSizeval = Settings.System.getInt(mContext.getContentResolver(),
-             Settings.System.STATUSBAR_STATS_SIZE, 25);
+             Settings.System.STATUSBAR_STATS_SIZE, defValuesStatsSize);
         int statSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                  statSizeval, mContext.getResources().getDisplayMetrics());
         return statSizepx;
@@ -2847,8 +2851,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     int getExpandedWidth() {
+        int defValuesTinyExpSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_tinyexpsize_default_cyanmobile);
         int expandedSizeval = Settings.System.getInt(mContext.getContentResolver(),
-             Settings.System.STATUSBAR_EXPANDED_SIZE, 40);
+             Settings.System.STATUSBAR_EXPANDED_SIZE, defValuesTinyExpSize);
         int expandedSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                  expandedSizeval, mContext.getResources().getDisplayMetrics());
         return (mDisplay.getWidth()-expandedSizepx);

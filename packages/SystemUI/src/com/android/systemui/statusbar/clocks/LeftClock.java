@@ -254,11 +254,11 @@ public class LeftClock extends TextView {
         ContentResolver resolver = mContext.getContentResolver();
 
         int mCColor = mClockColor;
-
+        int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
         mAmPmStyle = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_AM_PM, 2));
         mClockColor = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF38FF00));
+                Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
 
         int mCarrierSizeval = Settings.System.getInt(resolver,
                 Settings.System.STATUSBAR_CLOCK_FONT_SIZE, 11);

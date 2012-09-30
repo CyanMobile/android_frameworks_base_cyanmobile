@@ -244,11 +244,11 @@ public class PowerClock extends TextView {
         ContentResolver resolver = mContext.getContentResolver();
 
         int mCColor = mClockColor;
-
+        int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
         mAmPmStyle = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_AM_PM, 2));
         mClockColor = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF38FF00));
+                Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
 
         if ((mAmPmStyle != AM_PM_STYLE) || (mCColor != mClockColor)) {
             AM_PM_STYLE = mAmPmStyle;

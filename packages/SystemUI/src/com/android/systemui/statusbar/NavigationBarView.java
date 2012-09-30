@@ -188,7 +188,7 @@ public class NavigationBarView extends LinearLayout {
         @Override
         public void onChange(boolean selfChange) {
             ContentResolver resolver = mContext.getContentResolver();
-
+            int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
             mNVShow = (Settings.System.getInt(resolver,
                     Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
             mShowNV = (Settings.System.getInt(resolver,
@@ -208,7 +208,7 @@ public class NavigationBarView extends LinearLayout {
             mOverColorEnable = (Settings.System.getInt(resolver,
                     Settings.System.ENABLE_OVERICON_COLOR, 1) == 1);
             mOverColor = Settings.System.getInt(resolver,
-                    Settings.System.OVERICON_COLOR, 0xFF38FF00);
+                    Settings.System.OVERICON_COLOR, defValuesColor);
             updateNaviButtons();
         }
     }

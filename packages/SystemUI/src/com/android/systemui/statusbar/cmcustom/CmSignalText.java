@@ -171,12 +171,12 @@ public class CmSignalText extends TextView {
     final void updateSignalText() {
         style = Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.STATUS_BAR_CM_SIGNAL_TEXT, STYLE_HIDE);
-
+        int defValuesColor = getContext().getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
         mClockColor = (Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF38FF00));
-
+                Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
+        int defValuesFontSize = getContext().getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
         int mCarrierSizeval = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.STATUSBAR_ICON_FONT_SIZE, 11);
+                Settings.System.STATUSBAR_ICON_FONT_SIZE, defValuesFontSize);
         int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, getContext().getResources().getDisplayMetrics());
         mCarrierSize = CarrierSizepx;
 

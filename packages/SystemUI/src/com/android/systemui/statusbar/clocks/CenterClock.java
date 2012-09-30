@@ -253,14 +253,14 @@ public class CenterClock extends TextView {
         ContentResolver resolver = mContext.getContentResolver();
 
         int mCColor = mClockColor;
-
+        int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
         mAmPmStyle = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_AM_PM, 2));
         mClockColor = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_CLOCKCOLOR, 0xFF38FF00));
-
+                Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
+        int defValuesFontSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
         int mCarrierSizeval = Settings.System.getInt(resolver,
-                Settings.System.STATUSBAR_CLOCK_FONT_SIZE, 11);
+                Settings.System.STATUSBAR_CLOCK_FONT_SIZE, defValuesFontSize);
         int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, mContext.getResources().getDisplayMetrics());
         mCarrierSize = CarrierSizepx;
 

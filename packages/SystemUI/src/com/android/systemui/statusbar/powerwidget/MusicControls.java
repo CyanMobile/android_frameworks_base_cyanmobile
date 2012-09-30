@@ -122,9 +122,9 @@ public class MusicControls extends FrameLayout {
         mIsMusicActive = am.isMusicActive();
 
         ContentResolver resolver = mContext.getContentResolver();
-
+        int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
         mClockColor = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_CARRIERCOLOR, 0xFF38FF00));
+                Settings.System.STATUS_BAR_CARRIERCOLOR, defValuesColor));
 
         mPauseIcon = (ImageButton) findViewById(R.id.musicControlPause);
         mPlayIcon = (ImageButton) findViewById(R.id.musicControlPlay);

@@ -180,6 +180,8 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
     private String mDateFormatString;
     private boolean mEnableMenuKeyInLockScreen;
 
+    private int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+
     private boolean mTrackballUnlockScreen = (Settings.System.getInt(mContext.getContentResolver(),
             Settings.System.TRACKBALL_UNLOCK_SCREEN, 0) == 1);
 
@@ -243,10 +245,10 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
     };
 
     private int mClockColor = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_LOCKSCREENCOLOR, 0xFF38FF00)); // this value for color
+                Settings.System.STATUS_BAR_LOCKSCREENCOLOR, defValuesColor)); // this value for color
 
     private int mCarrierColor = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_CARRIERCOLOR, 0xFF38FF00)); // this value for color
+                Settings.System.STATUS_BAR_CARRIERCOLOR, defValuesColor)); // this value for color
 
     private int mLockscreenStyle = (Settings.System.getInt(mContext.getContentResolver(),
             Settings.System.LOCKSCREEN_STYLE_PREF, 5));
@@ -807,7 +809,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         mGestureTrail = (Settings.System.getInt(context.getContentResolver(),
                 Settings.System.LOCKSCREEN_GESTURES_TRAIL, 0) == 1);
         mGestureColor = Settings.System.getInt(context.getContentResolver(),
-                Settings.System.LOCKSCREEN_GESTURES_COLOR, 0xFF38FF00);
+                Settings.System.LOCKSCREEN_GESTURES_COLOR, defValuesColor);
         boolean prefHideUnlockTab = (Settings.Secure.getInt(context.getContentResolver(),
                 Settings.Secure.LOCKSCREEN_GESTURES_DISABLE_UNLOCK, 0) == 1);
         if (!mGestureActive) {
