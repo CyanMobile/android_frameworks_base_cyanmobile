@@ -117,7 +117,7 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
     };
 
     private static final int [] STREAM_ICONS_NORMAL = {
-        R.drawable.ic_audio_vol,
+        R.drawable.ic_audio_ring_notif,
         R.drawable.ic_audio_ring_notif,
         R.drawable.ic_audio_vol,
         R.drawable.ic_audio_alarm,
@@ -493,7 +493,7 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
                sc.iconRes = R.drawable.ic_audio_ring_notif_vibrate;
                sc.icon.setImageResource(sc.iconRes);
            } else {
-               sc.iconRes = R.drawable.ic_audio_vol;
+               sc.iconRes = R.drawable.ic_audio_ring_notif;
                sc.iconMuteRes = R.drawable.ic_volume_headset;
                sc.icon.setImageResource(mAudioManager.isWiredHeadsetOn() ? sc.iconMuteRes : sc.iconRes);
            }
