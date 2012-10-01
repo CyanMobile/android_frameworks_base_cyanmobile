@@ -1076,6 +1076,7 @@ public class NavigationBarView extends LinearLayout {
 
     public void setNaviVisible(boolean visible) {
       if (mShowNV) {
+        if (visible == mVisible) return;
         if (visible) {
            mNaviBackground.setVisibility(View.VISIBLE);
         } else {
