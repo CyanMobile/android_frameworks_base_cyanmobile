@@ -122,6 +122,7 @@ import static android.view.WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
 import static android.view.WindowManager.LayoutParams.TYPE_SYSTEM_ERROR;
 import static android.view.WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_TOAST;
+import static android.view.WindowManager.LayoutParams.TYPE_VOLUME_OVERLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 import android.view.WindowManagerImpl;
 import android.view.WindowManagerPolicy;
@@ -175,14 +176,17 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static final int NAVIGATION_BAR_LAYER = 15;
     // some panels (e.g. search) need to show on top of the navigation bar
     static final int NAVIGATION_BAR_PANEL_LAYER = 16;
+    // the on-screen volume indicator and controller shown when the user
+    // changes the device volume
+    static final int VOLUME_OVERLAY_LAYER = 17;
     // the keyguard; nothing on top of these can take focus, since they are
     // responsible for power management when displayed.
-    static final int KEYGUARD_LAYER = 17;
-    static final int KEYGUARD_DIALOG_LAYER = 18;
+    static final int KEYGUARD_LAYER = 18;
+    static final int KEYGUARD_DIALOG_LAYER = 19;
     // things in here CAN NOT take focus, but are shown on top of everything else.
-    static final int SYSTEM_OVERLAY_LAYER = 19;
-    static final int SECURE_SYSTEM_OVERLAY_LAYER = 20;
-    static final int BOOT_PROGRESS_LAYER = 21;
+    static final int SYSTEM_OVERLAY_LAYER = 20;
+    static final int SECURE_SYSTEM_OVERLAY_LAYER = 21;
+    static final int BOOT_PROGRESS_LAYER = 22;
 
     static final int APPLICATION_MEDIA_SUBLAYER = -2;
     static final int APPLICATION_MEDIA_OVERLAY_SUBLAYER = -1;
@@ -1230,6 +1234,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             return INPUT_METHOD_LAYER;
         case TYPE_INPUT_METHOD_DIALOG:
             return INPUT_METHOD_DIALOG_LAYER;
+        case TYPE_VOLUME_OVERLAY:
+            return VOLUME_OVERLAY_LAYER;
         case TYPE_SYSTEM_OVERLAY:
             return SYSTEM_OVERLAY_LAYER;
         case TYPE_SECURE_SYSTEM_OVERLAY:

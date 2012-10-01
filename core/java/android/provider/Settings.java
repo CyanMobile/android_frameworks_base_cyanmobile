@@ -1778,6 +1778,15 @@ public final class Settings {
         public static final String ALWAYS_FINISH_ACTIVITIES =
                 "always_finish_activities";
 
+        /**
+         * Volume Overlay Mode. This is the style of the volume overlay panel.
+         *      0 - Single
+         *      1 - Expandable (default)
+         *      2 - Expanded
+         *      3 - None
+         * @hide
+         */
+        public static final String MODE_VOLUME_OVERLAY = "mode_volume_overlay";
 
         /**
          * Ringer mode. This is used internally, changing this value will not

@@ -16,20 +16,20 @@
 
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:gravity="left">
+    android:layout_height="wrap_content" >
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:id="@+id/visible_panel"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="80dip"
         android:background="@android:drawable/toast_frame"
         android:orientation="horizontal">
 
         <LinearLayout
             android:id="@+id/slider_group"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:orientation="vertical" >
         </LinearLayout>
 
@@ -38,7 +38,9 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_gravity="top"
+            android:scaleType="center"
             android:src="@android:drawable/ic_sysbar_quicksettings"
+            android:background="@android:color/transparent"
             />
 
     </LinearLayout>
