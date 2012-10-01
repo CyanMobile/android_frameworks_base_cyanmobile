@@ -970,7 +970,7 @@ public class StatusBarPolicy {
                 public void run() {
                     setSmsInfo(mContext);
                 }
-            },1000);
+            },1500);
         }
     }
 

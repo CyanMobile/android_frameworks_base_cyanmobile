@@ -874,4 +874,9 @@
         <item name="windowEnterAnimation">@android:anim/fade_in</item>
         <item name="windowExitAnimation">@android:anim/fade_out</item>
     </style>
+
+    <style name="Animation.VolumePanel">
+        <item name="windowEnterAnimation">@null</item>
+        <item name="windowExitAnimation">@anim/fade_out</item>
+    </style>
 </resources>
