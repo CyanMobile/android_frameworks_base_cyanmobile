@@ -2374,13 +2374,12 @@ class PowerManagerService extends IPowerManager.Stub
                         }
                         mScreenBrightnessHandler.obtainMessage(ANIMATE_POWER_OFF, mode, 0)
                                 .sendToTarget();
-                    } else {
-                        mScreenBrightnessHandler.removeMessages(
-                            ScreenBrightnessAnimator.ANIMATE_LIGHTS);
-                        Message msg = mScreenBrightnessHandler
-                            .obtainMessage(ANIMATE_LIGHTS, mask, newValue);
-                        mScreenBrightnessHandler.sendMessageDelayed(msg, delay);
                     }
+                    mScreenBrightnessHandler.removeMessages(
+                            ScreenBrightnessAnimator.ANIMATE_LIGHTS);
+                    Message msg = mScreenBrightnessHandler
+                            .obtainMessage(ANIMATE_LIGHTS, mask, newValue);
+                    mScreenBrightnessHandler.sendMessageDelayed(msg, delay);
                 }
             }
         }
@@ -2551,8 +2550,8 @@ class PowerManagerService extends IPowerManager.Stub
 
     private boolean isScreenTurningOffLocked() {
         return (mScreenBrightnessAnimator.isAnimating()
-                && mScreenBrightnessAnimator.endValue == Power.BRIGHTNESS_OFF
-                && (mScreenBrightnessAnimator.currentMask & SCREEN_BRIGHT_BIT) != 0);
+                && (mScreenBrightnessAnimator.endValue == Power.BRIGHTNESS_OFF)
+                && ((mScreenBrightnessAnimator.currentMask & SCREEN_BRIGHT_BIT) != 0));
     }
 
     private boolean shouldLog(long time) {
