@@ -100,7 +100,6 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
 
     private final ViewGroup mSliderGroup;
     private final View mMoreButton;
-    private final View mDivider;
 
     // Synchronize when accessing this
     private ToneGenerator mToneGenerators[];
@@ -159,7 +158,6 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
         mSliderGroup = (ViewGroup) mView.findViewById(R.id.slider_group);
         mMoreButton = (ImageView) mView.findViewById(R.id.expand_button);
         mMoreButton.setOnClickListener(this);
-        mDivider = (ImageView) mView.findViewById(R.id.expand_button_divider);
 
         mDialog = new Dialog(context, R.style.Theme_Panel_Volume);
         mDialog.setTitle("Volume control"); // No need to localize
@@ -274,12 +272,10 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
             mSliderGroup.getChildAt(i).setVisibility(View.VISIBLE);
         }
         mMoreButton.setVisibility(View.INVISIBLE);
-        mDivider.setVisibility(View.INVISIBLE);
     }
 
     private void collapse() {
         mMoreButton.setVisibility(View.VISIBLE);
-        mDivider.setVisibility(View.VISIBLE);
         final int count = mSliderGroup.getChildCount();
         for (int i = 1; i < count; i++) {
             mSliderGroup.getChildAt(i).setVisibility(View.GONE);
