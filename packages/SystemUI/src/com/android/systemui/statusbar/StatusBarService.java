@@ -36,6 +36,7 @@ import com.android.systemui.statusbar.clocks.CenterClock;
 import com.android.systemui.statusbar.clocks.Clock;
 import com.android.systemui.statusbar.clocks.LeftClock;
 import com.android.systemui.statusbar.clocks.PowerClock;
+import com.android.systemui.statusbar.clocks.ClockExpand;
 import com.android.systemui.statusbar.cmcustom.BackLogo;
 import com.android.systemui.statusbar.dates.DateView;
 import com.android.systemui.statusbar.dates.PowerDateView;
@@ -268,6 +269,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private TextView mNotificationsToggle;
     private TextView mButtonsToggle;
     private LinearLayout mNotifications;
+    private LinearLayout mPowerCarrier;
     private LinearLayout mButtons;
     public static ImageView mMusicToggleButton;
 
@@ -948,7 +950,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mTickerText = (TickerView)mStatusBarView.findViewById(R.id.tickerText);
         mTickerText.mTicker = mTicker;
 
-        mTrackingView = (TrackingView)View.inflate(context, R.layout.status_bar_tracking, null);
+        if (!mStatusBarTab) {
+            mTrackingView = (TrackingView)View.inflate(context, R.layout.status_bar_tracking, null);
+        } else {
+            mTrackingView = (TrackingView)View.inflate(context, R.layout.status_bar_trackingtab, null);
+        }
         mTrackingView.mService = this;
         mCloseView = (CloseDragHandle)mTrackingView.findViewById(R.id.close);
         mCloseView.mService = this;
@@ -988,9 +994,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mContext=context;
 
         if (mStatusBarTab) {
+            mPowerCarrier = (LinearLayout)mExpandedView.findViewById(R.id.power_and_carrier_layout);
             mNotifications = (LinearLayout)mExpandedView.findViewById(R.id.notifications_layout);
-            mNotificationsToggle = (TextView)mExpandedView.findViewById(R.id.statusbar_notification_toggle);
-            mButtonsToggle = (TextView)mExpandedView.findViewById(R.id.statusbar_buttons_toggle);
+            mNotificationsToggle = (TextView)mTrackingView.findViewById(R.id.statusbar_notification_toggle);
+            mButtonsToggle = (TextView)mTrackingView.findViewById(R.id.statusbar_buttons_toggle);
             mNotifications.setVisibility(View.GONE);
         }
 
@@ -1024,8 +1031,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                  mButtonsToggle.setTextColor(Color.parseColor("#666666"));
                  LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
                  parent.setBackgroundResource(R.drawable.title_bar_portrait);
-                 mPowerAndCarrier.setVisibility(View.GONE);
-                 mPowerAndCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
+                 mPowerCarrier.setVisibility(View.GONE);
+                 mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
                  mNotifications.setVisibility(View.VISIBLE);
                  mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
                  updateExpandedViewPos(EXPANDED_FULL_OPEN);
@@ -1039,8 +1046,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                  mNotificationsToggle.setTextColor(Color.parseColor("#666666"));
                  LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
                  parent.setBackgroundResource(R.drawable.title_bar_portrait);
-                 mPowerAndCarrier.setVisibility(View.VISIBLE);
-                 mPowerAndCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
+                 mPowerCarrier.setVisibility(View.VISIBLE);
+                 mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
                  mNotifications.setVisibility(View.GONE);
                  mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
                  updateExpandedViewPos(EXPANDED_FULL_OPEN);
@@ -1328,18 +1335,22 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         // remove involved views
         powerAndCarrier.removeView(power);
-        powerAndCarrier.removeView(powerOne);
-        powerAndCarrier.removeView(powerTwo);
-        powerAndCarrier.removeView(powerThree);
-        powerAndCarrier.removeView(powerFour);
+        if (!mStatusBarTab) {
+            powerAndCarrier.removeView(powerOne);
+            powerAndCarrier.removeView(powerTwo);
+            powerAndCarrier.removeView(powerThree);
+            powerAndCarrier.removeView(powerFour);
+        }
         mExpandedView.removeView(powerAndCarrier);
 
         // readd in right order
         mExpandedView.addView(powerAndCarrier, mBottomBar ? 1 : 0);
-        powerAndCarrier.addView(powerFour, mBottomBar && mStatusBarCarrier != 5 ? 1 : 0);
-        powerAndCarrier.addView(powerThree, mBottomBar && mStatusBarCarrier != 5 ? 1 : 0);
-        powerAndCarrier.addView(powerTwo, mBottomBar && mStatusBarCarrier != 5 ? 1 : 0);
-        powerAndCarrier.addView(powerOne, mBottomBar && mStatusBarCarrier != 5 ? 1 : 0);
+        if (!mStatusBarTab) {
+            powerAndCarrier.addView(powerFour, mBottomBar && mStatusBarCarrier != 5 ? 1 : 0);
+            powerAndCarrier.addView(powerThree, mBottomBar && mStatusBarCarrier != 5 ? 1 : 0);
+            powerAndCarrier.addView(powerTwo, mBottomBar && mStatusBarCarrier != 5 ? 1 : 0);
+            powerAndCarrier.addView(powerOne, mBottomBar && mStatusBarCarrier != 5 ? 1 : 0);
+        }
         powerAndCarrier.addView(power, mBottomBar && mStatusBarCarrier != 5 ? 1 : 0);
 
         // Remove all notification views
@@ -2304,16 +2315,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 + mDisabled);
         }
 
-        brightnessControl(event);
-
-        if ((mDisabled & StatusBarManager.DISABLE_EXPAND) != 0) {
-            return false;
-        }
-
-        if (!mTrackingView.mIsAttachedToWindow) {
-            return false;
-        }
-
         final int statusBarSize = getStatBarSize();
         final int hitSize = statusBarSize*2;
         final int y = (int)event.getRawY();
@@ -2325,6 +2326,19 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 mTrackingView.getLocationOnScreen(mAbsPos);
                 mViewDelta = mAbsPos[1] + (mBottomBar ? 0 : mTrackingView.getHeight()) - y;
             }
+        }
+
+        brightnessControl(event);
+
+        if ((mDisabled & StatusBarManager.DISABLE_EXPAND) != 0) {
+            return false;
+        }
+
+        if (!mTrackingView.mIsAttachedToWindow) {
+            return false;
+        }
+
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
             if ((!mBottomBar && ((!mExpanded && y < hitSize) || ( mExpanded && y > (mDisplay.getHeight()-hitSize)))) ||
                  (mBottomBar && (( mExpanded && y < hitSize) || (!mExpanded && y > (mDisplay.getHeight()-hitSize))))) {
 
@@ -2930,6 +2944,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     public View.OnClickListener mMusicToggleButtonListener = new View.OnClickListener() {
 	public void onClick(View v) {
+           if (mStatusBarTab) {
+               mPowerCarrier.setVisibility(View.VISIBLE);
+               mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
+           }
 	   mMusicControls.visibilityToggled();
 	}
     };
@@ -3064,6 +3082,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     PowerClock centerCloex = (PowerClock)mExpandedView.findViewById(R.id.centerCloex);
                     if (centerCloex != null) {
                         centerCloex.invalidate();
+                    }
+                    ClockExpand clockExp = (ClockExpand)mExpandedView.findViewById(R.id.expclock_power);
+                    if (clockExp != null) {
+                        clockExp.invalidate();
                     }
                     PowerDateView powDateView = (PowerDateView)mExpandedView.findViewById(R.id.datestats);
                     if (powDateView != null) {
