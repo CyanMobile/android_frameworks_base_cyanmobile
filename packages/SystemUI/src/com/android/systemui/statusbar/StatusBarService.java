@@ -200,8 +200,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     LinearLayout mNotificationLinearLayout;
     LinearLayout mBottomNotificationLinearLayout;
     View mExpandedContents;
+    View mExpandededContents;
     // top bar
     TextView mNoNotificationsTitle;
+    TextView mNoNotificationsTitles;
     ImageView mClearButton;
     TextView mClearOldButton;
     TextView mCompactClearButton;
@@ -215,6 +217,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     // latest
     NotificationData mLatest = new NotificationData();
     TextView mLatestTitle;
+    TextView mLatestTitles;
     LinearLayout mLatestItems;
     ItemTouchDispatcher mTouchDispatcher;
     // position
@@ -322,6 +325,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     boolean mDeadZone;
     boolean mHasSoftButtons;
     boolean autoBrightness = false;
+    private boolean changeds = false;
     private boolean shouldTick = false;
     Context mContext;
     private int mStatusBarCarrier;
@@ -819,12 +823,21 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
 
         mExpandedDialog = new ExpandedDialog(context);
-        mExpandedContents = mExpandedView.findViewById(R.id.notificationLinearLayout);
+        if (!mStatusBarTab) {
+            mExpandedContents = mExpandedView.findViewById(R.id.notificationLinearLayout);
+        } else {
+            mExpandedContents = mExpandedView.findViewById(R.id.notifications_layout);
+            mExpandededContents = mExpandedView.findViewById(R.id.power_and_carrier_layout);
+        }
         mOngoingTitle = (TextView)mExpandedView.findViewById(R.id.ongoingTitle);
         mOngoingItems = (LinearLayout)mExpandedView.findViewById(R.id.ongoingItems);
         mLatestTitle = (TextView)mExpandedView.findViewById(R.id.latestTitle);
         mLatestItems = (LinearLayout)mExpandedView.findViewById(R.id.latestItems);
         mNoNotificationsTitle = (TextView)mExpandedView.findViewById(R.id.noNotificationsTitle);
+        if (mStatusBarTab) {
+            mLatestTitles = (TextView)mExpandedView.findViewById(R.id.latestTitles);
+            mNoNotificationsTitles = (TextView)mExpandedView.findViewById(R.id.noNotificationsTitles);
+        }
         mClearButton = (ImageView)mExpandedView.findViewById(R.id.clear_all_button);
         mClearButton.setOnClickListener(mClearButtonListener);
         mClearOldButton = (TextView)mExpandedView.findViewById(R.id.clear_old_button);
@@ -859,7 +872,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mExpandedView.setVisibility(View.GONE);
         mOngoingTitle.setVisibility(View.GONE);
         mLatestTitle.setVisibility(View.GONE);
-        
+        if (mStatusBarTab) {
+            mLatestTitles.setVisibility(View.GONE);
+        }
+
         mMusicControls = (MusicControls)mExpandedView.findViewById(R.id.exp_music_controls);
 
         mPowerWidget = (PowerWidget)mExpandedView.findViewById(R.id.exp_power_stat);
@@ -1031,6 +1047,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                  mButtonsToggle.setTextColor(Color.parseColor("#666666"));
                  LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
                  parent.setBackgroundResource(R.drawable.title_bar_portrait);
+                 changeds = true;
                  mPowerCarrier.setVisibility(View.GONE);
                  mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
                  mNotifications.setVisibility(View.VISIBLE);
@@ -1046,6 +1063,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                  mNotificationsToggle.setTextColor(Color.parseColor("#666666"));
                  LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
                  parent.setBackgroundResource(R.drawable.title_bar_portrait);
+                 changeds = false;
                  mPowerCarrier.setVisibility(View.VISIBLE);
                  mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
                  mNotifications.setVisibility(View.GONE);
@@ -1121,7 +1139,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mNotifyNone = Settings.System
                 .getInt(resolver, Settings.System.COLOR_NOTIFICATION_NONE, defValuesColor);
         mNoNotificationsTitle.setTextColor(mNotifyNone);
-
+        if (mStatusBarTab) {
+            mNoNotificationsTitles.setTextColor(mNotifyNone);
+        }
         mNotifyTicker = Settings.System
                 .getInt(resolver, Settings.System.COLOR_NOTIFICATION_TICKER_TEXT, defValuesColor);
         mTickerText.updateColor(mNotifyTicker);
@@ -1129,6 +1149,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mNotifyLatest = Settings.System
                 .getInt(resolver, Settings.System.COLOR_NOTIFICATION_LATEST, defValuesColor);
         mLatestTitle.setTextColor(mNotifyLatest);
+        if (mStatusBarTab) {
+            mLatestTitles.setTextColor(mNotifyLatest);
+        }
 
         mNotifyOngoing = Settings.System
                 .getInt(resolver, Settings.System.COLOR_NOTIFICATION_ONGOING, defValuesColor);
@@ -1834,7 +1857,19 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mOngoingTitle.setVisibility(ongoing ? View.VISIBLE : View.GONE);
         mLatestTitle.setVisibility(latest ? View.VISIBLE : View.GONE);
+        if (mStatusBarTab) {
+            mLatestTitles.setVisibility(latest ? View.VISIBLE : View.GONE);
+        }
 
+        if (latest) {
+            if (mStatusBarTab) {
+                mNoNotificationsTitles.setVisibility(View.GONE);
+            }
+        } else {
+            if (mStatusBarTab) {
+                mNoNotificationsTitles.setVisibility(View.VISIBLE);
+            }
+        }
         if (ongoing || latest) {
             mNoNotificationsTitle.setVisibility(View.GONE);
         } else {
@@ -2819,9 +2854,22 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         if (mExpandedParams != null) {
             mCloseView.getLocationInWindow(mPositionTmp);
             final int closePos = mPositionTmp[1];
+            int conBot;
 
-            mExpandedContents.getLocationInWindow(mPositionTmp);
-            final int contentsBottom = mPositionTmp[1] + mExpandedContents.getHeight();
+            if (!mStatusBarTab) {
+                mExpandedContents.getLocationInWindow(mPositionTmp);
+                conBot = mPositionTmp[1] + mExpandedContents.getHeight();
+            } else {
+                if (changeds) {
+                    mExpandedContents.getLocationInWindow(mPositionTmp);
+                    conBot = mPositionTmp[1] + mExpandedContents.getHeight();
+                } else {
+                    mExpandededContents.getLocationInWindow(mPositionTmp);
+                    conBot = mPositionTmp[1] + mExpandedContents.getHeight();
+                }
+            }
+
+            final int contentsBottom = conBot;
 
             if (expandedPosition != EXPANDED_LEAVE_ALONE) {
                 if(mBottomBar)
@@ -3132,6 +3180,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         } else {
             mOngoingTitle.setText(getText(R.string.status_bar_ongoing_events_title));
             mLatestTitle.setText(getText(R.string.status_bar_latest_events_title));
+            if (mStatusBarTab) {
+               mLatestTitles.setText(getText(R.string.status_bar_latestnews_events_title));
+            }
             mNoNotificationsTitle.setText(getText(R.string.status_bar_no_notifications_title));
 
             // update clock for changing font

@@ -220,11 +220,24 @@
           android:id="@+id/power_and_carrier_layout"
           android:layout_weight="1"
           android:orientation="vertical" >
-        <ImageView
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:background="@drawable/shade_header_background"
-              />
+
+        <TextView android:id="@+id/noNotificationsTitles"
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+           android:background="@drawable/shade_header_background"
+           android:paddingLeft="5dp"
+           android:textAppearance="@style/TextAppearance.StatusBar.Title"
+           android:text="@string/status_bar_no_notifications_title"
+           />
+
+        <TextView android:id="@+id/latestTitles"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/shade_header_background"
+            android:paddingLeft="5dp"
+            android:textAppearance="@style/TextAppearance.StatusBar.Title"
+            android:text="@string/status_bar_latestnews_events_title"
+            />
 
         <com.android.systemui.statusbar.powerwidget.MusicControls android:id="@+id/exp_music_controls"
              android:layout_width="match_parent"

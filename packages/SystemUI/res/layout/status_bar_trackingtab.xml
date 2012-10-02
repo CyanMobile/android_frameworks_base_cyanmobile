@@ -39,39 +39,39 @@
         android:orientation="vertical"
         >
 
-<LinearLayout 
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="bottom"
-    android:layout_gravity="bottom"
-    android:background="@drawable/title_bar_portrait"
-    android:id="@+id/expanded_bottom_bar"
-    >
-  <TextView
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_weight="1"
-      android:textAppearance="@style/TextAppearance.StatusBar.Title"
-      android:textColor="@color/carrier_label_text_color"
-      android:text="@string/status_bar_powerwidget"
-      android:gravity="center"
-      android:id="@+id/statusbar_buttons_toggle"
-      android:clickable="true"
-      />
-  <TextView
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_weight="1"
-      android:textAppearance="@style/TextAppearance.StatusBar.Title"
-      android:textColor="@color/carrier_label_text_color"
-      android:text="@string/status_bar_notifications"
-      android:layout_toRightOf="@+id/statusbar_buttons_toggle"
-      android:gravity="center"
-      android:id="@+id/statusbar_notification_toggle"
-      android:clickable="true"
-      />
-</LinearLayout>
+    <LinearLayout 
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="bottom"
+        android:layout_gravity="bottom"
+        android:background="@drawable/title_bar_portrait"
+        android:id="@+id/expanded_bottom_bar"
+        >
+          <TextView
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:layout_weight="1"
+             android:textAppearance="@style/TextAppearance.StatusBar.Title"
+             android:textColor="@color/carrier_label_text_color"
+             android:text="@string/status_bar_powerwidget"
+             android:gravity="center"
+             android:id="@+id/statusbar_buttons_toggle"
+             android:clickable="true"
+             />
+          <TextView
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:layout_weight="1"
+             android:textAppearance="@style/TextAppearance.StatusBar.Title"
+             android:textColor="@color/carrier_label_text_color"
+             android:text="@string/status_bar_notifications"
+             android:layout_toRightOf="@+id/statusbar_buttons_toggle"
+             android:gravity="center"
+             android:id="@+id/statusbar_notification_toggle"
+             android:clickable="true"
+             />
+        </LinearLayout>
 
         <com.android.systemui.statusbar.powerwidget.PowerWidgetBottom android:id="@+id/exp_power_stat"
              android:layout_width="match_parent"
