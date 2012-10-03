@@ -26,6 +26,7 @@ import com.android.internal.widget.LockPatternUtils;
 import com.android.internal.widget.UnlockRing;
 import com.android.internal.widget.CircularSelector;
 import com.android.internal.widget.SenseLikeLock;
+import com.android.internal.widget.WaveView;
 
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -99,7 +100,7 @@ import java.net.URISyntaxException;
 class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         KeyguardUpdateMonitor.InfoCallback, KeyguardUpdateMonitor.SimStateCallback,
         UnlockRing.OnTriggerListener, CircularSelector.OnCircularSelectorTriggerListener,
-        SenseLikeLock.OnSenseLikeSelectorTriggerListener {
+        SenseLikeLock.OnSenseLikeSelectorTriggerListener, WaveView.OnTriggerListener {
 
     private static final boolean DBG = false;
 
@@ -129,6 +130,9 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
     private UnlockRing mSelector;
     private CircularSelector mCircularSelector;
     private SenseLikeLock mSenseRingSelector;
+    private WaveView mEnergyWave;
+    private WaveViewMethods mWaveViewMethods;
+
     private TextView mDate;
     private TextView mTime;
     private TextView mAmPm;
@@ -261,6 +265,9 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
     private boolean mUseCircularLockscreen =
         LockscreenStyle.getStyleById(mLockscreenStyle) == LockscreenStyle.Circular;
 
+    private boolean mUseIcsLockscreen =
+        LockscreenStyle.getStyleById(mLockscreenStyle) == LockscreenStyle.IcsRing;
+
     private boolean mUseSenseLockscreen =
         LockscreenStyle.getStyleById(mLockscreenStyle) == LockscreenStyle.Sense;
 
@@ -334,6 +341,30 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
          */
         public boolean showStatusLines() {
             return mShowStatusLines;
+        }
+    }
+
+    class WaveViewMethods implements WaveView.OnTriggerListener {
+        private static final int WAIT_FOR_ANIMATION_TIMEOUT = 0;
+        private static final int STAY_ON_WHILE_GRABBED_TIMEOUT = 30000;
+
+        /** {@inheritDoc} */
+        public void onTrigger(View v, int whichHandle) {
+            if (whichHandle == WaveView.OnTriggerListener.CENTER_HANDLE) {
+                // Delay hiding lock screen long enough for animation to finish
+                postDelayed(new Runnable() {
+                    public void run() {
+                        mCallback.goToUnlockScreen();
+                    }
+                }, WAIT_FOR_ANIMATION_TIMEOUT);
+            }	
+        }
+
+        /** {@inheritDoc} */
+        public void onGrabbedStateChange(View v, int grabbedState) {
+            if (grabbedState == WaveView.OnTriggerListener.CENTER_HANDLE) {
+                mCallback.pokeWakelock(STAY_ON_WHILE_GRABBED_TIMEOUT);
+            }
         }
     }
 
@@ -471,10 +502,13 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         mSelector = (UnlockRing) findViewById(R.id.unlock_ring);
         mCircularSelector = (CircularSelector) findViewById(R.id.circular_selector);
         mSenseRingSelector = (SenseLikeLock) findViewById(R.id.sense_selector);
+        mEnergyWave = (WaveView) findViewById(R.id.wave_view);
 
         mSenseRingSelector.setOnSenseLikeSelectorTriggerListener(this);
         mCircularSelector.setOnCircularSelectorTriggerListener(this);
         mSelector.setOnTriggerListener(this);
+        mWaveViewMethods = new WaveViewMethods();
+        mEnergyWave.setOnTriggerListener(mWaveViewMethods);
 
         setupSenseLikeRingShortcuts();
 
@@ -1225,7 +1259,7 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         if (mHideUnlockTab) {
             return false;
         }
-        if (mUseSenseLockscreen || mUseHoneyLockscreen || mUseCircularLockscreen) {
+        if (mUseSenseLockscreen || mUseHoneyLockscreen || mUseCircularLockscreen || mUseIcsLockscreen) {
                 return false;
         }
         return true;
@@ -1470,19 +1504,28 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                 mSenseRingSelector.setVisibility(View.VISIBLE);
                 mCircularSelector.setVisibility(View.GONE);
                 mSelector.setVisibility(View.GONE);
+                mEnergyWave.setVisibility(View.GONE);
             } else if (mUseCircularLockscreen) {
                 mSenseRingSelector.setVisibility(View.GONE);
                 mCircularSelector.setVisibility(View.VISIBLE);
                 mSelector.setVisibility(View.GONE);
+                mEnergyWave.setVisibility(View.GONE);
+            } else if (mUseIcsLockscreen) {
+                mSenseRingSelector.setVisibility(View.GONE);
+                mCircularSelector.setVisibility(View.GONE);
+                mSelector.setVisibility(View.GONE);
+                mEnergyWave.setVisibility(View.VISIBLE);
             } else {
                 mSenseRingSelector.setVisibility(View.GONE);
                 mCircularSelector.setVisibility(View.GONE);
+                mEnergyWave.setVisibility(View.GONE);
                 mSelector.setVisibility(View.VISIBLE);
             }
         } else {
             mSenseRingSelector.setVisibility(View.GONE);
             mCircularSelector.setVisibility(View.GONE);
             mSelector.setVisibility(View.GONE);
+            mEnergyWave.setVisibility(View.GONE);
         }
     }
 
@@ -1597,6 +1640,9 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         if (mSmsCallListener != null) {
             getContext().unregisterReceiver(mSmsCallListener);
             mSmsCallListener = null;
+        }
+        if (mUseIcsLockscreen) {
+            mEnergyWave.reset();
         }
     }
 

@@ -1265,6 +1265,11 @@
   <public type="attr" name="windowCloseOnTouchOutside" />
   <public type="attr" name="textAppearanceListItem" />
   <public type="attr" name="textAppearanceListItemSmall" />
+  <public type="attr" name="valueFrom" />
+  <public type="attr" name="valueTo" />
+  <public type="attr" name="valueType" />
+  <public type="attr" name="propertyName" />
+  <public type="attr" name="ordering" />
 
   <!-- presence drawables for videochat or audiochat capable contacts -->
   <public type="drawable" name="presence_video_away" id="0x010800ac" />

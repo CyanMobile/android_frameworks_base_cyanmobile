@@ -237,6 +237,14 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"    />
 
+        <com.android.internal.widget.WaveView
+           android:id="@+id/wave_view"
+           android:orientation="vertical"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:layout_alignParentBottom="true"
+           />
+
         <!-- emergency call button shown when sim is PUKd and tab_selector is
              hidden -->
         <Button
