@@ -325,7 +325,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     boolean mDeadZone;
     boolean mHasSoftButtons;
     boolean autoBrightness = false;
-    private boolean changeds = false;
     private boolean shouldTick = false;
     Context mContext;
     private int mStatusBarCarrier;
@@ -1047,7 +1046,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                  mButtonsToggle.setTextColor(Color.parseColor("#666666"));
                  LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
                  parent.setBackgroundResource(R.drawable.title_bar_portrait);
-                 changeds = true;
                  mPowerCarrier.setVisibility(View.GONE);
                  mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
                  mNotifications.setVisibility(View.VISIBLE);
@@ -1063,7 +1061,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                  mNotificationsToggle.setTextColor(Color.parseColor("#666666"));
                  LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
                  parent.setBackgroundResource(R.drawable.title_bar_portrait);
-                 changeds = false;
                  mPowerCarrier.setVisibility(View.VISIBLE);
                  mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
                  mNotifications.setVisibility(View.GONE);
@@ -2860,13 +2857,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 mExpandedContents.getLocationInWindow(mPositionTmp);
                 conBot = mPositionTmp[1] + mExpandedContents.getHeight();
             } else {
-                if (changeds) {
-                    mExpandedContents.getLocationInWindow(mPositionTmp);
-                    conBot = mPositionTmp[1] + mExpandedContents.getHeight();
-                } else {
-                    mExpandededContents.getLocationInWindow(mPositionTmp);
-                    conBot = mPositionTmp[1] + mExpandedContents.getHeight();
-                }
+                conBot = mPositionTmp[1] + getExpandedHeight();
             }
 
             final int contentsBottom = conBot;
