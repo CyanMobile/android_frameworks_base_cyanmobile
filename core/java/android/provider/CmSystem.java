@@ -79,7 +79,8 @@ public final class CmSystem {
         Honeycomb,
         Circular,
         Sense,
-        IcsRing;
+        IcsRing,
+        JbRing;
 
         static public LockscreenStyle getStyleById(int id) {
             switch (id) {
@@ -102,8 +103,10 @@ public final class CmSystem {
                     return Sense;
                 case 9:
                     return IcsRing;
+                case 10:
+                    return JbRing;
                 default:
-                    return Ring;
+                    return JbRing;
             }
         }
 
@@ -129,8 +132,10 @@ public final class CmSystem {
                     return 8;
                 case IcsRing:
                     return 9;
+                case JbRing:
+                    return 10;
                 default:
-                    return 5;
+                    return 10;
             }
         }
     }

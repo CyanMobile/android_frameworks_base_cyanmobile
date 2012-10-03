@@ -47,4 +47,10 @@
     <!-- Default correction for the space key in the password keyboard -->
     <dimen name="password_keyboard_spacebar_vertical_correction">4dip</dimen>
     <dimen name="volume_panel_top">40dp</dimen>
+    <!-- Default target placement radius for MultiWaveView -->
+    <dimen name="multiwaveview_target_placement_radius">135dip</dimen>
+    <!-- Default distance beyond which MultiWaveView snaps to the target radius -->
+    <dimen name="multiwaveview_snap_margin">20dip</dimen>
+    <!-- Default distance from each snap target that MultiWaveView considers a "hit" -->
+    <dimen name="multiwaveview_hit_radius">60dip</dimen>
 </resources>

@@ -17,7 +17,9 @@
 package android.animation;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * This class plays a set of {@link Animator} objects in the specified order. Animations
@@ -85,14 +87,19 @@ public final class AnimatorSet extends Animator {
     private AnimatorSetListener mSetListener = null;
 
     /**
-     * Flag indicating that the AnimatorSet has been canceled (by calling cancel() or end()).
+     * Flag indicating that the AnimatorSet has been manually
+     * terminated (by calling cancel() or end()).
      * This flag is used to avoid starting other animations when currently-playing
-     * child animations of this AnimatorSet end.
+     * child animations of this AnimatorSet end. It also determines whether cancel/end
+     * notifications are sent out via the normal AnimatorSetListener mechanism.
      */
-    boolean mCanceled = false;
+    boolean mTerminated = false;
 
     // The amount of time in ms to delay starting the animation after start() is called
     private long mStartDelay = 0;
+
+    // Animator used for a nonzero startDelay
+    private ValueAnimator mDelayAnim = null;
 
 
     // How long the child animations should last in ms. The default value is negative, which
@@ -117,10 +124,29 @@ public final class AnimatorSet extends Animator {
     }
 
     /**
+     * Sets up this AnimatorSet to play all of the supplied animations at the same time.
+     *
+     * @param items The animations that will be started simultaneously.
+     */
+    public void playTogether(Collection<Animator> items) {
+        if (items != null && items.size() > 0) {
+            mNeedsSort = true;
+            Builder builder = null;
+            for (Animator anim : items) {
+                if (builder == null) {
+                    builder = play(anim);
+                } else {
+                    builder.with(anim);
+                }
+            }
+        }
+    }
+
+    /**
      * Sets up this AnimatorSet to play each of the supplied animations when the
      * previous animation ends.
      *
-     * @param items The aniamtions that will be started one after another.
+     * @param items The animations that will be started one after another.
      */
     public void playSequentially(Animator... items) {
         if (items != null) {
@@ -130,6 +156,25 @@ public final class AnimatorSet extends Animator {
             } else {
                 for (int i = 0; i < items.length - 1; ++i) {
                     play(items[i]).before(items[i+1]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Sets up this AnimatorSet to play each of the supplied animations when the
+     * previous animation ends.
+     *
+     * @param items The animations that will be started one after another.
+     */
+    public void playSequentially(List<Animator> items) {
+        if (items != null && items.size() > 0) {
+            mNeedsSort = true;
+            if (items.size() == 1) {
+                play(items.get(0));
+            } else {
+                for (int i = 0; i < items.size() - 1; ++i) {
+                    play(items.get(i)).before(items.get(i+1));
                 }
             }
         }
@@ -228,17 +273,28 @@ public final class AnimatorSet extends Animator {
     @SuppressWarnings("unchecked")
     @Override
     public void cancel() {
-        mCanceled = true;
-        if (mListeners != null) {
-            ArrayList<AnimatorListener> tmpListeners =
-                    (ArrayList<AnimatorListener>) mListeners.clone();
-            for (AnimatorListener listener : tmpListeners) {
-                listener.onAnimationCancel(this);
+        mTerminated = true;
+        if (isRunning()) {
+            ArrayList<AnimatorListener> tmpListeners = null;
+            if (mListeners != null) {
+                tmpListeners = (ArrayList<AnimatorListener>) mListeners.clone();
+                for (AnimatorListener listener : tmpListeners) {
+                    listener.onAnimationCancel(this);
+                }
             }
-        }
-        if (mSortedNodes.size() > 0) {
-            for (Node node : mSortedNodes) {
-                node.animation.cancel();
+            if (mDelayAnim != null && mDelayAnim.isRunning()) {
+                // If we're currently in the startDelay period, just cancel that animator and
+                // send out the end event to all listeners
+                mDelayAnim.cancel();
+            } else  if (mSortedNodes.size() > 0) {
+                for (Node node : mSortedNodes) {
+                    node.animation.cancel();
+                }
+            }
+            if (tmpListeners != null) {
+                for (AnimatorListener listener : tmpListeners) {
+                    listener.onAnimationEnd(this);
+                }
             }
         }
     }
@@ -251,20 +307,32 @@ public final class AnimatorSet extends Animator {
      */
     @Override
     public void end() {
-        mCanceled = true;
-        if (mSortedNodes.size() != mNodes.size()) {
-            // hasn't been started yet - sort the nodes now, then end them
-            sortNodes();
-            for (Node node : mSortedNodes) {
-                if (mSetListener == null) {
-                    mSetListener = new AnimatorSetListener(this);
+        mTerminated = true;
+        if (isRunning()) {
+            if (mSortedNodes.size() != mNodes.size()) {
+                // hasn't been started yet - sort the nodes now, then end them
+                sortNodes();
+                for (Node node : mSortedNodes) {
+                    if (mSetListener == null) {
+                        mSetListener = new AnimatorSetListener(this);
+                    }
+                    node.animation.addListener(mSetListener);
                 }
-                node.animation.addListener(mSetListener);
             }
-        }
-        if (mSortedNodes.size() > 0) {
-            for (Node node : mSortedNodes) {
-                node.animation.end();
+            if (mDelayAnim != null) {
+                mDelayAnim.cancel();
+            }
+            if (mSortedNodes.size() > 0) {
+                for (Node node : mSortedNodes) {
+                    node.animation.end();
+                }
+            }
+            if (mListeners != null) {
+                ArrayList<AnimatorListener> tmpListeners =
+                        (ArrayList<AnimatorListener>) mListeners.clone();
+                for (AnimatorListener listener : tmpListeners) {
+                    listener.onAnimationEnd(this);
+                }
             }
         }
     }
@@ -365,18 +433,32 @@ public final class AnimatorSet extends Animator {
     @SuppressWarnings("unchecked")
     @Override
     public void start() {
-        mCanceled = false;
+        mTerminated = false;
 
         // First, sort the nodes (if necessary). This will ensure that sortedNodes
         // contains the animation nodes in the correct order.
         sortNodes();
+
+        int numSortedNodes = mSortedNodes.size();
+        for (int i = 0; i < numSortedNodes; ++i) {
+            Node node = mSortedNodes.get(i);
+            // First, clear out the old listeners
+            ArrayList<AnimatorListener> oldListeners = node.animation.getListeners();
+            if (oldListeners != null && oldListeners.size() > 0) {
+                for (AnimatorListener listener : oldListeners) {
+                    if (listener instanceof DependencyListener ||
+                            listener instanceof AnimatorSetListener) {
+                        node.animation.removeListener(listener);
+                    }
+                }
+            }
+        }
 
         // nodesToStart holds the list of nodes to be started immediately. We don't want to
         // start the animations in the loop directly because we first need to set up
         // dependencies on all of the nodes. For example, we don't want to start an animation
         // when some other animation also wants to start when the first animation begins.
         final ArrayList<Node> nodesToStart = new ArrayList<Node>();
-        int numSortedNodes = mSortedNodes.size();
         for (int i = 0; i < numSortedNodes; ++i) {
             Node node = mSortedNodes.get(i);
             if (mSetListener == null) {
@@ -403,19 +485,25 @@ public final class AnimatorSet extends Animator {
             }
         } else {
             // TODO: Need to cancel out of the delay appropriately
-            ValueAnimator delayAnim = ValueAnimator.ofFloat(0f, 1f);
-            delayAnim.setDuration(mStartDelay);
-            delayAnim.addListener(new AnimatorListenerAdapter() {
+            mDelayAnim = ValueAnimator.ofFloat(0f, 1f);
+            mDelayAnim.setDuration(mStartDelay);
+            mDelayAnim.addListener(new AnimatorListenerAdapter() {
+                boolean canceled = false;
+                public void onAnimationCancel(Animator anim) {
+                    canceled = true;
+                }
                 public void onAnimationEnd(Animator anim) {
-                    int numNodes = nodesToStart.size();
-                    for (int i = 0; i < numNodes; ++i) {
-                        Node node = nodesToStart.get(i);
-                        node.animation.start();
-                        mPlayingSet.add(node.animation);
+                    if (!canceled) {
+                        int numNodes = nodesToStart.size();
+                        for (int i = 0; i < numNodes; ++i) {
+                            Node node = nodesToStart.get(i);
+                            node.animation.start();
+                            mPlayingSet.add(node.animation);
+                        }
                     }
                 }
             });
-            delayAnim.start();
+            mDelayAnim.start();
         }
         if (mListeners != null) {
             ArrayList<AnimatorListener> tmpListeners =
@@ -444,7 +532,7 @@ public final class AnimatorSet extends Animator {
          * and will populate any appropriate lists, when it is started.
          */
         anim.mNeedsSort = true;
-        anim.mCanceled = false;
+        anim.mTerminated = false;
         anim.mPlayingSet = new ArrayList<Animator>();
         anim.mNodeMap = new HashMap<Animator, Node>();
         anim.mNodes = new ArrayList<Node>();
@@ -562,7 +650,7 @@ public final class AnimatorSet extends Animator {
          * @param dependencyAnimation the animation that sent the event.
          */
         private void startIfReady(Animator dependencyAnimation) {
-            if (mAnimatorSet.mCanceled) {
+            if (mAnimatorSet.mTerminated) {
                 // if the parent AnimatorSet was canceled, then don't start any dependent anims
                 return;
             }
@@ -598,11 +686,15 @@ public final class AnimatorSet extends Animator {
         }
 
         public void onAnimationCancel(Animator animation) {
-            if (mPlayingSet.size() == 0) {
-                if (mListeners != null) {
-                    int numListeners = mListeners.size();
-                    for (int i = 0; i < numListeners; ++i) {
-                        mListeners.get(i).onAnimationCancel(mAnimatorSet);
+            if (!mTerminated) {
+                // Listeners are already notified of the AnimatorSet canceling in cancel().
+                // The logic below only kicks in when animations end normally
+                if (mPlayingSet.size() == 0) {
+                    if (mListeners != null) {
+                        int numListeners = mListeners.size();
+                        for (int i = 0; i < numListeners; ++i) {
+                            mListeners.get(i).onAnimationCancel(mAnimatorSet);
+                        }
                     }
                 }
             }
@@ -614,24 +706,28 @@ public final class AnimatorSet extends Animator {
             mPlayingSet.remove(animation);
             Node animNode = mAnimatorSet.mNodeMap.get(animation);
             animNode.done = true;
-            ArrayList<Node> sortedNodes = mAnimatorSet.mSortedNodes;
-            boolean allDone = true;
-            int numSortedNodes = sortedNodes.size();
-            for (int i = 0; i < numSortedNodes; ++i) {
-                if (!sortedNodes.get(i).done) {
-                    allDone = false;
-                    break;
+            if (!mTerminated) {
+                // Listeners are already notified of the AnimatorSet ending in cancel() or
+                // end(); the logic below only kicks in when animations end normally
+                ArrayList<Node> sortedNodes = mAnimatorSet.mSortedNodes;
+                boolean allDone = true;
+                int numSortedNodes = sortedNodes.size();
+                for (int i = 0; i < numSortedNodes; ++i) {
+                    if (!sortedNodes.get(i).done) {
+                        allDone = false;
+                        break;
+                    }
                 }
-            }
-            if (allDone) {
-                // If this was the last child animation to end, then notify listeners that this
-                // AnimatorSet has ended
-                if (mListeners != null) {
-                    ArrayList<AnimatorListener> tmpListeners =
-                            (ArrayList<AnimatorListener>) mListeners.clone();
-                    int numListeners = tmpListeners.size();
-                    for (int i = 0; i < numListeners; ++i) {
-                        tmpListeners.get(i).onAnimationEnd(mAnimatorSet);
+                if (allDone) {
+                    // If this was the last child animation to end, then notify listeners that this
+                    // AnimatorSet has ended
+                    if (mListeners != null) {
+                        ArrayList<AnimatorListener> tmpListeners =
+                                (ArrayList<AnimatorListener>) mListeners.clone();
+                        int numListeners = tmpListeners.size();
+                        for (int i = 0; i < numListeners; ++i) {
+                            tmpListeners.get(i).onAnimationEnd(mAnimatorSet);
+                        }
                     }
                 }
             }
@@ -713,6 +809,8 @@ public final class AnimatorSet extends Animator {
                         }
                     }
                 }
+                // nodes are 'done' by default; they become un-done when started, and done
+                // again when ended
                 node.done = false;
             }
         }

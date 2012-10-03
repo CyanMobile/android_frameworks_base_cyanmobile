@@ -87,15 +87,12 @@ public class DrawableHolder implements AnimatorListener {
      * @param property
      */
     public void removeAnimationFor(String property) {
-        ArrayList<ObjectAnimator> removalList = new ArrayList<ObjectAnimator>();
-        for (ObjectAnimator currentAnim : mAnimators) {
+        ArrayList<ObjectAnimator> removalList = (ArrayList<ObjectAnimator>)mAnimators.clone();
+        for (ObjectAnimator currentAnim : removalList) {
             if (property.equals(currentAnim.getPropertyName())) {
                 currentAnim.cancel();
-                removalList.add(currentAnim);
             }
         }
-        if (DBG) Log.v(TAG, "Remove list size: " + removalList.size());
-        mAnimators.removeAll(removalList);
     }
 
     /**
@@ -158,29 +155,24 @@ public class DrawableHolder implements AnimatorListener {
     }
 
 
-    public DrawableHolder setX(float value) {
+    public void setX(float value) {
         mX = value;
-        return this;
     }
 
-    public DrawableHolder setY(float value) {
+    public void setY(float value) {
         mY = value;
-        return this;
     }
 
-    public DrawableHolder setScaleX(float value) {
+    public void setScaleX(float value) {
         mScaleX = value;
-        return this;
     }
 
-    public DrawableHolder setScaleY(float value) {
+    public void setScaleY(float value) {
         mScaleY = value;
-        return this;
     }
 
-    public DrawableHolder setAlpha(float alpha) {
+    public void setAlpha(float alpha) {
         mAlpha = alpha;
-        return this;
     }
 
     public float getX() {
