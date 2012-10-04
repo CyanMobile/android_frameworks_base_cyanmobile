@@ -1842,6 +1842,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     /** {@inheritDoc} */
     public void beginLayoutLw(int displayWidth, int displayHeight) {
+        mNaviShowAll = (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.NAVI_BUTTONS, 1) == 1);
+        mNaviShowAll2 = (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.NAVI_BUTTONS, 1) == 2);
         mUnrestrictedScreenLeft = mUnrestrictedScreenTop = 0;
         mUnrestrictedScreenWidth = displayWidth;
         mUnrestrictedScreenHeight = displayHeight;
@@ -1957,6 +1961,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     /** {@inheritDoc} */
     public void layoutWindowLw(WindowState win, WindowManager.LayoutParams attrs,
             WindowState attached) {
+        mNaviShowAll = (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.NAVI_BUTTONS, 1) == 1);
+        mNaviShowAll2 = (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.NAVI_BUTTONS, 1) == 2);
         // we've already done the status bar
         if (win == mStatusBar || win == mNavigationBar) {
             return;
@@ -2181,6 +2189,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     /** {@inheritDoc} */
     public int finishAnimationLw() {
+        mNaviShowAll = (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.NAVI_BUTTONS, 1) == 1);
+        mNaviShowAll2 = (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.NAVI_BUTTONS, 1) == 2);
         int changes = 0;
 
         boolean hiding = false;
@@ -2201,14 +2213,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if (hideStatusBar || mShowStatBar) {
                     if (DEBUG_LAYOUT) Log.v(TAG, "Hiding status bar");
                     if (mStatusBar.hideLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
-                    if (mNavigationBar != null && mNaviShow && mNaviShowAll) {
+                    if (mNaviShow && mNaviShowAll) {
                        Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, 2);
                     }
                     hiding = true;
                 } else {
                     if (DEBUG_LAYOUT) Log.v(TAG, "Showing status bar");
                     if (mStatusBar.showLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
-                    if (mNavigationBar != null && mNaviShow && mNaviShowAll2) {
+                    if (mNaviShow && mNaviShowAll2) {
                        Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, 1);
                     }
                 }
