@@ -247,21 +247,41 @@
 
     <com.android.internal.widget.multiwaveview.MultiWaveView
         android:id="@+id/unlock_widget"
-        android:layout_width="300dip"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:gravity="top"
 
         android:targetDrawables="@array/lockscreen_targets_with_camera"
         android:handleDrawable="@drawable/ic_lockscreen_handle"
         android:waveDrawable="@drawable/ic_lockscreen_outerring"
         android:outerRadius="@*android:dimen/multiwaveview_target_placement_radius"
         android:snapMargin="@*android:dimen/multiwaveview_snap_margin"
-        android:hitRadius="@*android:dimen/multiwaveview_hit_radius"
-        android:vibrationDuration="20"
-        android:topChevronDrawable="@drawable/ic_lockscreen_chevron_up"
+        android:chevronDrawables="@array/lockscreen_chevron_drawables"
         android:feedbackCount="3"
-        android:horizontalOffset="60dip"
-        android:verticalOffset="0dip"
+        android:vibrationDuration="20"
         />
+
+        <com.android.internal.widget.multiwaveview.GlowPadView
+            android:id="@+id/unlockglow_widget"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentBottom="true"
+            android:gravity="top"
+
+            android:targetDrawables="@array/lockscreen_targets_with_camera"
+            android:handleDrawable="@drawable/ic_lockscreen_handle"
+            android:outerRingDrawable="@drawable/ic_lockscreen_outerring"
+            android:outerRadius="@dimen/glowpadview_target_placement_radius"
+            android:innerRadius="@dimen/glowpadview_inner_radius"
+            android:snapMargin="@dimen/glowpadview_snap_margin"
+            android:feedbackCount="1"
+            android:vibrationDuration="20"
+            android:glowRadius="@dimen/glowpadview_glow_radius"
+            android:pointDrawable="@drawable/ic_lockscreen_glowdot"
+            />
 
         <!-- emergency call button shown when sim is PUKd and tab_selector is
              hidden -->

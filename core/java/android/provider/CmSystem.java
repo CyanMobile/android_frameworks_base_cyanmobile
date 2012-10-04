@@ -80,7 +80,8 @@ public final class CmSystem {
         Circular,
         Sense,
         IcsRing,
-        JbRing;
+        JbRing,
+        JbGlowRing;
 
         static public LockscreenStyle getStyleById(int id) {
             switch (id) {
@@ -105,6 +106,8 @@ public final class CmSystem {
                     return IcsRing;
                 case 10:
                     return JbRing;
+                case 11:
+                    return JbGlowRing;
                 default:
                     return JbRing;
             }
@@ -134,6 +137,8 @@ public final class CmSystem {
                     return 9;
                 case JbRing:
                     return 10;
+                case JbGlowRing:
+                    return 11;
                 default:
                     return 10;
             }
