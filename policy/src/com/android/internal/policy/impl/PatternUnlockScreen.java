@@ -107,11 +107,13 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
     private int mBatteryLevel = 100;
     private String mCharging = null;
 
+    private int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+
     private int mClockColor = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_LOCKSCREENCOLOR, 0xFF38FF00));
+                Settings.System.STATUS_BAR_LOCKSCREENCOLOR, defValuesColor));
 
     private int mCarrierColor = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_CARRIERCOLOR, 0xFF38FF00));
+                Settings.System.STATUS_BAR_CARRIERCOLOR, defValuesColor));
 
     private String mNextAlarm = null;
 

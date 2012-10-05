@@ -154,7 +154,7 @@ public class CenterCarrierLabelStatusBar extends TextView {
     void updateSettings() {
         ContentResolver resolver = mContext.getContentResolver();
         int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
-        int defValuesFontSize = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+        int defValuesFontSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
         mCarrierLabelType = Settings.System.getInt(resolver,
                 Settings.System.CARRIER_LABEL_TYPE, TYPE_DEFAULT);
         mCarrierLabelCustom = Settings.System.getString(resolver,
@@ -166,7 +166,7 @@ public class CenterCarrierLabelStatusBar extends TextView {
         mStatusBarCarrierCenter = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_CARRIER, 6) == 2);
         int mCarrierSizeval = Settings.System.getInt(resolver,
-                Settings.System.STATUSBAR_CARRIER_FONT_SIZE, 11);
+                Settings.System.STATUSBAR_CARRIER_FONT_SIZE, defValuesFontSize);
         int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, mContext.getResources().getDisplayMetrics());
         mCarrierSize = CarrierSizepx;
     }
