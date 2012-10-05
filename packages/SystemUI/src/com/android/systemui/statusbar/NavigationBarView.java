@@ -112,6 +112,7 @@ public class NavigationBarView extends LinearLayout {
     private boolean mShowNV;
     private boolean mShowVol;
     private boolean mOverColorEnable;
+    private int mShowAnimate;
     private int mShowHome;
     private int mShowMenu;
     private int mShowBack;
@@ -165,6 +166,8 @@ public class NavigationBarView extends LinearLayout {
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.NAVI_BUTTONS), false, this);
             resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.NAVI_BUTTONS_ANIMATE), false, this);
+            resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.SHOW_NAVI_BUTTONS), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.NAVI_BUTTON_SHOW_HOME), false, this);
@@ -209,6 +212,8 @@ public class NavigationBarView extends LinearLayout {
                     Settings.System.ENABLE_OVERICON_COLOR, 1) == 1);
             mOverColor = Settings.System.getInt(resolver,
                     Settings.System.OVERICON_COLOR, defValuesColor);
+            mShowAnimate = Settings.System.getInt(resolver,
+                    Settings.System.NAVI_BUTTONS_ANIMATE, 20000);
             updateNaviButtons();
         }
     }
@@ -1029,6 +1034,8 @@ public class NavigationBarView extends LinearLayout {
             // set up settings observer
             SettingsObserver settingsObserver = new SettingsObserver(mHandler);
             settingsObserver.observe();
+
+            mHandler.postDelayed(mResetNormal, 1000);
         }
     }
 
@@ -1058,16 +1065,52 @@ public class NavigationBarView extends LinearLayout {
            mNaviAdd.setVisibility(View.GONE);
         }
 
-        mPowerIcon = mForceRotate ? mPowerIconRot : mPowerIconNorm;
-        mHomeIcon = mForceRotate ? mHomeIconRot : mHomeIconNorm;
-        mMenuIcon = mForceRotate ? mMenuIconRot : mMenuIconNorm;
-        mBackIcon = mForceRotate ? mBackIconRot : mBackIconNorm;
-        mSearchIcon = mForceRotate ? mSearchIconRot : mSearchIconNorm;
-        mQuickIcon = mForceRotate ? mQuickIconRot : mQuickIconNorm;
-        mVolUpIcon = mForceRotate ? mVolUpIconRot : mVolUpIconNorm;
-        mVolDownIcon = mForceRotate ? mVolDownIconRot : mVolDownIconNorm;
+        if (mShowAnimate == 1) {
+            mPowerIcon = mForceRotate ? mPowerIconRot : mPowerIconNorm;
+            mHomeIcon = mForceRotate ? mHomeIconRot : mHomeIconNorm;
+            mMenuIcon = mForceRotate ? mMenuIconRot : mMenuIconNorm;
+            mBackIcon = mForceRotate ? mBackIconRot : mBackIconNorm;
+            mSearchIcon = mForceRotate ? mSearchIconRot : mSearchIconNorm;
+            mQuickIcon = mForceRotate ? mQuickIconRot : mQuickIconNorm;
+            mVolUpIcon = mForceRotate ? mVolUpIconRot : mVolUpIconNorm;
+            mVolDownIcon = mForceRotate ? mVolDownIconRot : mVolDownIconNorm;
+        }
         updateNaviButtons();
     }
+
+    Runnable mResetNormal = new Runnable() {
+        public void run() {
+             mPowerIcon = mPowerIconNorm;
+             mHomeIcon = mHomeIconNorm;
+             mMenuIcon = mMenuIconNorm;
+             mBackIcon = mBackIconNorm;
+             mSearchIcon = mSearchIconNorm;
+             mQuickIcon = mQuickIconNorm;
+             mVolUpIcon = mVolUpIconNorm;
+             mVolDownIcon = mVolDownIconNorm;
+             updateNaviButtons();
+             if (mShowAnimate > 2) {
+                 mHandler.postDelayed(mResetRotate, mShowAnimate);
+             }
+        }
+    };
+
+    Runnable mResetRotate = new Runnable() {
+        public void run() {
+             mPowerIcon = mPowerIconRot;
+             mHomeIcon = mHomeIconRot;
+             mMenuIcon = mMenuIconRot;
+             mBackIcon = mBackIconRot;
+             mSearchIcon = mSearchIconRot;
+             mQuickIcon = mQuickIconRot;
+             mVolUpIcon = mVolUpIconRot;
+             mVolDownIcon = mVolDownIconRot;
+             updateNaviButtons();
+             if (mShowAnimate > 2) {
+                 mHandler.postDelayed(mResetNormal, mShowAnimate);
+             }
+        }
+    };
 
     public void setIMEVisible(boolean visible) {
         mInputShow = visible;
@@ -1083,20 +1126,6 @@ public class NavigationBarView extends LinearLayout {
            mNaviBackground.setVisibility(View.VISIBLE);
         } else {
            mNaviBackground.setVisibility(View.GONE);
-        }
-        updateNaviButtons();
-      }
-    }
-
-    public void setHidden(final boolean hide) {
-        if (hide == mHidden) return;
-
-        mHidden = hide;
-      if (mShowNV) {
-        if (!hide) {
-           mSoftButtons.setVisibility(View.VISIBLE);
-        } else {
-           mSoftButtons.setVisibility(View.GONE);
         }
         updateNaviButtons();
       }
@@ -1144,6 +1173,7 @@ public class NavigationBarView extends LinearLayout {
             return;
 
         // toggle visibility of buttons - at first, toggle all visible
+        mSoftButtons.setVisibility(View.VISIBLE);
         mHomeButton.setVisibility(View.VISIBLE);
         mMenuButton.setVisibility(View.VISIBLE);
         mBackButton.setVisibility(View.VISIBLE);
@@ -1164,12 +1194,10 @@ public class NavigationBarView extends LinearLayout {
 
         if (mVisible && mShowNV) {
            mNaviBackground.setVisibility(View.VISIBLE);
-           mSoftButtons.setVisibility(View.VISIBLE);
         }
 
         if(!mShowNV) {
            mNaviBackground.setVisibility(View.GONE);
-           mVisible = true;
         }
 
         // now toggle off unneeded stuff
@@ -1212,7 +1240,7 @@ public class NavigationBarView extends LinearLayout {
           if(mShowQuicker == 5)
             mQuickButton.clearColorFilter();
         }
-
+        
         mHandler.postDelayed(mResetHome, 10);
         mHandler.postDelayed(mResetMenu, 10);
         mHandler.postDelayed(mResetBack, 10);

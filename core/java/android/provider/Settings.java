@@ -3097,6 +3097,13 @@ public final class Settings {
         public static final String SHOW_NAVI_BUTTONS = "show_navi_buttons";
 
         /**
+         * Whether to display the nav buttons animation
+         * 0: disable animation
+         * @hide
+         */
+        public static final String NAVI_BUTTONS_ANIMATE = "navi_buttons_animate";
+
+        /**
          * Whether to display the status bar on lockscreen
          * 0: hide status bar on lockscreen
          * 1: show status bar on lockscreen (default for most devices)

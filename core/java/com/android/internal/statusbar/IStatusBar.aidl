@@ -31,5 +31,6 @@ oneway interface IStatusBar
     void animateExpand();
     void animateCollapse();
     void setIMEVisible(boolean visible);
+    void showNaviBar(boolean visible);
 }
 

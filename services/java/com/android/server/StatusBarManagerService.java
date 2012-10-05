@@ -70,6 +70,7 @@ public class StatusBarManagerService extends IStatusBarService.Stub
 
     Object mLock = new Object();
     boolean mIMEVisible = false;
+    boolean mShowNavBars = false;
 
     private class DisableRecord implements IBinder.DeathRecipient {
         String pkg;
@@ -283,12 +284,35 @@ public class StatusBarManagerService extends IStatusBarService.Stub
         }
     }
 
+    public void showNaviBar(final boolean visible) {
+        enforceStatusBar();
+
+        if (SPEW) Slog.d(TAG, (visible?"showing":"hiding") + " NavBar");
+
+        synchronized(mLock) {
+            if (mShowNavBars != visible) {
+                mShowNavBars = visible;
+                mHandler.post(new Runnable() {
+                    public void run() {
+                        if (mBar != null) {
+                            try {
+                                mBar.showNaviBar(visible);
+                            } catch (RemoteException ex) {
+                            }
+                        }
+                    }
+                });
+
+            }
+        }
+    }
+
     // ================================================================================
     // Callbacks from the status bar service.
     // ================================================================================
     public void registerStatusBar(IStatusBar bar, StatusBarIconList iconList,
             List<IBinder> notificationKeys, List<StatusBarNotification> notifications,
-            boolean switches[]) {
+            int switches[]) {
         enforceStatusBarService();
 
         Slog.i(TAG, "registerStatusBar bar=" + bar);
@@ -303,7 +327,9 @@ public class StatusBarManagerService extends IStatusBarService.Stub
             }
         }
         synchronized (mLock) {
-            switches[0] = mIMEVisible;;
+            switches[0] = gatherDisableActionsLocked();
+            switches[1] = mIMEVisible ? 1 : 0;
+            switches[2] = mShowNavBars ? 1 : 0;
         }
     }
 
