@@ -130,13 +130,7 @@ void SurfaceFlinger::init()
     LOGI_IF(mDebugBackground,   "showbackground enabled");
     LOGI_IF(mUseDithering,      "dithering enabled");
 
-    // default calibration color set (disabled by default)
-    property_get("debug.sf.render_color_red", value, "975");
-    mRenderColorR = atoi(value);
-    property_get("debug.sf.render_color_green", value, "937");
-    mRenderColorG = atoi(value);
-    property_get("debug.sf.render_color_blue", value, "824");
-    mRenderColorB = atoi(value);
+    initRenderColors();
 
     // perf setting for the dynamic 16bpp alpha mode
     property_get("persist.sys.use_16bpp_alpha", value, "0");
@@ -1565,6 +1559,18 @@ void SurfaceFlinger::triggerScreenRepaint()
     signalEvent();
 }
 
+void SurfaceFlinger::initRenderColors()
+{
+    char value[PROPERTY_VALUE_MAX];
+    // default calibration color set (disabled by default)
+    property_get("debug.sf.render_color_red", value, "975");
+    mRenderColorR = atoi(value);
+    property_get("debug.sf.render_color_green", value, "937");
+    mRenderColorG = atoi(value);
+    property_get("debug.sf.render_color_blue", value, "824");
+    mRenderColorB = atoi(value);
+}
+
 status_t SurfaceFlinger::onTransact(
     uint32_t code, const Parcel& data, Parcel* reply, uint32_t flags)
 {
@@ -1652,6 +1658,9 @@ status_t SurfaceFlinger::onTransact(
                 reply->writeInt32(mDebugRegion);
                 reply->writeInt32(mDebugBackground);
                 reply->writeInt32(mRenderEffect);
+                reply->writeInt32(mRenderColorR);
+                reply->writeInt32(mRenderColorG);
+                reply->writeInt32(mRenderColorB);
                 return NO_ERROR;
             case 1013: {
                 Mutex::Autolock _l(mStateLock);
@@ -1679,6 +1688,11 @@ status_t SurfaceFlinger::onTransact(
                 triggerScreenRepaint();
 		return NO_ERROR;
 	    }
+            case 1018: { // reset render colors
+                initRenderColors();
+                triggerScreenRepaint();
+                return NO_ERROR;
+            }
             return NO_ERROR;
         }
     }
