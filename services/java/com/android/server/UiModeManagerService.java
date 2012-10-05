@@ -124,68 +124,65 @@ class UiModeManagerService extends IUiModeManager.Stub {
     private final BroadcastReceiver mResultReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (getResultCode() != Activity.RESULT_OK) {
-                return;
+            if (getResultCode() == Activity.RESULT_OK) {
+                final int enableFlags = intent.getIntExtra("enableFlags", 0);
+                final int disableFlags = intent.getIntExtra("disableFlags", 0);
+
+                 synchronized (mLock) {
+                    // Launch a dock activity
+                    String category = null;
+                    if (UiModeManager.ACTION_ENTER_CAR_MODE.equals(intent.getAction())) {
+                        // Only launch car home when car mode is enabled and the caller
+                        // has asked us to switch to it.
+                        if ((enableFlags&UiModeManager.ENABLE_CAR_MODE_GO_CAR_HOME) != 0) {
+                            category = Intent.CATEGORY_CAR_DOCK;
+                        }
+                    } else if (UiModeManager.ACTION_ENTER_DESK_MODE.equals(intent.getAction())) {
+                        // Only launch car home when desk mode is enabled and the caller
+                        // has asked us to switch to it.  Currently re-using the car
+                        // mode flag since we don't have a formal API for "desk mode".
+                        if ((enableFlags&UiModeManager.ENABLE_CAR_MODE_GO_CAR_HOME) != 0) {
+                            category = Intent.CATEGORY_DESK_DOCK;
+                        }
+                    } else {
+                        // Launch the standard home app if requested.
+                        if ((disableFlags&UiModeManager.DISABLE_CAR_MODE_GO_HOME) != 0) {
+                            category = Intent.CATEGORY_HOME;
+                        }
+                    }
+                    if (category != null) {
+                        // This is the new activity that will serve as home while
+                        // we are in car mode.
+                        Intent homeIntent = buildHomeIntent(category);
+
+                        // Now we are going to be careful about switching the
+                        // configuration and starting the activity -- we need to
+                        // do this in a specific order under control of the
+                        // activity manager, to do it cleanly.  So compute the
+                        // new config, but don't set it yet, and let the
+                        // activity manager take care of both the start and config
+                        // change.
+                        Configuration newConfig = null;
+                        if (mHoldingConfiguration) {
+                            mHoldingConfiguration = false;
+                            updateConfigurationLocked(false);
+                            newConfig = mConfiguration;
+                        }
+                        try {
+                            ActivityManagerNative.getDefault().startActivityWithConfig(
+                                    null, homeIntent, null, null, 0, null, null, 0, false, false,
+                                    newConfig);
+                            mHoldingConfiguration = false;
+                        } catch (RemoteException e) {
+                            Slog.w(TAG, e.getCause());
+                        }
+                    }
+                }
             }
 
-            final int  enableFlags = intent.getIntExtra("enableFlags", 0);
-            final int  disableFlags = intent.getIntExtra("disableFlags", 0);
-            
-            synchronized (mLock) {
-                // Launch a dock activity
-                String category = null;
-                if (UiModeManager.ACTION_ENTER_CAR_MODE.equals(intent.getAction())) {
-                    // Only launch car home when car mode is enabled and the caller
-                    // has asked us to switch to it.
-                    if ((enableFlags&UiModeManager.ENABLE_CAR_MODE_GO_CAR_HOME) != 0) {
-                        category = Intent.CATEGORY_CAR_DOCK;
-                    }
-                } else if (UiModeManager.ACTION_ENTER_DESK_MODE.equals(intent.getAction())) {
-                    // Only launch car home when desk mode is enabled and the caller
-                    // has asked us to switch to it.  Currently re-using the car
-                    // mode flag since we don't have a formal API for "desk mode".
-                    if ((enableFlags&UiModeManager.ENABLE_CAR_MODE_GO_CAR_HOME) != 0) {
-                        category = Intent.CATEGORY_DESK_DOCK;
-                    }
-                } else {
-                    // Launch the standard home app if requested.
-                    if ((disableFlags&UiModeManager.DISABLE_CAR_MODE_GO_HOME) != 0) {
-                        category = Intent.CATEGORY_HOME;
-                    }
-                }
-                
-                if (category != null) {
-                    // This is the new activity that will serve as home while
-                    // we are in care mode.
-                    Intent homeIntent = buildHomeIntent(category);
-                    
-                    // Now we are going to be careful about switching the
-                    // configuration and starting the activity -- we need to
-                    // do this in a specific order under control of the
-                    // activity manager, to do it cleanly.  So compute the
-                    // new config, but don't set it yet, and let the
-                    // activity manager take care of both the start and config
-                    // change.
-                    Configuration newConfig = null;
-                    if (mHoldingConfiguration) {
-                        mHoldingConfiguration = false;
-                        updateConfigurationLocked(false);
-                        newConfig = mConfiguration;
-                    }
-                    try {
-                        ActivityManagerNative.getDefault().startActivityWithConfig(
-                                null, homeIntent, null, null, 0, null, null, 0, false, false,
-                                newConfig);
-                        mHoldingConfiguration = false;
-                    } catch (RemoteException e) {
-                        Slog.w(TAG, e.getCause());
-                    }
-                }
-
-                if (mHoldingConfiguration) {
-                    mHoldingConfiguration = false;
-                    updateConfigurationLocked(true);
-                }
+            if (mHoldingConfiguration) {
+                mHoldingConfiguration = false;
+                updateConfigurationLocked(true);
             }
         }
     };
