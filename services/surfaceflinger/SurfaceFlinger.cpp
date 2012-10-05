@@ -1557,6 +1557,14 @@ status_t SurfaceFlinger::dump(int fd, const Vector<String16>& args)
     return NO_ERROR;
 }
 
+void SurfaceFlinger::triggerScreenRepaint()
+{
+    Mutex::Autolock _l(mStateLock);
+    const DisplayHardware& hw(graphicPlane(0).displayHardware());
+    mDirtyRegion.set(hw.bounds()); // careful that's not thread-safe
+    signalEvent();
+}
+
 status_t SurfaceFlinger::onTransact(
     uint32_t code, const Parcel& data, Parcel* reply, uint32_t flags)
 {
@@ -1622,10 +1630,7 @@ status_t SurfaceFlinger::onTransact(
                 mDebugBackground = n ? 1 : 0;
                 return NO_ERROR;
             case 1004:{ // repaint everything
-                Mutex::Autolock _l(mStateLock);
-                const DisplayHardware& hw(graphicPlane(0).displayHardware());
-                mDirtyRegion.set(hw.bounds()); // careful that's not thread-safe
-                signalEvent();
+                triggerScreenRepaint();
                 return NO_ERROR;
             }
             case 1005:{ // force transaction
@@ -1656,18 +1661,22 @@ status_t SurfaceFlinger::onTransact(
             case 1014: { // RENDER_EFFECT
                 // TODO: filter to only allow valid effects
                 mRenderEffect = data.readInt32();
+                triggerScreenRepaint();
                 return NO_ERROR;
             }
 	    case 1015: { // RENDER_COLOR_RED
 		mRenderColorR = data.readInt32();
+                triggerScreenRepaint();
 		return NO_ERROR;
 	    }
 	    case 1016: { // RENDER_COLOR_GREEN
                 mRenderColorG = data.readInt32();
+                triggerScreenRepaint();
 		return NO_ERROR;
 	    }
 	    case 1017: { // RENDER_COLOR_BLUE
                 mRenderColorB = data.readInt32();
+                triggerScreenRepaint();
 		return NO_ERROR;
 	    }
             return NO_ERROR;
