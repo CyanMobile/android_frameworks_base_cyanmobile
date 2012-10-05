@@ -65,4 +65,5 @@
     <dimen name="glowpadview_inner_radius">15dip</dimen>
     <!-- Size of lockscreen outerring on unsecure unlock LockScreen -->
     <dimen name="keyguard_lockscreen_outerring_diameter">270dp</dimen>
+    <dimen name="lockscreen_target_inset">25dp</dimen>
 </resources>

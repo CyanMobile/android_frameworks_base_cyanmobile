@@ -400,6 +400,14 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                     launchCamera();
                     mCallback.goToUnlockScreen();
                     break;
+                case com.android.internal.R.drawable.ic_lockscreen_sms:
+                    launchSms();
+                    mCallback.goToUnlockScreen();
+                    break;
+                case com.android.internal.R.drawable.ic_lockscreen_phone:
+                    launchPhone();
+                    mCallback.goToUnlockScreen();
+                    break;
                 case com.android.internal.R.drawable.ic_lockscreen_unlock_phantom:
                 case com.android.internal.R.drawable.ic_lockscreen_unlock:
                     mCallback.goToUnlockScreen();
@@ -408,13 +416,42 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         }
 
         private void launchCamera() {
-            Intent intenta = new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA);
-            intenta.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                            | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+            Intent iocamera = new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA);
+            iocamera.setFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+                    | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             try {
-                mContext.startActivity(intenta);
+                mContext.startActivity(iocamera);
             } catch (ActivityNotFoundException e) {
-                Log.w(TAG, "Activity not found for intent + " + intenta.getAction());
+                Log.w(TAG, "Activity not found for intent + " + iocamera.getAction());
+            }
+        }
+
+        private void launchSms() {
+            Intent ioinbox = new Intent(Intent.ACTION_MAIN);  
+            ioinbox.addCategory(Intent.CATEGORY_DEFAULT);  
+            ioinbox.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                    | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            ioinbox.setType("vnd.android-dir/mms-sms");
+            try {
+                mContext.startActivity(ioinbox);
+            } catch (ActivityNotFoundException e) {
+                Log.w(TAG, "Activity not found for intent + " + ioinbox.getAction());
+            }
+        }
+
+        private void launchPhone() {
+            Intent iophone = new Intent(Intent.ACTION_CALL);
+            iophone.setFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+                    | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            try {
+                mContext.startActivity(iophone);
+            } catch (ActivityNotFoundException e) {
+                Log.w(TAG, "Activity not found for intent + " + iophone.getAction());
             }
         }
 
@@ -443,6 +480,8 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                 mGlowPadView.setTargetResources(resId);
             }
             setEnabled(com.android.internal.R.drawable.ic_lockscreen_camera, true);
+            setEnabled(com.android.internal.R.drawable.ic_lockscreen_phone, true);
+            setEnabled(com.android.internal.R.drawable.ic_lockscreen_sms, true);
         }
 
         public void onGrabbed(View v, int handle) {
@@ -458,6 +497,14 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                     launchCamera();
                     mCallback.goToUnlockScreen();
                     break;
+                case com.android.internal.R.drawable.ic_lockscreen_sms:
+                    launchSms();
+                    mCallback.goToUnlockScreen();
+                    break;
+                case com.android.internal.R.drawable.ic_lockscreen_phone:
+                    launchPhone();
+                    mCallback.goToUnlockScreen();
+                    break;
                 case com.android.internal.R.drawable.ic_lockscreen_unlock_phantom:
                 case com.android.internal.R.drawable.ic_lockscreen_unlock:
                     mCallback.goToUnlockScreen();
@@ -466,15 +513,42 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         }
 
         private void launchCamera() {
-            Intent intent = new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA);
-            intent.setFlags(
+            Intent iocamera = new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA);
+            iocamera.setFlags(
                     Intent.FLAG_ACTIVITY_NEW_TASK
                     | Intent.FLAG_ACTIVITY_SINGLE_TOP
                     | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             try {
-                mContext.startActivity(intent);
+                mContext.startActivity(iocamera);
             } catch (ActivityNotFoundException e) {
-                Log.w(TAG, "Activity not found for intent + " + intent.getAction());
+                Log.w(TAG, "Activity not found for intent + " + iocamera.getAction());
+            }
+        }
+
+        private void launchSms() {
+            Intent ioinbox = new Intent(Intent.ACTION_MAIN);  
+            ioinbox.addCategory(Intent.CATEGORY_DEFAULT);  
+            ioinbox.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                    | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            ioinbox.setType("vnd.android-dir/mms-sms");
+            try {
+                mContext.startActivity(ioinbox);
+            } catch (ActivityNotFoundException e) {
+                Log.w(TAG, "Activity not found for intent + " + ioinbox.getAction());
+            }
+        }
+
+        private void launchPhone() {
+            Intent iophone = new Intent(Intent.ACTION_CALL);
+            iophone.setFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+                    | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            try {
+                mContext.startActivity(iophone);
+            } catch (ActivityNotFoundException e) {
+                Log.w(TAG, "Activity not found for intent + " + iophone.getAction());
             }
         }
 

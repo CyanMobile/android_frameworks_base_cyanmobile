@@ -276,7 +276,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private boolean mShowStatBar;
     private boolean mNaviShow;
     private boolean mNaviShowAll;
-    private boolean mNaviShowAll2;
     private boolean mPowerNavBar;
     private boolean mNavRotate;
     private boolean mReverseRotate;
@@ -1003,8 +1002,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
             mNaviShowAll = (Settings.System.getInt(resolver,
                     Settings.System.NAVI_BUTTONS, 1) == 1);
-            mNaviShowAll2 = (Settings.System.getInt(resolver,
-                    Settings.System.NAVI_BUTTONS, 1) == 2);
             mPowerNavBar = (Settings.System.getInt(resolver,
                     Settings.System.NAVI_BUTTON_SHOW_HOME, 1) != 7) &&
                     (Settings.System.getInt(resolver,
@@ -1436,6 +1433,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 mContext.enforceCallingOrSelfPermission(
                         android.Manifest.permission.STATUS_BAR_SERVICE,
                         "PhoneWindowManager");
+                if (mNavigationBar != null) {
+                    return WindowManagerImpl.ADD_MULTIPLE_SINGLETON;
+                }
                 mNavigationBar = win;
                 break;
             case TYPE_NAVIGATION_BAR_PANEL:
@@ -1844,8 +1844,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     public void beginLayoutLw(int displayWidth, int displayHeight) {
         mNaviShowAll = (Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.NAVI_BUTTONS, 1) == 1);
-        mNaviShowAll2 = (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.NAVI_BUTTONS, 1) == 2);
         mUnrestrictedScreenLeft = mUnrestrictedScreenTop = 0;
         mUnrestrictedScreenWidth = displayWidth;
         mUnrestrictedScreenHeight = displayHeight;
@@ -1868,23 +1866,23 @@ public class PhoneWindowManager implements WindowManagerPolicy {
          pf.bottom = df.bottom = vf.bottom = displayHeight;
 
         // decide where the status bar goes ahead of time
-        if (mStatusBar != null) {
-            if (mNavigationBar != null) {
-                final boolean navVisible = (mNavigationBar.isVisibleLw() && mNaviShow && mNaviShowAll);
-                final int mNavigationBarHeight = mNavRotate ? getStatBarSize() : getNavBarSize();
-                    mTmpNavigationFrame.set(0, (displayHeight-mNavigationBarHeight),
-                            displayWidth, displayHeight);
-                    if (navVisible) {
-                        mDockBottom = mContentBottom = mCurBottom = mTmpNavigationFrame.top;
-                    } else {
-                        mTmpNavigationFrame.offset(0, mNavigationBarHeight);
-                    }
-                mNavigationBar.computeFrameLw(mTmpNavigationFrame, mTmpNavigationFrame,
-                                        mTmpNavigationFrame, mTmpNavigationFrame);
+        if (mNavigationBar != null) {
+            final boolean navVisible = (mNaviShow && mNaviShowAll);
+            final int mNavigationBarHeight = mNavRotate ? getStatBarSize() : getNavBarSize();
+            mTmpNavigationFrame.set(0, (displayHeight-mNavigationBarHeight),
+                       displayWidth, displayHeight);
+            if (navVisible) {
+                mDockBottom = mContentBottom = mCurBottom = mTmpNavigationFrame.top;
             } else {
-                mDockBottom = mContentBottom = mCurBottom = displayHeight;
+                mTmpNavigationFrame.offset(0, mNavigationBarHeight);
             }
+            mNavigationBar.computeFrameLw(mTmpNavigationFrame, mTmpNavigationFrame,
+                                mTmpNavigationFrame, mTmpNavigationFrame);
             if (DEBUG_LAYOUT) Log.i(TAG, "mNavigationBar frame: " + mTmpNavigationFrame);
+        } else {
+            mDockBottom = mContentBottom = mCurBottom = displayHeight;
+        }
+        if (mStatusBar != null) {
             if(mBottomBar && !mNaviShow){
                 final int statusbar_height = getStatBarSize();
                 //setting status bar's top, to bottom of the screen, minus status bar height
@@ -1963,8 +1961,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             WindowState attached) {
         mNaviShowAll = (Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.NAVI_BUTTONS, 1) == 1);
-        mNaviShowAll2 = (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.NAVI_BUTTONS, 1) == 2);
         // we've already done the status bar
         if (win == mStatusBar || win == mNavigationBar) {
             return;
@@ -2191,8 +2187,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     public int finishAnimationLw() {
         mNaviShowAll = (Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.NAVI_BUTTONS, 1) == 1);
-        mNaviShowAll2 = (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.NAVI_BUTTONS, 1) == 2);
         int changes = 0;
 
         boolean hiding = false;
@@ -2203,9 +2197,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if (DEBUG_LAYOUT) Log.v(TAG, "Showing status bar");
                 if (mStatusBar.showLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
             } else if (mTopFullscreenOpaqueWindowState != null) {
-                //Log.i(TAG, "frame: " + mTopFullscreenOpaqueWindowState.getFrameLw()
-                //        + " shown frame: " + mTopFullscreenOpaqueWindowState.getShownFrameLw());
-                //Log.i(TAG, "attr: " + mTopFullscreenOpaqueWindowState.getAttrs());
                 WindowManager.LayoutParams lp =
                     mTopFullscreenOpaqueWindowState.getAttrs();
                 boolean hideStatusBar =
@@ -2214,14 +2205,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     if (DEBUG_LAYOUT) Log.v(TAG, "Hiding status bar");
                     if (mStatusBar.hideLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
                     if (mNaviShow && mNaviShowAll) {
-                       Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, 2);
+                       if (mNavigationBar.hideLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
                     }
                     hiding = true;
                 } else {
                     if (DEBUG_LAYOUT) Log.v(TAG, "Showing status bar");
                     if (mStatusBar.showLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
-                    if (mNaviShow && mNaviShowAll2) {
-                       Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, 1);
+                    if (mNaviShow && mNaviShowAll) {
+                       if (mNavigationBar.showLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
                     }
                 }
             }

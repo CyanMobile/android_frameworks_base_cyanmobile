@@ -145,16 +145,16 @@
 
     <array name="lockscreen_targets_with_camera">
         <item>@drawable/ic_lockscreen_unlock</item>
-        <item>@null</item>
+        <item>@drawable/ic_lockscreen_phone</item>
         <item>@drawable/ic_lockscreen_camera</item>
-        <item>@null</item>
+        <item>@drawable/ic_lockscreen_sms</item>
     </array>
 
     <array name="lockscreen_chevron_drawables">	
         <item>@drawable/ic_lockscreen_chevron_right</item>
-        <item>@null</item>
-        <item>@null</item>	
-        <item>@null</item>
+        <item>@drawable/ic_lockscreen_chevron_up</item>
+        <item>@drawable/ic_lockscreen_chevron_left</item>	
+        <item>@drawable/ic_lockscreen_chevron_down</item>
     </array>
 
 </resources>

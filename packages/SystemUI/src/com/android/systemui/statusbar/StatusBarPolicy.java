@@ -1148,6 +1148,8 @@ public class StatusBarPolicy {
     }
 
     private void setSmsInfo(Context context) {
+        if (mSmsDialog != null) mSmsDialog.dismiss();
+
         smsCount = SmsHelper.getUnreadSmsCount(context);
         callNumber = SmsHelper.getSmsNumber(context);
         callerName = SmsHelper.getName(context, callNumber);
