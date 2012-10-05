@@ -279,6 +279,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private boolean mPowerNavBar;
     private boolean mNavRotate;
     private boolean mReverseRotate;
+    private boolean mNaviShowAll2 = false;
     int mPointerLocationMode = 0;
     int mBackKillTimeout;
 
@@ -2205,13 +2206,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     if (DEBUG_LAYOUT) Log.v(TAG, "Hiding status bar");
                     if (mStatusBar.hideLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
                     if (mNaviShow && mNaviShowAll) {
+                       mNaviShowAll2 = true;
                        mNavigationBar.hideLw(true);
                     }
                     hiding = true;
                 } else {
                     if (DEBUG_LAYOUT) Log.v(TAG, "Showing status bar");
                     if (mStatusBar.showLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
-                    if (mNaviShow && mNaviShowAll) {
+                    if (mNaviShow && mNaviShowAll && mNaviShowAll2) {
+                       mNaviShowAll2 = false;
                        mNavigationBar.showLw(true);
                     }
                 }

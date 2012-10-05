@@ -443,7 +443,9 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         }
 
         private void launchPhone() {
-            Intent iophone = new Intent(Intent.ACTION_CALL);
+            Intent iophone = new Intent(Intent.ACTION_MAIN);
+            iophone.setClassName("com.android.contacts",
+                                     "com.android.contacts.TwelveKeyDialer");
             iophone.setFlags(
                     Intent.FLAG_ACTIVITY_NEW_TASK
                     | Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -540,7 +542,9 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         }
 
         private void launchPhone() {
-            Intent iophone = new Intent(Intent.ACTION_CALL);
+            Intent iophone = new Intent(Intent.ACTION_MAIN);
+            iophone.setClassName("com.android.contacts",
+                                     "com.android.contacts.TwelveKeyDialer");
             iophone.setFlags(
                     Intent.FLAG_ACTIVITY_NEW_TASK
                     | Intent.FLAG_ACTIVITY_SINGLE_TOP
