@@ -1867,7 +1867,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         // decide where the status bar goes ahead of time
         if (mNavigationBar != null) {
-            final boolean navVisible = (mNaviShow && mNaviShowAll);
+            final boolean navVisible = (mNavigationBar.isVisibleLw() && mNaviShow && mNaviShowAll);
             final int mNavigationBarHeight = mNavRotate ? getStatBarSize() : getNavBarSize();
             mTmpNavigationFrame.set(0, (displayHeight-mNavigationBarHeight),
                        displayWidth, displayHeight);
@@ -2205,14 +2205,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     if (DEBUG_LAYOUT) Log.v(TAG, "Hiding status bar");
                     if (mStatusBar.hideLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
                     if (mNaviShow && mNaviShowAll) {
-                       if (mNavigationBar.hideLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
+                       mNavigationBar.hideLw(true);
                     }
                     hiding = true;
                 } else {
                     if (DEBUG_LAYOUT) Log.v(TAG, "Showing status bar");
                     if (mStatusBar.showLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
                     if (mNaviShow && mNaviShowAll) {
-                       if (mNavigationBar.showLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
+                       mNavigationBar.showLw(true);
                     }
                 }
             }
