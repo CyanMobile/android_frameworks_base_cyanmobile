@@ -79,7 +79,7 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
     private LockPatternUtils mLockPatternUtils;
     private KeyguardUpdateMonitor mUpdateMonitor;
     private KeyguardScreenCallback mCallback;
-
+    private static final int CARRIER_TYPE_DEFAULT = 0;
     /**
      * whether there is a fallback option available when the pattern is forgotten.
      */
@@ -129,7 +129,7 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
     private ViewGroup mFooterForgotPattern;
 
     private int mCarrierLabelType = (Settings.System.getInt(mContext.getContentResolver(),
-            Settings.System.CARRIER_LABEL_TYPE, LockScreen.CARRIER_TYPE_DEFAULT));
+            Settings.System.CARRIER_LABEL_TYPE, CARRIER_TYPE_DEFAULT));
 
     private String mCarrierLabelCustom = (Settings.System.getString(mContext.getContentResolver(),
             Settings.System.CARRIER_LABEL_CUSTOM_STRING));
@@ -574,11 +574,23 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
     public void onRefreshCarrierInfo(CharSequence plmn, CharSequence spn) {
         String realPlmn = SystemProperties.get(TelephonyProperties.PROPERTY_OPERATOR_ALPHA);
 
-        if (plmn == null || plmn.equals(realPlmn)) {
-            mCarrier.setText(LockScreen.getCarrierString(
+        int ls = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.LOCKSCREEN_STYLE_PREF, 10);
+
+        if (ls >= 6) {
+           if (plmn == null || plmn.equals(realPlmn)) {
+               mCarrier.setText(HoneycombLockscreen.getCarrierString(
                     plmn, spn, mCarrierLabelType, mCarrierLabelCustom));
+           } else {
+               mCarrier.setText(HoneycombLockscreen.getCarrierString(plmn, spn));
+           }
         } else {
-            mCarrier.setText(LockScreen.getCarrierString(plmn, spn));
+           if (plmn == null || plmn.equals(realPlmn)) {
+               mCarrier.setText(LockScreen.getCarrierString(
+                    plmn, spn, mCarrierLabelType, mCarrierLabelCustom));
+           } else {
+               mCarrier.setText(LockScreen.getCarrierString(plmn, spn));
+           }
         }
     }
 
