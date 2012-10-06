@@ -1015,11 +1015,26 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mNotifications = (LinearLayout)mExpandedView.findViewById(R.id.notifications_layout);
             mNotificationsToggle = (TextView)mTrackingView.findViewById(R.id.statusbar_notification_toggle);
             mButtonsToggle = (TextView)mTrackingView.findViewById(R.id.statusbar_buttons_toggle);
+            mButtonsToggle.setTextColor(mClockColor);
+            mNotificationsToggle.setTextColor(Color.parseColor("#666666"));
             mNotifications.setVisibility(View.GONE);
         }
 
         mSettingsButton = (ImageView)mTrackingView.findViewById(R.id.settingUp);
-        mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_close_on, mDisplay.getWidth(), getStatBarSize(), context));
+        int transSettingsButton = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_STS_BTT, 0);
+        int SettingsButtonColor = Settings.System.getInt(getContentResolver(), Settings.System.STS_BTT_COLOR, defValuesColor);
+        switch (transSettingsButton) {
+          case 0 : // theme, leave alone
+            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_close_on, mDisplay.getWidth(), getStatBarSize(), context));
+            break;
+          case 1 : // user defined argb hex color
+            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_transparent_background, mDisplay.getWidth(), getStatBarSize(), context));
+            mSettingsButton.setBackgroundColor(SettingsButtonColor);
+            break;
+          case 2 : // transparent
+            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_transparent_background, mDisplay.getWidth(), getStatBarSize(), context));
+            break;
+        }
         mSettingsButton.setOnLongClickListener(mSettingsButtonListener);
 
         mCarrierLabelBottomLayout = (CarrierLabelBottom) mTrackingView.findViewById(R.id.carrierlabel_bottom);

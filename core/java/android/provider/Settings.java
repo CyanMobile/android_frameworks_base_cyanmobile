@@ -1500,6 +1500,14 @@ public final class Settings {
         public static final String PWR_CRR_COLOR = "pwr_crr_color";
 
         /**
+         * The color to render the tracker background
+         * hex value including alpha
+         * default: ff000000
+         * @hide
+         */
+        public static final String STS_BTT_COLOR = "sts_btt_color";
+
+        /**
          * Sets overicon color
          * @hide
          */
@@ -1524,6 +1532,13 @@ public final class Settings {
          * @hide
          */
         public static final String TRANSPARENT_PWR_CRR = "transparent_pwr_crr";
+
+	/**
+         * Transparent tracker
+         *
+         * @hide
+         */
+        public static final String TRANSPARENT_STS_BTT = "transparent_sts_btt";
 
 	/**
          * Transparent notification bar
