@@ -136,10 +136,10 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
     private ViewGroup mFooterForgotPattern;
 
     private int mCarrierLabelType = (Settings.System.getInt(mContext.getContentResolver(),
-            Settings.System.CARRIER_LABEL_TYPE, CARRIER_TYPE_DEFAULT));
+            Settings.System.CARRIER_LABEL_LOCKSCREEN_TYPE, CARRIER_TYPE_DEFAULT));
 
     private String mCarrierLabelCustom = (Settings.System.getString(mContext.getContentResolver(),
-            Settings.System.CARRIER_LABEL_CUSTOM_STRING));
+            Settings.System.CARRIER_LABEL_LOCKSCREEN_CUSTOM_STRING));
 
     /**
      * Keeps track of the last time we poked the wake lock during dispatching
@@ -298,9 +298,6 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
         mStatus2 = (TextView) findViewById(R.id.status2);
         mStatus2.setTextColor(CColours);
 
-        resetStatusInfo(updateMonitor);
-
-
         mLockPatternView = (LockPatternView) findViewById(R.id.lockPattern);
 
         mFooterNormal = (ViewGroup) findViewById(R.id.footerNormal);
@@ -363,10 +360,7 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
         mCarrier.setSelected(true);
         mCarrier.setTextColor(mCarrierColor);
 
-        // until we get an update...
-        String plmn = (String) mUpdateMonitor.getTelephonyPlmn();
-        String spn = (String) mUpdateMonitor.getTelephonySpn();
-        onRefreshCarrierInfo(plmn, spn);
+        resetStatusInfo(updateMonitor);
 
         int widgetLayout = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.LOCKSCREEN_WIDGETS_LAYOUT, 0);
@@ -733,7 +727,6 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
      * Update the layout to match the current status.
      */
     private void updateLayout(Status status) {
-        // The emergency call button no longer appears on this screen.
         if (DBG) Log.d(TAG, "updateLayout: status=" + status);
         String realPlmn = SystemProperties.get(TelephonyProperties.PROPERTY_OPERATOR_ALPHA);
         String plmn = (String) mUpdateMonitor.getTelephonyPlmn();
