@@ -1202,16 +1202,16 @@ public class NavigationBarView extends LinearLayout {
 
         // now toggle off unneeded stuff
         if(mShowHome == 0)
-            mHomeButton.setVisibility(View.INVISIBLE);
+            mHomeButton.setVisibility(View.GONE);
         
         if(mShowMenu == 0)
-            mMenuButton.setVisibility(View.INVISIBLE);
+            mMenuButton.setVisibility(View.GONE);
         
         if(mShowBack == 0)
-            mBackButton.setVisibility(View.INVISIBLE);
+            mBackButton.setVisibility(View.GONE);
         
         if(mShowSearch == 0)
-            mSearchButton.setVisibility(View.INVISIBLE);
+            mSearchButton.setVisibility(View.GONE);
 
         if(!mShowVol) {
             mVolUpButton.setVisibility(View.GONE);

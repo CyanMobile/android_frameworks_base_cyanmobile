@@ -56,7 +56,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitXY"
-            android:layout_toLeftOf="@+id/home"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
             />
@@ -64,7 +63,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitXY"
-            android:layout_toLeftOf="@+id/quicker"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
             />
@@ -72,7 +70,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitXY"
-            android:layout_toLeftOf="@+id/quicker"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
             />
@@ -80,7 +77,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitXY"
-            android:layout_centerInParent="true"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
             />
@@ -88,7 +84,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitXY"
-            android:layout_toRightOf="@+id/quicker"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
             />
@@ -96,7 +91,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitXY"
-            android:layout_toRightOf="@+id/quicker"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
             />
@@ -104,7 +98,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitXY"
-            android:layout_toRightOf="@+id/search"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
             />
