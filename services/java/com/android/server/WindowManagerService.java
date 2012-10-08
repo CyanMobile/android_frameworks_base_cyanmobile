@@ -8227,6 +8227,7 @@ public class WindowManagerService extends IWindowManager.Stub
                             wtoken.startingData = null;
                             wtoken.startingView = null;
                             wtoken.startingWindow = null;
+                            wtoken.startingDisplayed = false;
                         }
                     }
                     if (view != null) {
@@ -8263,6 +8264,7 @@ public class WindowManagerService extends IWindowManager.Stub
                             wtoken.startingData = null;
                             wtoken.startingView = null;
                             wtoken.startingWindow = null;
+                            wtoken.startingDisplayed = false;
                         }
 
                         try {
