@@ -2206,11 +2206,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     };
 
-    private void HideUpNavbar() {
-        ContentResolver resolver = mContext.getContentResolver();
-        Settings.System.putInt(resolver,
+    Runnable mHidesNavbar = new Runnable() {
+        public void run() {
+           if (!mNaviShowAll2) {
+               Settings.System.putInt(mContext.getContentResolver(),
                     Settings.System.NAVI_BUTTONS, 0);
-    }
+               mHandler.postDelayed(mShowsNavbar, 25);
+           }
+        }
+    };
 
     /** {@inheritDoc} */
     public int finishAnimationLw() {
@@ -2268,15 +2272,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         changes |= FINISH_LAYOUT_REDO_LAYOUT;
                     }
                     if (mNaviShow && mNaviShowAll) {
-                        if (!mNaviShowAll2) {
-                            HideUpNavbar();
-                        }
+                        mHandler.postDelayed(mHidesNavbar, 50);
                         mHandler.post(new Runnable() { public void run() {
                             try {
                                 IStatusBarService statusbar = getStatusBarService();
                                 if (statusbar != null) {
                                     statusbar.showNaviBar(true);
-                                    mHandler.postDelayed(mShowsNavbar, 100);
                                 }
                             } catch (RemoteException ex) {
                                 // re-acquire status bar service next time it is needed.
