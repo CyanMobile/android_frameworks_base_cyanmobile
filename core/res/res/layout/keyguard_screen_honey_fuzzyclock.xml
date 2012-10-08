@@ -23,14 +23,26 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_alignParentRight="true"
-            android:layout_marginTop="3dip"
             android:layout_marginLeft="8dip"
             android:layout_marginRight="8dip"
             android:singleLine="true"
             android:ellipsize="marquee"
             android:gravity="right|bottom"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:textSize="22sp"
+            />
+
+        <TextView
+            android:id="@+id/custext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="8dip"
+            android:layout_marginRight="8dip"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:gravity="left|bottom"
+            android:textAppearance="?android:attr/textAppearanceSmall"
             />
 
     <!-- time and date -->
@@ -84,22 +96,12 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
             android:textAppearance="?android:attr/textAppearanceSmall"
             />
 
-        <TextView
-            android:id="@+id/custext"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/date"
-            android:layout_marginLeft="24dip"
-            android:layout_marginRight="24dip"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            />
-
         <!-- "emergency calls only" shown when sim is missing or PUKd -->
         <TextView
             android:id="@+id/emergencyCallText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/custext"
+            android:layout_below="@id/date"
             android:layout_alignParentRight="true"
             android:layout_marginTop="0dip"
             android:layout_marginRight="8dip"
@@ -114,7 +116,7 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_below="@id/custext">
+            android:layout_below="@id/date">
 
             <TextView
                 android:id="@+id/status_charging"

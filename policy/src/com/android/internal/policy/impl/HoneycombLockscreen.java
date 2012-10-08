@@ -857,12 +857,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
     }
 
     private void centerWidgets() {
-        RelativeLayout.LayoutParams layoutParams;
-        layoutParams = (RelativeLayout.LayoutParams) mCarrier.getLayoutParams();
-        layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
-        mCarrier.setLayoutParams(layoutParams);
-        mCarrier.setGravity(Gravity.CENTER_HORIZONTAL);
-
         mStatusBox.setGravity(Gravity.CENTER_HORIZONTAL);
 
         if (mUseFuzzyClock){
@@ -873,7 +867,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
            centerWidget(mClock);
         }
         centerWidget(mDate);
-        centerWidget(mCusText);
         centerWidget(mStatusCharging);
         centerWidget(mStatusAlarm);
         centerWidget(mStatusCalendar);
@@ -900,6 +893,12 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         mCarrier.setLayoutParams(layoutParams);
         mCarrier.setGravity(Gravity.LEFT);
 
+        RelativeLayout.LayoutParams llayoutParams;
+        llayoutParams = (RelativeLayout.LayoutParams) mCusText.getLayoutParams();
+        llayoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
+        mCusText.setLayoutParams(llayoutParams);
+        mCusText.setGravity(Gravity.RIGHT);
+
         mStatusBox.setGravity(Gravity.LEFT);
 
         if (mUseFuzzyClock){
@@ -910,7 +909,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
             alignWidgetToRight(mClock);
         }
         alignWidgetToRight(mDate);
-        alignWidgetToRight(mCusText);
         alignWidgetToRight(mStatusCharging);
         alignWidgetToRight(mStatusAlarm);
         alignWidgetToRight(mStatusCalendar);
