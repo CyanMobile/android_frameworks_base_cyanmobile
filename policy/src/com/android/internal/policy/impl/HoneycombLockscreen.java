@@ -385,6 +385,8 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                 mMultiWaveView.setTargetResources(resId);
             }
             setEnabled(com.android.internal.R.drawable.ic_lockscreen_camera, true);
+            setEnabled(com.android.internal.R.drawable.ic_lockscreen_phone, true);
+            setEnabled(com.android.internal.R.drawable.ic_lockscreen_sms, true);
         }
 
         public void onGrabbed(View v, int handle) {

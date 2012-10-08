@@ -148,7 +148,9 @@ public final class CmSystem {
     public enum InCallStyle {
         Slider,
         Rotary,
-        Ring;
+        Ring,
+        JbRing,
+        JbGlowRing;
 
         static public InCallStyle getStyleById(int id) {
             switch (id) {
@@ -161,6 +163,10 @@ public final class CmSystem {
                     return Rotary;
                 case 4:
                     return Ring;
+                case 5:
+                    return JbRing;
+                case 6:
+                    return JbGlowRing;
                 default:
                     return Ring;
             }
@@ -178,6 +184,10 @@ public final class CmSystem {
                     return 2;
                 case Ring:
                     return 4;
+                case JbRing:
+                    return 5;
+                case JbGlowRing:
+                    return 6;
                 default:
                     return 4;
             }
