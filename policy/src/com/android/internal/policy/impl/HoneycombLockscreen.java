@@ -874,8 +874,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         }
         centerWidget(mDate);
         centerWidget(mCusText);
-        centerWidget(mSmsCountView);
-        centerWidget(mMissedCallCountView);
         centerWidget(mStatusCharging);
         centerWidget(mStatusAlarm);
         centerWidget(mStatusCalendar);
@@ -913,8 +911,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         }
         alignWidgetToRight(mDate);
         alignWidgetToRight(mCusText);
-        alignWidgetToRight(mSmsCountView);
-        alignWidgetToRight(mMissedCallCountView);
         alignWidgetToRight(mStatusCharging);
         alignWidgetToRight(mStatusAlarm);
         alignWidgetToRight(mStatusCalendar);
