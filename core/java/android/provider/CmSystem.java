@@ -109,7 +109,7 @@ public final class CmSystem {
                 case 11:
                     return JbGlowRing;
                 default:
-                    return JbRing;
+                    return JbGlowRing;
             }
         }
 
@@ -140,7 +140,7 @@ public final class CmSystem {
                 case JbGlowRing:
                     return 11;
                 default:
-                    return 10;
+                    return 11;
             }
         }
     }
@@ -168,7 +168,7 @@ public final class CmSystem {
                 case 6:
                     return JbGlowRing;
                 default:
-                    return Ring;
+                    return JbGlowRing;
             }
         }
 
@@ -189,7 +189,7 @@ public final class CmSystem {
                 case JbGlowRing:
                     return 6;
                 default:
-                    return 4;
+                    return 6;
             }
         }
     }

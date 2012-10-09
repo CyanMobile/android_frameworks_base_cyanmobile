@@ -720,7 +720,7 @@ public class LockPatternKeyguardView extends KeyguardViewBase {
 
     View createLockScreen() {
         int ls = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.LOCKSCREEN_STYLE_PREF, 10);
+                Settings.System.LOCKSCREEN_STYLE_PREF, 11);
 
         if (ls >= 6)
             return new HoneycombLockscreen(mContext, mConfiguration, mLockPatternUtils,
