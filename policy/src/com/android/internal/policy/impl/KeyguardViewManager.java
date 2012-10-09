@@ -18,10 +18,13 @@ package com.android.internal.policy.impl;
 
 import com.android.internal.R;
 
+import android.database.ContentObserver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.graphics.PixelFormat;
 import android.graphics.Canvas;
+import android.os.Handler;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.util.Log;
@@ -60,6 +63,28 @@ public class KeyguardViewManager implements KeyguardWindowController {
         void onShown(IBinder windowToken);
     };
 
+    class SettingsObserver extends ContentObserver {
+       SettingsObserver(Handler handler) {
+           super(handler);
+       }
+
+       void observe() {
+           ContentResolver resolver = mContext.getContentResolver();
+           resolver.registerContentObserver(Settings.System.getUriFor(
+                   Settings.System.LOCKSCREEN_ROTATION), false, this);
+           resolver.registerContentObserver(Settings.System.getUriFor(
+                   Settings.System.ACCELEROMETER_ROTATION), false, this);
+           resolver.registerContentObserver(Settings.System.getUriFor(
+                   Settings.System.LOCKSCREEN_SEE_THROUGH), false, this);
+       }
+
+       @Override
+       public void onChange(boolean selfChange) {
+           setKeyguardParams();
+           mViewManager.updateViewLayout(mKeyguardHost, mWindowLayoutParams);
+       }
+    }
+
     /**
      * @param context Used to create views.
      * @param viewManager Keyguard will be attached to this.
@@ -71,6 +96,9 @@ public class KeyguardViewManager implements KeyguardWindowController {
         mViewManager = viewManager;
         mCallback = callback;
         mKeyguardViewProperties = keyguardViewProperties;
+
+        SettingsObserver observer = new SettingsObserver(new Handler());
+        observer.observe();
 
         mUpdateMonitor = updateMonitor;
     }
@@ -116,24 +144,9 @@ public class KeyguardViewManager implements KeyguardWindowController {
 
             mKeyguardHost = new KeyguardViewHost(mContext, mCallback);
 
-            final int stretch = ViewGroup.LayoutParams.MATCH_PARENT;
-            int flags = WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN
-                    | WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER
-                    | WindowManager.LayoutParams.FLAG_KEEP_SURFACE_WHILE_ANIMATING
-                    /*| WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                    | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR*/ ;
-            if (!mNeedsInput) {
-                flags |= WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
-            }
-            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                    stretch, stretch, WindowManager.LayoutParams.TYPE_KEYGUARD,
-                    flags, PixelFormat.TRANSLUCENT);
-            lp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN;
-            lp.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_NOSENSOR;
-            lp.setTitle("Keyguard");
-            mWindowLayoutParams = lp;
+            setKeyguardParams();
 
-            mViewManager.addView(mKeyguardHost, lp);
+            mViewManager.addView(mKeyguardHost, mWindowLayoutParams);
         }
 
         /* if (enableScreenRotation) {
@@ -173,6 +186,28 @@ public class KeyguardViewManager implements KeyguardWindowController {
         /* mViewManager.updateViewLayout(mKeyguardHost, mWindowLayoutParams); */
         mKeyguardHost.setVisibility(View.VISIBLE);
         mKeyguardView.requestFocus();
+    }
+
+    public void setKeyguardParams() {
+        boolean allowSeeThrough = Settings.System.getInt(mContext.getContentResolver(),
+	          Settings.System.LOCKSCREEN_SEE_THROUGH, 0) != 0;
+
+        final int stretch = ViewGroup.LayoutParams.MATCH_PARENT;
+        int flags = WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN
+                 | WindowManager.LayoutParams.FLAG_KEEP_SURFACE_WHILE_ANIMATING;
+        if (!allowSeeThrough) {
+            flags |= WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER;
+        }
+        if (!mNeedsInput) {
+            flags |= WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
+        }
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                stretch, stretch, WindowManager.LayoutParams.TYPE_KEYGUARD,
+                flags, PixelFormat.TRANSLUCENT);
+        lp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN;
+        lp.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_NOSENSOR;
+        lp.setTitle("Keyguard");
+        mWindowLayoutParams = lp;
     }
 
     public void setNeedsInput(boolean needsInput) {
