@@ -1879,23 +1879,24 @@ public class PhoneWindowManager implements WindowManagerPolicy {
          pf.bottom = df.bottom = vf.bottom = displayHeight;
 
         // decide where the status bar goes ahead of time
-        if (mNavigationBar != null) {
-            final boolean navVisible = (mNavigationBar.isVisibleLw() && mNaviShow && mNaviShowAll && mNaviShowAll2);
-            final int mNavigationBarHeight = mNavRotate ? getStatBarSize() : getNavBarSize();
-            mTmpNavigationFrame.set(0, (displayHeight-mNavigationBarHeight),
-                       displayWidth, displayHeight);
-            if (navVisible) {
-                mDockBottom = mContentBottom = mCurBottom = mTmpNavigationFrame.top;
-            } else {
-                mTmpNavigationFrame.offset(0, mNavigationBarHeight);
-            }
-            mNavigationBar.computeFrameLw(mTmpNavigationFrame, mTmpNavigationFrame,
-                                mTmpNavigationFrame, mTmpNavigationFrame);
-            if (DEBUG_LAYOUT) Log.i(TAG, "mNavigationBar frame: " + mTmpNavigationFrame);
-        } else {
-            mDockBottom = mContentBottom = mCurBottom = displayHeight;
-        }
         if (mStatusBar != null) {
+            if (mNavigationBar != null) {
+                final boolean navVisible = (mNavigationBar.isVisibleLw() && mNaviShow && mNaviShowAll && mNaviShowAll2);
+                final int mNavigationBarHeight = mNavRotate ? getStatBarSize() : getNavBarSize();
+                mTmpNavigationFrame.set(0, (displayHeight-mNavigationBarHeight),
+                       displayWidth, displayHeight);
+                if (navVisible) {
+                    mDockBottom = mContentBottom = mCurBottom = mTmpNavigationFrame.top;
+                } else {
+                    mTmpNavigationFrame.offset(0, mNavigationBarHeight);
+                }
+                mNavigationBar.computeFrameLw(mTmpNavigationFrame, mTmpNavigationFrame,
+                                mTmpNavigationFrame, mTmpNavigationFrame);
+                if (DEBUG_LAYOUT) Log.i(TAG, "mNavigationBar frame: " + mTmpNavigationFrame);
+            } else {
+                mDockBottom = mContentBottom = mCurBottom = displayHeight;
+            }
+
             if(mBottomBar && !mNaviShow){
                 final int statusbar_height = getStatBarSize();
                 //setting status bar's top, to bottom of the screen, minus status bar height

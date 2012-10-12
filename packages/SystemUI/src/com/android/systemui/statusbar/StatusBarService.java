@@ -179,6 +179,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     // last theme that was applied in order to detect theme change (as opposed
     // to some other configuration change).
     CustomTheme mCurrentTheme;
+    private DoNotDisturb mDoNotDisturb;
 
     // icons
     LinearLayout mIcons;
@@ -431,6 +432,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_BRIGHTNESS_TOGGLE), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_INTRUDER_ALERT), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.STATUS_BAR_NOTIF), false, this);
             onChange(true);
         }
 
@@ -1126,6 +1129,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mDateView.setVisibility(View.INVISIBLE);
         showClock(Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_CLOCK, 1) != 0);
         mVelocityTracker = VelocityTracker.obtain();
+        mDoNotDisturb = new DoNotDisturb(mContext);
     }
     
     private void updateColors() {
@@ -1576,7 +1580,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         StatusBarIconView iconView = addNotificationViews(key, notification);
         if (iconView == null) return;
 
-        if (shouldTicker) {
+        if (shouldTicker && mShowNotif) {
             if (!shouldTick) {
                 tick(notification);
             } else {
@@ -1682,7 +1686,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         // Restart the ticker if it's still running
         if (notification.notification.tickerText != null
                 && !TextUtils.equals(notification.notification.tickerText,
-                    oldEntry.notification.notification.tickerText)) {
+                    oldEntry.notification.notification.tickerText) && mShowNotif) {
             if (!shouldTick) {
                 tick(notification);
             } else {
@@ -1816,9 +1820,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         parent.addView(row, viewIndex);
         // Add the icon.
         final int iconIndex = chooseIconIndex(isOngoing, viewIndex);
-        if (mShowNotif) {
-            mNotificationIcons.addView(iconView, iconIndex);
-        }
+        mNotificationIcons.addView(iconView, iconIndex);
         return iconView;
     }
 
@@ -1951,7 +1953,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 }
             } else {
                 if (SPEW) Slog.d(TAG, "DISABLE_NOTIFICATION_ICONS: no");
-                if (!mExpandedVisible && mShowNotif) {
+                if (!mExpandedVisible) {
                     setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);
                 }
             }
@@ -2101,7 +2103,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mTrackingView.setVisibility(View.GONE);
         mExpandedView.setVisibility(View.GONE);
 
-        if ((mDisabled & StatusBarManager.DISABLE_NOTIFICATION_ICONS) == 0 && mShowNotif) {
+        if ((mDisabled & StatusBarManager.DISABLE_NOTIFICATION_ICONS) == 0) {
             setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);
         }
         if (mDateView.getVisibility() == View.VISIBLE) {
@@ -2514,7 +2516,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             animateCollapse();
 
             // If this click was on the intruder alert, hide that instead
-            if (shouldTick) {
+            if (shouldTick && mShowNotif) {
                 mHandler.sendEmptyMessage(MSG_HIDE_INTRUDER);
             }
         }
@@ -2755,9 +2757,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 	if (visible) {
             setNotificationIconVisibility(false, com.android.internal.R.anim.fade_out);
         } else {
-            if (mShowNotif) {
-                setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);
-            }
+            setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);
         }
     }
 
@@ -2799,8 +2799,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     void setNotificationIconVisibility(boolean visible, int anim) {
         int old = mNotificationIcons.getVisibility();
-        int v = visible ? (mShowNotif ? View.VISIBLE : View.INVISIBLE) : View.INVISIBLE;
-        if ((old != v) && mShowNotif) {
+        int v = visible ? View.VISIBLE : View.INVISIBLE;
+        if (old != v) {
            if (mStatusBarCarrierLogo == 2 && mStatusBarReverse) {
                mNotificationIcons.setVisibility(View.INVISIBLE);
                mNotificationIcons.startAnimation(loadAnim(anim, null));
@@ -2984,7 +2984,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 }
             } else {
                 Slog.d(TAG, "DISABLE_NOTIFICATION_ICONS: no");
-                if (!mExpandedVisible && mShowNotif) {
+                if (!mExpandedVisible) {
                     setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);
                 }
             }
@@ -3075,10 +3075,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 WeatherPopup weatherWindow = new WeatherPopup(v);
                 weatherWindow.showLikeQuickAction();
                 return true;
-            } else {
-                animateCollapse();
-                return true;
             }
+
+            return false;
         }
     };
 
