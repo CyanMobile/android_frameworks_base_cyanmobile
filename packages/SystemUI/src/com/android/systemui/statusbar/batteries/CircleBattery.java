@@ -271,6 +271,22 @@ public class CircleBattery extends ImageView {
 
         updateChargeAnim();
 
+        int defValuesColor = mContext.getResources().getInteger(R.color.color_default_cyanmobile);
+        String colores = Settings.System.getString(mContext.getContentResolver(), Settings.System.STATUS_BAR_BATTERY_COLOR);
+        Integer barColor = null;
+        if (!TextUtils.isEmpty(colores)) {
+           try {
+                barColor = Color.parseColor(colores);
+           } catch (IllegalArgumentException e) {
+           }
+        }
+
+        if (barColor != null) {
+            mPaintSystem.setColor(barColor);
+        } else {
+            mPaintSystem.setColor(defValuesColor);
+        }
+
         Paint usePaint = mPaintSystem;
         // turn red at 14% - same level android battery warning appears
         if (mLevel <= 14) {
