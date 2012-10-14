@@ -1075,7 +1075,19 @@ public class NavigationBarView extends LinearLayout {
             mQuickIcon = mForceRotate ? mQuickIconRot : mQuickIconNorm;
             mVolUpIcon = mForceRotate ? mVolUpIconRot : mVolUpIconNorm;
             mVolDownIcon = mForceRotate ? mVolDownIconRot : mVolDownIconNorm;
+        } else if (mShowAnimate == 0) {
+            mPowerIcon = mPowerIconNorm;
+            mHomeIcon = mHomeIconNorm;
+            mMenuIcon = mMenuIconNorm;
+            mBackIcon = mBackIconNorm;
+            mSearchIcon = mSearchIconNorm;
+            mQuickIcon = mQuickIconNorm;
+            mVolUpIcon = mVolUpIconNorm;
+            mVolDownIcon = mVolDownIconNorm;
+        } else if (mShowAnimate > 2) {
+            mHandler.postDelayed(mResetRotate30, mShowAnimate);
         }
+
         updateNaviButtons();
     }
 
@@ -1115,9 +1127,7 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             if (mShowAnimate > 2) {
-                 mHandler.postDelayed(mResetRotate60, mShowAnimate);
-             }
+             mHandler.postDelayed(mResetRotate60, mShowAnimate);
         }
     };
 
@@ -1140,9 +1150,7 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             if (mShowAnimate > 2) {
-                 mHandler.postDelayed(mResetRotate90, mShowAnimate);
-             }
+             mHandler.postDelayed(mResetRotate90, mShowAnimate);
         }
     };
 
@@ -1165,9 +1173,7 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             if (mShowAnimate > 2) {
-                 mHandler.postDelayed(mResetRotate120, mShowAnimate);
-             }
+             mHandler.postDelayed(mResetRotate120, mShowAnimate);
         }
     };
 
@@ -1190,9 +1196,7 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             if (mShowAnimate > 2) {
-                 mHandler.postDelayed(mResetRotate150, mShowAnimate);
-             }
+             mHandler.postDelayed(mResetRotate150, mShowAnimate);
         }
     };
 
@@ -1215,9 +1219,7 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             if (mShowAnimate > 2) {
-                 mHandler.postDelayed(mResetRotate180, mShowAnimate);
-             }
+             mHandler.postDelayed(mResetRotate180, mShowAnimate);
         }
     };
 
@@ -1240,9 +1242,7 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             if (mShowAnimate > 2) {
-                 mHandler.postDelayed(mResetRotate210, mShowAnimate);
-             }
+             mHandler.postDelayed(mResetRotate210, mShowAnimate);
         }
     };
 
@@ -1265,9 +1265,7 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             if (mShowAnimate > 2) {
-                 mHandler.postDelayed(mResetRotate240, mShowAnimate);
-             }
+             mHandler.postDelayed(mResetRotate240, mShowAnimate);
         }
     };
 
@@ -1290,9 +1288,7 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             if (mShowAnimate > 2) {
-                 mHandler.postDelayed(mResetRotate270, mShowAnimate);
-             }
+             mHandler.postDelayed(mResetRotate270, mShowAnimate);
         }
     };
 
@@ -1315,9 +1311,7 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             if (mShowAnimate > 2) {
-                 mHandler.postDelayed(mResetRotate300, mShowAnimate);
-             }
+             mHandler.postDelayed(mResetRotate300, mShowAnimate);
         }
     };
 
@@ -1340,9 +1334,7 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             if (mShowAnimate > 2) {
-                 mHandler.postDelayed(mResetRotate330, mShowAnimate);
-             }
+             mHandler.postDelayed(mResetRotate330, mShowAnimate);
         }
     };
 
@@ -1365,9 +1357,7 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             if (mShowAnimate > 2) {
-                 mHandler.postDelayed(mResetNormal, mShowAnimate);
-             }
+             mHandler.postDelayed(mResetNormal, mShowAnimate);
         }
     };
 
@@ -1499,7 +1489,7 @@ public class NavigationBarView extends LinearLayout {
           if(mShowQuicker == 5)
             mQuickButton.clearColorFilter();
         }
-        
+
         mHandler.postDelayed(mResetHome, 10);
         mHandler.postDelayed(mResetMenu, 10);
         mHandler.postDelayed(mResetBack, 10);
