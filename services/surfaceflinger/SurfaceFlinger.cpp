@@ -1955,8 +1955,8 @@ status_t SurfaceFlinger::electronBeamOffAnimationImplLocked()
         : hw_w(hw_w), hw_h(hw_h) {
         }
         void operator()(GLfloat* vtx, float v) {
-            const GLfloat w = hw_w + (hw_w * v);
-            const GLfloat h = hw_h - (hw_h * v);
+            const GLfloat w = hw_w - (hw_w * v);
+            const GLfloat h = hw_h + (hw_h * v);
             const GLfloat x = (hw_w - w) * 0.5f;
             const GLfloat y = (hw_h - h) * 0.5f;
             vtx[0] = x;         vtx[1] = y;
@@ -1973,8 +1973,8 @@ status_t SurfaceFlinger::electronBeamOffAnimationImplLocked()
         : hw_w(hw_w), hw_h(hw_h) {
         }
         void operator()(GLfloat* vtx, float v) {
-            const GLfloat w = hw_w - (hw_w * v);
-            const GLfloat h = 1.0f;
+            const GLfloat w = 1.0f;
+            const GLfloat h = hw_h - (hw_h * v);
             const GLfloat x = (hw_w - w) * 0.5f;
             const GLfloat y = (hw_h - h) * 0.5f;
             vtx[0] = x;         vtx[1] = y;
