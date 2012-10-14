@@ -155,6 +155,7 @@ public class NavigationBarView extends LinearLayout {
     boolean mVisible = true;
     boolean mHidden = false;
     boolean mForceRotate = false;
+    private boolean mDisableAnimate = false;
     Handler mHandler;
 
     class SettingsObserver extends ContentObserver {
@@ -1059,6 +1060,7 @@ public class NavigationBarView extends LinearLayout {
         }
 
         if (mShowAnimate == 1) {
+            mDisableAnimate = true;
             runIconPowerRot(180);
             runIconHomeRot(180);
             runIconMenuRot(180);
@@ -1076,6 +1078,7 @@ public class NavigationBarView extends LinearLayout {
             mVolUpIcon = mForceRotate ? mVolUpIconRot : mVolUpIconNorm;
             mVolDownIcon = mForceRotate ? mVolDownIconRot : mVolDownIconNorm;
         } else if (mShowAnimate == 0) {
+            mDisableAnimate = true;
             mPowerIcon = mPowerIconNorm;
             mHomeIcon = mHomeIconNorm;
             mMenuIcon = mMenuIconNorm;
@@ -1084,8 +1087,6 @@ public class NavigationBarView extends LinearLayout {
             mQuickIcon = mQuickIconNorm;
             mVolUpIcon = mVolUpIconNorm;
             mVolDownIcon = mVolDownIconNorm;
-        } else if (mShowAnimate > 2) {
-            mHandler.postDelayed(mResetRotate30, mShowAnimate);
         }
 
         updateNaviButtons();
@@ -1093,6 +1094,7 @@ public class NavigationBarView extends LinearLayout {
 
     Runnable mResetNormal = new Runnable() {
         public void run() {
+             mDisableAnimate = false;
              mPowerIcon = mPowerIconNorm;
              mHomeIcon = mHomeIconNorm;
              mMenuIcon = mMenuIconNorm;
@@ -1102,7 +1104,7 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconNorm;
              mVolDownIcon = mVolDownIconNorm;
              updateNaviButtons();
-             if (mShowAnimate > 2) {
+             if (mShowAnimate > 2 && !mDisableAnimate) {
                  mHandler.postDelayed(mResetRotate30, mShowAnimate);
              }
         }
@@ -1488,6 +1490,14 @@ public class NavigationBarView extends LinearLayout {
 
           if(mShowQuicker == 5)
             mQuickButton.clearColorFilter();
+        }
+
+        if ((mShowAnimate == 0) || (mShowAnimate == 1)) {
+            mDisableAnimate = true;
+        }
+
+        if (mShowAnimate > 2 && mDisableAnimate) {
+            mHandler.postDelayed(mResetNormal, 10);
         }
 
         mHandler.postDelayed(mResetHome, 10);
