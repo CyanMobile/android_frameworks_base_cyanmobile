@@ -707,6 +707,7 @@ public class StatusBarPolicy {
                     .getUriFor(Settings.System.STATUS_BAR_COLOR), false, this);
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.NOTIFICATION_BACKGROUND_COLOR), false, this);
+            onChange(true);
         }
 
         @Override 
