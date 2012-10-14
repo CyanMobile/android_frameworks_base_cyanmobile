@@ -683,43 +683,30 @@ public class StatusBarPolicy {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_BATTERY), false, this);
-
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUS_BAR_CM_SIGNAL_TEXT), false, this);
-
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUS_BAR_HEADSET), false, this);
-
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUS_BAR_ALARM), false, this);
-
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUS_BAR_WIFI), false, this);
-
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUS_BAR_CM_WIFI_TEXT), false, this);
-
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUS_BAR_BLUETOOTH), false, this);
-
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUS_BAR_3G), false, this);
-
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUS_BAR_GPS), false, this);
-
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUS_BAR_SYNC), false, this);
-
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUS_BAR_FOURG), false, this);
-
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUS_BAR_COLOR), false, this);
-
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.NOTIFICATION_BACKGROUND_COLOR), false, this);
-            onChange(true);
         }
 
         @Override 
@@ -754,13 +741,11 @@ public class StatusBarPolicy {
         mAlwaysUseCdmaRssi = mContext.getResources().getBoolean(
             com.android.internal.R.bool.config_alwaysUseCdmaRssi);
 
-        // load config to determine if phone should be hidden
-        //try {
-        //    mPhoneSignalHidden = mContext.getResources().getBoolean(
-        //        R.bool.config_statusbar_hide_phone_signal);
-        //} catch (Exception e) {
-        //    mPhoneSignalHidden = false;
-        //}
+        mPhoneSignalHidden = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_CM_SIGNAL_TEXT, 0) != 4);
+
+        mShowCmSignal = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_CM_SIGNAL_TEXT, 0) != 0);
 
         // hide phone_signal icon if hidden
         mService.setIconVisibility("phone_signal", !mPhoneSignalHidden && !mShowCmSignal);
@@ -2113,8 +2098,8 @@ public class StatusBarPolicy {
                 Settings.System.STATUS_BAR_CM_SIGNAL_TEXT, 0) != 4);
 
         // 0 will hide the cmsignaltext and show the signal bars
-        mShowCmSignal = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_CM_SIGNAL_TEXT, 0) != 0;
+        mShowCmSignal = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_CM_SIGNAL_TEXT, 0) != 0);
         mService.setIconVisibility("phone_signal", !mPhoneSignalHidden && !mShowCmSignal);
     }
 }
