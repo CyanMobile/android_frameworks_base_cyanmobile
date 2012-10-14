@@ -27,6 +27,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.Matrix;
 import android.graphics.PorterDuff.Mode;
 import android.content.res.Resources;
 import android.util.AttributeSet;
@@ -256,14 +257,6 @@ public class NavigationBarView extends LinearLayout {
             runIconVolUp();
             runIconVolDown();
             runIconTouch();
-            runIconPowerRot();
-            runIconHomeRot();
-            runIconMenuRot();
-            runIconBackRot();
-            runIconSearchRot();
-            runIconQuickRot();
-            runIconVolUpRot();
-            runIconVolDownRot();
 	    ActionItem appItem = new ActionItem(ID_APPLICATION, "Application");
 	    ActionItem dispItem = new ActionItem(ID_DISPLAY, "Display");
             ActionItem inpItem = new ActionItem(ID_INPUT, "Input");
@@ -1066,6 +1059,14 @@ public class NavigationBarView extends LinearLayout {
         }
 
         if (mShowAnimate == 1) {
+            runIconPowerRot(180);
+            runIconHomeRot(180);
+            runIconMenuRot(180);
+            runIconBackRot(180);
+            runIconSearchRot(180);
+            runIconQuickRot(180);
+            runIconVolUpRot(180);
+            runIconVolDownRot(180);
             mPowerIcon = mForceRotate ? mPowerIconRot : mPowerIconNorm;
             mHomeIcon = mForceRotate ? mHomeIconRot : mHomeIconNorm;
             mMenuIcon = mForceRotate ? mMenuIconRot : mMenuIconNorm;
@@ -1090,13 +1091,271 @@ public class NavigationBarView extends LinearLayout {
              mVolDownIcon = mVolDownIconNorm;
              updateNaviButtons();
              if (mShowAnimate > 2) {
-                 mHandler.postDelayed(mResetRotate, mShowAnimate);
+                 mHandler.postDelayed(mResetRotate30, mShowAnimate);
              }
         }
     };
 
-    Runnable mResetRotate = new Runnable() {
+    Runnable mResetRotate30 = new Runnable() {
         public void run() {
+            runIconPowerRot(30);
+            runIconHomeRot(30);
+            runIconMenuRot(30);
+            runIconBackRot(30);
+            runIconSearchRot(30);
+            runIconQuickRot(30);
+            runIconVolUpRot(30);
+            runIconVolDownRot(30);
+             mPowerIcon = mPowerIconRot;
+             mHomeIcon = mHomeIconRot;
+             mMenuIcon = mMenuIconRot;
+             mBackIcon = mBackIconRot;
+             mSearchIcon = mSearchIconRot;
+             mQuickIcon = mQuickIconRot;
+             mVolUpIcon = mVolUpIconRot;
+             mVolDownIcon = mVolDownIconRot;
+             updateNaviButtons();
+             if (mShowAnimate > 2) {
+                 mHandler.postDelayed(mResetRotate60, mShowAnimate);
+             }
+        }
+    };
+
+    Runnable mResetRotate60 = new Runnable() {
+        public void run() {
+            runIconPowerRot(60);
+            runIconHomeRot(60);
+            runIconMenuRot(60);
+            runIconBackRot(60);
+            runIconSearchRot(60);
+            runIconQuickRot(60);
+            runIconVolUpRot(60);
+            runIconVolDownRot(60);
+             mPowerIcon = mPowerIconRot;
+             mHomeIcon = mHomeIconRot;
+             mMenuIcon = mMenuIconRot;
+             mBackIcon = mBackIconRot;
+             mSearchIcon = mSearchIconRot;
+             mQuickIcon = mQuickIconRot;
+             mVolUpIcon = mVolUpIconRot;
+             mVolDownIcon = mVolDownIconRot;
+             updateNaviButtons();
+             if (mShowAnimate > 2) {
+                 mHandler.postDelayed(mResetRotate90, mShowAnimate);
+             }
+        }
+    };
+
+    Runnable mResetRotate90 = new Runnable() {
+        public void run() {
+            runIconPowerRot(90);
+            runIconHomeRot(90);
+            runIconMenuRot(90);
+            runIconBackRot(90);
+            runIconSearchRot(90);
+            runIconQuickRot(90);
+            runIconVolUpRot(90);
+            runIconVolDownRot(90);
+             mPowerIcon = mPowerIconRot;
+             mHomeIcon = mHomeIconRot;
+             mMenuIcon = mMenuIconRot;
+             mBackIcon = mBackIconRot;
+             mSearchIcon = mSearchIconRot;
+             mQuickIcon = mQuickIconRot;
+             mVolUpIcon = mVolUpIconRot;
+             mVolDownIcon = mVolDownIconRot;
+             updateNaviButtons();
+             if (mShowAnimate > 2) {
+                 mHandler.postDelayed(mResetRotate120, mShowAnimate);
+             }
+        }
+    };
+
+    Runnable mResetRotate120 = new Runnable() {
+        public void run() {
+            runIconPowerRot(120);
+            runIconHomeRot(120);
+            runIconMenuRot(120);
+            runIconBackRot(120);
+            runIconSearchRot(120);
+            runIconQuickRot(120);
+            runIconVolUpRot(120);
+            runIconVolDownRot(120);
+             mPowerIcon = mPowerIconRot;
+             mHomeIcon = mHomeIconRot;
+             mMenuIcon = mMenuIconRot;
+             mBackIcon = mBackIconRot;
+             mSearchIcon = mSearchIconRot;
+             mQuickIcon = mQuickIconRot;
+             mVolUpIcon = mVolUpIconRot;
+             mVolDownIcon = mVolDownIconRot;
+             updateNaviButtons();
+             if (mShowAnimate > 2) {
+                 mHandler.postDelayed(mResetRotate150, mShowAnimate);
+             }
+        }
+    };
+
+    Runnable mResetRotate150 = new Runnable() {
+        public void run() {
+            runIconPowerRot(150);
+            runIconHomeRot(150);
+            runIconMenuRot(150);
+            runIconBackRot(150);
+            runIconSearchRot(150);
+            runIconQuickRot(150);
+            runIconVolUpRot(150);
+            runIconVolDownRot(150);
+             mPowerIcon = mPowerIconRot;
+             mHomeIcon = mHomeIconRot;
+             mMenuIcon = mMenuIconRot;
+             mBackIcon = mBackIconRot;
+             mSearchIcon = mSearchIconRot;
+             mQuickIcon = mQuickIconRot;
+             mVolUpIcon = mVolUpIconRot;
+             mVolDownIcon = mVolDownIconRot;
+             updateNaviButtons();
+             if (mShowAnimate > 2) {
+                 mHandler.postDelayed(mResetRotate180, mShowAnimate);
+             }
+        }
+    };
+
+    Runnable mResetRotate180 = new Runnable() {
+        public void run() {
+            runIconPowerRot(180);
+            runIconHomeRot(180);
+            runIconMenuRot(180);
+            runIconBackRot(180);
+            runIconSearchRot(180);
+            runIconQuickRot(180);
+            runIconVolUpRot(180);
+            runIconVolDownRot(180);
+             mPowerIcon = mPowerIconRot;
+             mHomeIcon = mHomeIconRot;
+             mMenuIcon = mMenuIconRot;
+             mBackIcon = mBackIconRot;
+             mSearchIcon = mSearchIconRot;
+             mQuickIcon = mQuickIconRot;
+             mVolUpIcon = mVolUpIconRot;
+             mVolDownIcon = mVolDownIconRot;
+             updateNaviButtons();
+             if (mShowAnimate > 2) {
+                 mHandler.postDelayed(mResetRotate210, mShowAnimate);
+             }
+        }
+    };
+
+    Runnable mResetRotate210 = new Runnable() {
+        public void run() {
+            runIconPowerRot(210);
+            runIconHomeRot(210);
+            runIconMenuRot(210);
+            runIconBackRot(210);
+            runIconSearchRot(210);
+            runIconQuickRot(210);
+            runIconVolUpRot(210);
+            runIconVolDownRot(210);
+             mPowerIcon = mPowerIconRot;
+             mHomeIcon = mHomeIconRot;
+             mMenuIcon = mMenuIconRot;
+             mBackIcon = mBackIconRot;
+             mSearchIcon = mSearchIconRot;
+             mQuickIcon = mQuickIconRot;
+             mVolUpIcon = mVolUpIconRot;
+             mVolDownIcon = mVolDownIconRot;
+             updateNaviButtons();
+             if (mShowAnimate > 2) {
+                 mHandler.postDelayed(mResetRotate240, mShowAnimate);
+             }
+        }
+    };
+
+    Runnable mResetRotate240 = new Runnable() {
+        public void run() {
+            runIconPowerRot(240);
+            runIconHomeRot(240);
+            runIconMenuRot(240);
+            runIconBackRot(240);
+            runIconSearchRot(240);
+            runIconQuickRot(240);
+            runIconVolUpRot(240);
+            runIconVolDownRot(240);
+             mPowerIcon = mPowerIconRot;
+             mHomeIcon = mHomeIconRot;
+             mMenuIcon = mMenuIconRot;
+             mBackIcon = mBackIconRot;
+             mSearchIcon = mSearchIconRot;
+             mQuickIcon = mQuickIconRot;
+             mVolUpIcon = mVolUpIconRot;
+             mVolDownIcon = mVolDownIconRot;
+             updateNaviButtons();
+             if (mShowAnimate > 2) {
+                 mHandler.postDelayed(mResetRotate270, mShowAnimate);
+             }
+        }
+    };
+
+    Runnable mResetRotate270 = new Runnable() {
+        public void run() {
+            runIconPowerRot(270);
+            runIconHomeRot(270);
+            runIconMenuRot(270);
+            runIconBackRot(270);
+            runIconSearchRot(270);
+            runIconQuickRot(270);
+            runIconVolUpRot(270);
+            runIconVolDownRot(270);
+             mPowerIcon = mPowerIconRot;
+             mHomeIcon = mHomeIconRot;
+             mMenuIcon = mMenuIconRot;
+             mBackIcon = mBackIconRot;
+             mSearchIcon = mSearchIconRot;
+             mQuickIcon = mQuickIconRot;
+             mVolUpIcon = mVolUpIconRot;
+             mVolDownIcon = mVolDownIconRot;
+             updateNaviButtons();
+             if (mShowAnimate > 2) {
+                 mHandler.postDelayed(mResetRotate300, mShowAnimate);
+             }
+        }
+    };
+
+    Runnable mResetRotate300 = new Runnable() {
+        public void run() {
+            runIconPowerRot(300);
+            runIconHomeRot(300);
+            runIconMenuRot(300);
+            runIconBackRot(300);
+            runIconSearchRot(300);
+            runIconQuickRot(300);
+            runIconVolUpRot(300);
+            runIconVolDownRot(300);
+             mPowerIcon = mPowerIconRot;
+             mHomeIcon = mHomeIconRot;
+             mMenuIcon = mMenuIconRot;
+             mBackIcon = mBackIconRot;
+             mSearchIcon = mSearchIconRot;
+             mQuickIcon = mQuickIconRot;
+             mVolUpIcon = mVolUpIconRot;
+             mVolDownIcon = mVolDownIconRot;
+             updateNaviButtons();
+             if (mShowAnimate > 2) {
+                 mHandler.postDelayed(mResetRotate330, mShowAnimate);
+             }
+        }
+    };
+
+    Runnable mResetRotate330 = new Runnable() {
+        public void run() {
+            runIconPowerRot(330);
+            runIconHomeRot(330);
+            runIconMenuRot(330);
+            runIconBackRot(330);
+            runIconSearchRot(330);
+            runIconQuickRot(330);
+            runIconVolUpRot(330);
+            runIconVolDownRot(330);
              mPowerIcon = mPowerIconRot;
              mHomeIcon = mHomeIconRot;
              mMenuIcon = mMenuIconRot;
@@ -1400,44 +1659,84 @@ public class NavigationBarView extends LinearLayout {
         mTouchIcon = asIcon;
     }
 
-    private void runIconPowerRot() {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_powerrot);
-        mPowerIconRot = asIcon;
+    private void runIconPowerRot(int Degrs) {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_power);
+        int w = asIcon.getWidth();
+        int h = asIcon.getHeight();
+        Matrix mtx = new Matrix();
+        mtx.postRotate(Degrs);
+        Bitmap asIconS = Bitmap.createBitmap(asIcon, 0, 0, w, h, mtx, true);
+        mPowerIconRot = asIconS;
     }
 
-    private void runIconHomeRot() {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_homerot);
-        mHomeIconRot = asIcon;
+    private void runIconHomeRot(int Degrs) {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_home);
+        int w = asIcon.getWidth();
+        int h = asIcon.getHeight();
+        Matrix mtx = new Matrix();
+        mtx.postRotate(Degrs);
+        Bitmap asIconS = Bitmap.createBitmap(asIcon, 0, 0, w, h, mtx, true);
+        mHomeIconRot = asIconS;
     }
 
-    private void runIconMenuRot() {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_menurot);
-        mMenuIconRot = asIcon;
+    private void runIconMenuRot(int Degrs) {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_menu);
+        int w = asIcon.getWidth();
+        int h = asIcon.getHeight();
+        Matrix mtx = new Matrix();
+        mtx.postRotate(Degrs);
+        Bitmap asIconS = Bitmap.createBitmap(asIcon, 0, 0, w, h, mtx, true);
+        mMenuIconRot = asIconS;
     }
 
-    private void runIconBackRot() {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_backrot);
-        mBackIconRot = asIcon;
+    private void runIconBackRot(int Degrs) {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_back);
+        int w = asIcon.getWidth();
+        int h = asIcon.getHeight();
+        Matrix mtx = new Matrix();
+        mtx.postRotate(Degrs);
+        Bitmap asIconS = Bitmap.createBitmap(asIcon, 0, 0, w, h, mtx, true);
+        mBackIconRot = asIconS;
     }
 
-    private void runIconSearchRot() {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_searchrot);
-        mSearchIconRot = asIcon;
+    private void runIconSearchRot(int Degrs) {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_search);
+        int w = asIcon.getWidth();
+        int h = asIcon.getHeight();
+        Matrix mtx = new Matrix();
+        mtx.postRotate(Degrs);
+        Bitmap asIconS = Bitmap.createBitmap(asIcon, 0, 0, w, h, mtx, true);
+        mSearchIconRot = asIconS;
     }
 
-    private void runIconQuickRot() {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_quicknarot);
-        mQuickIconRot = asIcon;
+    private void runIconQuickRot(int Degrs) {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_quickna);
+        int w = asIcon.getWidth();
+        int h = asIcon.getHeight();
+        Matrix mtx = new Matrix();
+        mtx.postRotate(Degrs);
+        Bitmap asIconS = Bitmap.createBitmap(asIcon, 0, 0, w, h, mtx, true);
+        mQuickIconRot = asIconS;
     }
 
-    private void runIconVolUpRot() {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_voluprot);
-        mVolUpIconRot = asIcon;
+    private void runIconVolUpRot(int Degrs) {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_volup);
+        int w = asIcon.getWidth();
+        int h = asIcon.getHeight();
+        Matrix mtx = new Matrix();
+        mtx.postRotate(Degrs);
+        Bitmap asIconS = Bitmap.createBitmap(asIcon, 0, 0, w, h, mtx, true);
+        mVolUpIconRot = asIconS;
     }
 
-    private void runIconVolDownRot() {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_voldownrot);
-        mVolDownIconRot = asIcon;
+    private void runIconVolDownRot(int Degrs) {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_voldown);
+        int w = asIcon.getWidth();
+        int h = asIcon.getHeight();
+        Matrix mtx = new Matrix();
+        mtx.postRotate(Degrs);
+        Bitmap asIconS = Bitmap.createBitmap(asIcon, 0, 0, w, h, mtx, true);
+        mVolDownIconRot = asIconS;
     }
 
     Runnable mResetHome = new Runnable() {
