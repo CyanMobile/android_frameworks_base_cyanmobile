@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <set android:shareInterpolator="false"
   xmlns:android="http://schemas.android.com/apk/res/android">
     <translate android:interpolator="@anim/decelerate_quint" android:duration="@integer/config_shortAnimTime" android:fromYDelta="10.000002%" android:toYDelta="0.0" />
