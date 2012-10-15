@@ -57,7 +57,7 @@
     <style name="TextAppearance.StatusBar.Expanded" parent="@android:style/TextAppearance.StatusBar" />
 
     <style name="TextAppearance.StatusBar.Expanded.Clock">
-        <item name="android:textSize">32dp</item>
+        <item name="android:textSize">30dp</item>
         <item name="android:textStyle">normal</item>
     </style>
 

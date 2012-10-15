@@ -188,6 +188,7 @@
             android:textAppearance="@style/TextAppearance.StatusBar.Battery"
             android:singleLine="true"
             android:layout_alignParentLeft="true"
+            android:paddingRight="2dip"
             android:paddingLeft="2dip"
             android:gravity="center_vertical|left"
             android:orientation="horizontal"/>

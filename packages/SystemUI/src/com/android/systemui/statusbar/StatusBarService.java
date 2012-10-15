@@ -1028,14 +1028,14 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         int SettingsButtonColor = Settings.System.getInt(getContentResolver(), Settings.System.STS_BTT_COLOR, defValuesColor);
         switch (transSettingsButton) {
           case 0 : // theme, leave alone
-            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_close_on, mDisplay.getWidth(), getStatBarSize(), context));
+            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_close_on, getExpandedWidth(), getCloseDragSize(), context));
             break;
           case 1 : // user defined argb hex color
-            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_transparent_background, mDisplay.getWidth(), getStatBarSize(), context));
+            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_transparent_background, getExpandedWidth(), getCloseDragSize(), context));
             mSettingsButton.setBackgroundColor(SettingsButtonColor);
             break;
           case 2 : // transparent
-            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_transparent_background, mDisplay.getWidth(), getStatBarSize(), context));
+            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_transparent_background, getExpandedWidth(), getCloseDragSize(), context));
             break;
         }
         mSettingsButton.setOnLongClickListener(mSettingsButtonListener);
@@ -1481,6 +1481,16 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         int statSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                  statSizeval, mContext.getResources().getDisplayMetrics());
         return statSizepx;
+    }
+
+    private int getCloseDragSize() {
+        int defValuesStatsSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_statbarsize_default_cyanmobile);
+        int dragSizeval = Settings.System.getInt(mContext.getContentResolver(),
+             Settings.System.STATUSBAR_STATS_SIZE, defValuesStatsSize);
+        int dragSizefitUp = (dragSizeval-5);
+        int dragSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                 dragSizefitUp, mContext.getResources().getDisplayMetrics());
+        return dragSizepx;
     }
 
     private void addIntruderView() {
