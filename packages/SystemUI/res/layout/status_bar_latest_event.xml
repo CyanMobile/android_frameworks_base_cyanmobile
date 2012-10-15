@@ -15,8 +15,8 @@
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/divider_horizontal_light_opaque"
+        android:layout_height="@dimen/notification_divider_height"
+        android:background="@android:color/transparent"
         />
 
 </com.android.systemui.statusbar.LatestItemContainer>

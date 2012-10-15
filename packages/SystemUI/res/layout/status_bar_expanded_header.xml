@@ -31,6 +31,8 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="2dp"
         android:singleLine="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
         android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Clock"
         />
 
@@ -39,6 +41,8 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="4dp"
         android:layout_marginRight="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
         android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Date"
         />
 
@@ -47,6 +51,8 @@
             android:layout_height="48dp"
             android:layout_weight="1"
             android:scaleType="center"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             android:src="@drawable/ic_sysbar_set"
             />
 
@@ -61,6 +67,8 @@
             android:layout_height="48dp"
             android:layout_weight="1"
             android:scaleType="center"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             android:src="@drawable/ic_notify_clear"
             />
 </LinearLayout>

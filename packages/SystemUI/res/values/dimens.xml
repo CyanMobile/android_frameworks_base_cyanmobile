@@ -23,5 +23,6 @@
     <!-- thickness (height) of the navigation bar on phones that require it -->
     <dimen name="navigation_bar_size">25dp</dimen>
     <dimen name="notification_panel_header_height">48dp</dimen>
+    <dimen name="notification_divider_height">4dp</dimen>
 </resources>
 

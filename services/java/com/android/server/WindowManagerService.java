@@ -9021,7 +9021,8 @@ public class WindowManagerService extends IWindowManager.Stub
                                         + w);
                                 wallpaperForceHidingChanged = true;
                                 mFocusMayChange = true;
-                            } else if (w.isReadyForDisplay() && w.mAnimation == null) {
+                            } else if (w.isReadyForDisplay() && ((Settings.System.getInt(mContext.getContentResolver(),
+                                    Settings.System.LOCKSCREEN_SEE_THROUGH, 0) != 0) ||  w.mAnimation == null)) {
                                 forceHiding = true;
                             }
                         } else if (mPolicy.canBeForceHidden(w, attrs)) {
