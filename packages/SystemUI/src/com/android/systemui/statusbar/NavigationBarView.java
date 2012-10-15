@@ -1104,7 +1104,10 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconNorm;
              mVolDownIcon = mVolDownIconNorm;
              updateNaviButtons();
-             if (mShowAnimate > 2 && !mDisableAnimate) {
+             if (mShowAnimate == 2 && !mDisableAnimate) {
+                 mHandler.postDelayed(mResetRotate30, 1000);
+             }
+             if (mShowAnimate > 3 && !mDisableAnimate) {
                  mHandler.postDelayed(mResetRotate30, mShowAnimate);
              }
         }
@@ -1129,7 +1132,11 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             mHandler.postDelayed(mResetRotate60, mShowAnimate);
+             if (mShowAnimate == 2) {
+                 mHandler.postDelayed(mResetRotate60, 10);
+             } else {
+                 mHandler.postDelayed(mResetRotate60, mShowAnimate);
+             }
         }
     };
 
@@ -1152,7 +1159,11 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             mHandler.postDelayed(mResetRotate90, mShowAnimate);
+             if (mShowAnimate == 2) {
+                 mHandler.postDelayed(mResetRotate90, 10);
+             } else {
+                 mHandler.postDelayed(mResetRotate90, mShowAnimate);
+             }
         }
     };
 
@@ -1175,7 +1186,11 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             mHandler.postDelayed(mResetRotate120, mShowAnimate);
+             if (mShowAnimate == 2) {
+                 mHandler.postDelayed(mResetRotate120, 10);
+             } else {
+                 mHandler.postDelayed(mResetRotate120, mShowAnimate);
+             }
         }
     };
 
@@ -1198,7 +1213,11 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             mHandler.postDelayed(mResetRotate150, mShowAnimate);
+             if (mShowAnimate == 2) {
+                 mHandler.postDelayed(mResetRotate150, 10);
+             } else {
+                 mHandler.postDelayed(mResetRotate150, mShowAnimate);
+             }
         }
     };
 
@@ -1221,7 +1240,11 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             mHandler.postDelayed(mResetRotate180, mShowAnimate);
+             if (mShowAnimate == 2) {
+                 mHandler.postDelayed(mResetRotate180, 10);
+             } else {
+                 mHandler.postDelayed(mResetRotate180, mShowAnimate);
+             }
         }
     };
 
@@ -1244,7 +1267,11 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             mHandler.postDelayed(mResetRotate210, mShowAnimate);
+             if (mShowAnimate == 2) {
+                 mHandler.postDelayed(mResetRotate210, 10);
+             } else {
+                 mHandler.postDelayed(mResetRotate210, mShowAnimate);
+             }
         }
     };
 
@@ -1267,7 +1294,11 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             mHandler.postDelayed(mResetRotate240, mShowAnimate);
+             if (mShowAnimate == 2) {
+                 mHandler.postDelayed(mResetRotate240, 10);
+             } else {
+                 mHandler.postDelayed(mResetRotate240, mShowAnimate);
+             }
         }
     };
 
@@ -1290,7 +1321,11 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             mHandler.postDelayed(mResetRotate270, mShowAnimate);
+             if (mShowAnimate == 2) {
+                 mHandler.postDelayed(mResetRotate270, 10);
+             } else {
+                 mHandler.postDelayed(mResetRotate270, mShowAnimate);
+             }
         }
     };
 
@@ -1313,7 +1348,11 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             mHandler.postDelayed(mResetRotate300, mShowAnimate);
+             if (mShowAnimate == 2) {
+                 mHandler.postDelayed(mResetRotate300, 10);
+             } else {
+                 mHandler.postDelayed(mResetRotate300, mShowAnimate);
+             }
         }
     };
 
@@ -1336,7 +1375,11 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             mHandler.postDelayed(mResetRotate330, mShowAnimate);
+             if (mShowAnimate == 2) {
+                 mHandler.postDelayed(mResetRotate330, 10);
+             } else {
+                 mHandler.postDelayed(mResetRotate330, mShowAnimate);
+             }
         }
     };
 
@@ -1359,7 +1402,11 @@ public class NavigationBarView extends LinearLayout {
              mVolUpIcon = mVolUpIconRot;
              mVolDownIcon = mVolDownIconRot;
              updateNaviButtons();
-             mHandler.postDelayed(mResetNormal, mShowAnimate);
+             if (mShowAnimate == 2) {
+                 mHandler.postDelayed(mResetNormal, 10);
+             } else {
+                 mHandler.postDelayed(mResetNormal, mShowAnimate);
+             }
         }
     };
 
@@ -1508,7 +1555,7 @@ public class NavigationBarView extends LinearLayout {
             mDisableAnimate = true;
         }
 
-        if (mShowAnimate > 2 && mDisableAnimate) {
+        if (mShowAnimate >= 2 && mDisableAnimate) {
             mHandler.postDelayed(mResetNormal, 10);
         }
 
