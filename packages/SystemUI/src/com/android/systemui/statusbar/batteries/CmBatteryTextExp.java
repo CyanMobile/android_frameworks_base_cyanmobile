@@ -145,9 +145,9 @@ public class CmBatteryTextExp extends TextView {
         int defValuesColor = getContext().getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
         mClockColor = (Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
-
+        int defValuesFontSize = getContext().getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
         int mCarrierSizeval = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.STATUSBAR_ICON_FONT_SIZE, 11);
+                Settings.System.STATUSBAR_ICON_FONT_SIZE, defValuesFontSize);
         int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, getContext().getResources().getDisplayMetrics());
         mCarrierSize = CarrierSizepx;
 
@@ -200,6 +200,16 @@ public class CmBatteryTextExp extends TextView {
      * settings. Also does the initial call from constructor
      */
     private void updateSettings() {
+        ContentResolver resolver = mContext.getContentResolver();
+
+        int statusBarBattery = (Settings.System.getInt(resolver,
+                Settings.System.STATUS_BAR_BATTERY, 2));
+        mStatusBarBattery = Integer.valueOf(statusBarBattery);
+
+        if (mStatusBarBattery == BATTERY_STYLE_PERCENT) {
             setVisibility(View.VISIBLE);
+        } else {
+            setVisibility(View.GONE);
+        }
     }
 }
