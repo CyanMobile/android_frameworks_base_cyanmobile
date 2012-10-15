@@ -1028,7 +1028,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         int SettingsButtonColor = Settings.System.getInt(getContentResolver(), Settings.System.STS_BTT_COLOR, defValuesColor);
         switch (transSettingsButton) {
           case 0 : // theme, leave alone
-            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_close_on, getExpandedWidth(), getCloseDragSize(), context));
+            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_close_on, getExpandedWidth(), getStatBarSize(), context));
             break;
           case 1 : // user defined argb hex color
             mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_transparent_background, getExpandedWidth(), getCloseDragSize(), context));
