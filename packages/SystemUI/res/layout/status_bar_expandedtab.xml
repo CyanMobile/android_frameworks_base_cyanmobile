@@ -184,6 +184,18 @@
              android:layout_alignParentRight="true"
              />
 
+        <com.android.systemui.statusbar.DataTraffics
+             android:textAppearance="@android:style/TextAppearance.StatusBar.Icon" 
+             android:layout_gravity="right|center_vertical"
+             android:gravity="right|center_vertical"
+             android:layout_width="wrap_content" 
+             android:layout_height="match_parent"
+             android:layout_weight="1"
+             android:singleLine="true"
+             android:orientation="horizontal"
+             android:layout_alignParentRight="true"
+             />
+
         <LinearLayout android:id="@+id/expstatusIcons"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
