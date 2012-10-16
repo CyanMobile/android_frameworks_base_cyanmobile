@@ -3074,6 +3074,12 @@ public final class Settings {
         public static final String STATUS_BAR_NOTIF = "status_bar_notif";
 
         /**
+         * Whether to show the Ram status in status bar
+         * @hide
+         */
+        public static final String STATUS_BAR_SHOWRAM = "status_bar_showram";
+
+        /**
          * Whether to show the signal text or signal bars.
          * default: 0
          * 0: show signal bars

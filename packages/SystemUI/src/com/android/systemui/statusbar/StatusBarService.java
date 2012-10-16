@@ -55,6 +55,8 @@ import com.android.systemui.R;
 import android.os.IPowerManager;
 import android.provider.Settings.SettingNotFoundException;
 import android.app.ActivityManagerNative;
+import android.app.ActivityManager;
+import android.app.ActivityManager.MemoryInfo;
 import android.app.Dialog;
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -118,10 +120,12 @@ import android.widget.LinearLayout;
 import android.widget.RemoteViews;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.ProgressBar;
 import android.net.Uri;
 import java.io.File;
 
 import java.io.FileDescriptor;
+import java.io.RandomAccessFile;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -295,6 +299,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     int mNotifyOngoing;
     int mSettingsColor;
 
+    LinearLayout mAvalMemLayout;
+    TextView memHeader;
+    ProgressBar avalMemPB;
+    double totalMemory;
+    double availableMemory;
+
     // Tracking finger for opening/closing.
     int mEdgeBorder; // corresponds to R.dimen.status_bar_edge_ignore
     boolean mTracking;
@@ -342,6 +352,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private boolean mShowCmBatterySideBar = false;
     private boolean mTinyExpanded = true;
     private boolean mMoreExpanded = true;
+    private boolean mShowRam = true;
 
     // tracks changes to settings, so status bar is moved to top/bottom
     // as soon as cmparts setting is changed
@@ -434,6 +445,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_INTRUDER_ALERT), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_NOTIF), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.STATUS_BAR_SHOWRAM), false, this);
             onChange(true);
         }
 
@@ -466,6 +479,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.STATUS_BAR_DATE, 0) == 1);
             mShowNotif = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_NOTIF, 1) == 1);
+            mShowRam = (Settings.System.getInt(resolver,
+                    Settings.System.STATUS_BAR_SHOWRAM, 1) == 1);
             mShowCmBatterySideBar = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_BATTERY, 0) == 4);
             mHasSoftButtons = (Settings.System.getInt(resolver,
@@ -661,6 +676,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.STATUS_BAR_DATE, 0) == 1);
             mShowNotif = (Settings.System.getInt(getContentResolver(),
                     Settings.System.STATUS_BAR_NOTIF, 1) == 1);
+            mShowRam = (Settings.System.getInt(getContentResolver(),
+                    Settings.System.STATUS_BAR_SHOWRAM, 1) == 1);
             mShowCmBatterySideBar = (Settings.System.getInt(getContentResolver(),
                 Settings.System.STATUS_BAR_BATTERY, 0) == 4);
             mHasSoftButtons = (Settings.System.getInt(getContentResolver(),
@@ -964,7 +981,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mCarrierLabelLayout = (LinearLayout)mExpandedView.findViewById(R.id.carrier_label_layout);
         mCompactCarrierLayout = (LinearLayout)mExpandedView.findViewById(R.id.compact_carrier_layout);
-
+        mAvalMemLayout = (LinearLayout)mExpandedView.findViewById(R.id.memlabel_layout);
+        memHeader = (TextView) mExpandedView.findViewById(R.id.avail_mem_text);
+        avalMemPB = (ProgressBar) mExpandedView.findViewById(R.id.aval_memos);
         mTicker = new MyTicker(context, mStatusBarView);
 
         mTickerText = (TickerView)mStatusBarView.findViewById(R.id.tickerText);
@@ -1130,6 +1149,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         showClock(Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_CLOCK, 1) != 0);
         mVelocityTracker = VelocityTracker.obtain();
         mDoNotDisturb = new DoNotDisturb(mContext);
+        totalMemory = 0;
+        availableMemory = 0;
+        getMemInfo();
     }
     
     private void updateColors() {
@@ -1350,11 +1372,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mCompactCarrierLayout.setVisibility(View.GONE);
             mMusicToggleButton.setVisibility(View.VISIBLE);
         }
-        if (mMoreExpanded) {
-            mCenterClockex.setVisibility(View.VISIBLE);
-        } else {
-            mCenterClockex.setVisibility(View.GONE);
-        }
+
+        mCenterClockex.setVisibility(mMoreExpanded ? View.VISIBLE : View.GONE);
+        mAvalMemLayout.setVisibility(mShowRam ? View.VISIBLE : View.GONE);
     }
 
     private void updateLayout() {
@@ -2438,6 +2458,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     updateExpandedViewPos(y + (mBottomBar ? -mViewDelta : mViewDelta));
                 }
                 mSettingsButton.setColorFilter(mSettingsColor, Mode.MULTIPLY);
+                getMemInfo();
             } else if (event.getAction() == MotionEvent.ACTION_UP) {
                 mVelocityTracker.computeCurrentVelocity(1000);
 
@@ -2461,6 +2482,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 mHandler.postDelayed(new Runnable() {
                        public void run() {
                            mSettingsButton.clearColorFilter();
+                           getMemInfo();
                        }
                    }, 100);
             }
@@ -3170,6 +3192,29 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private void setIntruderAlertVisibility(boolean vis) {
         mIntruderAlertView.setVisibility(vis ? View.VISIBLE : View.GONE);
     }
+
+    private void getMemInfo() {
+        if (!mShowRam) return;
+
+	if(totalMemory == 0) {
+	   try {
+	      RandomAccessFile reader = new RandomAccessFile("/proc/meminfo", "r");
+	      String load = reader.readLine();
+	      String[] memInfo = load.split(" ");
+	      totalMemory = Double.parseDouble(memInfo[9])/1024;
+           } catch (IOException ex) {
+	      ex.printStackTrace();
+	   }
+	}
+
+	ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+	MemoryInfo mi = new MemoryInfo();
+	activityManager.getMemoryInfo(mi);
+	availableMemory = mi.availMem / 1048576L;
+	memHeader.setText("Ram Info: Available: "+(int)(availableMemory)+"MB Total: "+(int)totalMemory+"MB.");
+	int progress = (int) (((totalMemory-availableMemory)/totalMemory)*100);
+	avalMemPB.setProgress(progress);
+    } 
 
     /**
      * Reload some of our resources when the configuration changes.
