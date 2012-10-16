@@ -27,9 +27,9 @@
     <dimen name="app_icon_size">48dip</dimen>
     <dimen name="toast_y_offset">64dip</dimen>
     <!-- The width that is used when creating big thumbnails of applications. -->
-    <dimen name="big_thumbnail_width">240dp</dimen>
+    <dimen name="big_thumbnail_width">164dp</dimen>
     <!-- The height that is used when creating big thumbnails of applications. -->
-    <dimen name="big_thumbnail_height">320dp</dimen>
+    <dimen name="big_thumbnail_height">145dp</dimen>
     <!-- Height of the status bar -->
     <dimen name="status_bar_height">25dip</dimen>
     <!-- Height of the status bar -->
