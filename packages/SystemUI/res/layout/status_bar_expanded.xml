@@ -197,6 +197,7 @@
             />
 
         <com.android.systemui.statusbar.carrierlabels.CarrierLabelExp
+             android:id="@+id/carrierExp"
              android:textAppearance="@android:style/TextAppearance.StatusBar.Icon" 
              android:layout_gravity="right|center_vertical"
              android:gravity="right|center_vertical"

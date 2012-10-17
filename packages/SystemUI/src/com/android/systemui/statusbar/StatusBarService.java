@@ -26,6 +26,7 @@ import com.android.systemui.statusbar.batteries.CmBatterySideBar;
 import com.android.systemui.statusbar.batteries.CmBatteryStatusBar;
 import com.android.systemui.statusbar.carrierlabels.CarrierLabel;
 import com.android.systemui.statusbar.carrierlabels.CarrierLabelBottom;
+import com.android.systemui.statusbar.carrierlabels.CarrierLabelExp;
 import com.android.systemui.statusbar.carrierlabels.CarrierLabelStatusBar;
 import com.android.systemui.statusbar.carrierlabels.CarrierLogo;
 import com.android.systemui.statusbar.carrierlabels.CenterCarrierLabelStatusBar;
@@ -81,6 +82,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.graphics.PorterDuff.Mode;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
@@ -268,6 +270,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     LinearLayout mCompactCarrierLayout;
     LinearLayout mPowerAndCarrier;
     FrameLayout mNaviBarContainer;
+    CarrierLabelExp mCarrierLabelExpLayout;
 
     // ticker
     private Ticker mTicker;
@@ -865,6 +868,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mClearOldButton.setOnClickListener(mClearButtonListener);
         mCompactClearButton = (TextView)mExpandedView.findViewById(R.id.compact_clear_all_button);
         mCompactClearButton.setOnClickListener(mClearButtonListener);
+        mCarrierLabelExpLayout = (CarrierLabelExp)mExpandedView.findViewById(R.id.carrierExp);
         mPowerAndCarrier = (LinearLayout)mExpandedView.findViewById(R.id.power_and_carrier);
         int transPowerAndCarrier = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_PWR_CRR, 0);
         int PowerAndCarrierColor = Settings.System.getInt(getContentResolver(), Settings.System.PWR_CRR_COLOR, defValuesColor);
@@ -1375,6 +1379,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mCenterClockex.setVisibility(mMoreExpanded ? View.VISIBLE : View.GONE);
         mAvalMemLayout.setVisibility(mShowRam ? View.VISIBLE : View.GONE);
+    }
+
+    private boolean getDataStates(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context
+            .getSystemService(Context.CONNECTIVITY_SERVICE);
+        return cm.getMobileDataEnabled();
     }
 
     private void updateLayout() {
@@ -2049,6 +2059,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mExpandedView.requestFocus(View.FOCUS_FORWARD);
         mTrackingView.setVisibility(View.VISIBLE);
         mExpandedView.setVisibility(View.VISIBLE);
+        mCarrierLabelExpLayout.setVisibility(getDataStates(mContext) ? View.GONE : View.VISIBLE);
 
         if (!mTicking) {
             setDateViewVisibility(true, com.android.internal.R.anim.fade_in);

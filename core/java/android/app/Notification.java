@@ -501,11 +501,7 @@ public class Notification implements Parcelable
         RemoteViews contentView = new RemoteViews(context.getPackageName(),
                 R.layout.status_bar_latest_event_content);
         if (this.icon != 0) {
-            Bitmap asIcon = BitmapFactory.decodeResource(context.getResources(), this.icon);
-            int w = asIcon.getWidth()*2;
-            int h = asIcon.getHeight()*2;
-            Bitmap asIconS = Bitmap.createScaledBitmap(asIcon, w, h, false);
-            contentView.setImageViewBitmap(R.id.iconBig, asIconS);
+            contentView.setImageViewResource(R.id.iconBig, this.icon);
             if (this.when != 0 || this.number > 0) {
                 contentView.setImageViewResource(R.id.icon, this.icon);
             } else {
