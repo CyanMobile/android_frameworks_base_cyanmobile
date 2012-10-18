@@ -183,7 +183,7 @@ public class WaveViewBeBe extends View implements ValueAnimator.AnimatorUpdateLi
 
         mUnlockHalo = new DrawableHolder(createDrawable(R.drawable.unlockbebe_halo));
         mUnlockHalo.setX(mLockCenterX);
-        mUnlockHalo.setY(mLockCenterY + 320);
+        mUnlockHalo.setY(mLockCenterY + 480);
         mUnlockHalo.setScaleX(2.0f);
         mUnlockHalo.setScaleY(1.0f);
         mUnlockHalo.setAlpha(0.0f);
