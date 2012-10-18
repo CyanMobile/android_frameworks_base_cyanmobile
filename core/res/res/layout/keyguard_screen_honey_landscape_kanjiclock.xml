@@ -229,6 +229,14 @@
            android:layout_alignParentBottom="true"
            />
 
+        <com.android.internal.widget.WaveViewBeBe
+            android:id="@+id/waveBebe_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_alignParentBottom="true"
+            />
+
     <com.android.internal.widget.multiwaveview.MultiWaveView
         android:id="@+id/unlock_widget"
         android:orientation="horizontal"

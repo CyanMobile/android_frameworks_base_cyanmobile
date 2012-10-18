@@ -9023,7 +9023,8 @@ public class WindowManagerService extends IWindowManager.Stub
                                 mFocusMayChange = true;
                             } else if (w.isReadyForDisplay() && ((Settings.System.getInt(mContext.getContentResolver(),
                                     Settings.System.LOCKSCREEN_SEE_THROUGH, 0) != 0) ||  w.mAnimation == null)) {
-                                forceHiding = true;
+                                forceHiding = (Settings.System.getInt(mContext.getContentResolver(),
+                                    Settings.System.LOCKSCREEN_SEE_THROUGH, 0) != 1) ? true : false;
                             }
                         } else if (mPolicy.canBeForceHidden(w, attrs)) {
                             boolean changed;
