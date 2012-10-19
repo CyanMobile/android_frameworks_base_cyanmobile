@@ -246,7 +246,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
 
     private boolean mKeyboardOpen = false;
 
-    private boolean mScreenOn = false;
+    private boolean mScreenOn;
 
     // last known state of the cellular connection
     private String mPhoneState = TelephonyManager.EXTRA_STATE_IDLE;
@@ -322,6 +322,8 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
 
         final ContentResolver cr = mContext.getContentResolver();
         mShowLockIcon = (Settings.System.getInt(cr, Settings.System.SHOW_STATUS_BAR_LOCK, 0) == 1);
+
+        mScreenOn = mPM.isScreenOn();
 
         IntentFilter iF = new IntentFilter();
         iF.addAction("com.android.music.metachanged");
