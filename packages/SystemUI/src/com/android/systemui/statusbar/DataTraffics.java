@@ -53,7 +53,7 @@ public class DataTraffics extends TextView {
     private DecimalFormat mDecimalFormater;
     private double BYTE_TO_KILOBIT = 0.0078125;
     private double KILOBIT_TO_MEGABIT = 0.0009765625;
-    private int EXPECTED_SIZE_IN_BYTES = 1048;
+    private int EXPECTED_SIZE_IN_KILOBIT = 1048;
 
     Handler mHandler;
 
