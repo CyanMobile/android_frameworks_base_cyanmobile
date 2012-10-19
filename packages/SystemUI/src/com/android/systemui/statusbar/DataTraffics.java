@@ -48,6 +48,8 @@ public class DataTraffics extends TextView {
     private String mDataFormatString;
     private long gMtx;
     private long gMrx;
+    private long gOldMtx;
+    private long gOldMrx;
     private DecimalFormat mDecimalFormater;
     private double BYTE_TO_KILOBIT = 0.0078125;
     private double KILOBIT_TO_MEGABIT = 0.0009765625;
@@ -145,7 +147,9 @@ public class DataTraffics extends TextView {
     };
 
     final void updateDataTraffics() {
-        setText("Rx: "+getDatas(gMrx)+" Tx: "+getDatas(gMtx));
+        long txBytes = gMtx - gOldMtx;
+        long rxBytes = gMrx - gOldMrx;
+        setText("Rx: "+getDatas(rxBytes)+" Tx: "+getDatas(txBytes));
         setTextColor(mCarrierColor);
     }
 
@@ -180,8 +184,8 @@ public class DataTraffics extends TextView {
         y = (int)what;
         z = (int)(y * BYTE_TO_KILOBIT);
         result = mDecimalFormater.format(z)+"KB/s";
-        if (z > EXPECTED_SIZE_IN_BYTES) {
-          z = (int)(z * KILOBIT_TO_MEGABIT);
+        if (z > EXPECTED_SIZE_IN_KILOBIT) {
+          z = (int)(y * BYTE_TO_KILOBIT * KILOBIT_TO_MEGABIT);
           result = mDecimalFormater.format(z)+"MB/s";
         }
         return result;
@@ -193,19 +197,22 @@ public class DataTraffics extends TextView {
         return cm.getMobileDataEnabled();
     }
 
-    private long getMobileTxBytes() {
-        return TrafficStats.getMobileTxBytes();
+    private long getTxBytes() {
+        return TrafficStats.getTotalRxBytes();
     }
 
-    private long getMobileRxBytes() {
-        return TrafficStats.getMobileRxBytes();
+    private long getRxBytes() {
+        return TrafficStats.getTotalTxBytes();
     }
 
     private void updateDatas() {
         if (!mAttached) return;
 
-        gMtx = getMobileTxBytes();
-        gMrx = getMobileRxBytes();
+        gOldMtx = gMtx;
+        gOldMrx = gMrx;
+
+        gMtx = getTxBytes();
+        gMrx = getRxBytes();
         updateDataTraffics();
     }
 
