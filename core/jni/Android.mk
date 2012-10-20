@@ -144,7 +144,8 @@ LOCAL_SRC_FILES:= \
 	android_backup_BackupHelperDispatcher.cpp \
 	android_content_res_ObbScanner.cpp \
         android_content_res_Configuration.cpp \
-        android_font_FontManager.cpp
+        android_font_FontManager.cpp \
+        android_animation_PropertyValuesHolder.cpp
 
 ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
     LOCAL_CFLAGS += -DQCOM_HARDWARE

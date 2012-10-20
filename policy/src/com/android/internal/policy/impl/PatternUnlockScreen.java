@@ -57,6 +57,7 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
         implements KeyguardScreen, KeyguardUpdateMonitor.InfoCallback,
         KeyguardUpdateMonitor.SimStateCallback {
 
+    private static final boolean DBG = false;
     private static final boolean DEBUG = false;
     private static final String TAG = "UnlockScreen";
 
@@ -79,6 +80,12 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
     private LockPatternUtils mLockPatternUtils;
     private KeyguardUpdateMonitor mUpdateMonitor;
     private KeyguardScreenCallback mCallback;
+    static final int CARRIER_TYPE_DEFAULT = 0;
+    static final int CARRIER_TYPE_SPN = 1;
+    static final int CARRIER_TYPE_PLMN = 2;
+    static final int CARRIER_TYPE_CUSTOM = 3;
+
+    private Status mStatus = Status.Normal;
 
     /**
      * whether there is a fallback option available when the pattern is forgotten.
@@ -107,11 +114,13 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
     private int mBatteryLevel = 100;
     private String mCharging = null;
 
+    private int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+
     private int mClockColor = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_LOCKSCREENCOLOR, 0xFF38FF00));
+                Settings.System.STATUS_BAR_LOCKSCREENCOLOR, defValuesColor));
 
     private int mCarrierColor = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_CARRIERCOLOR, 0xFF38FF00));
+                Settings.System.STATUS_BAR_CARRIERCOLOR, defValuesColor));
 
     private String mNextAlarm = null;
 
@@ -127,10 +136,10 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
     private ViewGroup mFooterForgotPattern;
 
     private int mCarrierLabelType = (Settings.System.getInt(mContext.getContentResolver(),
-            Settings.System.CARRIER_LABEL_TYPE, LockScreen.CARRIER_TYPE_DEFAULT));
+            Settings.System.CARRIER_LABEL_LOCKSCREEN_TYPE, CARRIER_TYPE_DEFAULT));
 
     private String mCarrierLabelCustom = (Settings.System.getString(mContext.getContentResolver(),
-            Settings.System.CARRIER_LABEL_CUSTOM_STRING));
+            Settings.System.CARRIER_LABEL_LOCKSCREEN_CUSTOM_STRING));
 
     /**
      * Keeps track of the last time we poked the wake lock during dispatching
@@ -153,6 +162,57 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
     private Button mEmergencyAlone;
     private Button mEmergencyTogether;
     private int mCreationOrientation;
+
+    /**
+     * The status of this lock screen.
+     */
+    enum Status {
+        /**
+         * Normal case (sim card present, it's not locked)
+         */
+        Normal(true),
+
+        /**
+         * The sim card is 'network locked'.
+         */
+        NetworkLocked(true),
+
+        /**
+         * The sim card is missing.
+         */
+        SimMissing(false),
+
+        /**
+         * The sim card is missing, and this is the device isn't provisioned, so we don't let
+         * them get past the screen.
+         */
+        SimMissingLocked(false),
+
+        /**
+         * The sim card is PUK locked, meaning they've entered the wrong sim unlock code too many
+         * times.
+         */
+        SimPukLocked(false),
+
+        /**
+         * The sim card is locked.
+         */
+        SimLocked(true);
+
+        private final boolean mShowStatusLines;
+
+        Status(boolean mShowStatusLines) {
+            this.mShowStatusLines = mShowStatusLines;
+        }
+
+        /**
+         * @return Whether the status lines (battery level and / or next alarm) are shown while
+         *         in this state.  Mostly dictated by whether this is room for them.
+         */
+        public boolean showStatusLines() {
+            return mShowStatusLines;
+        }
+    }
 
     enum FooterMode {
         Normal,
@@ -238,9 +298,6 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
         mStatus2 = (TextView) findViewById(R.id.status2);
         mStatus2.setTextColor(CColours);
 
-        resetStatusInfo(updateMonitor);
-
-
         mLockPatternView = (LockPatternView) findViewById(R.id.lockPattern);
 
         mFooterNormal = (ViewGroup) findViewById(R.id.footerNormal);
@@ -303,10 +360,7 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
         mCarrier.setSelected(true);
         mCarrier.setTextColor(mCarrierColor);
 
-        // until we get an update...
-        String plmn = (String) mUpdateMonitor.getTelephonyPlmn();
-        String spn = (String) mUpdateMonitor.getTelephonySpn();
-        onRefreshCarrierInfo(plmn, spn);
+        resetStatusInfo(updateMonitor);
 
         int widgetLayout = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.LOCKSCREEN_WIDGETS_LAYOUT, 0);
@@ -406,6 +460,8 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
         mPluggedIn = updateMonitor.isDevicePluggedIn();
         mBatteryLevel = updateMonitor.getBatteryLevel();
         mNextAlarm = mLockPatternUtils.getNextAlarm();
+        mStatus = getCurrentStatus(updateMonitor.getSimState());
+        updateLayout(mStatus);
         updateStatusLines();
         refreshBatteryString();
     }
@@ -509,6 +565,60 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
         }
     }
 
+    static CharSequence getCarrierString(CharSequence telephonyPlmn, CharSequence telephonySpn) {
+        return getCarrierString(telephonyPlmn, telephonySpn, CARRIER_TYPE_DEFAULT, "");
+    }
+
+    static CharSequence getCarrierString(CharSequence telephonyPlmn, CharSequence telephonySpn,
+            int carrierLabelType, String carrierLabelCustom) {
+        switch (carrierLabelType) {
+            default:
+            case CARRIER_TYPE_DEFAULT:
+                if (telephonyPlmn != null && TextUtils.isEmpty(telephonySpn)) {
+                    return telephonyPlmn;
+                } else if (telephonySpn != null && TextUtils.isEmpty(telephonyPlmn)) {
+                    return telephonySpn;
+                } else if (telephonyPlmn != null && telephonySpn != null) {
+                    return telephonyPlmn + "|" + telephonySpn;
+                }
+                return "";
+            case CARRIER_TYPE_SPN:
+                if (telephonySpn != null) {
+                    return telephonySpn;
+                 }
+                 break;
+            case CARRIER_TYPE_PLMN:
+                if (telephonyPlmn != null) {
+                    return telephonyPlmn;
+                }
+                break;
+            case CARRIER_TYPE_CUSTOM:
+                // If the custom carrier label contains any "$x" items then we must
+                // replace those with the proper text.
+                //  - $n = new line
+                //  - $d = default carrier text
+                //  - $p = plmn carrier text
+                //  - $s = spn carrier text
+                //
+                // First we create the default carrier text in case we need it.
+                StringBuilder defaultStr = new StringBuilder();
+                if (telephonyPlmn != null && TextUtils.isEmpty(telephonySpn)) {
+                    defaultStr.append(telephonyPlmn.toString());
+                } else if (telephonySpn != null && TextUtils.isEmpty(telephonyPlmn)) {
+                    defaultStr.append(telephonySpn.toString());
+                } else if (telephonyPlmn != null && telephonySpn != null) {
+                    defaultStr.append(telephonyPlmn.toString() + "|" + telephonySpn.toString());
+                }
+
+                String customStr = carrierLabelCustom;
+                customStr = customStr.replaceAll("\\$n", "\n");
+                customStr = customStr.replaceAll("\\$d", (defaultStr != null) ? defaultStr.toString() : "");
+                customStr = customStr.replaceAll("\\$p", (telephonyPlmn != null) ? telephonyPlmn.toString() : "");
+                customStr = customStr.replaceAll("\\$s", (telephonySpn != null) ? telephonySpn.toString() : "");
+                return customStr;
+         }
+         return "";
+     }
 
     private void refreshTimeAndDateDisplay() {
         mDate.setText(DateFormat.format(mDateFormatString, new Date()));
@@ -528,7 +638,7 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
         int ls = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.LOCKSCREEN_STYLE_PREF, 6);
         if (keyCode == KeyEvent.KEYCODE_HOME) {
-            if (ls == 6 || ls == 7 || ls == 8) {
+            if (ls >= 6) {
                 HoneycombLockscreen.handleHomeLongPress(getContext());
             } else {
                 LockScreen.handleHomeLongPress(getContext());
@@ -570,13 +680,102 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
 
     /** {@inheritDoc} */
     public void onRefreshCarrierInfo(CharSequence plmn, CharSequence spn) {
-        String realPlmn = SystemProperties.get(TelephonyProperties.PROPERTY_OPERATOR_ALPHA);
+        if (DBG) Log.d(TAG, "onRefreshCarrierInfo(" + plmn + ", " + spn + ")");
+        updateLayout(mStatus);
+    }
 
-        if (plmn == null || plmn.equals(realPlmn)) {
-            mCarrier.setText(LockScreen.getCarrierString(
-                    plmn, spn, mCarrierLabelType, mCarrierLabelCustom));
-        } else {
-            mCarrier.setText(LockScreen.getCarrierString(plmn, spn));
+    private boolean isAirplaneModeOn() {
+      return (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.AIRPLANE_MODE_ON, 0) == 1);
+    }
+
+    /**
+     * Determine the current status of the lock screen given the sim state and other stuff.
+     */
+    private Status getCurrentStatus(IccCard.State simState) {
+        boolean missingAndNotProvisioned = (!mUpdateMonitor.isDeviceProvisioned()
+                && simState == IccCard.State.ABSENT);
+        if (missingAndNotProvisioned) {
+            return Status.SimMissingLocked;
+        }
+
+        boolean presentButNotAvailable = isAirplaneModeOn();
+        if (presentButNotAvailable) {
+            return Status.Normal;
+        }
+
+        switch (simState) {
+            case ABSENT:
+                return Status.SimMissing;
+            case NETWORK_LOCKED:
+                return Status.SimMissingLocked;
+            case NOT_READY:
+                return Status.SimMissing;
+            case PIN_REQUIRED:
+                return Status.SimLocked;
+            case PUK_REQUIRED:
+                return Status.SimPukLocked;
+            case READY:
+                return Status.Normal;
+            case UNKNOWN:
+                return Status.SimMissing;
+        }
+        return Status.SimMissing;
+    }
+
+    /**
+     * Update the layout to match the current status.
+     */
+    private void updateLayout(Status status) {
+        if (DBG) Log.d(TAG, "updateLayout: status=" + status);
+        String realPlmn = SystemProperties.get(TelephonyProperties.PROPERTY_OPERATOR_ALPHA);
+        String plmn = (String) mUpdateMonitor.getTelephonyPlmn();
+        String spn = (String) mUpdateMonitor.getTelephonySpn();
+
+        switch (status) {
+            case Normal:
+                // text
+                if (plmn == null || plmn.equals(realPlmn)) {
+                    mCarrier.setText(getCarrierString(
+                            plmn, spn, mCarrierLabelType, mCarrierLabelCustom));
+                } else {
+                    mCarrier.setText(getCarrierString(plmn, spn));
+                }
+                break;
+            case NetworkLocked:
+                // The carrier string shows both sim card status (i.e. No Sim Card) and
+                // carrier's name and/or "Emergency Calls Only" status
+                mCarrier.setText(
+                        getCarrierString(
+                                mUpdateMonitor.getTelephonyPlmn(),
+                                getContext().getText(R.string.lockscreen_network_locked_message)));
+                break;
+            case SimMissing:
+                // text
+                mCarrier.setText(R.string.lockscreen_missing_sim_message_short);
+                // do not need to show the e-call button; user may unlock
+                break;
+            case SimMissingLocked:
+                // text
+                mCarrier.setText(
+                        getCarrierString(
+                                mUpdateMonitor.getTelephonyPlmn(),
+                                getContext().getText(R.string.lockscreen_missing_sim_message_short)));
+                break;
+            case SimLocked:
+                // text
+                mCarrier.setText(
+                        getCarrierString(
+                                mUpdateMonitor.getTelephonyPlmn(),
+                                getContext().getText(R.string.lockscreen_sim_locked_message)));
+                break;
+            case SimPukLocked:
+                // text
+                mCarrier.setText(
+                        getCarrierString(
+                                mUpdateMonitor.getTelephonyPlmn(),
+                                getContext().getText(R.string.lockscreen_sim_puk_locked_message)));
+                break;
         }
     }
 
@@ -589,6 +788,8 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
 
     /** {@inheritDoc} */
     public void onSimStateChanged(IccCard.State simState) {
+        mStatus = getCurrentStatus(simState);
+        updateLayout(mStatus);
     }
 
     @Override

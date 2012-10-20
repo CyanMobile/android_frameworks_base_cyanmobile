@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <set android:interpolator="@anim/accelerate_quad"
   xmlns:android="http://schemas.android.com/apk/res/android">
     <translate android:duration="@integer/config_shortAnimTime" android:fromYDelta="0.0" android:toYDelta="-50.0%" />

@@ -211,6 +211,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     Context mUiContext;
     IWindowManager mWindowManager;
     LocalPowerManager mPowerManager;
+    IStatusBarService mStatusBarService;
+    final Object mServiceAquireLock = new Object();
     Vibrator mVibrator; // Vibrator for giving feedback of orientation changes
 
     // Vibrator pattern for haptic feedback of a long press.
@@ -276,10 +278,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private boolean mShowStatBar;
     private boolean mNaviShow;
     private boolean mNaviShowAll;
-    private boolean mNaviShowAll2;
     private boolean mPowerNavBar;
     private boolean mNavRotate;
     private boolean mReverseRotate;
+    private boolean mNaviShowAll2 = true;
     int mPointerLocationMode = 0;
     int mBackKillTimeout;
 
@@ -469,6 +471,16 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
     MyOrientationListener mOrientationListener;
+
+    IStatusBarService getStatusBarService() {
+        synchronized (mServiceAquireLock) {
+            if (mStatusBarService == null) {
+                mStatusBarService = IStatusBarService.Stub.asInterface(
+                        ServiceManager.getService("statusbar"));
+            }
+            return mStatusBarService;
+        }
+    }
 
     boolean useSensorForOrientationLp(int appOrientation) {
         // The app says use the sensor.
@@ -1003,8 +1015,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
             mNaviShowAll = (Settings.System.getInt(resolver,
                     Settings.System.NAVI_BUTTONS, 1) == 1);
-            mNaviShowAll2 = (Settings.System.getInt(resolver,
-                    Settings.System.NAVI_BUTTONS, 1) == 2);
             mPowerNavBar = (Settings.System.getInt(resolver,
                     Settings.System.NAVI_BUTTON_SHOW_HOME, 1) != 7) &&
                     (Settings.System.getInt(resolver,
@@ -1436,6 +1446,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 mContext.enforceCallingOrSelfPermission(
                         android.Manifest.permission.STATUS_BAR_SERVICE,
                         "PhoneWindowManager");
+                if (mNavigationBar != null) {
+                    return WindowManagerImpl.ADD_MULTIPLE_SINGLETON;
+                }
                 mNavigationBar = win;
                 break;
             case TYPE_NAVIGATION_BAR_PANEL:
@@ -1829,7 +1842,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
              Settings.System.STATUSBAR_NAVI_SIZE, 25);
         int navSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                  navSizeval, mContext.getResources().getDisplayMetrics());
-        return (mNaviShow && mNaviShowAll) ? navSizepx : 0;
+        return (mNaviShow && mNaviShowAll && mNaviShowAll2) ? navSizepx : 0;
     }
 
     private int getStatBarSize() {
@@ -1842,6 +1855,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     /** {@inheritDoc} */
     public void beginLayoutLw(int displayWidth, int displayHeight) {
+        mNaviShowAll = (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.NAVI_BUTTONS, 1) == 1);
         mUnrestrictedScreenLeft = mUnrestrictedScreenTop = 0;
         mUnrestrictedScreenWidth = displayWidth;
         mUnrestrictedScreenHeight = displayHeight;
@@ -1866,21 +1881,22 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         // decide where the status bar goes ahead of time
         if (mStatusBar != null) {
             if (mNavigationBar != null) {
-                final boolean navVisible = (mNavigationBar.isVisibleLw() && mNaviShow && mNaviShowAll);
+                final boolean navVisible = (mNavigationBar.isVisibleLw() && mNaviShow && mNaviShowAll && mNaviShowAll2);
                 final int mNavigationBarHeight = mNavRotate ? getStatBarSize() : getNavBarSize();
-                    mTmpNavigationFrame.set(0, (displayHeight-mNavigationBarHeight),
-                            displayWidth, displayHeight);
-                    if (navVisible) {
-                        mDockBottom = mContentBottom = mCurBottom = mTmpNavigationFrame.top;
-                    } else {
-                        mTmpNavigationFrame.offset(0, mNavigationBarHeight);
-                    }
+                mTmpNavigationFrame.set(0, (displayHeight-mNavigationBarHeight),
+                       displayWidth, displayHeight);
+                if (navVisible) {
+                    mDockBottom = mContentBottom = mCurBottom = mTmpNavigationFrame.top;
+                } else {
+                    mTmpNavigationFrame.offset(0, mNavigationBarHeight);
+                }
                 mNavigationBar.computeFrameLw(mTmpNavigationFrame, mTmpNavigationFrame,
-                                        mTmpNavigationFrame, mTmpNavigationFrame);
+                                mTmpNavigationFrame, mTmpNavigationFrame);
+                if (DEBUG_LAYOUT) Log.i(TAG, "mNavigationBar frame: " + mTmpNavigationFrame);
             } else {
                 mDockBottom = mContentBottom = mCurBottom = displayHeight;
             }
-            if (DEBUG_LAYOUT) Log.i(TAG, "mNavigationBar frame: " + mTmpNavigationFrame);
+
             if(mBottomBar && !mNaviShow){
                 final int statusbar_height = getStatBarSize();
                 //setting status bar's top, to bottom of the screen, minus status bar height
@@ -1893,7 +1909,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 final Rect r = mStatusBar.getFrameLw();
                 // If the status bar is hidden, we don't want to cause
                 // windows behind it to scroll.
-                if(mBottomBar && (!mNaviShow || !mNaviShowAll)) {
+                if(mBottomBar && (!mNaviShow || !mNaviShowAll || !mNaviShowAll2)) {
                     //setting activites bottoms, to top of status bar
                     mDockBottom = mContentBottom = mCurBottom = r.top;
                 } else {
@@ -1957,6 +1973,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     /** {@inheritDoc} */
     public void layoutWindowLw(WindowState win, WindowManager.LayoutParams attrs,
             WindowState attached) {
+        mNaviShowAll = (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.NAVI_BUTTONS, 1) == 1);
         // we've already done the status bar
         if (win == mStatusBar || win == mNavigationBar) {
             return;
@@ -1976,7 +1994,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         final Rect df = mTmpDisplayFrame;
         final Rect cf = mTmpContentFrame;
         final Rect vf = mTmpVisibleFrame;
-        final boolean hasNavBar = (mNaviShow && mNaviShowAll);
+        final boolean hasNavBar = (mNaviShow && mNaviShowAll && mNaviShowAll2);
 
         if (attrs.type == TYPE_INPUT_METHOD) {
             pf.left = df.left = cf.left = vf.left = mDockLeft;
@@ -2179,11 +2197,32 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+    Runnable mShowsNavbar = new Runnable() {
+        public void run() {
+           if (!mNaviShowAll2) {
+                Settings.System.putInt(mContext.getContentResolver(),
+                    Settings.System.NAVI_BUTTONS, 1);
+                mNaviShowAll2 = true;
+           }
+        }
+    };
+
+    Runnable mHidesNavbar = new Runnable() {
+        public void run() {
+           if (!mNaviShowAll2) {
+               Settings.System.putInt(mContext.getContentResolver(),
+                    Settings.System.NAVI_BUTTONS, 0);
+               mHandler.postDelayed(mShowsNavbar, 25);
+           }
+        }
+    };
+
     /** {@inheritDoc} */
     public int finishAnimationLw() {
+        mNaviShowAll = (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.NAVI_BUTTONS, 1) == 1);
         int changes = 0;
 
-        boolean hiding = false;
         if (mStatusBar != null) {
             if (localLOGV) Log.i(TAG, "force=" + mForceStatusBar
                     + " top=" + mTopFullscreenOpaqueWindowState);
@@ -2191,37 +2230,62 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if (DEBUG_LAYOUT) Log.v(TAG, "Showing status bar");
                 if (mStatusBar.showLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
             } else if (mTopFullscreenOpaqueWindowState != null) {
-                //Log.i(TAG, "frame: " + mTopFullscreenOpaqueWindowState.getFrameLw()
-                //        + " shown frame: " + mTopFullscreenOpaqueWindowState.getShownFrameLw());
-                //Log.i(TAG, "attr: " + mTopFullscreenOpaqueWindowState.getAttrs());
                 WindowManager.LayoutParams lp =
                     mTopFullscreenOpaqueWindowState.getAttrs();
                 boolean hideStatusBar =
                     (lp.flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0;
                 if (hideStatusBar || mShowStatBar) {
                     if (DEBUG_LAYOUT) Log.v(TAG, "Hiding status bar");
-                    if (mStatusBar.hideLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
-                    if (mNavigationBar != null && mNaviShow && mNaviShowAll) {
-                       Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, 2);
+                    if (mStatusBar.hideLw(true)) {
+                        changes |= FINISH_LAYOUT_REDO_LAYOUT;
+
+                        mHandler.post(new Runnable() { public void run() {
+                            try {
+                                IStatusBarService statusbar = getStatusBarService();
+                                if (statusbar != null) {
+                                    statusbar.collapse();
+                                }
+                            } catch (RemoteException ex) {
+                                // re-acquire status bar service next time it is needed.
+                                mStatusBarService = null;
+                            }
+                        }});
+                    } else if (DEBUG_LAYOUT) {
+                        if (DEBUG_LAYOUT) Log.v(TAG, "Preventing status bar from hiding by policy");
                     }
-                    hiding = true;
+                    if (mNaviShow && mNaviShowAll) {
+                        mNaviShowAll2 = false;
+                        mHandler.post(new Runnable() { public void run() {
+                            try {
+                                IStatusBarService statusbar = getStatusBarService();
+                                if (statusbar != null) {
+                                    statusbar.showNaviBar(false);
+                                }
+                            } catch (RemoteException ex) {
+                                // re-acquire status bar service next time it is needed.
+                                mStatusBarService = null;
+                            }
+                        }});
+                    }
                 } else {
                     if (DEBUG_LAYOUT) Log.v(TAG, "Showing status bar");
-                    if (mStatusBar.showLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
-                    if (mNavigationBar != null && mNaviShow && mNaviShowAll2) {
-                       Settings.System.putInt(mContext.getContentResolver(), Settings.System.NAVI_BUTTONS, 1);
+                    if (mStatusBar.showLw(true)) {
+                        changes |= FINISH_LAYOUT_REDO_LAYOUT;
                     }
-                }
-            }
-        }
-
-        if (changes != 0 && hiding) {
-            IStatusBarService sbs = IStatusBarService.Stub.asInterface(ServiceManager.getService("statusbar"));
-            if (sbs != null) {
-                try {
-                    // Make sure the window shade is hidden.
-                    sbs.collapse();
-                } catch (RemoteException e) {
+                    if (mNaviShow && mNaviShowAll) {
+                        mHandler.postDelayed(mHidesNavbar, 50);
+                        mHandler.post(new Runnable() { public void run() {
+                            try {
+                                IStatusBarService statusbar = getStatusBarService();
+                                if (statusbar != null) {
+                                    statusbar.showNaviBar(true);
+                                }
+                            } catch (RemoteException ex) {
+                                // re-acquire status bar service next time it is needed.
+                                mStatusBarService = null;
+                            }
+                        }});
+                    }
                 }
             }
         }

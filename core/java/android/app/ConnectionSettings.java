@@ -1,13 +1,17 @@
 package android.app;
 
 import android.bluetooth.BluetoothAdapter;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.location.LocationManager;
 import android.net.wifi.WifiManager;
+import android.net.ConnectivityManager;
 import android.content.Intent;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.Settings;
+
+import android.server.PowerSaverService;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -22,12 +26,15 @@ public final class ConnectionSettings implements Parcelable {
     private boolean mOverride;
     private boolean mDirty;
 
+    public static final int PROFILE_CONNECTION_MOBILEDATA = 0;
     public static final int PROFILE_CONNECTION_WIFI = 1;
     public static final int PROFILE_CONNECTION_WIFIAP = 2;
     public static final int PROFILE_CONNECTION_WIMAX = 3;
     public static final int PROFILE_CONNECTION_GPS = 4;
+    public static final int PROFILE_CONNECTION_SYNC = 5;
     public static final int PROFILE_CONNECTION_BLUETOOTH = 7;
     public static final int PROFILE_CONNECTION_AIRPLANE = 8;
+    public static final int PROFILE_CONNECTION_POWERSAVER = 9;
 
     /** @hide */
     public static final Parcelable.Creator<ConnectionSettings> CREATOR = new Parcelable.Creator<ConnectionSettings>() {
@@ -88,22 +95,31 @@ public final class ConnectionSettings implements Parcelable {
         BluetoothAdapter bta = BluetoothAdapter.getDefaultAdapter();
         LocationManager lm = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         WifiManager wm = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-        Boolean state;
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        boolean forcedState = getValue() == 1;
+        boolean currentState;
 
         switch (getConnectionId()) {
+             case PROFILE_CONNECTION_MOBILEDATA:
+                currentState = cm.getMobileDataEnabled();
+                if (forcedState != currentState) {
+                    cm.setMobileDataEnabled(forcedState);
+                }
+                break;
             case PROFILE_CONNECTION_AIRPLANE:
-                state = (Settings.System.getInt(context.getContentResolver(), Settings.System.AIRPLANE_MODE_ON, 0) == 1);
-                if (getValue() == 1) {
-                    if (!state) {
-                        Settings.System.putInt(context.getContentResolver(),  Settings.System.AIRPLANE_MODE_ON, 1);
+                currentState = (Settings.System.getInt(context.getContentResolver(), Settings.System.AIRPLANE_MODE_ON, 0) == 1);
+                if (forcedState) {
+                    if (!currentState) {
+                        Settings.System.putInt(context.getContentResolver(), Settings.System.AIRPLANE_MODE_ON, 1);
                         Intent intentOn = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
                         intentOn.addFlags(Intent.FLAG_RECEIVER_REPLACE_PENDING);
                         intentOn.putExtra("state", true);
                         context.sendBroadcast(intentOn);
                     }
                 } else {
-                    if (state) {
-                        Settings.System.putInt(context.getContentResolver(),  Settings.System.AIRPLANE_MODE_ON, 0);
+                    if (currentState) {
+                        Settings.System.putInt(context.getContentResolver(), Settings.System.AIRPLANE_MODE_ON, 0);
                         Intent intentOff = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
                         intentOff.addFlags(Intent.FLAG_RECEIVER_REPLACE_PENDING);
                         intentOff.putExtra("state", false);
@@ -111,58 +127,80 @@ public final class ConnectionSettings implements Parcelable {
                     }
                 }
                 break;
+            case PROFILE_CONNECTION_POWERSAVER:
+                currentState = (Settings.Secure.getInt(context.getContentResolver(),
+                       Settings.Secure.POWER_SAVER_MODE,
+                       PowerSaverService.POWER_SAVER_MODE_OFF) == PowerSaverService.POWER_SAVER_MODE_ON);
+                if (forcedState) {
+                    if (!currentState) {
+                        Settings.Secure.putInt(context.getContentResolver(),
+                            Settings.Secure.POWER_SAVER_MODE, PowerSaverService.POWER_SAVER_MODE_ON);
+                    }
+                } else {
+                    if (currentState) {
+                        Settings.Secure.putInt(context.getContentResolver(),
+                            Settings.Secure.POWER_SAVER_MODE, PowerSaverService.POWER_SAVER_MODE_OFF);
+                    }
+                }
+                break;
             case PROFILE_CONNECTION_BLUETOOTH:
-                state = bta.isEnabled();
-                if (getValue() == 1) {
-                    if (!state) {
+                currentState = bta.isEnabled();
+                if (forcedState) {
+                    if (!currentState) {
                         bta.enable();
                     }
                 } else {
-                    if (state) {
+                    if (currentState) {
                         bta.disable();
                     }
                 }
                 break;
             case PROFILE_CONNECTION_GPS:
-                state = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
-                if (getValue() == 1) {
-                    if (!state) {
+                currentState = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+                if (forcedState) {
+                    if (!currentState) {
                         Settings.Secure.setLocationProviderEnabled(context.getContentResolver(), LocationManager.GPS_PROVIDER, true);
                     }
                 } else {
-                    if (state) {
+                    if (currentState) {
                         Settings.Secure.setLocationProviderEnabled(context.getContentResolver(), LocationManager.GPS_PROVIDER, false);
                     }
                 }
                 break;
+            case PROFILE_CONNECTION_SYNC:
+                currentState = ContentResolver.getMasterSyncAutomatically();
+                if (forcedState != currentState) {
+                    ContentResolver.setMasterSyncAutomatically(forcedState);
+                }
+                break;
             case PROFILE_CONNECTION_WIFI:
                 int wifiApState = wm.getWifiApState();
-                state = wm.isWifiEnabled();
-                if (getValue() == 1) {
+                currentState = wm.isWifiEnabled();
+                if (forcedState) {
                     if ((wifiApState == WifiManager.WIFI_AP_STATE_ENABLING) || (wifiApState == WifiManager.WIFI_AP_STATE_ENABLED)) {
                         wm.setWifiApEnabled(null, false);
                     }
-                    if (!state) {
+                    if (!currentState) {
                         wm.setWifiEnabled(true);
                     }
                 } else {
-                    if (state) {
+                    if (currentState) {
                         wm.setWifiEnabled(false);
                     }
                 }
                 break;
             case PROFILE_CONNECTION_WIFIAP:
                 int wifiState = wm.getWifiState();
-                state = wm.isWifiApEnabled();
-                if (getValue() == 1) {
+                currentState = wm.isWifiApEnabled();
+                if (forcedState) {
                     if ((wifiState == WifiManager.WIFI_STATE_ENABLING) || (wifiState == WifiManager.WIFI_STATE_ENABLED)) {
                         wm.setWifiEnabled(false);
                     }
-                    if (!state) {
+                    if (!currentState) {
                         wm.setWifiApEnabled(null, true);
                     }
                 } else {
-                    if (state) {
+                    if (currentState) {
                         wm.setWifiApEnabled(null, false);
                     }
                 }

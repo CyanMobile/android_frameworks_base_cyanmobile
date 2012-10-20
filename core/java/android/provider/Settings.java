@@ -1500,6 +1500,14 @@ public final class Settings {
         public static final String PWR_CRR_COLOR = "pwr_crr_color";
 
         /**
+         * The color to render the tracker background
+         * hex value including alpha
+         * default: ff000000
+         * @hide
+         */
+        public static final String STS_BTT_COLOR = "sts_btt_color";
+
+        /**
          * Sets overicon color
          * @hide
          */
@@ -1524,6 +1532,13 @@ public final class Settings {
          * @hide
          */
         public static final String TRANSPARENT_PWR_CRR = "transparent_pwr_crr";
+
+	/**
+         * Transparent tracker
+         *
+         * @hide
+         */
+        public static final String TRANSPARENT_STS_BTT = "transparent_sts_btt";
 
 	/**
          * Transparent notification bar
@@ -2113,6 +2128,12 @@ public final class Settings {
         public static final String ACCELEROMETER_ROTATION = "accelerometer_rotation";
 
         /**
+         * Allows to show the background activity back the lockscreen
+         * @hide
+         */
+        public static final String LOCKSCREEN_SEE_THROUGH = "lockscreen_see_through";
+
+        /**
          * Control whether the accelerometer will be used to change lockscreen
          * orientation.  If 0, it will not be used unless explicitly requested
          * by the application; if 1, it will be used by default unless explicitly
@@ -2673,6 +2694,12 @@ public final class Settings {
         public static final String LOCKSCREEN_IF_CALL_ENDS_WITH_SCREENOFF = "lockscreen_if_call_ends_with_screenoff";
 
         /**
+         * Stores values for custom lockscreen targets
+         * @hide
+         */
+        public static final String LOCKSCREEN_TARGETS = "lockscreen_targets";
+
+        /**
          * URI for the low battery sound file.
          * @hide
          */
@@ -3047,6 +3074,12 @@ public final class Settings {
         public static final String STATUS_BAR_NOTIF = "status_bar_notif";
 
         /**
+         * Whether to show the Ram status in status bar
+         * @hide
+         */
+        public static final String STATUS_BAR_SHOWRAM = "status_bar_showram";
+
+        /**
          * Whether to show the signal text or signal bars.
          * default: 0
          * 0: show signal bars
@@ -3089,6 +3122,13 @@ public final class Settings {
          * @hide
          */
         public static final String SHOW_NAVI_BUTTONS = "show_navi_buttons";
+
+        /**
+         * Whether to display the nav buttons animation
+         * 0: disable animation
+         * @hide
+         */
+        public static final String NAVI_BUTTONS_ANIMATE = "navi_buttons_animate";
 
         /**
          * Whether to display the status bar on lockscreen

@@ -27,9 +27,9 @@
     <dimen name="app_icon_size">48dip</dimen>
     <dimen name="toast_y_offset">64dip</dimen>
     <!-- The width that is used when creating big thumbnails of applications. -->
-    <dimen name="big_thumbnail_width">240dp</dimen>
+    <dimen name="big_thumbnail_width">164dp</dimen>
     <!-- The height that is used when creating big thumbnails of applications. -->
-    <dimen name="big_thumbnail_height">320dp</dimen>
+    <dimen name="big_thumbnail_height">145dp</dimen>
     <!-- Height of the status bar -->
     <dimen name="status_bar_height">25dip</dimen>
     <!-- Height of the status bar -->
@@ -46,5 +46,24 @@
     <dimen name="password_keyboard_key_height">56dip</dimen>
     <!-- Default correction for the space key in the password keyboard -->
     <dimen name="password_keyboard_spacebar_vertical_correction">4dip</dimen>
-    <dimen name="volume_panel_top">40dp</dimen>
+    <dimen name="volume_panel_top">30dp</dimen>
+    <!-- Default target placement radius for MultiWaveView -->
+    <dimen name="multiwaveview_target_placement_radius">135dip</dimen>
+    <!-- Default distance beyond which MultiWaveView snaps to the target radius -->
+    <dimen name="multiwaveview_snap_margin">40dip</dimen>
+    <!-- Default distance from each snap target that MultiWaveView considers a "hit" -->
+    <dimen name="multiwaveview_hit_radius">60dip</dimen>
+    <!-- Default target placement radius for GlowPadView. Should be 1/2 of outerring diameter. -->
+    <dimen name="glowpadview_target_placement_radius">135dip</dimen>
+    <!-- Default glow radius for GlowPadView -->
+    <dimen name="glowpadview_glow_radius">75dip</dimen>
+    <!-- Default distance beyond which GlowPadView snaps to the target radius -->
+    <dimen name="glowpadview_snap_margin">40dip</dimen>
+    <!-- Default distance from each snap target that GlowPadView considers a "hit" -->
+    <dimen name="glowpadview_hit_radius">60dip</dimen>
+    <!-- Default distance from each snap target that GlowPadView considers a "hit" -->
+    <dimen name="glowpadview_inner_radius">15dip</dimen>
+    <!-- Size of lockscreen outerring on unsecure unlock LockScreen -->
+    <dimen name="keyguard_lockscreen_outerring_diameter">270dp</dimen>
+    <dimen name="lockscreen_target_inset">25dp</dimen>
 </resources>

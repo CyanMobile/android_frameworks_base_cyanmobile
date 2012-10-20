@@ -2935,6 +2935,66 @@
     </declare-styleable>
 
     <!-- ========================== -->
+    <!-- ValueAnimator class attributes -->
+    <!-- ========================== -->
+    <eat-comment />
+
+    <declare-styleable name="Animator">
+        <!-- Defines the interpolator used to smooth the animation movement in time. -->
+        <attr name="interpolator" />
+        <!-- When set to true, fillAfter is taken into account. -->
+        <!-- Amount of time (in milliseconds) for the animation to run. -->
+        <attr name="duration" />
+        <!-- Delay in milliseconds before the animation runs, once start time is reached. -->
+        <attr name="startOffset"/>
+        <!-- Defines how many times the animation should repeat. The default value is 0. -->
+        <attr name="repeatCount"/>
+        <!-- Defines the animation behavior when it reaches the end and the repeat count is
+             greater than 0 or infinite. The default value is restart. -->
+        <attr name="repeatMode"/>
+        <!-- Value the animation starts from. -->
+        <attr name="valueFrom" format="float|integer|color|dimension"/>
+        <!-- Value the animation animates to. -->
+        <attr name="valueTo" format="float|integer|color|dimension"/>
+        <!-- The type of valueFrom and valueTo. -->
+        <attr name="valueType">
+            <!-- valueFrom and valueTo are floats. This is the default value is valueType is
+                 unspecified. Note that if either valueFrom or valueTo represent colors
+                 (beginning with "#"), then this attribute is ignored and the color values are
+                 interpreted as integers. -->
+            <enum name="floatType" value="0" />
+            <!-- valueFrom and valueTo are integers. -->
+            <enum name="intType"   value="1" />
+        </attr>
+    </declare-styleable>
+
+    <!-- ========================== -->
+    <!-- ObjectAnimator class attributes -->
+    <!-- ========================== -->
+    <eat-comment />
+
+    <declare-styleable name="PropertyAnimator">
+        <!-- Name of the property being animated. -->
+        <attr name="propertyName" format="string"/>
+    </declare-styleable>
+
+
+    <!-- ========================== -->
+    <!-- AnimatorSet class attributes -->
+    <!-- ========================== -->
+    <eat-comment />
+
+    <declare-styleable name="AnimatorSet">
+        <!-- Name of the property being animated. -->
+        <attr name="ordering">
+            <!-- child animations should be played together. -->
+            <enum name="together" value="0" />
+            <!-- child animations should be played sequentially, in the same order as the xml. -->
+            <enum name="sequentially" value="1" />
+        </attr>
+    </declare-styleable>
+
+    <!-- ========================== -->
     <!-- State attributes           -->
     <!-- ========================== -->
     <eat-comment />
@@ -3741,6 +3801,81 @@
     <declare-styleable name="SlidingTab">
         <!-- Use "horizontal" for a row, "vertical" for a column.  The default is horizontal. -->
         <attr name="orientation" />
+    </declare-styleable>
+
+    <!-- =============================== -->
+    <!-- GlowPadView class attributes -->
+    <!-- =============================== -->
+    <eat-comment />
+    <declare-styleable name="GlowPadView">
+        <!-- Reference to an array resource that be shown as targets around a circle. -->
+        <attr name="targetDrawables"/>
+
+        <!-- Sets a drawable as the center. -->
+        <attr name="handleDrawable"/>
+
+        <!-- Drawable to use for wave ripple animation. -->
+        <attr name="outerRingDrawable" format="reference"/>
+
+        <!-- Drawble used for drawing points -->
+        <attr name="pointDrawable" format="reference" />
+
+        <!-- Inner radius of glow area. -->
+        <attr name="innerRadius"/>
+
+        <!-- Outer radius of glow area. Target icons will be drawn on this circle. -->
+        <attr name="outerRadius"/>
+
+        <!-- Radius of glow under finger. -->
+        <attr name="glowRadius" format="dimension" />
+
+        <!-- Tactile feedback duration for actions. Set to '0' for no vibration. -->
+        <attr name="vibrationDuration"/>
+
+        <!-- How close we need to be before snapping to a target. -->
+        <attr name="snapMargin"/>
+
+        <!-- Number of waves/chevrons to show in animation. -->
+        <attr name="feedbackCount"/>
+
+        <!-- Used when the handle shouldn't wait to be hit before following the finger -->
+        <attr name="alwaysTrackFinger"/>
+    </declare-styleable>
+
+    <!-- =============================== -->
+    <!-- MultiWaveView class attributes -->
+    <!-- =============================== -->
+    <eat-comment />
+    <declare-styleable name="MultiWaveView">
+        <!-- Reference to an array resource that be shown as targets around a circle. -->
+        <attr name="targetDrawables" format="reference"/>
+
+        <!-- Sets a drawable as the drag center. -->
+        <attr name="handleDrawable" format="reference" />
+
+        <!-- Drawables to use for chevron animations. May be null. -->
+        <attr name="chevronDrawables" format="reference"/>
+
+        <!-- Drawable to use for wave ripple animation. -->
+        <attr name="waveDrawable" format="reference" />
+
+        <!-- Outer radius of target circle. Icons will be drawn on this circle. -->
+        <attr name="outerRadius" format="dimension" />
+
+        <!-- Tactile feedback duration for actions. Set to '0' for no vibration. -->
+        <attr name="vibrationDuration" format="integer"/>
+
+        <!-- How close we need to be before snapping to a target. -->
+        <attr name="snapMargin" format="dimension" />
+
+        <!-- Number of waves/chevrons to show in animation. -->
+        <attr name="feedbackCount" format="integer" />
+
+        <!-- How the items in this layout should be positioned -->
+        <attr name="gravity" />
+
+        <!-- Used when the handle shouldn't wait to be hit before following the finger -->
+        <attr name="alwaysTrackFinger" format="boolean" />
     </declare-styleable>
 
     <!-- =============================== -->

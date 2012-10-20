@@ -78,7 +78,11 @@ public final class CmSystem {
         Ring,
         Honeycomb,
         Circular,
-        Sense;
+        Sense,
+        IcsRing,
+        JbRing,
+        JbGlowRing,
+        BebeRing;
 
         static public LockscreenStyle getStyleById(int id) {
             switch (id) {
@@ -99,8 +103,16 @@ public final class CmSystem {
                     return Circular;
                 case 8:
                     return Sense;
+                case 9:
+                    return IcsRing;
+                case 10:
+                    return JbRing;
+                case 11:
+                    return JbGlowRing;
+                case 12:
+                    return BebeRing;
                 default:
-                    return Ring;
+                    return JbGlowRing;
             }
         }
 
@@ -124,8 +136,16 @@ public final class CmSystem {
                     return 7;
                 case Sense:
                     return 8;
+                case IcsRing:
+                    return 9;
+                case JbRing:
+                    return 10;
+                case JbGlowRing:
+                    return 11;
+                case BebeRing:
+                    return 12;
                 default:
-                    return 5;
+                    return 11;
             }
         }
     }
@@ -133,7 +153,9 @@ public final class CmSystem {
     public enum InCallStyle {
         Slider,
         Rotary,
-        Ring;
+        Ring,
+        JbRing,
+        JbGlowRing;
 
         static public InCallStyle getStyleById(int id) {
             switch (id) {
@@ -146,8 +168,12 @@ public final class CmSystem {
                     return Rotary;
                 case 4:
                     return Ring;
+                case 5:
+                    return JbRing;
+                case 6:
+                    return JbGlowRing;
                 default:
-                    return Ring;
+                    return JbGlowRing;
             }
         }
 
@@ -163,8 +189,12 @@ public final class CmSystem {
                     return 2;
                 case Ring:
                     return 4;
+                case JbRing:
+                    return 5;
+                case JbGlowRing:
+                    return 6;
                 default:
-                    return 4;
+                    return 6;
             }
         }
     }

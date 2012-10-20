@@ -26,6 +26,7 @@ import com.android.systemui.statusbar.batteries.CmBatterySideBar;
 import com.android.systemui.statusbar.batteries.CmBatteryStatusBar;
 import com.android.systemui.statusbar.carrierlabels.CarrierLabel;
 import com.android.systemui.statusbar.carrierlabels.CarrierLabelBottom;
+import com.android.systemui.statusbar.carrierlabels.CarrierLabelExp;
 import com.android.systemui.statusbar.carrierlabels.CarrierLabelStatusBar;
 import com.android.systemui.statusbar.carrierlabels.CarrierLogo;
 import com.android.systemui.statusbar.carrierlabels.CenterCarrierLabelStatusBar;
@@ -55,6 +56,8 @@ import com.android.systemui.R;
 import android.os.IPowerManager;
 import android.provider.Settings.SettingNotFoundException;
 import android.app.ActivityManagerNative;
+import android.app.ActivityManager;
+import android.app.ActivityManager.MemoryInfo;
 import android.app.Dialog;
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -79,6 +82,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.graphics.PorterDuff.Mode;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
@@ -118,10 +122,12 @@ import android.widget.LinearLayout;
 import android.widget.RemoteViews;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.ProgressBar;
 import android.net.Uri;
 import java.io.File;
 
 import java.io.FileDescriptor;
+import java.io.RandomAccessFile;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -179,6 +185,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     // last theme that was applied in order to detect theme change (as opposed
     // to some other configuration change).
     CustomTheme mCurrentTheme;
+    private DoNotDisturb mDoNotDisturb;
 
     // icons
     LinearLayout mIcons;
@@ -263,6 +270,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     LinearLayout mCompactCarrierLayout;
     LinearLayout mPowerAndCarrier;
     FrameLayout mNaviBarContainer;
+    CarrierLabelExp mCarrierLabelExpLayout;
 
     // ticker
     private Ticker mTicker;
@@ -293,6 +301,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     int mNotifyLatest;
     int mNotifyOngoing;
     int mSettingsColor;
+
+    LinearLayout mAvalMemLayout;
+    TextView memHeader;
+    ProgressBar avalMemPB;
+    double totalMemory;
+    double availableMemory;
 
     // Tracking finger for opening/closing.
     int mEdgeBorder; // corresponds to R.dimen.status_bar_edge_ignore
@@ -325,7 +339,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     boolean mDeadZone;
     boolean mHasSoftButtons;
     boolean autoBrightness = false;
-    private boolean changeds = false;
     private boolean shouldTick = false;
     Context mContext;
     private int mStatusBarCarrier;
@@ -342,6 +355,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private boolean mShowCmBatterySideBar = false;
     private boolean mTinyExpanded = true;
     private boolean mMoreExpanded = true;
+    private boolean mShowRam = true;
 
     // tracks changes to settings, so status bar is moved to top/bottom
     // as soon as cmparts setting is changed
@@ -432,6 +446,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_BRIGHTNESS_TOGGLE), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_INTRUDER_ALERT), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.STATUS_BAR_NOTIF), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.STATUS_BAR_SHOWRAM), false, this);
             onChange(true);
         }
 
@@ -464,6 +482,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.STATUS_BAR_DATE, 0) == 1);
             mShowNotif = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_NOTIF, 1) == 1);
+            mShowRam = (Settings.System.getInt(resolver,
+                    Settings.System.STATUS_BAR_SHOWRAM, 1) == 1);
             mShowCmBatterySideBar = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_BATTERY, 0) == 4);
             mHasSoftButtons = (Settings.System.getInt(resolver,
@@ -559,7 +579,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mCommandQueue = new CommandQueue(this, iconList);
         mBarService = IStatusBarService.Stub.asInterface(
                 ServiceManager.getService(Context.STATUS_BAR_SERVICE));
-        boolean[] switches = new boolean[1];
+        int[] switches = new int[3];
         try {
             mBarService.registerStatusBar(mCommandQueue, iconList, notificationKeys, notifications,
                         switches);
@@ -567,7 +587,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             // If the system process isn't there we're doomed anyway.
         }
 
-        setIMEVisible(switches[0]);
+        disable(switches[0]);
+        setIMEVisible(switches[1] != 0);
+        showNaviBar(switches[2] != 0);
 
         // Set up the initial icon state
         int N = iconList.size();
@@ -657,6 +679,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.STATUS_BAR_DATE, 0) == 1);
             mShowNotif = (Settings.System.getInt(getContentResolver(),
                     Settings.System.STATUS_BAR_NOTIF, 1) == 1);
+            mShowRam = (Settings.System.getInt(getContentResolver(),
+                    Settings.System.STATUS_BAR_SHOWRAM, 1) == 1);
             mShowCmBatterySideBar = (Settings.System.getInt(getContentResolver(),
                 Settings.System.STATUS_BAR_BATTERY, 0) == 4);
             mHasSoftButtons = (Settings.System.getInt(getContentResolver(),
@@ -844,6 +868,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mClearOldButton.setOnClickListener(mClearButtonListener);
         mCompactClearButton = (TextView)mExpandedView.findViewById(R.id.compact_clear_all_button);
         mCompactClearButton.setOnClickListener(mClearButtonListener);
+        mCarrierLabelExpLayout = (CarrierLabelExp)mExpandedView.findViewById(R.id.carrierExp);
         mPowerAndCarrier = (LinearLayout)mExpandedView.findViewById(R.id.power_and_carrier);
         int transPowerAndCarrier = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_PWR_CRR, 0);
         int PowerAndCarrierColor = Settings.System.getInt(getContentResolver(), Settings.System.PWR_CRR_COLOR, defValuesColor);
@@ -960,7 +985,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mCarrierLabelLayout = (LinearLayout)mExpandedView.findViewById(R.id.carrier_label_layout);
         mCompactCarrierLayout = (LinearLayout)mExpandedView.findViewById(R.id.compact_carrier_layout);
-
+        mAvalMemLayout = (LinearLayout)mExpandedView.findViewById(R.id.memlabel_layout);
+        memHeader = (TextView) mExpandedView.findViewById(R.id.avail_mem_text);
+        avalMemPB = (ProgressBar) mExpandedView.findViewById(R.id.aval_memos);
         mTicker = new MyTicker(context, mStatusBarView);
 
         mTickerText = (TickerView)mStatusBarView.findViewById(R.id.tickerText);
@@ -1014,11 +1041,26 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mNotifications = (LinearLayout)mExpandedView.findViewById(R.id.notifications_layout);
             mNotificationsToggle = (TextView)mTrackingView.findViewById(R.id.statusbar_notification_toggle);
             mButtonsToggle = (TextView)mTrackingView.findViewById(R.id.statusbar_buttons_toggle);
+            mButtonsToggle.setTextColor(mClockColor);
+            mNotificationsToggle.setTextColor(Color.parseColor("#666666"));
             mNotifications.setVisibility(View.GONE);
         }
 
         mSettingsButton = (ImageView)mTrackingView.findViewById(R.id.settingUp);
-        mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_close_on, mDisplay.getWidth(), getStatBarSize(), context));
+        int transSettingsButton = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_STS_BTT, 0);
+        int SettingsButtonColor = Settings.System.getInt(getContentResolver(), Settings.System.STS_BTT_COLOR, defValuesColor);
+        switch (transSettingsButton) {
+          case 0 : // theme, leave alone
+            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_close_on, getExpandedWidth(), getStatBarSize(), context));
+            break;
+          case 1 : // user defined argb hex color
+            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_transparent_background, getExpandedWidth(), getCloseDragSize(), context));
+            mSettingsButton.setBackgroundColor(SettingsButtonColor);
+            break;
+          case 2 : // transparent
+            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_transparent_background, getExpandedWidth(), getCloseDragSize(), context));
+            break;
+        }
         mSettingsButton.setOnLongClickListener(mSettingsButtonListener);
 
         mCarrierLabelBottomLayout = (CarrierLabelBottom) mTrackingView.findViewById(R.id.carrierlabel_bottom);
@@ -1047,7 +1089,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                  mButtonsToggle.setTextColor(Color.parseColor("#666666"));
                  LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
                  parent.setBackgroundResource(R.drawable.title_bar_portrait);
-                 changeds = true;
                  mPowerCarrier.setVisibility(View.GONE);
                  mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
                  mNotifications.setVisibility(View.VISIBLE);
@@ -1063,7 +1104,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                  mNotificationsToggle.setTextColor(Color.parseColor("#666666"));
                  LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
                  parent.setBackgroundResource(R.drawable.title_bar_portrait);
-                 changeds = false;
                  mPowerCarrier.setVisibility(View.VISIBLE);
                  mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
                  mNotifications.setVisibility(View.GONE);
@@ -1112,6 +1152,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mDateView.setVisibility(View.INVISIBLE);
         showClock(Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_CLOCK, 1) != 0);
         mVelocityTracker = VelocityTracker.obtain();
+        mDoNotDisturb = new DoNotDisturb(mContext);
+        totalMemory = 0;
+        availableMemory = 0;
+        getMemInfo();
     }
     
     private void updateColors() {
@@ -1332,11 +1376,15 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mCompactCarrierLayout.setVisibility(View.GONE);
             mMusicToggleButton.setVisibility(View.VISIBLE);
         }
-        if (mMoreExpanded) {
-            mCenterClockex.setVisibility(View.VISIBLE);
-        } else {
-            mCenterClockex.setVisibility(View.GONE);
-        }
+
+        mCenterClockex.setVisibility(mMoreExpanded ? View.VISIBLE : View.GONE);
+        mAvalMemLayout.setVisibility(mShowRam ? View.VISIBLE : View.GONE);
+    }
+
+    private boolean getDataStates(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context
+            .getSystemService(Context.CONNECTIVITY_SERVICE);
+        return cm.getMobileDataEnabled();
     }
 
     private void updateLayout() {
@@ -1465,6 +1513,16 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         return statSizepx;
     }
 
+    private int getCloseDragSize() {
+        int defValuesStatsSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_statbarsize_default_cyanmobile);
+        int dragSizeval = Settings.System.getInt(mContext.getContentResolver(),
+             Settings.System.STATUSBAR_STATS_SIZE, defValuesStatsSize);
+        int dragSizefitUp = (dragSizeval-5);
+        int dragSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                 dragSizefitUp, mContext.getResources().getDisplayMetrics());
+        return dragSizepx;
+    }
+
     private void addIntruderView() {
         final int height = getStatBarSize();
 
@@ -1562,7 +1620,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         StatusBarIconView iconView = addNotificationViews(key, notification);
         if (iconView == null) return;
 
-        if (shouldTicker) {
+        if (shouldTicker && mShowNotif) {
             if (!shouldTick) {
                 tick(notification);
             } else {
@@ -1668,7 +1726,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         // Restart the ticker if it's still running
         if (notification.notification.tickerText != null
                 && !TextUtils.equals(notification.notification.tickerText,
-                    oldEntry.notification.notification.tickerText)) {
+                    oldEntry.notification.notification.tickerText) && mShowNotif) {
             if (!shouldTick) {
                 tick(notification);
             } else {
@@ -1802,9 +1860,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         parent.addView(row, viewIndex);
         // Add the icon.
         final int iconIndex = chooseIconIndex(isOngoing, viewIndex);
-        if (mShowNotif) {
-            mNotificationIcons.addView(iconView, iconIndex);
-        }
+        mNotificationIcons.addView(iconView, iconIndex);
         return iconView;
     }
 
@@ -1898,7 +1954,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     public void showNaviBar(boolean show) {
-      if (mStatusBarView != null) {
+      if (mNavigationBarView != null) {
           mNavigationBarView.setNaviVisible(show);
       }
     }
@@ -1937,7 +1993,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 }
             } else {
                 if (SPEW) Slog.d(TAG, "DISABLE_NOTIFICATION_ICONS: no");
-                if (!mExpandedVisible && mShowNotif) {
+                if (!mExpandedVisible) {
                     setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);
                 }
             }
@@ -2003,6 +2059,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mExpandedView.requestFocus(View.FOCUS_FORWARD);
         mTrackingView.setVisibility(View.VISIBLE);
         mExpandedView.setVisibility(View.VISIBLE);
+        mCarrierLabelExpLayout.setVisibility(getDataStates(mContext) ? View.GONE : View.VISIBLE);
 
         if (!mTicking) {
             setDateViewVisibility(true, com.android.internal.R.anim.fade_in);
@@ -2087,7 +2144,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mTrackingView.setVisibility(View.GONE);
         mExpandedView.setVisibility(View.GONE);
 
-        if ((mDisabled & StatusBarManager.DISABLE_NOTIFICATION_ICONS) == 0 && mShowNotif) {
+        if ((mDisabled & StatusBarManager.DISABLE_NOTIFICATION_ICONS) == 0) {
             setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);
         }
         if (mDateView.getVisibility() == View.VISIBLE) {
@@ -2412,6 +2469,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     updateExpandedViewPos(y + (mBottomBar ? -mViewDelta : mViewDelta));
                 }
                 mSettingsButton.setColorFilter(mSettingsColor, Mode.MULTIPLY);
+                getMemInfo();
             } else if (event.getAction() == MotionEvent.ACTION_UP) {
                 mVelocityTracker.computeCurrentVelocity(1000);
 
@@ -2435,6 +2493,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 mHandler.postDelayed(new Runnable() {
                        public void run() {
                            mSettingsButton.clearColorFilter();
+                           getMemInfo();
                        }
                    }, 100);
             }
@@ -2500,7 +2559,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             animateCollapse();
 
             // If this click was on the intruder alert, hide that instead
-            if (shouldTick) {
+            if (shouldTick && mShowNotif) {
                 mHandler.sendEmptyMessage(MSG_HIDE_INTRUDER);
             }
         }
@@ -2741,9 +2800,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 	if (visible) {
             setNotificationIconVisibility(false, com.android.internal.R.anim.fade_out);
         } else {
-            if (mShowNotif) {
-                setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);
-            }
+            setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);
         }
     }
 
@@ -2785,8 +2842,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     void setNotificationIconVisibility(boolean visible, int anim) {
         int old = mNotificationIcons.getVisibility();
-        int v = visible ? (mShowNotif ? View.VISIBLE : View.INVISIBLE) : View.INVISIBLE;
-        if ((old != v) && mShowNotif) {
+        int v = visible ? View.VISIBLE : View.INVISIBLE;
+        if (old != v) {
            if (mStatusBarCarrierLogo == 2 && mStatusBarReverse) {
                mNotificationIcons.setVisibility(View.INVISIBLE);
                mNotificationIcons.startAnimation(loadAnim(anim, null));
@@ -2860,13 +2917,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 mExpandedContents.getLocationInWindow(mPositionTmp);
                 conBot = mPositionTmp[1] + mExpandedContents.getHeight();
             } else {
-                if (changeds) {
-                    mExpandedContents.getLocationInWindow(mPositionTmp);
-                    conBot = mPositionTmp[1] + mExpandedContents.getHeight();
-                } else {
-                    mExpandededContents.getLocationInWindow(mPositionTmp);
-                    conBot = mPositionTmp[1] + mExpandedContents.getHeight();
-                }
+                conBot = mPositionTmp[1] + getExpandedHeight();
             }
 
             final int contentsBottom = conBot;
@@ -2976,7 +3027,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 }
             } else {
                 Slog.d(TAG, "DISABLE_NOTIFICATION_ICONS: no");
-                if (!mExpandedVisible && mShowNotif) {
+                if (!mExpandedVisible) {
                     setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);
                 }
             }
@@ -3067,10 +3118,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 WeatherPopup weatherWindow = new WeatherPopup(v);
                 weatherWindow.showLikeQuickAction();
                 return true;
-            } else {
-                animateCollapse();
-                return true;
             }
+
+            return false;
         }
     };
 
@@ -3153,6 +3203,29 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private void setIntruderAlertVisibility(boolean vis) {
         mIntruderAlertView.setVisibility(vis ? View.VISIBLE : View.GONE);
     }
+
+    private void getMemInfo() {
+        if (!mShowRam) return;
+
+	if(totalMemory == 0) {
+	   try {
+	      RandomAccessFile reader = new RandomAccessFile("/proc/meminfo", "r");
+	      String load = reader.readLine();
+	      String[] memInfo = load.split(" ");
+	      totalMemory = Double.parseDouble(memInfo[9])/1024;
+           } catch (IOException ex) {
+	      ex.printStackTrace();
+	   }
+	}
+
+	ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+	MemoryInfo mi = new MemoryInfo();
+	activityManager.getMemoryInfo(mi);
+	availableMemory = mi.availMem / 1048576L;
+	memHeader.setText("Ram Info: Available: "+(int)(availableMemory)+"MB Total: "+(int)totalMemory+"MB.");
+	int progress = (int) (((totalMemory-availableMemory)/totalMemory)*100);
+	avalMemPB.setProgress(progress);
+    } 
 
     /**
      * Reload some of our resources when the configuration changes.

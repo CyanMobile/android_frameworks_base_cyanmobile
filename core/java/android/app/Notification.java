@@ -21,7 +21,9 @@ import com.android.internal.R;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Parcel;
@@ -500,7 +502,11 @@ public class Notification implements Parcelable
                 R.layout.status_bar_latest_event_content);
         if (this.icon != 0) {
             contentView.setImageViewResource(R.id.iconBig, this.icon);
-            contentView.setImageViewResource(R.id.icon, this.icon);
+            if (this.when != 0 || this.number > 0) {
+                contentView.setImageViewResource(R.id.icon, this.icon);
+            } else {
+                contentView.setViewVisibility(R.id.icon, View.GONE);
+            }
         }
         if (contentTitle != null) {
             contentView.setTextViewText(R.id.title, contentTitle);

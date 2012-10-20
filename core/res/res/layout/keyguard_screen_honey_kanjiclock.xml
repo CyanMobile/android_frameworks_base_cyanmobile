@@ -23,39 +23,26 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_alignParentRight="true"
-            android:layout_marginTop="5dip"
             android:layout_marginLeft="8dip"
             android:layout_marginRight="8dip"
             android:singleLine="true"
             android:ellipsize="marquee"
             android:gravity="right|bottom"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:textSize="22sp"
+            android:textAppearance="?android:attr/textAppearanceSmall"
             />
 
         <TextView
             android:id="@+id/custext"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/carrier"
-            android:layout_marginLeft="24dip"
-            android:layout_marginRight="24dip"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            />
-
-        <!-- "emergency calls only" shown when sim is missing or PUKd -->
-        <TextView
-            android:id="@+id/emergencyCallText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/custext"
-            android:layout_alignParentRight="true"
-            android:layout_marginTop="0dip"
-            android:layout_marginRight="8dip"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
             android:layout_marginLeft="8dip"
-            android:text="@string/emergency_calls_only"
+            android:layout_marginRight="8dip"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:gravity="left|bottom"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:textColor="@color/white"
             />
 
     <!-- time and date -->
@@ -63,11 +50,10 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
             android:id="@+id/time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/custext"
-            android:layout_marginTop="6dip"
+            android:layout_below="@id/carrier"
+            android:layout_marginTop="3dip"
             android:layout_marginLeft="20dip"
-            android:layout_marginRight="20dip"
-            android:paddingBottom="8dip">
+            android:layout_marginRight="20dip" >
 
             <TextView android:id="@+id/timeDisplay"
                 android:layout_width="wrap_content"
@@ -80,7 +66,7 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
                 android:shadowDx="0"
                 android:shadowDy="0"
                 android:shadowRadius="3.0"
-                android:layout_marginBottom="10dip"
+                android:layout_marginBottom="6dip"
                 />
         </com.android.internal.widget.KanjiClock>
 
@@ -91,27 +77,22 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
             android:layout_below="@id/time"
             android:layout_marginLeft="24dip"
             android:layout_marginRight="24dip"
-            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textAppearance="?android:attr/textAppearanceSmall"
             />
 
+        <!-- "emergency calls only" shown when sim is missing or PUKd -->
         <TextView
-            android:id="@+id/smssWidget"
+            android:id="@+id/emergencyCallText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/date"
-            android:layout_marginLeft="24dip"
-            android:layout_marginRight="24dip"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            />
-
-        <TextView
-            android:id="@+id/callsWidget"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/smssWidget"
-            android:layout_marginLeft="24dip"
-            android:layout_marginRight="24dip"
-            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="0dip"
+            android:layout_marginRight="8dip"
+            android:layout_marginLeft="8dip"
+            android:text="@string/emergency_calls_only"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textColor="@color/white"
             />
 
         <LinearLayout
@@ -119,18 +100,18 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_below="@id/callsWidget">
+            android:layout_below="@id/date">
 
             <TextView
                 android:id="@+id/status_charging"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dip"
+                android:layout_marginTop="2dip"
                 android:layout_marginLeft="24dip"
                 android:layout_marginRight="24dip"
                 android:maxLines="2"
                 android:ellipsize="end"
-                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textAppearance="?android:attr/textAppearanceSmall"
                 android:drawablePadding="4dip"
                 />
 
@@ -138,12 +119,12 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
                 android:id="@+id/status_alarm"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dip"
+                android:layout_marginTop="2dip"
                 android:layout_marginLeft="24dip"
                 android:layout_marginRight="24dip"
                 android:maxLines="2"
                 android:ellipsize="end"
-                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textAppearance="?android:attr/textAppearanceSmall"
                 android:drawablePadding="4dip"
                 android:drawableLeft="@drawable/ic_lock_idle_alarm"
                 />
@@ -152,12 +133,12 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
                 android:id="@+id/status_calendar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dip"
+                android:layout_marginTop="2dip"
                 android:layout_marginLeft="24dip"
                 android:layout_marginRight="24dip"
                 android:maxLines="3"
                 android:ellipsize="end"
-                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textAppearance="?android:attr/textAppearanceSmall"
                 android:drawablePadding="4dip"
                 android:drawableLeft="@drawable/ic_lock_idle_calendar"
                 />
@@ -168,7 +149,7 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
             android:id="@+id/customMsg"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4.0dip"
+            android:layout_marginTop="2dip"
             android:layout_marginLeft="24dip"
             android:layout_marginRight="24dip"
             android:layout_below="@id/status_box"
@@ -221,6 +202,60 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
                 android:layout_marginBottom="0dip"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"    />
+
+        <com.android.internal.widget.WaveView
+           android:id="@+id/wave_view"
+           android:orientation="vertical"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:layout_alignParentBottom="true"
+           />
+
+        <com.android.internal.widget.WaveViewBeBe
+            android:id="@+id/waveBebe_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_alignParentBottom="true"
+            />
+
+    <com.android.internal.widget.multiwaveview.MultiWaveView
+        android:id="@+id/unlock_widget"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:gravity="top"
+
+        android:targetDrawables="@array/lockscreen_targets_with_camera"
+        android:handleDrawable="@drawable/ic_lockscreen_handle"
+        android:waveDrawable="@drawable/ic_lockscreen_outerring"
+        android:outerRadius="@*android:dimen/multiwaveview_target_placement_radius"
+        android:snapMargin="@*android:dimen/multiwaveview_snap_margin"
+        android:chevronDrawables="@array/lockscreen_chevron_drawables"
+        android:feedbackCount="3"
+        android:vibrationDuration="20"
+        />
+
+        <com.android.internal.widget.multiwaveview.GlowPadView
+            android:id="@+id/unlockglow_widget"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentBottom="true"
+            android:gravity="top"
+
+            android:targetDrawables="@array/lockscreen_targets_with_camera"
+            android:handleDrawable="@drawable/ic_lockscreen_handle"
+            android:outerRingDrawable="@drawable/ic_lockscreen_outerring"
+            android:outerRadius="@dimen/glowpadview_target_placement_radius"
+            android:innerRadius="@dimen/glowpadview_inner_radius"
+            android:snapMargin="@dimen/glowpadview_snap_margin"
+            android:feedbackCount="1"
+            android:vibrationDuration="20"
+            android:glowRadius="@dimen/glowpadview_glow_radius"
+            android:pointDrawable="@drawable/ic_lockscreen_glowdot"
+            />
 
         <!-- emergency call button shown when sim is PUKd and tab_selector is
              hidden -->
@@ -304,6 +339,30 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
             android:focusable="true"
             android:focusableInTouchMode="true"
             android:marqueeRepeatLimit="marquee_forever"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            />
+
+        <TextView
+            android:id="@+id/smssWidget"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:gravity="left|bottom"
+            android:layout_marginLeft="8dip"
+            android:layout_marginRight="8dip"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            />
+
+        <TextView
+            android:id="@+id/callsWidget"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:gravity="right|bottom"
+            android:layout_marginLeft="8dip"
+            android:layout_marginRight="8dip"
             android:textAppearance="?android:attr/textAppearanceSmall"
             />
 </RelativeLayout>

@@ -76,11 +76,28 @@ public class CmSignalTextExp extends TextView {
 
     }
 
+    private boolean mPhoneSignalHidden;
+
     public CmSignalTextExp(Context context, AttributeSet attrs) {
         super(context, attrs);
         mHandler = new Handler();
         SettingsObserver settingsObserver = new SettingsObserver(mHandler);
         settingsObserver.observe();
+
+        // load config to determine if CmSignalText should be hidden
+        try {
+            mPhoneSignalHidden = context.getResources().getBoolean(
+                R.bool.config_statusbar_hide_phone_signal);
+        } catch (Exception e) {
+            mPhoneSignalHidden = false;
+        }
+
+        // hide phone_signal icon if hidden
+        if (mPhoneSignalHidden) {
+            this.setVisibility(GONE);
+        } else {
+            this.setVisibility(VISIBLE);
+        }
 
         updateSettings();
     }
@@ -170,10 +187,21 @@ public class CmSignalTextExp extends TextView {
             setText(getSignalLevelString(dBm) + " ");
             setTextColor(mClockColor);
             setTextSize(mCarrierSize);
+        } else if (style == STYLE_SHOW_DBM) {
+            String result = getSignalLevelString(dBm) + " dBm";
+            SpannableStringBuilder formatted = new SpannableStringBuilder(result);
+            int start = result.indexOf("d");
+            CharacterStyle style = new RelativeSizeSpan(0.7f);
+            formatted.setSpan(style, start, start + 3, Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
+
+            setVisibility(View.VISIBLE);
+            setText(formatted);
+            setTextColor(mClockColor);
+            setTextSize(mCarrierSize);
         } else if (style == STYLE_SHOW_WITH_COLOR) {
             setVisibility(View.VISIBLE);
-            setTextSize(mCarrierSize);
             setText(getSignalLevelString(dBm) + " ");
+            setTextSize(mCarrierSize);
             if (ASU <= 2 || ASU == 99)
                 setTextColor(Color.RED);
             else if (ASU >= 12)
@@ -184,16 +212,10 @@ public class CmSignalTextExp extends TextView {
                 setTextColor(Color.YELLOW);
             else
                 setTextColor(Color.MAGENTA);
+        } else if (style == STYLE_HIDDEN) {
+            setVisibility(View.GONE);
         } else {
-            String result = getSignalLevelString(dBm) + " dBm";
-            SpannableStringBuilder formatted = new SpannableStringBuilder(result);
-            int start = result.indexOf("d");
-            CharacterStyle style = new RelativeSizeSpan(0.7f);
-            formatted.setSpan(style, start, start + 3, Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
-            setVisibility(View.VISIBLE);
-            setText(formatted);
-            setTextColor(mClockColor);
-            setTextSize(mCarrierSize);
+            setVisibility(View.GONE);
         }
     }
 

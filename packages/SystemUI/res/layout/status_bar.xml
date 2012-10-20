@@ -196,6 +196,17 @@
             android:gravity="center_vertical"
             android:orientation="horizontal"/>
 
+        <com.android.systemui.statusbar.batteries.CircleBattery
+            android:id="@+id/circle_battery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.StatusBar.Battery"
+            android:singleLine="true"
+            android:paddingRight="2dip"
+            android:paddingLeft="2dip"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"/>
+
         <com.android.systemui.statusbar.clocks.Clock
             android:id="@+id/clock"
             android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"

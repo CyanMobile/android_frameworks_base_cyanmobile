@@ -130,13 +130,7 @@ void SurfaceFlinger::init()
     LOGI_IF(mDebugBackground,   "showbackground enabled");
     LOGI_IF(mUseDithering,      "dithering enabled");
 
-    // default calibration color set (disabled by default)
-    property_get("debug.sf.render_color_red", value, "975");
-    mRenderColorR = atoi(value);
-    property_get("debug.sf.render_color_green", value, "937");
-    mRenderColorG = atoi(value);
-    property_get("debug.sf.render_color_blue", value, "824");
-    mRenderColorB = atoi(value);
+    initRenderColors();
 
     // perf setting for the dynamic 16bpp alpha mode
     property_get("persist.sys.use_16bpp_alpha", value, "0");
@@ -1557,6 +1551,26 @@ status_t SurfaceFlinger::dump(int fd, const Vector<String16>& args)
     return NO_ERROR;
 }
 
+void SurfaceFlinger::triggerScreenRepaint()
+{
+    Mutex::Autolock _l(mStateLock);
+    const DisplayHardware& hw(graphicPlane(0).displayHardware());
+    mDirtyRegion.set(hw.bounds()); // careful that's not thread-safe
+    signalEvent();
+}
+
+void SurfaceFlinger::initRenderColors()
+{
+    char value[PROPERTY_VALUE_MAX];
+    // default calibration color set (disabled by default)
+    property_get("debug.sf.render_color_red", value, "975");
+    mRenderColorR = atoi(value);
+    property_get("debug.sf.render_color_green", value, "937");
+    mRenderColorG = atoi(value);
+    property_get("debug.sf.render_color_blue", value, "824");
+    mRenderColorB = atoi(value);
+}
+
 status_t SurfaceFlinger::onTransact(
     uint32_t code, const Parcel& data, Parcel* reply, uint32_t flags)
 {
@@ -1622,10 +1636,7 @@ status_t SurfaceFlinger::onTransact(
                 mDebugBackground = n ? 1 : 0;
                 return NO_ERROR;
             case 1004:{ // repaint everything
-                Mutex::Autolock _l(mStateLock);
-                const DisplayHardware& hw(graphicPlane(0).displayHardware());
-                mDirtyRegion.set(hw.bounds()); // careful that's not thread-safe
-                signalEvent();
+                triggerScreenRepaint();
                 return NO_ERROR;
             }
             case 1005:{ // force transaction
@@ -1647,6 +1658,9 @@ status_t SurfaceFlinger::onTransact(
                 reply->writeInt32(mDebugRegion);
                 reply->writeInt32(mDebugBackground);
                 reply->writeInt32(mRenderEffect);
+                reply->writeInt32(mRenderColorR);
+                reply->writeInt32(mRenderColorG);
+                reply->writeInt32(mRenderColorB);
                 return NO_ERROR;
             case 1013: {
                 Mutex::Autolock _l(mStateLock);
@@ -1656,20 +1670,29 @@ status_t SurfaceFlinger::onTransact(
             case 1014: { // RENDER_EFFECT
                 // TODO: filter to only allow valid effects
                 mRenderEffect = data.readInt32();
+                triggerScreenRepaint();
                 return NO_ERROR;
             }
 	    case 1015: { // RENDER_COLOR_RED
 		mRenderColorR = data.readInt32();
+                triggerScreenRepaint();
 		return NO_ERROR;
 	    }
 	    case 1016: { // RENDER_COLOR_GREEN
                 mRenderColorG = data.readInt32();
+                triggerScreenRepaint();
 		return NO_ERROR;
 	    }
 	    case 1017: { // RENDER_COLOR_BLUE
                 mRenderColorB = data.readInt32();
+                triggerScreenRepaint();
 		return NO_ERROR;
 	    }
+            case 1018: { // reset render colors
+                initRenderColors();
+                triggerScreenRepaint();
+                return NO_ERROR;
+            }
             return NO_ERROR;
         }
     }
@@ -1932,8 +1955,8 @@ status_t SurfaceFlinger::electronBeamOffAnimationImplLocked()
         : hw_w(hw_w), hw_h(hw_h) {
         }
         void operator()(GLfloat* vtx, float v) {
-            const GLfloat w = hw_w + (hw_w * v);
-            const GLfloat h = hw_h - (hw_h * v);
+            const GLfloat w = hw_w - (hw_w * v);
+            const GLfloat h = hw_h + (hw_h * v);
             const GLfloat x = (hw_w - w) * 0.5f;
             const GLfloat y = (hw_h - h) * 0.5f;
             vtx[0] = x;         vtx[1] = y;
@@ -1950,8 +1973,8 @@ status_t SurfaceFlinger::electronBeamOffAnimationImplLocked()
         : hw_w(hw_w), hw_h(hw_h) {
         }
         void operator()(GLfloat* vtx, float v) {
-            const GLfloat w = hw_w - (hw_w * v);
-            const GLfloat h = 1.0f;
+            const GLfloat w = 1.0f;
+            const GLfloat h = hw_h - (hw_h * v);
             const GLfloat x = (hw_w - w) * 0.5f;
             const GLfloat y = (hw_h - h) * 0.5f;
             vtx[0] = x;         vtx[1] = y;

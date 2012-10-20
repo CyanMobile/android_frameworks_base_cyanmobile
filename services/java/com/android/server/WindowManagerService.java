@@ -8227,6 +8227,7 @@ public class WindowManagerService extends IWindowManager.Stub
                             wtoken.startingData = null;
                             wtoken.startingView = null;
                             wtoken.startingWindow = null;
+                            wtoken.startingDisplayed = false;
                         }
                     }
                     if (view != null) {
@@ -8263,6 +8264,7 @@ public class WindowManagerService extends IWindowManager.Stub
                             wtoken.startingData = null;
                             wtoken.startingView = null;
                             wtoken.startingWindow = null;
+                            wtoken.startingDisplayed = false;
                         }
 
                         try {
@@ -9019,8 +9021,10 @@ public class WindowManagerService extends IWindowManager.Stub
                                         + w);
                                 wallpaperForceHidingChanged = true;
                                 mFocusMayChange = true;
-                            } else if (w.isReadyForDisplay() && w.mAnimation == null) {
-                                forceHiding = true;
+                            } else if (w.isReadyForDisplay() && ((Settings.System.getInt(mContext.getContentResolver(),
+                                    Settings.System.LOCKSCREEN_SEE_THROUGH, 0) != 0) ||  w.mAnimation == null)) {
+                                forceHiding = (Settings.System.getInt(mContext.getContentResolver(),
+                                    Settings.System.LOCKSCREEN_SEE_THROUGH, 0) != 1) ? true : false;
                             }
                         } else if (mPolicy.canBeForceHidden(w, attrs)) {
                             boolean changed;

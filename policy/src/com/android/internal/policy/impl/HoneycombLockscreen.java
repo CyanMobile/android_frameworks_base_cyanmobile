@@ -26,6 +26,10 @@ import com.android.internal.widget.LockPatternUtils;
 import com.android.internal.widget.UnlockRing;
 import com.android.internal.widget.CircularSelector;
 import com.android.internal.widget.SenseLikeLock;
+import com.android.internal.widget.WaveView;
+import com.android.internal.widget.WaveViewBeBe;
+import com.android.internal.widget.multiwaveview.MultiWaveView;
+import com.android.internal.widget.multiwaveview.GlowPadView;
 
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -75,6 +79,7 @@ import android.provider.CallLog.Calls;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.PhoneLookup;
+import android.provider.MediaStore;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -129,6 +134,15 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
     private UnlockRing mSelector;
     private CircularSelector mCircularSelector;
     private SenseLikeLock mSenseRingSelector;
+    private WaveView mEnergyWave;
+    private WaveViewMethods mWaveViewMethods;
+    private WaveViewBeBe mEnergyWaveBebe;
+    private WaveViewBeBeMethods mWaveViewBeBeMethods;
+    private MultiWaveView mMultiWaveView;
+    private MultiWaveViewMethods mMultiWaveViewMethods;
+    private GlowPadView mGlowPadView;
+    private GlowPadViewMethods mGlowPadViewMethods;
+
     private TextView mDate;
     private TextView mTime;
     private TextView mAmPm;
@@ -256,10 +270,22 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
             Settings.System.LOCKSCREEN_MESSAGE, 1) != 1);
 
     private int mLockscreenStyle = (Settings.System.getInt(mContext.getContentResolver(),
-            Settings.System.LOCKSCREEN_STYLE_PREF, 5));
+            Settings.System.LOCKSCREEN_STYLE_PREF, 11));
 
     private boolean mUseCircularLockscreen =
         LockscreenStyle.getStyleById(mLockscreenStyle) == LockscreenStyle.Circular;
+
+    private boolean mUseIcsLockscreen =
+        LockscreenStyle.getStyleById(mLockscreenStyle) == LockscreenStyle.IcsRing;
+
+    private boolean mUseBebeLockscreen =
+        LockscreenStyle.getStyleById(mLockscreenStyle) == LockscreenStyle.BebeRing;
+
+    private boolean mUseJbLockscreen =
+        LockscreenStyle.getStyleById(mLockscreenStyle) == LockscreenStyle.JbRing;
+
+    private boolean mUseJbGlowLockscreen =
+        LockscreenStyle.getStyleById(mLockscreenStyle) == LockscreenStyle.JbGlowRing;
 
     private boolean mUseSenseLockscreen =
         LockscreenStyle.getStyleById(mLockscreenStyle) == LockscreenStyle.Sense;
@@ -337,6 +363,248 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         }
     }
 
+    private static final int WAIT_FOR_ANIMATION_TIMEOUT = 500;
+    private static final int STAY_ON_WHILE_GRABBED_TIMEOUT = 20000;
+
+    class WaveViewMethods implements WaveView.OnTriggerListener {
+        /** {@inheritDoc} */
+        public void onTrigger(View v, int whichHandle) {
+            if (whichHandle == WaveView.OnTriggerListener.CENTER_HANDLE) {
+                requestUnlockScreen();
+            }
+        }
+
+        /** {@inheritDoc} */
+        public void onGrabbedStateChange(View v, int grabbedState) {
+            if (grabbedState == WaveView.OnTriggerListener.CENTER_HANDLE) {
+                mCallback.pokeWakelock(STAY_ON_WHILE_GRABBED_TIMEOUT);
+            }
+        }
+    }
+
+    class WaveViewBeBeMethods implements WaveViewBeBe.OnTriggerListener {
+        /** {@inheritDoc} */
+        public void onTrigger(View v, int whichHandle) {
+            if (whichHandle == WaveViewBeBe.OnTriggerListener.CENTER_HANDLE) {
+                requestUnlockScreen();
+            }
+        }
+
+        /** {@inheritDoc} */
+        public void onGrabbedStateChange(View v, int grabbedState) {
+            if (grabbedState == WaveViewBeBe.OnTriggerListener.CENTER_HANDLE) {
+                mCallback.pokeWakelock(STAY_ON_WHILE_GRABBED_TIMEOUT);
+            }
+        }
+    }
+
+    class MultiWaveViewMethods implements MultiWaveView.OnTriggerListener {
+
+        public void updateResources() {
+            int resId = R.array.lockscreen_targets_with_camera;
+            if (mMultiWaveView.getTargetResourceId() != resId) {
+                mMultiWaveView.setTargetResources(resId);
+            }
+            setEnabled(com.android.internal.R.drawable.ic_lockscreen_camera, true);
+            setEnabled(com.android.internal.R.drawable.ic_lockscreen_phone, true);
+            setEnabled(com.android.internal.R.drawable.ic_lockscreen_sms, true);
+        }
+
+        public void onGrabbed(View v, int handle) {
+        }
+
+        public void onReleased(View v, int handle) {
+        }
+
+        public void onTrigger(View v, int target) {
+            final int resId = mMultiWaveView.getResourceIdForTarget(target);
+            switch (resId) {
+                case com.android.internal.R.drawable.ic_lockscreen_camera:
+                    launchCamera();
+                    mCallback.goToUnlockScreen();
+                    break;
+                case com.android.internal.R.drawable.ic_lockscreen_sms:
+                    launchSms();
+                    mCallback.goToUnlockScreen();
+                    break;
+                case com.android.internal.R.drawable.ic_lockscreen_phone:
+                    launchPhone();
+                    mCallback.goToUnlockScreen();
+                    break;
+                case com.android.internal.R.drawable.ic_lockscreen_unlock_phantom:
+                case com.android.internal.R.drawable.ic_lockscreen_unlock:
+                    mCallback.goToUnlockScreen();
+                break;
+           }
+        }
+
+        private void launchCamera() {
+            Intent iocamera = new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA);
+            iocamera.setFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+                    | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            try {
+                mContext.startActivity(iocamera);
+            } catch (ActivityNotFoundException e) {
+                Log.w(TAG, "Activity not found for intent + " + iocamera.getAction());
+            }
+        }
+
+        private void launchSms() {
+            Intent ioinbox = new Intent(Intent.ACTION_MAIN);  
+            ioinbox.addCategory(Intent.CATEGORY_DEFAULT);  
+            ioinbox.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                    | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            ioinbox.setType("vnd.android-dir/mms-sms");
+            try {
+                mContext.startActivity(ioinbox);
+            } catch (ActivityNotFoundException e) {
+                Log.w(TAG, "Activity not found for intent + " + ioinbox.getAction());
+            }
+        }
+
+        private void launchPhone() {
+            Intent iophone = new Intent(Intent.ACTION_MAIN);
+            iophone.setClassName("com.android.contacts",
+                                     "com.android.contacts.TwelveKeyDialer");
+            iophone.setFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+                    | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            try {
+                mContext.startActivity(iophone);
+            } catch (ActivityNotFoundException e) {
+                Log.w(TAG, "Activity not found for intent + " + iophone.getAction());
+            }
+        }
+
+        public void onGrabbedStateChange(View v, int handle) {
+            // Don't poke the wake lock when returning to a state where the handle is
+            // not grabbed since that can happen when the system (instead of the user)
+            // cancels the grab.
+            if (handle != MultiWaveView.OnTriggerListener.NO_HANDLE) {
+                mCallback.pokeWakelock();
+            }
+        }
+
+        public void setEnabled(int resourceId, boolean enabled) {
+            mMultiWaveView.setEnableTarget(resourceId, enabled);
+        }
+
+        public void onFinishFinalAnimation() {
+        }
+    }
+
+    class GlowPadViewMethods implements GlowPadView.OnTriggerListener {
+
+        public void updateResources() {
+            int resId = R.array.lockscreen_targets_with_camera;
+            if (mGlowPadView.getTargetResourceId() != resId) {
+                mGlowPadView.setTargetResources(resId);
+            }
+            setEnabled(com.android.internal.R.drawable.ic_lockscreen_camera, true);
+            setEnabled(com.android.internal.R.drawable.ic_lockscreen_phone, true);
+            setEnabled(com.android.internal.R.drawable.ic_lockscreen_sms, true);
+        }
+
+        public void onGrabbed(View v, int handle) {
+        }
+
+        public void onReleased(View v, int handle) {
+        }
+
+        public void onTrigger(View v, int target) {
+            final int resId = mGlowPadView.getResourceIdForTarget(target);
+            switch (resId) {
+                case com.android.internal.R.drawable.ic_lockscreen_camera:
+                    launchCamera();
+                    mCallback.goToUnlockScreen();
+                    break;
+                case com.android.internal.R.drawable.ic_lockscreen_sms:
+                    launchSms();
+                    mCallback.goToUnlockScreen();
+                    break;
+                case com.android.internal.R.drawable.ic_lockscreen_phone:
+                    launchPhone();
+                    mCallback.goToUnlockScreen();
+                    break;
+                case com.android.internal.R.drawable.ic_lockscreen_unlock_phantom:
+                case com.android.internal.R.drawable.ic_lockscreen_unlock:
+                    mCallback.goToUnlockScreen();
+                break;
+           }
+        }
+
+        private void launchCamera() {
+            Intent iocamera = new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA);
+            iocamera.setFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+                    | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            try {
+                mContext.startActivity(iocamera);
+            } catch (ActivityNotFoundException e) {
+                Log.w(TAG, "Activity not found for intent + " + iocamera.getAction());
+            }
+        }
+
+        private void launchSms() {
+            Intent ioinbox = new Intent(Intent.ACTION_MAIN);  
+            ioinbox.addCategory(Intent.CATEGORY_DEFAULT);  
+            ioinbox.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                    | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            ioinbox.setType("vnd.android-dir/mms-sms");
+            try {
+                mContext.startActivity(ioinbox);
+            } catch (ActivityNotFoundException e) {
+                Log.w(TAG, "Activity not found for intent + " + ioinbox.getAction());
+            }
+        }
+
+        private void launchPhone() {
+            Intent iophone = new Intent(Intent.ACTION_MAIN);
+            iophone.setClassName("com.android.contacts",
+                                     "com.android.contacts.TwelveKeyDialer");
+            iophone.setFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+                    | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            try {
+                mContext.startActivity(iophone);
+            } catch (ActivityNotFoundException e) {
+                Log.w(TAG, "Activity not found for intent + " + iophone.getAction());
+            }
+        }
+
+        public void onGrabbedStateChange(View v, int handle) {
+            // Don't poke the wake lock when returning to a state where the handle is
+            // not grabbed since that can happen when the system (instead of the user)
+            // cancels the grab.
+            if (handle != GlowPadView.OnTriggerListener.NO_HANDLE) {
+                mCallback.pokeWakelock();
+            }
+        }
+
+        public void setEnabled(int resourceId, boolean enabled) {
+            mGlowPadView.setEnableTarget(resourceId, enabled);
+        }
+
+        public void onFinishFinalAnimation() {
+        }
+    }
+
+    private void requestUnlockScreen() {
+        // Delay hiding lock screen long enough for animation to finish	
+        postDelayed(new Runnable() {	
+            public void run() {
+                mCallback.goToUnlockScreen();
+            }
+        }, WAIT_FOR_ANIMATION_TIMEOUT);	
+    }
+
     /**
      * In general, we enable unlocking the insecure key guard with the menu key. However, there are
      * some cases where we wish to disable it, notably when the menu button placement or technology
@@ -387,9 +655,9 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
 
         final LayoutInflater inflater = LayoutInflater.from(context);
         if (DBG) Log.v(TAG, "Creation orientation = " + mCreationOrientation);
-        if (mUseFuzzyClock && mCreationOrientation != Configuration.ORIENTATION_LANDSCAPE){
+        if (mUseFuzzyClock && (mCreationOrientation != Configuration.ORIENTATION_LANDSCAPE)){
             inflater.inflate(R.layout.keyguard_screen_honey_fuzzyclock, this, true);
-        } else if (mUseKanjiClock && mCreationOrientation != Configuration.ORIENTATION_LANDSCAPE){
+        } else if (mUseKanjiClock && (mCreationOrientation != Configuration.ORIENTATION_LANDSCAPE)){
             inflater.inflate(R.layout.keyguard_screen_honey_kanjiclock, this, true);
         } else if (mCreationOrientation != Configuration.ORIENTATION_LANDSCAPE) {
             inflater.inflate(R.layout.keyguard_screen_honey, this, true);
@@ -471,10 +739,22 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         mSelector = (UnlockRing) findViewById(R.id.unlock_ring);
         mCircularSelector = (CircularSelector) findViewById(R.id.circular_selector);
         mSenseRingSelector = (SenseLikeLock) findViewById(R.id.sense_selector);
+        mEnergyWave = (WaveView) findViewById(R.id.wave_view);
+        mEnergyWaveBebe = (WaveViewBeBe) findViewById(R.id.waveBebe_view);
+        mMultiWaveView = (MultiWaveView) findViewById(R.id.unlock_widget);
+        mGlowPadView = (GlowPadView) findViewById(R.id.unlockglow_widget);
 
         mSenseRingSelector.setOnSenseLikeSelectorTriggerListener(this);
         mCircularSelector.setOnCircularSelectorTriggerListener(this);
         mSelector.setOnTriggerListener(this);
+        mWaveViewMethods = new WaveViewMethods();
+        mEnergyWave.setOnTriggerListener(mWaveViewMethods);
+        mWaveViewBeBeMethods = new WaveViewBeBeMethods();
+        mEnergyWaveBebe.setOnTriggerListener(mWaveViewBeBeMethods);
+        mMultiWaveViewMethods = new MultiWaveViewMethods();
+        mMultiWaveView.setOnTriggerListener(mMultiWaveViewMethods);
+        mGlowPadViewMethods = new GlowPadViewMethods();
+        mGlowPadView.setOnTriggerListener(mGlowPadViewMethods);
 
         setupSenseLikeRingShortcuts();
 
@@ -581,6 +861,14 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
             mHideUnlockTab = false;
         }
 
+        if (mUseJbLockscreen) {
+            mMultiWaveViewMethods.updateResources();
+        }
+
+        if (mUseJbGlowLockscreen) {
+            mGlowPadViewMethods.updateResources();
+        }
+
         resetStatusInfo(updateMonitor);
         switch (mWidgetLayout) {
             case 2:
@@ -593,12 +881,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
     }
 
     private void centerWidgets() {
-        RelativeLayout.LayoutParams layoutParams;
-        layoutParams = (RelativeLayout.LayoutParams) mCarrier.getLayoutParams();
-        layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
-        mCarrier.setLayoutParams(layoutParams);
-        mCarrier.setGravity(Gravity.CENTER_HORIZONTAL);
-
         mStatusBox.setGravity(Gravity.CENTER_HORIZONTAL);
 
         if (mUseFuzzyClock){
@@ -609,9 +891,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
            centerWidget(mClock);
         }
         centerWidget(mDate);
-        centerWidget(mCusText);
-        centerWidget(mSmsCountView);
-        centerWidget(mMissedCallCountView);
         centerWidget(mStatusCharging);
         centerWidget(mStatusAlarm);
         centerWidget(mStatusCalendar);
@@ -638,6 +917,12 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         mCarrier.setLayoutParams(layoutParams);
         mCarrier.setGravity(Gravity.LEFT);
 
+        RelativeLayout.LayoutParams llayoutParams;
+        llayoutParams = (RelativeLayout.LayoutParams) mCusText.getLayoutParams();
+        llayoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
+        mCusText.setLayoutParams(llayoutParams);
+        mCusText.setGravity(Gravity.RIGHT);
+
         mStatusBox.setGravity(Gravity.LEFT);
 
         if (mUseFuzzyClock){
@@ -648,9 +933,6 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
             alignWidgetToRight(mClock);
         }
         alignWidgetToRight(mDate);
-        alignWidgetToRight(mCusText);
-        alignWidgetToRight(mSmsCountView);
-        alignWidgetToRight(mMissedCallCountView);
         alignWidgetToRight(mStatusCharging);
         alignWidgetToRight(mStatusAlarm);
         alignWidgetToRight(mStatusCalendar);
@@ -1225,7 +1507,9 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         if (mHideUnlockTab) {
             return false;
         }
-        if (mUseSenseLockscreen || mUseHoneyLockscreen || mUseCircularLockscreen) {
+        if (mUseSenseLockscreen || mUseHoneyLockscreen
+            || mUseCircularLockscreen || mUseIcsLockscreen
+            || mUseJbLockscreen || mUseJbGlowLockscreen || mUseBebeLockscreen) {
                 return false;
         }
         return true;
@@ -1470,19 +1754,67 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
                 mSenseRingSelector.setVisibility(View.VISIBLE);
                 mCircularSelector.setVisibility(View.GONE);
                 mSelector.setVisibility(View.GONE);
+                mEnergyWave.setVisibility(View.GONE);
+                mEnergyWaveBebe.setVisibility(View.GONE);
+                mMultiWaveView.setVisibility(View.GONE);
+                mGlowPadView.setVisibility(View.GONE);
             } else if (mUseCircularLockscreen) {
                 mSenseRingSelector.setVisibility(View.GONE);
                 mCircularSelector.setVisibility(View.VISIBLE);
                 mSelector.setVisibility(View.GONE);
+                mEnergyWave.setVisibility(View.GONE);
+                mEnergyWaveBebe.setVisibility(View.GONE);
+                mMultiWaveView.setVisibility(View.GONE);
+                mGlowPadView.setVisibility(View.GONE);
+            } else if (mUseIcsLockscreen) {
+                mSenseRingSelector.setVisibility(View.GONE);
+                mCircularSelector.setVisibility(View.GONE);
+                mSelector.setVisibility(View.GONE);
+                mEnergyWave.setVisibility(View.VISIBLE);
+                mEnergyWaveBebe.setVisibility(View.GONE);
+                mMultiWaveView.setVisibility(View.GONE);
+                mGlowPadView.setVisibility(View.GONE);
+            } else if (mUseJbLockscreen) {
+                mSenseRingSelector.setVisibility(View.GONE);
+                mCircularSelector.setVisibility(View.GONE);
+                mSelector.setVisibility(View.GONE);
+                mEnergyWave.setVisibility(View.GONE);
+                mEnergyWaveBebe.setVisibility(View.GONE);
+                mMultiWaveView.setVisibility(View.VISIBLE);
+                mGlowPadView.setVisibility(View.GONE);
+            } else if (mUseJbGlowLockscreen) {
+                mSenseRingSelector.setVisibility(View.GONE);
+                mCircularSelector.setVisibility(View.GONE);
+                mSelector.setVisibility(View.GONE);
+                mEnergyWave.setVisibility(View.GONE);
+                mEnergyWaveBebe.setVisibility(View.GONE);
+                mMultiWaveView.setVisibility(View.GONE);
+                mGlowPadView.setVisibility(View.VISIBLE);
+            } else if (mUseBebeLockscreen) {
+                mSenseRingSelector.setVisibility(View.GONE);
+                mCircularSelector.setVisibility(View.GONE);
+                mSelector.setVisibility(View.GONE);
+                mEnergyWave.setVisibility(View.GONE);
+                mEnergyWaveBebe.setVisibility(View.VISIBLE);
+                mMultiWaveView.setVisibility(View.GONE);
+                mGlowPadView.setVisibility(View.GONE);
             } else {
                 mSenseRingSelector.setVisibility(View.GONE);
                 mCircularSelector.setVisibility(View.GONE);
+                mEnergyWave.setVisibility(View.GONE);
+                mEnergyWaveBebe.setVisibility(View.GONE);
                 mSelector.setVisibility(View.VISIBLE);
+                mMultiWaveView.setVisibility(View.GONE);
+                mGlowPadView.setVisibility(View.GONE);
             }
         } else {
             mSenseRingSelector.setVisibility(View.GONE);
             mCircularSelector.setVisibility(View.GONE);
             mSelector.setVisibility(View.GONE);
+            mEnergyWave.setVisibility(View.GONE);
+            mEnergyWaveBebe.setVisibility(View.GONE);
+            mMultiWaveView.setVisibility(View.GONE);
+            mGlowPadView.setVisibility(View.GONE);
         }
     }
 
@@ -1598,6 +1930,18 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
             getContext().unregisterReceiver(mSmsCallListener);
             mSmsCallListener = null;
         }
+        if (mUseIcsLockscreen) {
+            mEnergyWave.reset();
+        }
+        if (mUseBebeLockscreen) {
+            mEnergyWaveBebe.reset();
+        }
+        if (mUseJbLockscreen) {
+            mMultiWaveView.reset(false);
+        }
+        if (mUseJbGlowLockscreen) {
+            mGlowPadView.reset(false);
+        }
     }
 
     /** {@inheritDoc} */
@@ -1614,6 +1958,12 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         mSelector.enableUnlockMode();
         if (mSmsCallListener == null) {
             getContext().registerReceiver(mSmsCallListener, filter);
+        }
+        if (mUseJbLockscreen) {
+            mMultiWaveView.ping();
+        }
+        if (mUseJbGlowLockscreen) {
+            mGlowPadView.ping();
         }
     }
 

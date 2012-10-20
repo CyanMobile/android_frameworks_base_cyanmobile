@@ -1145,8 +1145,8 @@ public final class ActivityThread {
             int h;
             if (w < 0) {
                 Resources res = r.activity.getResources();
-                mBigThumbnailHeight = h = bigthumb.widthPixels;
-                mBigThumbnailWidth = w = bigthumb.heightPixels;
+                mBigThumbnailHeight = h = res.getDimensionPixelSize(com.android.internal.R.dimen.big_thumbnail_height);
+                mBigThumbnailWidth = w = res.getDimensionPixelSize(com.android.internal.R.dimen.big_thumbnail_width);
             } else {
                 h = mBigThumbnailHeight;
             }

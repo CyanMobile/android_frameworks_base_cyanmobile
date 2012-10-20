@@ -32,6 +32,7 @@ import android.util.Slog;
 import android.widget.TextView;
 import android.view.View;
 
+import com.android.systemui.R;
 import java.util.Date;
 
 public final class PowerDateView extends TextView {
@@ -127,8 +128,9 @@ public final class PowerDateView extends TextView {
 
     private final void updateClock() {
         Date now = new Date();
-        Resources res = Resources.getSystem();
-        setText(DateFormat.format("EEEE\n MMMM d, yyyy",now));
+        CharSequence dow = DateFormat.format("EEEE", now);
+        CharSequence date = DateFormat.getLongDateFormat(mContext).format(now);
+        setText(mContext.getString(R.string.status_bar_date_formatter, dow, date));
 	setTextColor(mClockColor);
     }
 

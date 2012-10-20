@@ -2000,8 +2000,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
         public void setWindowBackground(Drawable drawable) {
             if (getBackground() != drawable) {
                 setBackgroundDrawable(drawable);
-                int transBackgroundAppWhich = Settings.System.getInt(getContext().getContentResolver(), Settings.System.TRANSPARENT_BACKGROUND_APP, 0);
-                if ((drawable != null) && (transBackgroundAppWhich != 2)) {
+                if (drawable != null) {
                     drawable.getPadding(mBackgroundPadding);
                 } else {
                     mBackgroundPadding.setEmpty();
