@@ -99,7 +99,7 @@ public class WaveViewBeBe extends View implements ValueAnimator.AnimatorUpdateLi
          * isnt officially supported, but this should do for most cases
          */
         if (densityDpi <= 240 && densityDpi >= 200) {
-            mRingRadius = 800.0f;
+            mRingRadius = 960.0f;
         } else if (densityDpi < 200 && densityDpi >= 160) {
             mRingRadius = 480.0f;
         } else if (densityDpi < 160 && densityDpi >= 120) {
@@ -172,6 +172,7 @@ public class WaveViewBeBe extends View implements ValueAnimator.AnimatorUpdateLi
         mUnlockWave.setScaleY(1.0f);
         mUnlockWave.setAlpha(1.0f);
         mDrawables.add(mUnlockWave);
+	
 
         mUnlockDefault = new DrawableHolder(createDrawable(R.drawable.unlockbebe_default));
         mUnlockDefault.setX(mLockCenterX);
@@ -183,7 +184,7 @@ public class WaveViewBeBe extends View implements ValueAnimator.AnimatorUpdateLi
 
         mUnlockHalo = new DrawableHolder(createDrawable(R.drawable.unlockbebe_halo));
         mUnlockHalo.setX(mLockCenterX);
-        mUnlockHalo.setY(mLockCenterY + 120);
+        mUnlockHalo.setY(mLockCenterY + 540);
         mUnlockHalo.setScaleX(2.0f);
         mUnlockHalo.setScaleY(1.0f);
         mUnlockHalo.setAlpha(0.0f);

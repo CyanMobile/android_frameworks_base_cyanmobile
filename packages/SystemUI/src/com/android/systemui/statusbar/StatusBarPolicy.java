@@ -743,17 +743,17 @@ public class StatusBarPolicy {
 
 
         // load config to determine if phone should be hidden
-        //try {
-        //    mPhoneSignalHidden = mContext.getResources().getBoolean(
-        //        R.bool.config_statusbar_hide_phone_signal);
-        //} catch (Exception e) {
-        //    mPhoneSignalHidden = false;
-        //}
-        mPhoneSignalHidden = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_CM_SIGNAL_TEXT, 0) != 4);
+        try {
+            mPhoneSignalHidden = mContext.getResources().getBoolean(
+                R.bool.config_statusbar_hide_phone_signal);
+        } catch (Exception e) {
+            mPhoneSignalHidden = false;
+        }
+        //mPhoneSignalHidden = (Settings.System.getInt(mContext.getContentResolver(),
+        //        Settings.System.STATUS_BAR_CM_SIGNAL_TEXT, 0) != 4);
 
-        mShowCmSignal = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_CM_SIGNAL_TEXT, 0) != 0);
+        //mShowCmSignal = (Settings.System.getInt(mContext.getContentResolver(),
+        //        Settings.System.STATUS_BAR_CM_SIGNAL_TEXT, 0) != 0);
 
         // hide phone_signal icon if hidden
         mService.setIconVisibility("phone_signal", !mPhoneSignalHidden && !mShowCmSignal);
