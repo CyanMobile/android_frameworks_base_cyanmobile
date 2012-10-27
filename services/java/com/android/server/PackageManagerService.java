@@ -22,6 +22,7 @@ import com.android.internal.app.IMediaContainerService;
 import com.android.internal.app.ResolverActivity;
 import com.android.internal.content.NativeLibraryHelper;
 import com.android.internal.content.PackageHelper;
+import com.android.internal.policy.impl.PhoneWindowManager;
 import com.android.internal.util.FastXmlSerializer;
 import com.android.internal.util.JournaledFile;
 import com.android.internal.util.XmlUtils;
@@ -97,6 +98,7 @@ import android.security.SystemKeyStore;
 import android.util.*;
 import android.view.Display;
 import android.view.WindowManager;
+import android.view.WindowManagerPolicy;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -409,6 +411,10 @@ class PackageManagerService extends IPackageManager.Stub {
 
     // Delay time in millisecs
     static final int BROADCAST_DELAY = 10 * 1000;
+
+    WindowManager mWindowManager;
+    private final WindowManagerPolicy mPolicy; // to set packageName
+
     final private DefaultContainerConnection mDefContainerConn =
             new DefaultContainerConnection();
     class DefaultContainerConnection implements ServiceConnection {
@@ -853,8 +859,9 @@ class PackageManagerService extends IPackageManager.Stub {
             mInstaller = null;
         }
 
-        WindowManager wm = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
-        Display d = wm.getDefaultDisplay();
+        mWindowManager = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
+        Display d = mWindowManager.getDefaultDisplay();
+        mPolicy = new PhoneWindowManager();
         d.getMetrics(mMetrics);
 
         synchronized (mInstallLock) {
@@ -2966,8 +2973,17 @@ class PackageManagerService extends IPackageManager.Stub {
 
         if (pkgs != null) {
             for (int i=0; i<pkgs.size(); i++) {
+                PackageParser.Package p = pkgs.get(i);
                 if (!isFirstBoot()) {
                     try {
+                        // give the packagename to the PhoneWindowManager
+			ApplicationInfo ai;
+			try {
+			    ai = mContext.getPackageManager().getApplicationInfo( p.packageName, 0);
+			} catch (Exception e) {
+			    ai = null;
+			}
+			mPolicy.setPackageName((String) (ai != null ? mContext.getPackageManager().getApplicationLabel(ai) : p.packageName));
                         ActivityManagerNative.getDefault().showBootMessage(
                                 mContext.getResources().getString(
                                         com.android.internal.R.string.android_upgrading_apk,
@@ -2976,7 +2992,6 @@ class PackageManagerService extends IPackageManager.Stub {
                     }
                 }
 
-                PackageParser.Package p = pkgs.get(i);
                 synchronized (mInstallLock) {
                     if (!p.mDidDexOpt) {
                         performDexOptLI(p, false, false);
