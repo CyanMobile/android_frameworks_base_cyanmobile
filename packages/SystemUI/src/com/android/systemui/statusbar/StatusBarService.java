@@ -1183,7 +1183,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mNotifyNone = Settings.System
                 .getInt(resolver, Settings.System.COLOR_NOTIFICATION_NONE, defValuesColor);
         mNoNotificationsTitle.setTextColor(mNotifyNone);
-        if (mStatusBarTab) {
+        if (mStatusBarTab && (mNoNotificationsTitles != null)) {
             mNoNotificationsTitles.setTextColor(mNotifyNone);
         }
         mNotifyTicker = Settings.System
