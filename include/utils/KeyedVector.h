@@ -17,10 +17,6 @@
 #ifndef ANDROID_KEYED_VECTOR_H
 #define ANDROID_KEYED_VECTOR_H
 
-#define GCC_VERSION (__GNUC__ * 10000 \
-                    + __GNUC_MINOR__ * 100 \
-                    + __GNUC_PATCHLEVEL__)
-
 #include <assert.h>
 #include <stdint.h>
 #include <sys/types.h>
@@ -194,11 +190,7 @@ DefaultKeyedVector<KEY,VALUE>::DefaultKeyedVector(const VALUE& defValue)
 
 template<typename KEY, typename VALUE> inline
 const VALUE& DefaultKeyedVector<KEY,VALUE>::valueFor(const KEY& key) const {
-#if GCC_VERSION > 40403
-    ssize_t i = this->indexOfKey(key);
-#else
     ssize_t i = indexOfKey(key);
-#endif
     return i >= 0 ? KeyedVector<KEY,VALUE>::valueAt(i) : mDefault;
 }
 
