@@ -1363,10 +1363,10 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
             // windows that appear on top, ever
             int flags = StatusBarManager.DISABLE_NONE;
             if (mShowing) {
+                flags |= StatusBarManager.DISABLE_NAVIGATION;
                 if (!mHidden) {
                     // showing lockscreen exclusively; disable various extra
                     // statusbar components.
-                    flags |= StatusBarManager.DISABLE_NAVIGATION;
                     flags |= StatusBarManager.DISABLE_CLOCK;
                 }
                 if (isSecure()) {
