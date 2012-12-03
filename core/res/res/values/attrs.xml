@@ -1614,6 +1614,12 @@
         <attr name="hand_hour" format="reference"/>
         <attr name="hand_minute" format="reference"/>
     </declare-styleable>
+    <declare-styleable name="AnalogClockSecond">
+        <attr name="dials" format="reference"/>
+        <attr name="hand_hours" format="reference"/>
+        <attr name="hand_minutes" format="reference"/>
+        <attr name="hand_seconds" format="reference"/>
+    </declare-styleable>
     <declare-styleable name="Button">
     </declare-styleable>
     <declare-styleable name="Chronometer">
