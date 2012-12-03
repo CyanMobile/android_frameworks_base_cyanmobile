@@ -130,7 +130,7 @@ public final class PowerDateView extends TextView {
         Date now = new Date();
         CharSequence dow = DateFormat.format("EEEE", now);
         CharSequence date = DateFormat.getLongDateFormat(mContext).format(now);
-        setText(mContext.getString(R.string.status_bar_date_formatter, dow, date));
+        setText(mContext.getString(R.string.status_bar_date_formatter, dow, date).toUpperCase());
 	setTextColor(mClockColor);
     }
 
