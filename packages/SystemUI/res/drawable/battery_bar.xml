@@ -16,12 +16,6 @@
                         <solid android:color="#ff0000" />
                     </shape>
                 </item>
-                <item android:maxLevel="2000">
-                    <shape>
-                        <corners android:radius="5dip" />
-                        <solid android:color="#ffff00" />
-                    </shape>
-                </item>
                 <item android:maxLevel="10000">
                     <shape>
                         <corners android:radius="5dip" />
