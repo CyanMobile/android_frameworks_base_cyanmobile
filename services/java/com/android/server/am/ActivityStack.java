@@ -3490,14 +3490,6 @@ public class ActivityStack {
                     + Integer.toHexString(r.info.configChanges)
                     + ", newConfig=" + newConfig);
         }
-        // TODO:
-        // !!! Ugly (but effective) hack - temporary gmaps workaround for
-        // occasional segfault in PowerVR SGX lib after orientation change.
-        // Will be removed when the real fix of this issue will be ready.
-        if (r.info.name.equals("com.google.android.maps.MapsActivity")) {
-            startPausingLocked(false, false);
-            return false;
-        }
         if ((changes&(~r.info.configChanges)) != 0) {
             // Aha, the activity isn't handling the change, so DIE DIE DIE.
             r.configChangeFlags |= changes;
