@@ -60,7 +60,14 @@ public class Clock extends TextView {
 
     private static int AM_PM_STYLE = AM_PM_STYLE_GONE;
 
+    private static final int WEEKDAY_STYLE_NORMAL = 0;
+    private static final int WEEKDAY_STYLE_SMALL  = 1;
+    private static final int WEEKDAY_STYLE_GONE   = 2;
+
+    private int WEEKDAY_STYLE = WEEKDAY_STYLE_GONE;
+
     private int mAmPmStyle;
+    private int mWeekdayStyle;
     private boolean mShowClock;
     private boolean mShowClocker;
     private int mClockColor;
@@ -79,6 +86,8 @@ public class Clock extends TextView {
                     Settings.System.STATUS_BAR_AM_PM), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_CLOCK), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_WEEKDAY), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_CLOCKCOLOR), false, this);
             resolver.registerContentObserver(
@@ -220,11 +229,22 @@ public class Clock extends TextView {
         }
         String result = sdf.format(mCalendar.getTime());
 
+        String currentDay = null;
+
+        Calendar calendar = Calendar.getInstance();
+        int day = calendar.get(Calendar.DAY_OF_WEEK);
+
+        if (WEEKDAY_STYLE != WEEKDAY_STYLE_GONE) {
+            currentDay = getDay(day);
+            result = currentDay + result;
+        }
+
+        SpannableStringBuilder formatted = new SpannableStringBuilder(result);
+
         if (AM_PM_STYLE != AM_PM_STYLE_NORMAL) {
             int magic1 = result.indexOf(MAGIC1);
             int magic2 = result.indexOf(MAGIC2);
             if (magic1 >= 0 && magic2 > magic1) {
-                SpannableStringBuilder formatted = new SpannableStringBuilder(result);
                 if (AM_PM_STYLE == AM_PM_STYLE_GONE) {
                     formatted.delete(magic1, magic2+1);
                 } else {
@@ -236,12 +256,51 @@ public class Clock extends TextView {
                     formatted.delete(magic2, magic2 + 1);
                     formatted.delete(magic1, magic1 + 1);
                 }
-                return formatted;
             }
         }
 
-        return result;
+        if (WEEKDAY_STYLE != WEEKDAY_STYLE_NORMAL) {
+            if (currentDay != null) {
+                if (WEEKDAY_STYLE == WEEKDAY_STYLE_GONE) {
+                    formatted.delete(result.indexOf(currentDay), result.lastIndexOf(currentDay)+currentDay.length());
+                } else {
+                    if (WEEKDAY_STYLE == WEEKDAY_STYLE_SMALL) {
+                        CharacterStyle style = new RelativeSizeSpan(0.7f);
+                        formatted.setSpan(style, result.indexOf(currentDay), result.lastIndexOf(currentDay)+currentDay.length(), Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
+                    }
+                }
+            }
+        }
 
+        return formatted;
+    }
+
+    private String getDay(int today) {
+        String currentDay = null;
+        switch (today) {
+            case 1:
+                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_sunday);
+            break;
+            case 2:
+                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_monday);
+            break;
+            case 3:
+                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_tuesday);
+            break;
+            case 4:
+                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_wednesday);
+            break;
+            case 5:
+                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_thursday);
+            break;
+            case 6:
+                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_friday);
+            break;
+            case 7:
+                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_saturday);
+            break;
+        }
+        return currentDay.toUpperCase() + " ";
     }
 
     public void VisibilityChecks(boolean show) {
@@ -256,6 +315,8 @@ public class Clock extends TextView {
         int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
         mAmPmStyle = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_AM_PM, 2));
+        mWeekdayStyle = (Settings.System.getInt(resolver,
+            Settings.System.STATUS_BAR_WEEKDAY, 2));
 	mClockColor = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
         int defValuesFontSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
@@ -266,6 +327,15 @@ public class Clock extends TextView {
 
         if ((mAmPmStyle != AM_PM_STYLE) || (mCColor != mClockColor)) {
             AM_PM_STYLE = mAmPmStyle;
+            mClockFormatString = "";
+
+            if (mAttached) {
+                updateClock();
+            }
+        }
+
+        if (mWeekdayStyle != WEEKDAY_STYLE) {
+            WEEKDAY_STYLE = mWeekdayStyle;
             mClockFormatString = "";
 
             if (mAttached) {
