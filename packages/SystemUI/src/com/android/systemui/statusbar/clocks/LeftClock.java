@@ -339,7 +339,7 @@ public class LeftClock extends TextView {
             mClockFormatString = "";
 
             if (mAttached) {
-                updateClock();
+                updateLeftClock();
             }
         }
 

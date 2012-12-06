@@ -339,7 +339,7 @@ public class CenterClock extends TextView {
             mClockFormatString = "";
 
             if (mAttached) {
-                updateClock();
+                updateCenterClock();
             }
         }
 
