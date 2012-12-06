@@ -16,6 +16,8 @@ import android.os.Handler;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
 import android.widget.ProgressBar;
 
 public class CmBatteryBar extends ProgressBar implements Animatable, Runnable {
@@ -27,6 +29,9 @@ public class CmBatteryBar extends ProgressBar implements Animatable, Runnable {
 
     // Duration between frames of charging animation
     private static final int FRAME_DURATION = ANIM_DURATION / 100;
+
+    // Battery level to stop animation
+    private static final int STOP_ANIMATION_LEVEL = 95;
 
     // Are we listening for actions?
     private boolean mAttached = false;
@@ -45,6 +50,8 @@ public class CmBatteryBar extends ProgressBar implements Animatable, Runnable {
     private boolean mBatteryCharging = false;
 
     private Handler mHandler = new Handler();
+
+    private Interpolator mInterpolator = new DecelerateInterpolator();
 
     class SettingsObserver extends ContentObserver {
 
@@ -113,8 +120,9 @@ public class CmBatteryBar extends ProgressBar implements Animatable, Runnable {
             String action = intent.getAction();
             if (Intent.ACTION_BATTERY_CHANGED.equals(action)) {
                 mBatteryLevel = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
-                mBatteryCharging = intent.getIntExtra(BatteryManager.EXTRA_STATUS, 0) == BatteryManager.BATTERY_STATUS_CHARGING;
-                if (mBatteryCharging && mBatteryLevel < 100) {
+                mBatteryCharging = intent.getIntExtra(BatteryManager.EXTRA_STATUS,
+                        BatteryManager.BATTERY_STATUS_UNKNOWN) == BatteryManager.BATTERY_STATUS_CHARGING;
+                if (mBatteryCharging && mBatteryLevel < STOP_ANIMATION_LEVEL) {
                     start();
                 } else {
                     stop();
@@ -122,7 +130,7 @@ public class CmBatteryBar extends ProgressBar implements Animatable, Runnable {
             } else if (Intent.ACTION_SCREEN_OFF.equals(action)) {
                 stop();
             } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
-                if (mBatteryCharging && mBatteryLevel < 100) {
+                if (mBatteryCharging && mBatteryLevel < STOP_ANIMATION_LEVEL) {
                     start();
                 }
             }
@@ -166,7 +174,7 @@ public class CmBatteryBar extends ProgressBar implements Animatable, Runnable {
             }
         }
 
-        if (mBatteryCharging && mBatteryLevel < 100) {
+        if (mBatteryCharging && mBatteryLevel < STOP_ANIMATION_LEVEL) {
             start();
         } else {
             stop();
@@ -180,7 +188,9 @@ public class CmBatteryBar extends ProgressBar implements Animatable, Runnable {
             mChargingLevel = mBatteryLevel;
         }
         setProgress(mChargingLevel);
-        mHandler.postDelayed(this, FRAME_DURATION);
+        long delay = (long) (FRAME_DURATION * mInterpolator
+                .getInterpolation(100 / (float) mChargingLevel));
+        mHandler.postDelayed(this, delay);
     }
 
     @Override
@@ -188,7 +198,7 @@ public class CmBatteryBar extends ProgressBar implements Animatable, Runnable {
         if (!isRunning()) {
             mHandler.removeCallbacks(this);
             mChargingLevel = mBatteryLevel;
-            mHandler.postDelayed(this, FRAME_DURATION);
+            mHandler.post(this);
         }
     }
 

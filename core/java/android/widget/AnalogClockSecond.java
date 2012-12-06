@@ -221,7 +221,7 @@ public class AnalogClockSecond extends View {
         canvas.restore();
 
         canvas.save();
-        canvas.rotate(mSeconds / 60.0f * 360.0f, x, y);
+        canvas.rotate(mSeconds / 1.0f * 360.0f, x, y);
 
         final Drawable secondHand = mSecondHand;
         if (changed) {

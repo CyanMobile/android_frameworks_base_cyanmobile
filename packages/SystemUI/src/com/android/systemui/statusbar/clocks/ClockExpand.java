@@ -79,6 +79,8 @@ public class ClockExpand extends TextView {
                     Settings.System.STATUSBAR_MORE_EXPANDED), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_CLOCKCOLOR), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_CLOCKEXPAND), false, this);
         }
 
         @Override public void onChange(boolean selfChange) {
@@ -258,8 +260,10 @@ public class ClockExpand extends TextView {
             }
         }
 
-        mShowClock = (Settings.System.getInt(resolver,
-                Settings.System.STATUSBAR_MORE_EXPANDED, 1) != 1);
+        mShowClock = ((Settings.System.getInt(resolver,
+                Settings.System.STATUSBAR_MORE_EXPANDED, 1) != 1) && 
+               (Settings.System.getInt(resolver,
+                Settings.System.STATUS_BAR_CLOCKEXPAND, 1) == 1));
 
         if(mShowClock)
             setVisibility(View.VISIBLE);

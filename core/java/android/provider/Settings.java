@@ -2975,6 +2975,15 @@ public final class Settings {
         public static final String STATUS_BAR_CLOCK = "status_bar_clock";
 
         /**
+         * Whether to show the clock in expanded
+         * 0: don't show the clock
+         * 1: show the clock
+         * default: 1
+         * @hide
+         */
+        public static final String STATUS_BAR_CLOCKEXPAND = "status_bar_clockexpand";
+
+        /**
          * Whether to show the intruder alert in status bar
          * 0: don't show the intruder alert
          * 1: show the intruder alert
