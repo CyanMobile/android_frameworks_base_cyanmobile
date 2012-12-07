@@ -2975,6 +2975,16 @@ public final class Settings {
         public static final String STATUS_BAR_CLOCK = "status_bar_clock";
 
         /**
+         * Display style of the day of the week before clock in status bar
+         * 0: Normal display
+         * 1: Small display
+         * 2: No display	
+         * default: 2
+         * @hide
+         */
+        public static final String STATUS_BAR_WEEKDAY = "status_bar_weekday";
+
+        /**
          * Whether to show the clock in expanded
          * 0: don't show the clock
          * 1: show the clock
