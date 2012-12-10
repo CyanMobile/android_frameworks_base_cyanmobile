@@ -1995,6 +1995,14 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
+    private void runTaskSwitcher() {
+        Intent intentx = new Intent(Intent.ACTION_MAIN);
+        intentx.setClassName("com.cyanmobile.TaskSwitcher", "com.cyanmobile.TaskSwitcher.TaskSwitcherMainActivity");
+        intentx.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        getContext().startActivity(intentx);
+    }
+
     /**
      * Runnable to hold simulate a keypress.
      *

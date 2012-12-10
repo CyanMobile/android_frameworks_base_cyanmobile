@@ -3003,6 +3003,13 @@ public final class Settings {
         public static final String STATUS_BAR_INTRUDER_ALERT = "status_bar_clock_intruder_alert";
 
         /**
+         * choose long time to show the intruder alert in status bar
+         * default: 3000
+         * @hide
+         */
+        public static final String STATUS_BAR_INTRUDER_TIME = "status_bar_clock_intruder_time";
+
+        /**
           * Volume keys control cursor in text fields (default is 0)
           * 0 - Disabled
           * 1 - Volume up/down moves cursor to left/right
