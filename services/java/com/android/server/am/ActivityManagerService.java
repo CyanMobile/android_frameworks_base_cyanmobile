@@ -263,6 +263,8 @@ public final class ActivityManagerService extends ActivityManagerNative
     
     // GMAPS NLS HACK	
     static boolean GMAPS_HACK;
+    static final String GMAPS_OLDNLS = 
+            "com.google.android.apps.maps/com.google.android.location.internal.server.NetworkLocationService";
     static final String GMAPS_NLS = 
             "com.google.android.apps.maps/com.google.android.location.internal.server.GoogleLocationService";
 
@@ -9087,7 +9089,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         //r.dump("  ");
 
         GMAPS_HACK = "1".equals(SystemProperties.get("persist.sys.gmaps_hack", "0"));
-        if (GMAPS_HACK && r.shortName.equals(GMAPS_NLS)
+        if (GMAPS_HACK && (r.shortName.equals(GMAPS_OLDNLS) || r.shortName.equals(GMAPS_NLS))
                 && getProcessRecordLocked("com.google.android.apps.maps",
                 r.appInfo.uid) == null) {
             // Slog.i(TAG, "Not starting Gmaps NetworkLocationService, Gmaps are not running!");
@@ -9885,7 +9887,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                             // We are done with the associated start arguments.
                             r.findDeliveredStart(startId, true);
                             // Don't stop if killed.
-                            if (GMAPS_HACK && r.shortName.equals(GMAPS_NLS)) {
+                            if (GMAPS_HACK && (r.shortName.equals(GMAPS_OLDNLS) || r.shortName.equals(GMAPS_NLS))) {
                                 // Slog.i(TAG, "Stop Gmaps NetworkLocationService if killed.");
                                 r.stopIfKilled = true;
                             } else {
@@ -11819,7 +11821,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     // Don't kill this process because it is doing work; it
                     // has said it is doing work.
                     app.keeping = true;
-                    if (GMAPS_HACK && s.shortName.equals(GMAPS_NLS)
+                    if (GMAPS_HACK && (s.shortName.equals(GMAPS_OLDNLS) || s.shortName.equals(GMAPS_NLS))
                             && getProcessRecordLocked("com.google.android.apps.maps",
                             s.appInfo.uid) == null) {
                         // Slog.i(TAG, "Let the Gmaps NetworkLocationService die! Gmaps are not running!");

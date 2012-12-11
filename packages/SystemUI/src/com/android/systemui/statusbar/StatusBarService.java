@@ -301,6 +301,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     int mNotifyLatest;
     int mNotifyOngoing;
     int mSettingsColor;
+    int IntruderTime;
 
     LinearLayout mAvalMemLayout;
     TextView memHeader;
@@ -509,6 +510,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
             mBrightnessControl = !autoBrightness && Settings.System.getInt(
                     resolver, Settings.System.STATUS_BAR_BRIGHTNESS_TOGGLE, 0) == 1;
+            IntruderTime = Settings.System.getInt(resolver,
+                    Settings.System.STATUS_BAR_INTRUDER_TIME, INTRUDER_ALERT_DECAY_MS);
             updateColors();
             updateLayout();
             updateCarrierLabel();
@@ -706,6 +709,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
             mBrightnessControl = !autoBrightness && Settings.System.getInt(
                     getContentResolver(), Settings.System.STATUS_BAR_BRIGHTNESS_TOGGLE, 0) == 1;
+            IntruderTime = Settings.System.getInt(getContentResolver(),
+                    Settings.System.STATUS_BAR_INTRUDER_TIME, INTRUDER_ALERT_DECAY_MS);
 
         if (!mStatusBarTab) {
             mExpandedView = (ExpandedView)View.inflate(context,
@@ -1648,7 +1653,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mHandler.sendEmptyMessage(MSG_SHOW_INTRUDER);
         mHandler.removeMessages(MSG_HIDE_INTRUDER);
-        mHandler.sendEmptyMessageDelayed(MSG_HIDE_INTRUDER, INTRUDER_ALERT_DECAY_MS);
+        mHandler.sendEmptyMessageDelayed(MSG_HIDE_INTRUDER, IntruderTime);
 
     }
 

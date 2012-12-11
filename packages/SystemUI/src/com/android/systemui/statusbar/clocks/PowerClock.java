@@ -166,7 +166,7 @@ public class PowerClock extends TextView {
         boolean b24 = DateFormat.is24HourFormat(context);
         int res;
 
-        if (b24 && AM_PM_STYLE == AM_PM_STYLE_GONE) {
+        if (b24) {
             res = R.string.twenty_four_hour_time_format;
         } else {
             res = R.string.twelve_hour_time_format;
