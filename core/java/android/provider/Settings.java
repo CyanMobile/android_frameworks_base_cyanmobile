@@ -3470,6 +3470,48 @@ public final class Settings {
         public static final String STATUS_BAR_FOURG = "status_bar_fourg";
 
         /**
+         * Show the weather on the lock screen
+         * @hide
+         */
+        public static final String LOCKSCREEN_WEATHER = "lockscreen_weather";
+
+        /**
+         * Show the current weather location on the lock screen
+         * @hide
+         */
+        public static final String WEATHER_SHOW_LOCATION = "weather_show_location";
+
+        /**
+         * Show the current weather location on the lock screen
+         * @hide
+         */
+        public static final String WEATHER_SHOW_TIMESTAMP = "weather_show_timestamp";
+
+        /**
+         * Use the custom/manually configured weather location
+         * @hide
+         */
+        public static final String WEATHER_USE_CUSTOM_LOCATION = "weather_use_custom_location";
+
+        /**
+         * Stores the custom/manually configured weather location
+         * @hide
+         */
+        public static final String WEATHER_CUSTOM_LOCATION = "weather_custom_location";
+
+        /**
+         * Stores the weather update frequency
+         * @hide
+         */
+        public static final String WEATHER_UPDATE_INTERVAL = "weather_update_interval";
+
+        /**
+         * Use Metric measurements (celcius, km/h) for weather data
+         * @hide
+         */
+        public static final String WEATHER_USE_METRIC = "weather_use_metric";
+
+        /**
          * Whether to wake the screen with the trackball. The value is boolean (1 or 0).
          * @hide
          */
