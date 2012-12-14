@@ -40,6 +40,19 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import org.w3c.dom.Document;
+import android.text.format.DateFormat;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationManager;
+import com.android.internal.util.weather.HttpRetriever;
+import com.android.internal.util.weather.WeatherInfo;
+import com.android.internal.util.weather.WeatherXmlParser;
+import com.android.internal.util.weather.YahooPlaceFinder;
+
 import com.android.systemui.R;
 
 /**
@@ -51,46 +64,12 @@ public class WeatherPopup extends QuickSettings {
     }
     private static final boolean DEBUG = false;
 
-    private static final String LOG_TAG = "WeatherPopup";
+    private static final String TAG = "WeatherPopup";
 
-    // Interval between forced polls of the weather widget.
-    private final long QUERY_WEATHER_DELAY = 60 * 60 * 1000; // 1 hr
-
-    // Internal message IDs.
-    private final int QUERY_WEATHER_DATA_MSG     = 0x1000;
-    private final int UPDATE_WEATHER_DISPLAY_MSG = 0x1001;
-
-    // Weather widget query information.
-    private static final String GENIE_PACKAGE_ID = "com.google.android.apps.genie.geniewidget";
-    private static final String WEATHER_CONTENT_AUTHORITY = GENIE_PACKAGE_ID + ".weather";
-    private static final String WEATHER_CONTENT_PATH = "/weather/current";
-    private static final String[] WEATHER_CONTENT_COLUMNS = new String[] {
-            "location",
-            "timestamp",
-            "temperature",
-            "highTemperature",
-            "lowTemperature",
-            "iconUrl",
-            "iconResId",
-            "description",
-        };
-
-    private static final String ACTION_GENIE_REFRESH = "com.google.android.apps.genie.REFRESH";
-
-    private TextView mWeatherCurrentTemperature;
-    private TextView mWeatherHighTemperature;
-    private TextView mWeatherLowTemperature;
-    private TextView mWeatherLocation;
-    private ImageView mWeatherIcon;
+    private TextView mWeatherCity, mWeatherCondition, mWeatherLowHigh, mWeatherTemp, mWeatherUpdateTime;
+    private ImageView mWeatherImage;
     private ViewGroup root;
-
-    private String mWeatherCurrentTemperatureString;
-    private String mWeatherHighTemperatureString;
-    private String mWeatherLowTemperatureString;
-    private String mWeatherLocationString;
-    private Drawable mWeatherIconDrawable;
-
-    private Resources mGenieResources = null;
+    private Context mContext;
 
     @Override
     protected void onCreate() {
@@ -98,204 +77,272 @@ public class WeatherPopup extends QuickSettings {
         LayoutInflater inflater =
                 (LayoutInflater) this.anchor.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
+        mContext = this.anchor.getContext();
+
         root = (ViewGroup)inflater.inflate(R.layout.weatherpopup, null);
 
-        mWeatherCurrentTemperature = (TextView) root.findViewById(R.id.weather_temperature);
-        mWeatherHighTemperature = (TextView) root.findViewById(R.id.weather_high_temperature);
-        mWeatherLowTemperature = (TextView) root.findViewById(R.id.weather_low_temperature);
-        mWeatherLocation = (TextView) root.findViewById(R.id.weather_location);
-        mWeatherIcon = (ImageView) root.findViewById(R.id.weather_icon);
+        mWeatherCity = (TextView) root.findViewById(R.id.weather_city);
+        mWeatherCondition = (TextView) root.findViewById(R.id.weather_condition);
+        mWeatherTemp = (TextView) root.findViewById(R.id.weather_temp);
+        mWeatherLowHigh = (TextView) root.findViewById(R.id.weather_low_high);
+        mWeatherUpdateTime = (TextView) root.findViewById(R.id.update_time);
+        mWeatherImage = (ImageView) root.findViewById(R.id.weather_image);
 
-        mWeatherIcon.setOnClickListener(new View.OnClickListener() {
+        mWeatherImage.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                if (!supportsWeatherIcon()) return;
-
-                Intent genieAppQuery = v.getContext().getPackageManager()
-                    .getLaunchIntentForPackage(GENIE_PACKAGE_ID)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                if (genieAppQuery != null) {
-                    v.getContext().startActivity(genieAppQuery);
+                if (mWeatherCondition != null) {
+                    mWeatherCondition.setText(com.android.internal.R.string.weather_refreshing);
                 }
-                dismiss();
+
+                if (!mHandler.hasMessages(QUERY_WEATHER)) {
+                   mHandler.sendEmptyMessage(QUERY_WEATHER);
+                }
             }
         });
 
         this.setContentView(root);
     }
 
-    private final Handler mHandy = new Handler() {
+
+    /*
+     * CyanogenMod Lock screen Weather related functionality
+     */
+    private static final String URL_YAHOO_API_WEATHER = "http://weather.yahooapis.com/forecastrss?w=%s&u=";
+    private static WeatherInfo mWeatherInfo = new WeatherInfo();
+    private static final int QUERY_WEATHER = 0;
+    private static final int UPDATE_WEATHER = 1;
+
+    private Handler mHandler = new Handler() {
         @Override
-        public void handleMessage(Message m) {
-            if (m.what == QUERY_WEATHER_DATA_MSG) {
-                new Thread() { public void run() { queryWeatherData(); } }.start();
-                scheduleWeatherQueryDelayed(QUERY_WEATHER_DELAY);
-            } else if (m.what == UPDATE_WEATHER_DISPLAY_MSG) {
-                updateWeatherDisplay();
-            }
-        }
-    };
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+            case QUERY_WEATHER:
+                Thread queryWeather = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        LocationManager locationManager = (LocationManager) mContext.
+                                getSystemService(Context.LOCATION_SERVICE);
+                        final ContentResolver resolver = mContext.getContentResolver();
+                        boolean useCustomLoc = Settings.System.getInt(resolver,
+                                Settings.System.WEATHER_USE_CUSTOM_LOCATION, 0) == 1;
+                        String customLoc = Settings.System.getString(resolver,
+                                    Settings.System.WEATHER_CUSTOM_LOCATION);
+                        String woeid = null;
 
-    private final ContentObserver mContentObserver = new ContentObserver(mHandy) {
-        @Override
-        public void onChange(boolean selfChange) {
-            if (DEBUG) Log.d(LOG_TAG, "content observer notified that weather changed");
-            refreshWeather();
-        }
-    };
-
-    // Tell the Genie widget to load new data from the network.
-    private void requestWeatherDataFetch() {
-        if (DEBUG) Log.d(LOG_TAG, "forcing the Genie widget to update weather now...");
-        this.anchor.getContext().sendBroadcast(new Intent(ACTION_GENIE_REFRESH).putExtra("requestWeather", true));
-        // we expect the result to show up in our content observer
-    }
-
-    private boolean supportsWeatherIcon() {
-        return (mGenieResources != null);
-    }
-
-    private void scheduleWeatherQueryDelayed(long delay) {
-        // cancel any existing scheduled queries
-        unscheduleWeatherQuery();
-
-        if (DEBUG) Log.d(LOG_TAG, "scheduling weather fetch message for " + delay + "ms from now");
-
-        mHandy.sendEmptyMessageDelayed(QUERY_WEATHER_DATA_MSG, delay);
-    }
-
-    private void unscheduleWeatherQuery() {
-        mHandy.removeMessages(QUERY_WEATHER_DATA_MSG);
-    }
-
-    private void queryWeatherData() {
-        // if we couldn't load the weather widget's resources, we simply
-        // assume it's not present on the device.
-        if (mGenieResources == null) return;
-
-        Uri queryUri = new Uri.Builder()
-            .scheme(android.content.ContentResolver.SCHEME_CONTENT)
-            .authority(WEATHER_CONTENT_AUTHORITY)
-            .path(WEATHER_CONTENT_PATH)
-            .appendPath(new Long(System.currentTimeMillis()).toString())
-            .build();
-
-        if (DEBUG) Log.d(LOG_TAG, "querying genie: " + queryUri);
-
-        Cursor cur;
-        try {
-            cur = this.anchor.getContext().getContentResolver().query(
-                queryUri,
-                WEATHER_CONTENT_COLUMNS,
-                null,
-                null,
-                null);
-        } catch (RuntimeException e) {
-            Log.e(LOG_TAG, "Weather query failed", e);
-            cur = null;
-        }
-
-        if (cur != null && cur.moveToFirst()) {
-            if (DEBUG) {
-                java.lang.StringBuilder sb =
-                    new java.lang.StringBuilder("Weather query result: {");
-                for(int i=0; i<cur.getColumnCount(); i++) {
-                    if (i>0) sb.append(", ");
-                    sb.append(cur.getColumnName(i))
-                        .append("=")
-                        .append(cur.getString(i));
+                        // custom location
+                        if (customLoc != null && useCustomLoc) {
+                            try {
+                                woeid = YahooPlaceFinder.GeoCode(mContext, customLoc);
+                                if (DEBUG)
+                                    Log.d(TAG, "Yahoo location code for " + customLoc + " is " + woeid);
+                            } catch (Exception e) {
+                                Log.e(TAG, "ERROR: Could not get Location code");
+                                e.printStackTrace();
+                            }
+                        // network location
+                        } else {
+                            Criteria crit = new Criteria();
+                            crit.setAccuracy(Criteria.ACCURACY_COARSE);
+                            String bestProvider = locationManager.getBestProvider(crit, true);
+                            Location loc = null;
+                            if (bestProvider != null) {
+                                loc = locationManager.getLastKnownLocation(bestProvider);
+                            } else {
+                                loc = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
+                            }
+                            try {
+                                woeid = YahooPlaceFinder.reverseGeoCode(mContext, loc.getLatitude(),
+                                        loc.getLongitude());
+                                if (DEBUG)
+                                    Log.d(TAG, "Yahoo location code for current geolocation is " + woeid);
+                            } catch (Exception e) {
+                                Log.e(TAG, "ERROR: Could not get Location code");
+                                e.printStackTrace();
+                            }
+                        }
+                        Message msg = Message.obtain();
+                        msg.what = UPDATE_WEATHER;
+                        msg.obj = woeid;
+                        mHandler.sendMessage(msg);
+                    }
+                });
+                queryWeather.setPriority(Thread.MIN_PRIORITY);
+                queryWeather.start();
+                break;
+            case UPDATE_WEATHER:
+                String woeid = (String) msg.obj;
+                if (woeid != null) {
+                    if (DEBUG) {
+                        Log.d(TAG, "Location code is " + woeid);
+                    }
+                    WeatherInfo w = null;
+                    try {
+                        w = parseXml(getDocument(woeid));
+                    } catch (Exception e) {
+                    }
+                    if (w == null) {
+                        setNoWeatherData();
+                    } else {
+                        setWeatherData(w);
+                        mWeatherInfo = w;
+                    }
+                } else {
+                    if (mWeatherInfo.temp.equals(WeatherInfo.NODATA)) {
+                        setNoWeatherData();
+                    } else {
+                        setWeatherData(mWeatherInfo);
+                    }
                 }
-                sb.append("}");
-                Log.d(LOG_TAG, sb.toString());
+                break;
+            }
+        }
+    };
+
+    /**
+     * Reload the weather forecast
+     */
+    private void refreshWeather() {
+        final ContentResolver resolver = this.anchor.getContext().getContentResolver();
+            final long interval = Settings.System.getLong(resolver,
+                    Settings.System.WEATHER_UPDATE_INTERVAL, 60); // Default to hourly
+            boolean manualSync = (interval == 0);
+            if (!manualSync && (((System.currentTimeMillis() - mWeatherInfo.last_sync) / 60000) >= interval)) {
+                mHandler.sendEmptyMessage(QUERY_WEATHER);
+            } else if (manualSync && mWeatherInfo.last_sync == 0) {
+                setNoWeatherData();
+            } else {
+                setWeatherData(mWeatherInfo);
+            }
+    }
+
+    /**
+     * Display the weather information
+     * @param w
+     */
+    private void setWeatherData(WeatherInfo w) {
+        final ContentResolver resolver = this.anchor.getContext().getContentResolver();
+        final Resources res = this.anchor.getContext().getResources();
+        boolean showLocation = Settings.System.getInt(resolver,
+                Settings.System.WEATHER_SHOW_LOCATION, 1) == 1;
+        boolean showTimestamp = Settings.System.getInt(resolver,
+                Settings.System.WEATHER_SHOW_TIMESTAMP, 1) == 1;
+        boolean invertLowhigh = Settings.System.getInt(resolver,
+                Settings.System.WEATHER_INVERT_LOWHIGH, 0) == 1;
+
+            if (mWeatherImage != null) {
+                String conditionCode = w.condition_code;
+                String condition_filename = "weather_" + conditionCode;
+                int resID = res.getIdentifier(condition_filename, "drawable",
+                        this.anchor.getContext().getPackageName());
+
+                if (DEBUG)
+                    Log.d("Weather", "Condition:" + conditionCode + " ID:" + resID);
+
+                if (resID != 0) {
+                    mWeatherImage.setImageDrawable(res.getDrawable(resID));
+                } else {
+                    mWeatherImage.setImageResource(com.android.internal.R.drawable.weather_na);
+                }
+            }
+            if (mWeatherTemp != null) {
+                mWeatherTemp.setText(w.temp);
+            }
+            if (mWeatherCity != null) {
+                mWeatherCity.setText(w.city);
+                mWeatherCity.setVisibility(showLocation ? View.VISIBLE : View.GONE);
+            }
+            if (mWeatherCondition != null) {
+                mWeatherCondition.setText(w.condition);
+            }
+            if (mWeatherLowHigh != null) {
+                mWeatherLowHigh.setText(invertLowhigh ? w.high + " | " + w.low : w.low + " | " + w.high);
+            }
+            if (mWeatherUpdateTime != null) {
+                Date lastTime = new Date(mWeatherInfo.last_sync);
+                String date = DateFormat.getDateFormat(this.anchor.getContext()).format(lastTime);
+                String time = DateFormat.getTimeFormat(this.anchor.getContext()).format(lastTime);
+                mWeatherUpdateTime.setText(date + " " + time);
+                mWeatherUpdateTime.setVisibility(showTimestamp ? View.VISIBLE : View.GONE);
+            }
+    }
+
+    /**
+     * There is no data to display, display 'empty' fields and the
+     * 'Tap to reload' message
+     */
+    private void setNoWeatherData() {
+        final ContentResolver resolver = this.anchor.getContext().getContentResolver();
+        boolean useMetric = Settings.System.getInt(resolver,
+                Settings.System.WEATHER_USE_METRIC, 1) == 1;
+
+            if (mWeatherImage != null) {
+                mWeatherImage.setImageResource(com.android.internal.R.drawable.weather_na);
+            }
+            if (mWeatherTemp != null) {
+                mWeatherTemp.setVisibility(View.GONE);
+            }
+            if (mWeatherCity != null) {
+                mWeatherCity.setText(com.android.internal.R.string.weather_no_data);
+                mWeatherCity.setVisibility(View.VISIBLE);
+            }
+            if (mWeatherCondition != null) {
+                mWeatherCondition.setText(com.android.internal.R.string.weather_tap_to_refresh);
+            }
+            if (mWeatherLowHigh != null) {
+                mWeatherLowHigh.setVisibility(View.GONE);
+            }
+            if (mWeatherUpdateTime != null) {
+                mWeatherUpdateTime.setVisibility(View.GONE);
+            }
+    }
+
+    /**
+     * Get the weather forecast XML document for a specific location
+     * @param woeid
+     * @return
+     */
+    private Document getDocument(String woeid) {
+        try {
+            boolean celcius = Settings.System.getInt(this.anchor.getContext().getContentResolver(),
+                    Settings.System.WEATHER_USE_METRIC, 1) == 1;
+            String urlWithDegreeUnit;
+
+            if (celcius) {
+                urlWithDegreeUnit = URL_YAHOO_API_WEATHER + "c";
+            } else {
+                urlWithDegreeUnit = URL_YAHOO_API_WEATHER + "f";
             }
 
-            mWeatherIconDrawable = mGenieResources.getDrawable(cur.getInt(
-                cur.getColumnIndexOrThrow("iconResId")));
-
-            mWeatherLocationString = cur.getString(
-                cur.getColumnIndexOrThrow("location"));
-
-            // any of these may be NULL
-            final int colTemp = cur.getColumnIndexOrThrow("temperature");
-            final int colHigh = cur.getColumnIndexOrThrow("highTemperature");
-            final int colLow = cur.getColumnIndexOrThrow("lowTemperature");
-
-            mWeatherCurrentTemperatureString =
-                cur.isNull(colTemp)
-                    ? "\u2014"
-                    : String.format("%d\u00b0", cur.getInt(colTemp));
-            mWeatherHighTemperatureString =
-                cur.isNull(colHigh)
-                    ? "\u2014"
-                    : String.format("%d\u00b0", cur.getInt(colHigh));
-            mWeatherLowTemperatureString =
-                cur.isNull(colLow)
-                    ? "\u2014"
-                    : String.format("%d\u00b0", cur.getInt(colLow));
-        } else {
-            Log.w(LOG_TAG, "No weather information available (cur="
-                + cur +")");
-            mWeatherIconDrawable = null;
-            mWeatherLocationString = this.anchor.getContext().getString(R.string.weather_fetch_failure);
-            mWeatherCurrentTemperatureString =
-                mWeatherHighTemperatureString =
-                mWeatherLowTemperatureString = "";
+            return new HttpRetriever().getDocumentFromURL(String.format(urlWithDegreeUnit, woeid));
+        } catch (IOException e) {
+            Log.e(TAG, "Error querying Yahoo weather");
         }
 
-        if (cur != null) {
-            // clean up cursor
-            cur.close();
+        return null;
+    }
+
+    /**
+     * Parse the weather XML document
+     * @param wDoc
+     * @return
+     */
+    private WeatherInfo parseXml(Document wDoc) {
+        try {
+            return new WeatherXmlParser(this.anchor.getContext()).parseWeatherResponse(wDoc);
+        } catch (Exception e) {
+            Log.e(TAG, "Error parsing Yahoo weather XML document");
+            e.printStackTrace();
         }
-
-        mHandy.sendEmptyMessage(UPDATE_WEATHER_DISPLAY_MSG);
-    }
-
-    private void refreshWeather() {
-        if (supportsWeatherIcon())
-            scheduleWeatherQueryDelayed(0);
-        updateWeatherDisplay(); // in case we have it cached
-    }
-
-    private void updateWeatherDisplay() {
-        if (mWeatherCurrentTemperature == null) return;
-
-        mWeatherCurrentTemperature.setText(mWeatherCurrentTemperatureString);
-        mWeatherHighTemperature.setText(mWeatherHighTemperatureString);
-        mWeatherLowTemperature.setText(mWeatherLowTemperatureString);
-        mWeatherLocation.setText(mWeatherLocationString);
-        mWeatherIcon.setImageDrawable(mWeatherIconDrawable);
+        return null;
     }
 
     @Override
     protected void onShow() {
-        initViews();
-        // Listen for updates to weather data
-        Uri weatherNotificationUri = new Uri.Builder()
-            .scheme(android.content.ContentResolver.SCHEME_CONTENT)
-            .authority(WEATHER_CONTENT_AUTHORITY)
-            .path(WEATHER_CONTENT_PATH)
-            .build();
-        this.anchor.getContext().getContentResolver().registerContentObserver(
-            weatherNotificationUri, true, mContentObserver);
-
-        if (supportsWeatherIcon()) {
-            requestWeatherDataFetch();
-        }
+        refreshWeather();
     }
 
     @Override
     public void dismiss() {
-        this.anchor.getContext().getContentResolver().unregisterContentObserver(mContentObserver);
-        unscheduleWeatherQuery();
 	this.dismiss();
     }
-
-    private void initViews() {
-        try {
-            mGenieResources = this.anchor.getContext().getPackageManager().getResourcesForApplication(GENIE_PACKAGE_ID);
-        } catch (PackageManager.NameNotFoundException e) {
-            // no weather info available
-            Log.w(LOG_TAG, "Can't find "+GENIE_PACKAGE_ID+". Weather forecast will not be available.");
-        }
-    }
-
 }

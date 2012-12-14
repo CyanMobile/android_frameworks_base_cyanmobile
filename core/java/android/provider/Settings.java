@@ -3512,6 +3512,12 @@ public final class Settings {
         public static final String WEATHER_USE_METRIC = "weather_use_metric";
 
         /**
+         * Invert low/high temperature display	
+         * @hide	
+         */	
+        public static final String WEATHER_INVERT_LOWHIGH = "weather_invert_lowhigh";
+
+        /**
          * Whether to wake the screen with the trackball. The value is boolean (1 or 0).
          * @hide
          */

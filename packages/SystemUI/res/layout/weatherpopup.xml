@@ -20,31 +20,29 @@
         android:layout_height="wrap_content"
         android:background="@android:drawable/alert_dark_frame" >
     <TableRow>
-        <ImageView android:id="@+id/weather_icon"
+        <ImageView android:id="@+id/weather_image"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:scaleType="centerInside"
             android:gravity="center"
             />
-        <TextView android:id="@+id/weather_temperature"
+        <TextView android:id="@+id/weather_temp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center_vertical|center_horizontal"
-            android:textSize="46sp"
+            android:textSize="42sp"
             android:textColor="?android:attr/textColorPrimary"
             />
     </TableRow>
  <TableRow>
-    <TextView android:id="@+id/weather_location"
+    <TextView android:id="@+id/weather_city"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center_vertical|center_horizontal"
         android:textSize="18sp"
         android:textColor="#ffffffff"
         />
-  </TableRow>
-    <TableRow>
-        <TextView android:id="@+id/weather_high_temperature"
+        <TextView android:id="@+id/weather_condition"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center_vertical|center_horizontal"
@@ -52,12 +50,22 @@
             android:textStyle="bold"
             android:textColor="?android:attr/textColorPrimary"
             />
-        <TextView android:id="@+id/weather_low_temperature"
+  </TableRow>
+    <TableRow>
+        <TextView android:id="@+id/weather_low_high"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center_vertical|center_horizontal"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:textColor="?android:attr/textColorSecondary"
+            />
+        <TextView android:id="@+id/update_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical|center_horizontal"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary"
             />
     </TableRow>
 </TableLayout>

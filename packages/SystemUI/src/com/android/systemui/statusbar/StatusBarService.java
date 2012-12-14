@@ -351,6 +351,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private boolean mNaviShow = true;
     private boolean mStatusBarReverse = false;
     private boolean mStatusBarTab = false;
+    private boolean mStatusBarGrid = false;
     private boolean LogoStatusBar = false;
     private boolean mShowCmBatteryStatusBar = false;
     private boolean mShowCmBatterySideBar = false;
@@ -499,6 +500,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.STATUS_BAR_SETTINGSCOLOR, defValuesColor));
             mStatusBarTab = (Settings.System.getInt(resolver,
                     Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4);
+            mStatusBarGrid = (Settings.System.getInt(resolver,
+                    Settings.System.EXPANDED_VIEW_WIDGET, 1) == 3);
             mNaviShow = (Settings.System.getInt(resolver,
                     Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
             mTinyExpanded = (Settings.System.getInt(resolver,
@@ -698,6 +701,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.STATUS_BAR_SETTINGSCOLOR, defValuesColor));
             mStatusBarTab = (Settings.System.getInt(getContentResolver(),
                     Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4);
+            mStatusBarGrid = (Settings.System.getInt(getContentResolver(),
+                    Settings.System.EXPANDED_VIEW_WIDGET, 1) == 3);
             mNaviShow = (Settings.System.getInt(getContentResolver(),
                     Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
             mTinyExpanded = (Settings.System.getInt(getContentResolver(),
@@ -1411,7 +1416,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         // remove involved views
         powerAndCarrier.removeView(power);
-        if (!mStatusBarTab) {
+        if (mStatusBarGrid) {
             powerAndCarrier.removeView(powerOne);
             powerAndCarrier.removeView(powerTwo);
             powerAndCarrier.removeView(powerThree);
@@ -1421,7 +1426,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         // readd in right order
         mExpandedView.addView(powerAndCarrier, mBottomBar ? 1 : 0);
-        if (!mStatusBarTab) {
+        if (mStatusBarGrid) {
             powerAndCarrier.addView(powerFour, mBottomBar && mStatusBarCarrier != 5 ? 1 : 0);
             powerAndCarrier.addView(powerThree, mBottomBar && mStatusBarCarrier != 5 ? 1 : 0);
             powerAndCarrier.addView(powerTwo, mBottomBar && mStatusBarCarrier != 5 ? 1 : 0);
