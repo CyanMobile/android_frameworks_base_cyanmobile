@@ -204,7 +204,7 @@ public class WeatherPopup extends QuickSettings {
     private void refreshWeather() {
         final ContentResolver resolver = this.anchor.getContext().getContentResolver();
             final long interval = Settings.System.getLong(resolver,
-                    Settings.System.WEATHER_UPDATE_INTERVAL, 60); // Default to hourly
+                    Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
             boolean manualSync = (interval == 0);
             if (!manualSync && (((System.currentTimeMillis() - mWeatherInfo.last_sync) / 60000) >= interval)) {
                 mHandler.sendEmptyMessage(QUERY_WEATHER);
