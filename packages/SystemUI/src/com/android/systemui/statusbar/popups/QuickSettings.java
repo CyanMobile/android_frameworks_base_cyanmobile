@@ -29,14 +29,14 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
-import android.widget.PopupWindow;
+import android.widget.PopupWindowAction;
 
 import com.android.systemui.R;
 
 
 public class QuickSettings {
 	protected final View anchor;
-	private final PopupWindow window;
+	private final PopupWindowAction window;
 	private View root;
 	private Drawable background = null;
 	private final WindowManager windowManager;
@@ -49,7 +49,7 @@ public class QuickSettings {
 	 */
 	public QuickSettings(View anchor) {
 		this.anchor = anchor;
-		this.window = new PopupWindow(anchor.getContext());
+		this.window = new PopupWindowAction(anchor.getContext());
 
                 Log.d(TAG, "started view");
 
@@ -93,9 +93,9 @@ public class QuickSettings {
 			this.window.setBackgroundDrawable(this.background);
 		}
 
-		// if using PopupWindow#setBackgroundDrawable this is the only values of the width and hight that make it work
+		// if using PopupWindowAction#setBackgroundDrawable this is the only values of the width and hight that make it work
 		// otherwise you need to set the background of the root viewgroup
-		// and set the popupwindow background to an empty BitmapDrawable
+		// and set the PopupWindowAction background to an empty BitmapDrawable
 		this.window.setWidth(WindowManager.LayoutParams.WRAP_CONTENT);
 		this.window.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
 		this.window.setTouchable(true);
@@ -136,7 +136,7 @@ public class QuickSettings {
 	 * 
 	 * @param listener
 	 */
-	public void setOnDismissListener(PopupWindow.OnDismissListener listener) {
+	public void setOnDismissListener(PopupWindowAction.OnDismissListener listener) {
 		this.window.setOnDismissListener(listener);
 	}
 
@@ -168,6 +168,10 @@ public class QuickSettings {
 	 */
 	public void showLikeQuickAction() {
 		this.showLikeQuickAction(0, 0);
+	}
+
+	public void showWeatherAction() {
+		this.showWeatherAction(0, 0);
 	}
 
 	/**
@@ -202,6 +206,22 @@ public class QuickSettings {
 		int yPos = ((screenHeight - rootHeight) / 2) + yOffset;
 
 		this.window.showAtLocation(this.anchor, Gravity.NO_GRAVITY, xPos, yPos);
+	}
+
+	public void showWeatherAction(int xOffset, int yOffset) {
+		this.preShow();
+
+		this.window.setAnimationStyle(R.style.Animations_PopUpMenu_Reflect);
+
+		this.root.measure(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+
+		int screenWidth = this.windowManager.getDefaultDisplay().getWidth();
+		int screenHeight = this.windowManager.getDefaultDisplay().getHeight();
+
+		int xPos = (screenWidth / 2) + xOffset;
+		int yPos = (screenHeight / 2) + yOffset;
+
+		this.window.showAtLocation(this.anchor, Gravity.CENTER, xPos, yPos);
 	}
 
 	public void dismiss() {

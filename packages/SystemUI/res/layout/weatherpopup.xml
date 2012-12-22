@@ -52,6 +52,28 @@
             />
   </TableRow>
     <TableRow>
+        <TextView android:id="@+id/weather_humi"
+            android:layout_width="wrap_content"
+
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical|center_horizontal"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textStyle="bold"
+
+            android:textColor="?android:attr/textColorPrimary"
+            />
+        <TextView android:id="@+id/weather_wind"
+            android:layout_width="wrap_content"
+
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical|center_horizontal"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textStyle="bold"
+
+            android:textColor="?android:attr/textColorPrimary"
+            />
+    </TableRow>
+    <TableRow>
         <TextView android:id="@+id/weather_low_high"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

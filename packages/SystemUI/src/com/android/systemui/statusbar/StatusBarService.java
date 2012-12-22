@@ -3126,7 +3126,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             } else if (Settings.System.getInt(getContentResolver(),
                       Settings.System.ENABLE_SETTING_BUTTON, 0) == 2) {
                 WeatherPopup weatherWindow = new WeatherPopup(v);
-                weatherWindow.showLikeQuickAction();
+                weatherWindow.showWeatherAction();
                 return true;
             }
 

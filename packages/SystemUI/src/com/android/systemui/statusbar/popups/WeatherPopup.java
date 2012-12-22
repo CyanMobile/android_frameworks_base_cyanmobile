@@ -66,7 +66,7 @@ public class WeatherPopup extends QuickSettings {
 
     private static final String TAG = "WeatherPopup";
 
-    private TextView mWeatherCity, mWeatherCondition, mWeatherLowHigh, mWeatherTemp, mWeatherUpdateTime;
+    private TextView mWeatherCity, mWeatherHumi, mWeatherWind, mWeatherCondition, mWeatherLowHigh, mWeatherTemp, mWeatherUpdateTime;
     private ImageView mWeatherImage;
     private ViewGroup root;
     private Context mContext;
@@ -84,6 +84,8 @@ public class WeatherPopup extends QuickSettings {
         mWeatherCity = (TextView) root.findViewById(R.id.weather_city);
         mWeatherCondition = (TextView) root.findViewById(R.id.weather_condition);
         mWeatherTemp = (TextView) root.findViewById(R.id.weather_temp);
+        mWeatherHumi = (TextView) root.findViewById(R.id.weather_humi);
+        mWeatherWind = (TextView) root.findViewById(R.id.weather_wind);
         mWeatherLowHigh = (TextView) root.findViewById(R.id.weather_low_high);
         mWeatherUpdateTime = (TextView) root.findViewById(R.id.update_time);
         mWeatherImage = (ImageView) root.findViewById(R.id.weather_image);
@@ -254,6 +256,12 @@ public class WeatherPopup extends QuickSettings {
             if (mWeatherCondition != null) {
                 mWeatherCondition.setText(w.condition);
             }
+            if (mWeatherHumi != null) {
+                mWeatherHumi.setText(w.humidity);
+            }
+            if (mWeatherWind != null) {
+                mWeatherWind.setText(w.wind);
+            }
             if (mWeatherLowHigh != null) {
                 mWeatherLowHigh.setText(invertLowhigh ? w.high + " | " + w.low : w.low + " | " + w.high);
             }
@@ -287,6 +295,12 @@ public class WeatherPopup extends QuickSettings {
             }
             if (mWeatherCondition != null) {
                 mWeatherCondition.setText(com.android.internal.R.string.weather_tap_to_refresh);
+            }
+            if (mWeatherHumi != null) {
+                mWeatherHumi.setVisibility(View.GONE);
+            }
+            if (mWeatherWind != null) {
+                mWeatherWind.setVisibility(View.GONE);
             }
             if (mWeatherLowHigh != null) {
                 mWeatherLowHigh.setVisibility(View.GONE);
