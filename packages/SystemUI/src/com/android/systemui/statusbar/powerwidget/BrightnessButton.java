@@ -40,7 +40,7 @@ public class BrightnessButton extends PowerButton {
 
     // Defaults for now. MIN_BACKLIGHT will be replaced later
     private static final int[] BACKLIGHTS = new int[] {
-            MIN_BACKLIGHT, LOW_BACKLIGHT, LOWMID_BACKLIGHT, MID_BACKLIGHT, HIGH_BACKLIGHT,
+            AUTO_BACKLIGHT, MIN_BACKLIGHT, LOW_BACKLIGHT, LOWMID_BACKLIGHT, MID_BACKLIGHT, HIGH_BACKLIGHT,
             MAX_BACKLIGHT
     };
 
@@ -66,7 +66,7 @@ public class BrightnessButton extends PowerButton {
     private int mCurrentBacklightIndex = 0;
 
     private int[] mBacklightValues = new int[] {
-            0, 1, 2, 3, 4, 5
+            0, 1, 2, 3, 4, 5, 6
     };
 
     public BrightnessButton() {
@@ -168,7 +168,7 @@ public class BrightnessButton extends PowerButton {
                 resolver, Settings.System.EXPANDED_BRIGHTNESS_MODE));
         if (modes == null || modes.length == 0) {
             mBacklightValues = new int[] {
-                    0, 1, 2, 3, 4, 5
+                    0, 1, 2, 3, 4, 5, 6
             };
         } else {
             mBacklightValues = new int[modes.length];
