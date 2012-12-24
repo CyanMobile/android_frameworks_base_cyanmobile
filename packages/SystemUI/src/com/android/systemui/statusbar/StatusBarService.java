@@ -192,6 +192,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     LinearLayout mCenterClock;
     LinearLayout mCenterClockex;
     SignalClusterView mCenterIconex;
+    QuickTileView mQuickTile;
     LinearLayout mLeftClock;
     IconMerger mNotificationIcons;
     LinearLayout mStatusIcons;
@@ -237,7 +238,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     // on-screen navigation buttons
     private NavigationBarView mNavigationBarView;
-
+    
     // the tracker view
     TrackingView mTrackingView;
     View mNotificationBackgroundView;
@@ -900,6 +901,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mMusicToggleButton.setOnClickListener(mMusicToggleButtonListener);
         mCenterClockex = (LinearLayout)mExpandedView.findViewById(R.id.centerClockex);
         mCenterIconex = (SignalClusterView)mExpandedView.findViewById(R.id.centerIconex);
+        mQuickTile = (QuickTileView)mExpandedView.findViewById(R.id.quick_tile_view);
+        mQuickTile.setVisibility(View.GONE); // delete this line if you want to see (WIP)
         mSettingsIconButton = (ImageView)mExpandedView.findViewById(R.id.settingIcon);
         mSettingsIconButton.setOnClickListener(mSettingsIconButtonListener);
         mStatusIconsExp = (LinearLayout)mExpandedView.findViewById(R.id.expstatusIcons);
