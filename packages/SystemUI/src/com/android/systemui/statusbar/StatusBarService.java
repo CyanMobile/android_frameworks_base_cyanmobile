@@ -3127,6 +3127,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                       Settings.System.ENABLE_SETTING_BUTTON, 0) == 2) {
                 WeatherPopup weatherWindow = new WeatherPopup(v);
                 weatherWindow.showWeatherAction();
+                animateCollapse();
                 return true;
             }
 
