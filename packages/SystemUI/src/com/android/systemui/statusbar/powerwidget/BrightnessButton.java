@@ -40,8 +40,8 @@ public class BrightnessButton extends PowerButton {
 
     // Defaults for now. MIN_BACKLIGHT will be replaced later
     private static final int[] BACKLIGHTS = new int[] {
-            MIN_BACKLIGHT, LOW_BACKLIGHT, LOWMID_BACKLIGHT, MID_BACKLIGHT, HIGH_BACKLIGHT,
-            MAX_BACKLIGHT
+            AUTO_BACKLIGHT, MIN_BACKLIGHT, LOW_BACKLIGHT, LOWMID_BACKLIGHT, MID_BACKLIGHT,
+            HIGH_BACKLIGHT, MAX_BACKLIGHT
     };
 
     private static final Uri BRIGHTNESS_URI = Settings.System
