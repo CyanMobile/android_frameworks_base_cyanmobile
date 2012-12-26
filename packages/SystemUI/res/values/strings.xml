@@ -103,4 +103,90 @@
     <string name="smscall_popup">Message Info</string>
     <string name="weather_fetch_failure">Fetch failed</string>
     <string name="callings">Make a Call</string>
+
+    <string name="ethernet_label">Ethernet</string>
+    <string name="status_bar_settings_auto_brightness_label">AUTO</string>
+    <string name="status_bar_network_name_separator" translatable="false">|</string>
+    <string name="status_bar_settings_signal_meter_disconnected">
+        No Internet connection
+    </string>
+    <string name="status_bar_settings_signal_meter_wifi_nossid">Wi-Fi connected</string>
+
+    <!-- QuickSettings: Airplane mode [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_airplane_mode_label">Airplane mode</string>
+    <!-- QuickSettings: Battery Charging [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_battery_charging_label">Charging, <xliff:g id="number">%d</xliff:g><xliff:g id="percent">%%</xliff:g></string>
+    <!-- QuickSettings: Battery Charged [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_battery_charged_label">Charged</string>
+    <!-- QuickSettings: Bluetooth [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_bluetooth_label">Bluetooth</string>
+    <!-- QuickSettings: Bluetooth (Multiple) [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_bluetooth_multiple_devices_label">Bluetooth (<xliff:g id="number">%d</xliff:g> Devices)</string>
+    <!-- QuickSettings: Bluetooth (Off) [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_bluetooth_off_label">Bluetooth Off</string>
+    <!-- QuickSettings: Brightness [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_brightness_label">Brightness</string>
+    <!-- QuickSettings: Rotation Unlocked [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_rotation_unlocked_label">Auto Rotate</string>
+    <!-- QuickSettings: Rotation Locked [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_rotation_locked_label">Rotation Locked</string>
+    <!-- QuickSettings: IME [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_ime_label">Input Method</string>
+    <!-- QuickSettings: Location [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_location_label">Location in use</string>
+    <!-- QuickSettings: Media device [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_media_device_label">Media device</string>
+    <!-- QuickSettings: RSSI [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_rssi_label">RSSI</string>
+    <!-- QuickSettings: RSSI (No network) [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_rssi_emergency_only">Emergency Calls Only</string>
+    <!-- QuickSettings: Settings [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_settings_label">Settings</string>
+    <!-- QuickSettings: Time [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_time_label">Time</string>
+    <!-- QuickSettings: User [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_user_label">Me</string>
+    <!-- QuickSettings: Wifi [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_wifi_label">Wi-Fi</string>
+    <!-- QuickSettings: Wifi (Not connected) [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_wifi_not_connected">Not Connected</string>
+    <!-- QuickSettings: Wifi (No network) [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_wifi_no_network">No Network</string>
+    <!-- QuickSettings: Wifi (Off) [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_wifi_off_label">Wi-Fi Off</string>
+    <!-- QuickSettings: Wifi display [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_wifi_display_label">Wi-Fi Display</string>
+    <!-- QuickSettings: Wifi display [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_wifi_display_no_connection_label">Wireless Display</string>
+    <!-- QuickSettings: Profile [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_profile_label">Profile</string>
+    <!-- QuickSettings: Brightness dialog title [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_brightness_dialog_title">Brightness</string>
+    <!-- QuickSettings: Brightness dialog auto brightness button [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_brightness_dialog_auto_brightness_label">AUTO</string>
+
+    <string name="quick_settings_gps">GPS</string>
+    <string name="quick_settings_screen_sleep">Go to sleep</string>
+    <string name="quick_settings_ringer_on">Sound on</string>
+    <string name="quick_settings_ringer_off">Sound off</string>
+    <string name="quick_settings_vibration_on">Vibration on</string>
+    <string name="quick_settings_vibration_off">Vibration off</string>
+    <string name="quick_settings_label_enabled">On</string>
+    <string name="quick_settings_label_disabled">Off</string>
+    <string name="quick_settings_ringer_normal">Sound</string>
+    <string name="quick_settings_lockscreen">Lock screen</string>
+    <string name="quick_settings_network_type">Network mode</string>
+    <string name="quick_settings_report_bug">Report bug</string>
+    <string name="quick_settings_sync">Sync</string>
+    <string name="quick_settings_torch">Torch</string>
+    <string name="quick_settings_nfc">NFC</string>
+    <string name="quick_settings_screen_timeout">Timeout</string>
+    <string name="quick_settings_screen_timeout_summary">%1$d %2$s</string>
+
+    <string name="status_bar_settings_battery_meter_format" translatable="false">
+        <xliff:g id="number">%d</xliff:g><xliff:g id="percent">%%</xliff:g>
+    </string>
+    <string name="status_bar_settings_battery_meter_min_format" translatable="false">
+        <xliff:g id="number">%d</xliff:g>
+    </string>
 </resources>

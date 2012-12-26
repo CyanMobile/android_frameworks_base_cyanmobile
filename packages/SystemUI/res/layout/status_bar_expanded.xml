@@ -65,11 +65,11 @@
             android:layout_height="wrap_content"
             />
 
-        <com.android.systemui.statusbar.QuickTileView android:id="@+id/quick_tile_view"
+        <com.android.systemui.statusbar.quicksettings.QuickTileView android:id="@+id/quick_tile_view"
              android:layout_width="match_parent"
              android:layout_height="match_parent" >
              <include layout="@layout/quicktile" />
-        </com.android.systemui.statusbar.QuickTileView>
+        </com.android.systemui.statusbar.quicksettings.QuickTileView>
 
         <LinearLayout android:id="@+id/carrier_label_layout"
             android:layout_width="match_parent"

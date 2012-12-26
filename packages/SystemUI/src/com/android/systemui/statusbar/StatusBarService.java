@@ -52,6 +52,7 @@ import com.android.systemui.statusbar.powerwidget.PowerWidgetTwo;
 import com.android.systemui.statusbar.powerwidget.PowerWidgetThree;
 import com.android.systemui.statusbar.powerwidget.PowerWidgetFour;
 import com.android.systemui.statusbar.powerwidget.MusicControls;
+import com.android.systemui.statusbar.quicksettings.QuickTileView;
 import com.android.systemui.R;
 import android.os.IPowerManager;
 import android.provider.Settings.SettingNotFoundException;
