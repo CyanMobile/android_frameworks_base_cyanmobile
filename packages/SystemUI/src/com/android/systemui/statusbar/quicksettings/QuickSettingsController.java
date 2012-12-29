@@ -46,6 +46,10 @@ import com.android.systemui.statusbar.quicksettings.quicktile.MobileNetworkTypeT
 import com.android.systemui.statusbar.quicksettings.quicktile.QuickSettingsTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.RingerModeTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.SyncTile;
+import com.android.systemui.statusbar.quicksettings.quicktile.SleepTile;
+import com.android.systemui.statusbar.quicksettings.quicktile.LockscreenTile;
+import com.android.systemui.statusbar.quicksettings.quicktile.ScreenshotTile;
+import com.android.systemui.statusbar.quicksettings.quicktile.SleepTimeTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.SettingsTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.TimeTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.WiFiDisplayTile;
@@ -76,6 +80,9 @@ public class QuickSettingsController {
     public static final String TILE_BRIGHTNESS = "toggleBrightness";
     public static final String TILE_RINGER = "toggleSound";
     public static final String TILE_SYNC = "toggleSync";
+    public static final String TILE_SLEEP = "toggleSleep";
+    public static final String TILE_SCREENSHOT = "toggleScreenshot";
+    public static final String TILE_SCREENTIME = "toggleScreentime";
     public static final String TILE_SETTING = "toggleSettings";
     public static final String TILE_TIME = "toggleTime";
     public static final String TILE_WIFIAP = "toggleWifiAp";
@@ -85,6 +92,7 @@ public class QuickSettingsController {
     public static final String TILE_AIRPLANE = "toggleAirplane";
     public static final String TILE_TORCH = "toggleFlashlight";  // Keep old string for compatibility
     public static final String TILE_WIMAX = "toggleWimax";
+    public static final String TILE_LOCKSCREEN = "toggleLockscreen";
 
     private static final String TILE_DELIMITER = "|";
     private static final String TILES_DEFAULT = TILE_WIFI
@@ -94,10 +102,16 @@ public class QuickSettingsController {
             + TILE_DELIMITER + TILE_BATTERY
             + TILE_DELIMITER + TILE_GPS
             + TILE_DELIMITER + TILE_SYNC
+            + TILE_DELIMITER + TILE_SCREENSHOT
+            + TILE_DELIMITER + TILE_SCREENTIME
             + TILE_DELIMITER + TILE_RINGER
             + TILE_DELIMITER + TILE_NETWORKMODE
             + TILE_DELIMITER + TILE_AUTOROTATE
             + TILE_DELIMITER + TILE_AIRPLANE
+            + TILE_DELIMITER + TILE_MOBILEDATA
+            + TILE_DELIMITER + TILE_SLEEP
+            + TILE_DELIMITER + TILE_LOCKSCREEN
+            + TILE_DELIMITER + TILE_WIFIAP
             + TILE_DELIMITER + TILE_BLUETOOTH;
     /**
      * END OF DATA MATCHING BLOCK
@@ -127,6 +141,10 @@ public class QuickSettingsController {
     public static final int TORCH_TILE = 13;
     public static final int WIFIAP_TILE = 14;
     public static final int SYNC_TILE = 15;
+    public static final int SCREENSHOT_TILE = 16;
+    public static final int SCREENTIME_TILE = 17;
+    public static final int LOCKSCREEN_TILE = 18;
+    public static final int SLEEP_TILE = 19;
 
     public QuickSettingsController(Context context, QuickSettingsContainerView container) {
         mContext = context;
@@ -189,6 +207,14 @@ public class QuickSettingsController {
                 mQuickSettings.add(AIRPLANE_MODE_TILE);
             } else if (tile.equals(TILE_TORCH)) {
                 mQuickSettings.add(TORCH_TILE);
+            } else if (tile.equals(TILE_SCREENSHOT)) {
+                mQuickSettings.add(SCREENSHOT_TILE);
+            } else if (tile.equals(TILE_SCREENTIME)) {
+                mQuickSettings.add(SCREENTIME_TILE);
+            } else if (tile.equals(TILE_LOCKSCREEN)) {
+                mQuickSettings.add(LOCKSCREEN_TILE);
+            } else if (tile.equals(TILE_SLEEP)) {
+                mQuickSettings.add(SLEEP_TILE);
             } else if (tile.equals(TILE_WIMAX)) {
                 // Not available yet
             }
@@ -318,11 +344,11 @@ public class QuickSettingsController {
                 break;
             case AUTO_ROTATION_TILE:
                 qs = new AutoRotateTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this, mHandler);
+                        (QuickSettingsContainerView) mContainerView, this);
                 break;
             case BRIGHTNESS_TILE:
                 qs = new BrightnessTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this, mHandler);
+                        (QuickSettingsContainerView) mContainerView, this);
                 break;
             case MOBILE_NETWORK_TYPE_TILE:
                 qs = new MobileNetworkTypeTile(mContext, inflater,
@@ -354,6 +380,22 @@ public class QuickSettingsController {
                 break;
             case TIME_TILE:
                 qs = new TimeTile(mContext, inflater,
+                        (QuickSettingsContainerView) mContainerView, this);
+                break;
+            case SCREENSHOT_TILE:
+                qs = new ScreenshotTile(mContext, inflater,
+                        (QuickSettingsContainerView) mContainerView, this);
+                break;
+            case SCREENTIME_TILE:
+                qs = new SleepTimeTile(mContext, inflater,
+                        (QuickSettingsContainerView) mContainerView, this);
+                break;
+            case LOCKSCREEN_TILE:
+                qs = new LockscreenTile(mContext, inflater,
+                        (QuickSettingsContainerView) mContainerView, this);
+                break;
+            case SLEEP_TILE:
+                qs = new SleepTile(mContext, inflater,
                         (QuickSettingsContainerView) mContainerView, this);
                 break;
             }

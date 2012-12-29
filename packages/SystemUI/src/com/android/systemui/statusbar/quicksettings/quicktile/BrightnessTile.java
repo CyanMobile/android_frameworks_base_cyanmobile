@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
-import android.os.Handler;
 import android.os.RemoteException;
 import android.os.Power;
 import android.os.PowerManager;
@@ -54,7 +53,7 @@ public class BrightnessTile extends QuickSettingsTile {
     };
 
     public BrightnessTile(Context context, LayoutInflater inflater,
-            QuickSettingsContainerView container, final QuickSettingsController qsc, Handler handler) {
+            QuickSettingsContainerView container, final QuickSettingsController qsc) {
         super(context, inflater, container, qsc);
 
         mAutoBrightnessSupported = context.getResources().getBoolean(

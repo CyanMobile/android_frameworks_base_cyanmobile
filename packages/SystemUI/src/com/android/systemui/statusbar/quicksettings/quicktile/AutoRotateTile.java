@@ -3,7 +3,6 @@ package com.android.systemui.statusbar.quicksettings.quicktile;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
-import android.os.Handler;
 import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,7 +19,7 @@ public class AutoRotateTile extends QuickSettingsTile {
     Context mContext;
 
     public AutoRotateTile(Context context, LayoutInflater inflater,
-            QuickSettingsContainerView container, QuickSettingsController qsc, Handler handler) {
+            QuickSettingsContainerView container, QuickSettingsController qsc) {
         super(context, inflater, container, qsc);
 
         mContext = context;

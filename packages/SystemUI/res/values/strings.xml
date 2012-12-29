@@ -85,6 +85,7 @@
 
     <string name="status_bar_date_formatter">%1$s\n%2$s</string>
     <string name="powerwidget_screen_timeout_toast">Screen timeout set to: %1$d %2$s</string>
+    <string name="powerwidget_screen_timeout_tile">Timeout: %1$d %2$s</string>
 
     <!-- Color Picker -->
     <string name="title_color_picker">Pick a color</string>
@@ -167,6 +168,10 @@
     <!-- QuickSettings: Brightness dialog auto brightness button [CHAR LIMIT=NONE] -->
     <string name="quick_settings_brightness_dialog_auto_brightness_label">AUTO</string>
 
+    <string name="quick_settings_sleep">Sleep</string>
+    <string name="quick_settings_lockon">Lock Enable</string>
+    <string name="quick_settings_lockoff">Lock Disable</string>
+    <string name="quick_settings_screenshot">CMXhots</string>
     <string name="quick_settings_gps">GPS</string>
     <string name="quick_settings_gps_search">Searching</string>
     <string name="quick_settings_screen_sleep">Go to sleep</string>

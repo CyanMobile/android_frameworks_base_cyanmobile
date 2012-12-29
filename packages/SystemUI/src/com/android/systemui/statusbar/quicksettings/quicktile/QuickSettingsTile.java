@@ -83,6 +83,10 @@ public class QuickSettingsTile implements OnClickListener {
     void startSettingsActivity(Intent intent) {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         mContext.startActivity(intent);
+        startCollapseActivity();
+    }
+
+    void startCollapseActivity() {
         mHandler.post(new Runnable() { public void run() {
             try {
                  IStatusBarService statusbar = getStatusBarService();

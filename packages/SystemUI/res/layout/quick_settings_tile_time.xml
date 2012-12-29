@@ -30,7 +30,7 @@
         android:hand_minute="@*android:drawable/clock_hand_minute"
         />
     <com.android.systemui.statusbar.dates.PowerDateView
-        android:textAppearance="@style/TextAppearance.QuickSettings.TileView"
+        android:textAppearance="@style/TextAppearance.QuickSettings.TileView.Date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
