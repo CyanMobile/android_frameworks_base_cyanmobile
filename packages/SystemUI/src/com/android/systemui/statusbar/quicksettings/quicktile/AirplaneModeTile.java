@@ -10,10 +10,8 @@ import android.view.View.OnLongClickListener;
 import com.android.systemui.R;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
-import com.android.systemui.statusbar.policy.NetworkController;
-import com.android.systemui.statusbar.policy.NetworkController.NetworkSignalChangedCallback;
 
-public class AirplaneModeTile extends QuickSettingsTile implements NetworkSignalChangedCallback{
+public class AirplaneModeTile extends QuickSettingsTile {
 
     private boolean mEnabled = false;
 
@@ -22,6 +20,7 @@ public class AirplaneModeTile extends QuickSettingsTile implements NetworkSignal
         super(context, inflater, container, qsc);
 
         mLabel = mContext.getString(R.string.quick_settings_airplane_mode_label);
+        getAirState();
 
         mOnClick = new View.OnClickListener() {
 
@@ -45,35 +44,37 @@ public class AirplaneModeTile extends QuickSettingsTile implements NetworkSignal
                 return true;
             }
         };
+
+        qsc.registerAction(Intent.ACTION_AIRPLANE_MODE_CHANGED, this);
     }
 
     @Override
-    void onPostCreate() {
-        NetworkController controller = new NetworkController(mContext);
-        controller.addNetworkSignalChangedCallback(this);
-        super.onPostCreate();
+    public void onReceive(Context context, Intent intent) {
+        if(intent.getAction().equals(Intent.ACTION_AIRPLANE_MODE_CHANGED)){
+            getAirState();
+        }
+        applyAirChanges();
     }
 
-    @Override
-    public void onWifiSignalChanged(boolean enabled, int wifiSignalIconId, String description) {
-    }
-
-    @Override
-    public void onMobileDataSignalChanged(boolean enabled,
-            int mobileSignalIconId, int dataTypeIconId, String description) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void onAirplaneModeChanged(boolean enabled) {
-        mEnabled = enabled;
-        if(enabled){
+    private void applyAirChanges() {
+        if(mEnabled){
             mDrawable = R.drawable.stat_airplane_on;
         }else{
             mDrawable = R.drawable.stat_airplane_off;
         }
         updateQuickSettings();
+    }
+
+    @Override
+    void onPostCreate() {
+        getAirState();
+        applyAirChanges();
+        super.onPostCreate();
+    }
+
+    private void getAirState() {
+        mEnabled = (Settings.System.getInt(mContext.getContentResolver(),
+                 Settings.System.AIRPLANE_MODE_ON,0) == 1);
     }
 
 }

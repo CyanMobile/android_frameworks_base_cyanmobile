@@ -6,12 +6,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.LocationManager;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.AnimationDrawable;
 import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.net.Uri;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.android.systemui.R;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
@@ -30,8 +34,7 @@ public class GPSTile extends QuickSettingsTile {
         super(context, inflater, container, qsc);
 
         mContentResolver = mContext.getContentResolver();
-
-        mLabel = mContext.getString(R.string.quick_settings_gps);
+        mTileLayout = R.layout.quick_settings_tile_location;
         enabled = Settings.Secure.isLocationProviderEnabled(mContentResolver, LocationManager.GPS_PROVIDER);
 
         mOnClick = new OnClickListener() {
@@ -65,13 +68,6 @@ public class GPSTile extends QuickSettingsTile {
     }
 
     void applyGPSChanges() {
-        if (working) {
-            mDrawable = R.drawable.stat_sys_gps_acquiring_anim;
-        } else if (enabled && mEnabled) {
-            mDrawable = R.drawable.stat_gps_on;
-        } else {
-            mDrawable = R.drawable.stat_gps_off;
-        }
         setGenericLabel();
         updateQuickSettings();
     }
@@ -86,19 +82,41 @@ public class GPSTile extends QuickSettingsTile {
             working = false;
             applyGPSChanges();
         } else if (action.equals(LocationManager.GPS_ENABLED_CHANGE_ACTION) && !GPSenabled) {
-            mEnabled = false;
+            mEnabled = !GPSenabled;
             working = false;
             applyGPSChanges();
         } else {
-            working = true;
+            working = enabled;
             mEnabled = false;
             applyGPSChanges();
+        }
+    }
+
+    @Override
+    void updateQuickSettings() {
+        TextView tv = (TextView) mTile.findViewById(R.id.gps_textview);
+        if (tv != null) tv.setText(mLabel);
+        ImageView iv = (ImageView) mTile.findViewById(R.id.gps_image);
+        if (iv != null) {
+           if (enabled && working) {
+              iv.setBackgroundResource(R.drawable.stat_sys_gps_acquiring_anim);
+              AnimationDrawable gpsAnimation = (AnimationDrawable) iv.getBackground();
+              gpsAnimation.start();
+           } else if (enabled && mEnabled) {
+              iv.setBackgroundResource(R.drawable.stat_gps_on);
+           } else {
+              iv.setBackgroundResource(R.drawable.stat_gps_off);
+           }
         }
     }
 
     private void setGenericLabel() {
         // Show OFF next to the GPS label when in OFF state, ON/IN USE is indicated by the color
         String label = mContext.getString(R.string.quick_settings_gps);
-        mLabel = (enabled ? label : label + " " + mContext.getString(R.string.quick_settings_label_disabled));
+        if (enabled) {
+            mLabel = (working ? mContext.getString(R.string.quick_settings_gps_search) : (label + " " + mContext.getString(R.string.quick_settings_label_disabled)));
+        } else {
+            mLabel = (label + " " + mContext.getString(R.string.quick_settings_label_disabled));
+        }
     }
 }

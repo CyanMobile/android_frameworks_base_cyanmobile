@@ -22,14 +22,13 @@ import com.android.systemui.statusbar.policy.NetworkController.NetworkSignalChan
 public class MobileNetworkTile extends QuickSettingsTile implements NetworkSignalChangedCallback{
 
     private int mDataTypeIconId;
-    private boolean wifiOn = false;
+    private boolean dataOn = false;
 
     public MobileNetworkTile(Context context, LayoutInflater inflater,
             QuickSettingsContainerView container, QuickSettingsController qsc) {
         super(context, inflater, container, qsc);
         mTileLayout = R.layout.quick_settings_tile_rssi;
         mOnClick = new View.OnClickListener() {
-
             @Override
             public void onClick(View v) {
                 TelephonyManager tm = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
@@ -42,7 +41,6 @@ public class MobileNetworkTile extends QuickSettingsTile implements NetworkSigna
             }
         };
         mOnLongClick = new OnLongClickListener() {
-
             @Override
             public boolean onLongClick(View v) {
                 Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -65,23 +63,15 @@ public class MobileNetworkTile extends QuickSettingsTile implements NetworkSigna
         // TODO Auto-generated method stub
     }
 
-    boolean deviceSupportsTelephony() {
-        PackageManager pm = mContext.getPackageManager();
-        return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
-    }
-
     @Override
     public void onMobileDataSignalChanged(boolean enabled,
             int mobileSignalIconId, int dataTypeIconId, String description) {
-        if (deviceSupportsTelephony()) {
-            // TODO: If view is in awaiting state, disable
-            mDrawable = mobileSignalIconId;
-            mDataTypeIconId = enabled && (dataTypeIconId > 0) 
-                    ? dataTypeIconId
-                    : 0;
-            mLabel = description;
-            updateQuickSettings();
-        }
+        // TODO: If view is in awaiting state, disable
+        dataOn = enabled;
+        mDrawable = mobileSignalIconId;
+        mDataTypeIconId = dataTypeIconId;
+        mLabel = description;
+        updateQuickSettings();
     }
 
     @Override
@@ -92,14 +82,14 @@ public class MobileNetworkTile extends QuickSettingsTile implements NetworkSigna
     @Override
     void updateQuickSettings() {
         TextView tv = (TextView) mTile.findViewById(R.id.rssi_textview);
+        tv.setText(mLabel);
         ImageView iv = (ImageView) mTile.findViewById(R.id.rssi_image);
         ImageView iov = (ImageView) mTile.findViewById(R.id.rssi_overlay_image);
         iv.setImageResource(mDrawable);
-        if (mDataTypeIconId > 0) {
+        if (dataOn) {
             iov.setImageResource(mDataTypeIconId);
         } else {
             iov.setImageDrawable(null);
         }
-        tv.setText(mLabel);
     }
 }

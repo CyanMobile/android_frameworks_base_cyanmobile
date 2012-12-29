@@ -52,7 +52,6 @@ import com.android.systemui.statusbar.powerwidget.PowerWidgetTwo;
 import com.android.systemui.statusbar.powerwidget.PowerWidgetThree;
 import com.android.systemui.statusbar.powerwidget.PowerWidgetFour;
 import com.android.systemui.statusbar.powerwidget.MusicControls;
-import com.android.systemui.statusbar.policy.NetworkController;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
 import com.android.systemui.R;
@@ -166,7 +165,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private static final int INTRUDER_ALERT_DECAY_MS = 3000;
 
     StatusBarPolicy mIconPolicy;
-    NetworkController mNetworkController;
 
     CommandQueue mCommandQueue;
     IStatusBarService mBarService;
@@ -637,7 +635,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         // Lastly, call to the icon policy to install/update all the icons.
         mIconPolicy = new StatusBarPolicy(this);
-        mNetworkController = new NetworkController(this);
 
         mContext = getApplicationContext();
 

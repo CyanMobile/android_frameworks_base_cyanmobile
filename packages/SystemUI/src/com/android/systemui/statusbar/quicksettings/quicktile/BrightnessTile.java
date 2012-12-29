@@ -97,16 +97,20 @@ public class BrightnessTile extends QuickSettingsTile {
     }
 
     protected void updateState() {
+        updateSettings(mContext.getContentResolver());
         if (mAutoBrightness) {
             mDrawable = R.drawable.stat_brightness_auto;
+            mLabel = mContext.getString(R.string.quick_settings_brightness_dialog_auto_brightness_label);
         } else if (mCurrentBrightness <= LOW_BACKLIGHT) {
             mDrawable = R.drawable.stat_brightness_off;
+            mLabel = mContext.getString(R.string.quick_settings_brightness_labellow);
         } else if (mCurrentBrightness <= MID_BACKLIGHT) {
             mDrawable = R.drawable.stat_brightness_mid;
+            mLabel = mContext.getString(R.string.quick_settings_brightness_labelmid);
         } else {
             mDrawable = R.drawable.stat_brightness_on;
+            mLabel = mContext.getString(R.string.quick_settings_brightness_label);
         }
-        mLabel = mContext.getString(R.string.quick_settings_brightness_label);
     }
 
     protected void toggleState() {

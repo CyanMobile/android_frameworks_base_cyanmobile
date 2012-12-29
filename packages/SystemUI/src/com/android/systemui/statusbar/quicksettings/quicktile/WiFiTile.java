@@ -18,7 +18,6 @@ public class WiFiTile extends QuickSettingsTile implements NetworkSignalChangedC
             QuickSettingsContainerView container, QuickSettingsController qsc) {
         super(context, inflater, container, qsc);
         mOnClick = new View.OnClickListener() {
-
             @Override
             public void onClick(View v) {
                 WifiManager wfm = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
@@ -26,7 +25,6 @@ public class WiFiTile extends QuickSettingsTile implements NetworkSignalChangedC
             }
         };
         mOnLongClick = new OnLongClickListener() {
-
             @Override
             public boolean onLongClick(View v) {
                 startSettingsActivity(android.provider.Settings.ACTION_WIFI_SETTINGS);
@@ -45,12 +43,12 @@ public class WiFiTile extends QuickSettingsTile implements NetworkSignalChangedC
     @Override
     public void onWifiSignalChanged(boolean enabled, int wifiSignalIconId, String description) {
         boolean wifiConnected = enabled && (wifiSignalIconId > 0) && (description != null);
-        boolean wifiNotConnected = (wifiSignalIconId > 0) && (description == null);
+        boolean wifiNotConnected = enabled && (wifiSignalIconId > 0) && (description == null);
         if (wifiConnected) {
             mDrawable = wifiSignalIconId;
             mLabel = description.substring(1, description.length()-1);
         } else if (wifiNotConnected) {
-            mDrawable = R.drawable.stat_wifi_off;
+            mDrawable = R.drawable.stat_wifi_on;
             mLabel = mContext.getString(R.string.quick_settings_wifi_label);
         } else {
             mDrawable = R.drawable.stat_wifi_off;

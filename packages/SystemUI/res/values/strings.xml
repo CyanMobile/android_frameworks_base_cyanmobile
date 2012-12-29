@@ -125,6 +125,8 @@
     <!-- QuickSettings: Bluetooth (Off) [CHAR LIMIT=NONE] -->
     <string name="quick_settings_bluetooth_off_label">Bluetooth Off</string>
     <!-- QuickSettings: Brightness [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_brightness_labellow">Brightness Low</string>
+    <string name="quick_settings_brightness_labelmid">Brightness Med</string>
     <string name="quick_settings_brightness_label">Brightness</string>
     <!-- QuickSettings: Rotation Unlocked [CHAR LIMIT=NONE] -->
     <string name="quick_settings_rotation_unlocked_label">Auto Rotate</string>
@@ -166,6 +168,7 @@
     <string name="quick_settings_brightness_dialog_auto_brightness_label">AUTO</string>
 
     <string name="quick_settings_gps">GPS</string>
+    <string name="quick_settings_gps_search">Searching</string>
     <string name="quick_settings_screen_sleep">Go to sleep</string>
     <string name="quick_settings_ringer_on">Sound on</string>
     <string name="quick_settings_ringer_off">Sound off</string>
