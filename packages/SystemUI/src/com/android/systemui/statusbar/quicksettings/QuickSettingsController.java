@@ -88,11 +88,9 @@ public class QuickSettingsController {
             + TILE_DELIMITER + TILE_MOBILEDATA
             + TILE_DELIMITER + TILE_BATTERY
             + TILE_DELIMITER + TILE_GPS
-            + TILE_DELIMITER + TILE_RINGER
             + TILE_DELIMITER + TILE_SYNC
             + TILE_DELIMITER + TILE_NETWORKMODE
             + TILE_DELIMITER + TILE_AUTOROTATE
-            + TILE_DELIMITER + TILE_WIFIAP
             + TILE_DELIMITER + TILE_AIRPLANE
             + TILE_DELIMITER + TILE_BLUETOOTH;
     /**

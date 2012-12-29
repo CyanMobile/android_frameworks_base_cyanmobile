@@ -15,7 +15,7 @@ import com.android.systemui.statusbar.policy.NetworkController.NetworkSignalChan
 
 public class AirplaneModeTile extends QuickSettingsTile implements NetworkSignalChangedCallback{
 
-    private boolean enabled = false;
+    private boolean mEnabled = false;
 
     public AirplaneModeTile(Context context, LayoutInflater inflater,
             QuickSettingsContainerView container, QuickSettingsController qsc) {
@@ -29,11 +29,11 @@ public class AirplaneModeTile extends QuickSettingsTile implements NetworkSignal
             public void onClick(View v) {
              // Change the system setting
                 Settings.System.putInt(mContext.getContentResolver(), Settings.System.AIRPLANE_MODE_ON,
-                                        !enabled ? 1 : 0);
+                                        !mEnabled ? 1 : 0);
 
                 // Post the intent
                 Intent intent = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
-                intent.putExtra("state", !enabled);
+                intent.putExtra("state", !mEnabled);
                 mContext.sendBroadcast(intent);
             }
         };
@@ -67,7 +67,7 @@ public class AirplaneModeTile extends QuickSettingsTile implements NetworkSignal
 
     @Override
     public void onAirplaneModeChanged(boolean enabled) {
-        this.enabled = enabled;
+        mEnabled = enabled;
         if(enabled){
             mDrawable = R.drawable.stat_airplane_on;
         }else{

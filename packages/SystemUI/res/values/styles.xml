@@ -73,11 +73,11 @@
     <style name="TextAppearance.QuickSettings" parent="@android:style/TextAppearance.StatusBar" />
 
     <style name="TextAppearance.QuickSettings.TileView">
-        <item name="android:paddingLeft">6dp</item>
-        <item name="android:paddingRight">6dp</item>
+        <item name="android:paddingLeft">4dp</item>
+        <item name="android:paddingRight">4dp</item>
         <item name="android:paddingBottom">2dp</item>
-        <item name="android:drawablePadding">12dp</item>
-        <item name="android:textSize">12dp</item>
+        <item name="android:drawablePadding">8dp</item>
+        <item name="android:textSize">10dp</item>
         <item name="android:textStyle">normal</item>
         <item name="android:textColor">#CCCCCC</item>
         <item name="android:singleLine">true</item>

@@ -28,6 +28,7 @@ public class AutoRotateTile extends QuickSettingsTile {
                      Settings.System.putInt(
                          mContext.getContentResolver(),
                              Settings.System.ACCELEROMETER_ROTATION, getAutoRotation() ? 1 : 0);
+               applyAutoRotationChanges();
             }
         };
 
