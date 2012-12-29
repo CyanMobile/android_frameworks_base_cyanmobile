@@ -1,11 +1,14 @@
 package com.android.systemui.statusbar.quicksettings.quicktile;
 
+import com.android.internal.statusbar.IStatusBarService;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.ServiceManager;
 import android.os.RemoteException;
 import android.provider.Settings;
 import android.view.LayoutInflater;
@@ -32,6 +35,8 @@ public class QuickSettingsTile implements OnClickListener {
     protected int mDrawable;
     protected String mLabel;
     protected QuickSettingsController mQsc;
+    IStatusBarService mStatusBarService;
+    Handler mHandler;
 
     public QuickSettingsTile(Context context, LayoutInflater inflater, QuickSettingsContainerView container, QuickSettingsController qsc) {
         mContext = context;
@@ -41,6 +46,7 @@ public class QuickSettingsTile implements OnClickListener {
         mLabel = mContext.getString(R.string.quick_settings_label_enabled);
         mQsc = qsc;
         mTileLayout = R.layout.quick_settings_tile_generic;
+        mHandler = new Handler();
     }
 
     public void setupQuickSettingsTile(){
@@ -77,6 +83,25 @@ public class QuickSettingsTile implements OnClickListener {
     void startSettingsActivity(Intent intent) {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         mContext.startActivity(intent);
+        mHandler.post(new Runnable() { public void run() {
+            try {
+                 IStatusBarService statusbar = getStatusBarService();
+                 if (statusbar != null) {
+                     statusbar.collapse();
+                 }
+            } catch (RemoteException ex) {
+                 // re-acquire status bar service next time it is needed.
+                 mStatusBarService = null;
+            }
+        }});
+    }
+
+    IStatusBarService getStatusBarService() {
+        if (mStatusBarService == null) {
+            mStatusBarService = IStatusBarService.Stub.asInterface(
+                    ServiceManager.getService("statusbar"));
+        }
+        return mStatusBarService;
     }
 
     @Override

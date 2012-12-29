@@ -75,7 +75,6 @@ public class MobileNetworkTile extends QuickSettingsTile implements NetworkSigna
             int mobileSignalIconId, int dataTypeIconId, String description) {
         if (deviceSupportsTelephony()) {
             // TODO: If view is in awaiting state, disable
-            Resources r = mContext.getResources();
             mDrawable = mobileSignalIconId;
             mDataTypeIconId = enabled && (dataTypeIconId > 0) 
                     ? dataTypeIconId

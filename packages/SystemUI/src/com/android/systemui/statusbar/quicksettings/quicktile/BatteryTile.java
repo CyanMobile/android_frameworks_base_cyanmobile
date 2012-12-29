@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LevelListDrawable;
+import android.os.BatteryManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -12,10 +13,8 @@ import android.widget.TextView;
 import com.android.systemui.R;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
-import com.android.systemui.statusbar.policy.BatteryController;
-import com.android.systemui.statusbar.policy.BatteryController.BatteryStateChangeCallback;
 
-public class BatteryTile extends QuickSettingsTile implements BatteryStateChangeCallback{
+public class BatteryTile extends QuickSettingsTile {
 
     private boolean charging = false;
     private int batteryLevel = 0;
@@ -32,15 +31,14 @@ public class BatteryTile extends QuickSettingsTile implements BatteryStateChange
         batteryLevels = (LevelListDrawable) mContext.getResources().getDrawable(com.android.internal.R.drawable.stat_sys_battery);
         chargingBatteryLevels = (LevelListDrawable) mContext.getResources().getDrawable(com.android.internal.R.drawable.stat_sys_battery_charge);
 
-        BatteryController controller = new BatteryController(mContext);
-        controller.addStateChangedCallback(this);
-
         mOnClick = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startSettingsActivity(Intent.ACTION_POWER_USAGE_SUMMARY);
             }
         };
+
+        qsc.registerAction(Intent.ACTION_BATTERY_CHANGED, this);
     }
 
     @Override
@@ -50,19 +48,22 @@ public class BatteryTile extends QuickSettingsTile implements BatteryStateChange
     }
 
     @Override
-    public void onBatteryLevelChanged(int level, boolean pluggedIn) {
-        batteryLevel = level;
-        charging = pluggedIn;
-        applyBatteryChanges();
+    public void onReceive(Context context, Intent intent) {
+        final String action = intent.getAction();
+        if (action.equals(Intent.ACTION_BATTERY_CHANGED)) {
+            batteryLevel = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
+            charging = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0;
+            applyBatteryChanges();
+        }
     }
 
     void applyBatteryChanges() {
         batteryIcon = charging
                 ? chargingBatteryLevels :
                     batteryLevels;
-        if(batteryLevel == 100) {
+        if (batteryLevel == 100) {
             mLabel = mContext.getString(R.string.quick_settings_battery_charged_label);
-        }else{
+        } else {
             mLabel = charging
                     ? mContext.getString(R.string.quick_settings_battery_charging_label,
                             batteryLevel)

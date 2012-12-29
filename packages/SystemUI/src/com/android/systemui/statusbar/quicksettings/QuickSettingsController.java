@@ -35,7 +35,6 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import com.android.systemui.statusbar.quicksettings.quicktile.AirplaneModeTile;
-import com.android.systemui.statusbar.quicksettings.quicktile.AlarmTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.AutoRotateTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.BatteryTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.BluetoothTile;
@@ -47,6 +46,8 @@ import com.android.systemui.statusbar.quicksettings.quicktile.MobileNetworkTypeT
 import com.android.systemui.statusbar.quicksettings.quicktile.QuickSettingsTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.RingerModeTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.SyncTile;
+import com.android.systemui.statusbar.quicksettings.quicktile.SettingsTile;
+import com.android.systemui.statusbar.quicksettings.quicktile.TimeTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.WiFiDisplayTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.WiFiTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.WifiAPTile;
@@ -75,6 +76,8 @@ public class QuickSettingsController {
     public static final String TILE_BRIGHTNESS = "toggleBrightness";
     public static final String TILE_RINGER = "toggleSound";
     public static final String TILE_SYNC = "toggleSync";
+    public static final String TILE_SETTING = "toggleSettings";
+    public static final String TILE_TIME = "toggleTime";
     public static final String TILE_WIFIAP = "toggleWifiAp";
     public static final String TILE_MOBILEDATA = "toggleMobileData";
     public static final String TILE_NETWORKMODE = "toggleNetworkMode";
@@ -85,10 +88,13 @@ public class QuickSettingsController {
 
     private static final String TILE_DELIMITER = "|";
     private static final String TILES_DEFAULT = TILE_WIFI
-            + TILE_DELIMITER + TILE_MOBILEDATA
+            + TILE_DELIMITER + TILE_TIME
+            + TILE_DELIMITER + TILE_SETTING
+            + TILE_DELIMITER + TILE_BRIGHTNESS
             + TILE_DELIMITER + TILE_BATTERY
             + TILE_DELIMITER + TILE_GPS
             + TILE_DELIMITER + TILE_SYNC
+            + TILE_DELIMITER + TILE_RINGER
             + TILE_DELIMITER + TILE_NETWORKMODE
             + TILE_DELIMITER + TILE_AUTOROTATE
             + TILE_DELIMITER + TILE_AIRPLANE
@@ -106,20 +112,21 @@ public class QuickSettingsController {
 
     // Constants for use in switch statement
     public static final int WIFI_TILE = 0;
-    public static final int MOBILE_NETWORK_TILE = 1;
-    public static final int AIRPLANE_MODE_TILE = 2;
-    public static final int BLUETOOTH_TILE = 3;
-    public static final int RINGER_TILE = 4;
-    public static final int GPS_TILE = 5;
-    public static final int AUTO_ROTATION_TILE = 6;
-    public static final int BRIGHTNESS_TILE = 7;
-    public static final int MOBILE_NETWORK_TYPE_TILE = 8;
-    public static final int BATTERY_TILE = 9;
-    public static final int ALARM_TILE = 10;
-    public static final int WIFI_DISPLAY_TILE = 11;
-    public static final int TORCH_TILE = 12;
-    public static final int WIFIAP_TILE = 13;
-    public static final int SYNC_TILE = 14;
+    public static final int SETTINGS_TILE = 1;
+    public static final int TIME_TILE = 2;
+    public static final int MOBILE_NETWORK_TILE = 3;
+    public static final int AIRPLANE_MODE_TILE = 4;
+    public static final int BLUETOOTH_TILE = 5;
+    public static final int RINGER_TILE = 6;
+    public static final int GPS_TILE = 7;
+    public static final int AUTO_ROTATION_TILE = 8;
+    public static final int BRIGHTNESS_TILE = 9;
+    public static final int MOBILE_NETWORK_TYPE_TILE = 10;
+    public static final int BATTERY_TILE = 11;
+    public static final int WIFI_DISPLAY_TILE = 12;
+    public static final int TORCH_TILE = 13;
+    public static final int WIFIAP_TILE = 14;
+    public static final int SYNC_TILE = 15;
 
     public QuickSettingsController(Context context, QuickSettingsContainerView container) {
         mContext = context;
@@ -150,6 +157,10 @@ public class QuickSettingsController {
                 mQuickSettings.add(WIFI_TILE);
             } else if (tile.equals(TILE_GPS)) {
                 mQuickSettings.add(GPS_TILE);
+            } else if (tile.equals(TILE_SETTING)) {
+                mQuickSettings.add(SETTINGS_TILE);
+            } else if (tile.equals(TILE_TIME)) {
+                mQuickSettings.add(TIME_TILE);
             } else if (tile.equals(TILE_BLUETOOTH)) {
                 if(deviceSupportsBluetooth()) {
                     mQuickSettings.add(BLUETOOTH_TILE);
@@ -182,16 +193,6 @@ public class QuickSettingsController {
                 // Not available yet
             }
         }
-
-        // Load the dynamic tiles
-        // These toggles must be the last ones added to the view, as they will show
-        // only when they are needed
-        /*if (Settings.System.getInt(resolver, Settings.System.QS_DYNAMIC_ALARM, 1) == 1) {
-            mQuickSettings.add(ALARM_TILE);
-        }
-        if (Settings.System.getInt(resolver, Settings.System.QS_DYNAMIC_WIFI, 1) == 1) {
-            mQuickSettings.add(WIFI_DISPLAY_TILE);
-        }*/
     }
 
     public void setupQuickSettings() {
@@ -327,10 +328,6 @@ public class QuickSettingsController {
                 qs = new MobileNetworkTypeTile(mContext, inflater,
                         (QuickSettingsContainerView) mContainerView, this);
                 break;
-            case ALARM_TILE:
-                qs = new AlarmTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this, mHandler);
-                break;
             case WIFI_DISPLAY_TILE:
                 qs = new WiFiDisplayTile(mContext, inflater,
                         (QuickSettingsContainerView) mContainerView, this);
@@ -349,6 +346,14 @@ public class QuickSettingsController {
                 break;
             case SYNC_TILE:
                 qs = new SyncTile(mContext, inflater,
+                        (QuickSettingsContainerView) mContainerView, this);
+                break;
+            case SETTINGS_TILE:
+                qs = new SettingsTile(mContext, inflater,
+                        (QuickSettingsContainerView) mContainerView, this);
+                break;
+            case TIME_TILE:
+                qs = new TimeTile(mContext, inflater,
                         (QuickSettingsContainerView) mContainerView, this);
                 break;
             }

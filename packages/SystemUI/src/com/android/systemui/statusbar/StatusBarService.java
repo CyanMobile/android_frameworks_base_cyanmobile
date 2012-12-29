@@ -53,8 +53,6 @@ import com.android.systemui.statusbar.powerwidget.PowerWidgetThree;
 import com.android.systemui.statusbar.powerwidget.PowerWidgetFour;
 import com.android.systemui.statusbar.powerwidget.MusicControls;
 import com.android.systemui.statusbar.policy.NetworkController;
-import com.android.systemui.statusbar.policy.BatteryController;
-import com.android.systemui.statusbar.policy.LocationController;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
 import com.android.systemui.R;
@@ -168,8 +166,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private static final int INTRUDER_ALERT_DECAY_MS = 3000;
 
     StatusBarPolicy mIconPolicy;
-    BatteryController mBatteryController;
-    LocationController mLocationController;
     NetworkController mNetworkController;
 
     CommandQueue mCommandQueue;
@@ -641,8 +637,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         // Lastly, call to the icon policy to install/update all the icons.
         mIconPolicy = new StatusBarPolicy(this);
-        mBatteryController = new BatteryController(this);
-        mLocationController = new LocationController(this);
         mNetworkController = new NetworkController(this);
 
         mContext = getApplicationContext();
@@ -920,7 +914,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         if (mQuickContainer != null) {
             mQS = new QuickSettingsController(context, mQuickContainer);
-            mQS.setupQuickSettings();
         }
 
         mExpandedView.setVisibility(View.GONE);
@@ -1599,6 +1592,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mPowerWidgetThree.setupWidget();
         mPowerWidgetFour.setupWidget();
         mMusicControls.setupControls();
+        if (mQS != null) mQS.setupQuickSettings();
     }
 
     public void addIcon(String slot, int index, int viewIndex, StatusBarIcon icon) {

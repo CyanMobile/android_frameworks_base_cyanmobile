@@ -17,18 +17,21 @@ import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 public class AutoRotateTile extends QuickSettingsTile {
 
     private static final String TAG = "AutoRotateButton";
+    Context mContext;
 
     public AutoRotateTile(Context context, LayoutInflater inflater,
             QuickSettingsContainerView container, QuickSettingsController qsc, Handler handler) {
         super(context, inflater, container, qsc);
+
+        mContext = context;
 
         mOnClick = new OnClickListener() {
             @Override
             public void onClick(View v) {
                      Settings.System.putInt(
                          mContext.getContentResolver(),
-                             Settings.System.ACCELEROMETER_ROTATION, getAutoRotation() ? 1 : 0);
-               applyAutoRotationChanges();
+                             Settings.System.ACCELEROMETER_ROTATION, getAutoRotation() ? 0 : 1);
+                applyAutoRotationChanges();
             }
         };
 
@@ -44,12 +47,12 @@ public class AutoRotateTile extends QuickSettingsTile {
     }
 
     void applyAutoRotationChanges() {
-        if(!getAutoRotation()){
+        if(getAutoRotation()){
             mDrawable = R.drawable.stat_orientation_on;
-            mLabel = mContext.getString(R.string.quick_settings_rotation_locked_label);
-        }else{
-            mDrawable = R.drawable.stat_orientation_off;
             mLabel = mContext.getString(R.string.quick_settings_rotation_unlocked_label);
+        } else {
+            mDrawable = R.drawable.stat_orientation_off;
+            mLabel = mContext.getString(R.string.quick_settings_rotation_locked_label);
         }
         updateQuickSettings();
     }
@@ -63,11 +66,12 @@ public class AutoRotateTile extends QuickSettingsTile {
     private boolean getAutoRotation() {
         return (Settings.System.getInt(
                 mContext.getContentResolver(),
-                Settings.System.ACCELEROMETER_ROTATION, 0) == 0);
+                Settings.System.ACCELEROMETER_ROTATION, 0) == 1);
     }
 
     @Override
     public void onChangeUri(ContentResolver resolver, Uri uri) {
+        getAutoRotation();
         applyAutoRotationChanges();
     }
 }

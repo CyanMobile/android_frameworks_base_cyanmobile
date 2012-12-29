@@ -53,12 +53,15 @@ import com.android.internal.telephony.TelephonyProperties;
 import com.android.systemui.R;
 import android.net.wimax.WimaxManagerConstants;
 
+import com.android.internal.app.IBatteryStats;
+import com.android.server.am.BatteryStatsService;
+
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NetworkController {
+public class NetworkController extends BroadcastReceiver {
     // debug
     static final String TAG = "StatusBar.NetworkController";
 
@@ -117,19 +120,13 @@ public class NetworkController {
     private static final int TYPE_PLMN = 2;
     private static final int TYPE_CUSTOM = 3;
     private boolean mWimaxSupported;
-    private final Handler mHandler;
+    Handler mHandler;
+    IBatteryStats mBatteryStats;
 
     // our ui
     Context mContext;
     ArrayList<NetworkSignalChangedCallback> mSignalsChangedCallbacks =
             new ArrayList<NetworkSignalChangedCallback>();
-
-    public interface SignalCluster {
-        void setWifiIndicators(boolean visible, int strengthIcon, int activityIcon);
-        void setMobileDataIndicators(boolean visible, int strengthIcon, int activityIcon,
-                int typeIcon);
-        void setIsAirplaneMode(boolean is, int airplaneIcon);
-    }
 
     public interface NetworkSignalChangedCallback {
         void onWifiSignalChanged(boolean enabled, int wifiSignalIconId, String description);
@@ -208,11 +205,10 @@ public class NetworkController {
         filter.addAction(WimaxManagerConstants.WIMAX_ENABLED_CHANGED_ACTION);
         filter.addAction(WimaxManagerConstants.NETWORK_STATE_CHANGED_ACTION);
         filter.addAction(WimaxManagerConstants.RSSI_CHANGED_ACTION);
+        context.registerReceiver(this, filter);
+
         mWimaxSupported = mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_wimaxEnabled);
-
-        mContext.registerReceiver(mIntentReceiver, filter, null, mHandler);
-
         try {
             mHspaDataDistinguishable = mContext.getResources().getBoolean(
                     R.bool.config_hspa_data_distinguishable);
@@ -222,7 +218,8 @@ public class NetworkController {
 
         // AIRPLANE_MODE_CHANGED is sent at boot; we've probably already missed it
         updateAirplaneMode();
-        mMobileDataEnable = false;
+
+        mBatteryStats = BatteryStatsService.getService();
     }
 
     public boolean isEmergencyOnly() {
@@ -243,14 +240,13 @@ public class NetworkController {
         if (isEmergencyOnly()) {
             cb.onMobileDataSignalChanged(false, mPhoneSignalIconId, mDataSignalIconId, null);
         } else {
-            cb.onMobileDataSignalChanged(mWifiEnabled ? false : mMobileDataEnable, mPhoneSignalIconId, mDataSignalIconId, mNetworkName);
+            cb.onMobileDataSignalChanged((mWifiEnabled ? false : mMobileDataEnable), mPhoneSignalIconId, mDataSignalIconId, mNetworkName);
         }
         cb.onAirplaneModeChanged(mAirplaneMode);
     }
 
-    private BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
-       @Override
-       public void onReceive(Context context, Intent intent) {
+    @Override
+    public void onReceive(Context context, Intent intent) {
         final String action = intent.getAction();
         if (action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION) ||
                     action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION) ||
@@ -278,9 +274,7 @@ public class NetworkController {
                         intent.getBooleanExtra(Telephony.Intents.EXTRA_SHOW_PLMN, false),
                         intent.getStringExtra(Telephony.Intents.EXTRA_PLMN));
         }
-       }
-    };
-
+    }
 
     // ===== Telephony ==============================================================
 
@@ -411,6 +405,7 @@ public class NetworkController {
             } else {
                 iconList = TelephonyIcons.sSignalImages[mInetCondition];
             }
+            mPhoneSignalIconId = iconList[iconLevel];
         } else {
             iconList = TelephonyIcons.sSignalImages[mInetCondition];
 
@@ -431,22 +426,16 @@ public class NetworkController {
                 if ((mPhoneState == TelephonyManager.CALL_STATE_IDLE) && isEvdo()
                     && !mAlwaysUseCdmaRssi) {
                     iconLevel = getEvdoLevel();
-                    if (false) {
-                        Slog.d(TAG, "use Evdo level=" + iconLevel + " to replace Cdma Level=" + getCdmaLevel());
-                    }
                 } else {
                     if ((mPhoneState == TelephonyManager.CALL_STATE_IDLE) && isEvdo()){
                         iconLevel = getEvdoLevel();
-                        if (false) {
-                            Slog.d(TAG, "use Evdo level=" + iconLevel + " to replace Cdma Level=" + getCdmaLevel());
-                        }
                     } else {
                         iconLevel = getCdmaLevel();
                     }
                 }
             }
+            mPhoneSignalIconId = iconList[iconLevel];
         }
-        mPhoneSignalIconId = iconList[iconLevel];
     }
 
     // ===== Full or limited Internet connectivity ==================================

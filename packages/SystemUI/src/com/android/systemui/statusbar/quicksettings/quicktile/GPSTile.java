@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.location.LocationManager;
 import android.provider.Settings;
 import android.view.LayoutInflater;
+import android.net.Uri;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
@@ -15,14 +16,12 @@ import android.view.View.OnLongClickListener;
 import com.android.systemui.R;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
-import com.android.systemui.statusbar.policy.LocationController;
-import com.android.systemui.statusbar.policy.LocationController.LocationGpsStateChangeCallback;
 
-
-public class GPSTile extends QuickSettingsTile implements LocationGpsStateChangeCallback {
+public class GPSTile extends QuickSettingsTile {
 
     private boolean enabled = false;
     private boolean working = false;
+    private boolean mEnabled = false;
 
     ContentResolver mContentResolver;
 
@@ -31,8 +30,6 @@ public class GPSTile extends QuickSettingsTile implements LocationGpsStateChange
         super(context, inflater, container, qsc);
 
         mContentResolver = mContext.getContentResolver();
-        LocationController controller = new LocationController(mContext);
-        controller.addStateChangedCallback(this);
 
         mLabel = mContext.getString(R.string.quick_settings_gps);
         enabled = Settings.Secure.isLocationProviderEnabled(mContentResolver, LocationManager.GPS_PROVIDER);
@@ -52,14 +49,8 @@ public class GPSTile extends QuickSettingsTile implements LocationGpsStateChange
             }
         };
         qsc.registerAction(LocationManager.PROVIDERS_CHANGED_ACTION, this);
-    }
-
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        enabled = Settings.Secure.isLocationProviderEnabled(mContentResolver, LocationManager.GPS_PROVIDER);
-        mLabel = mContext.getString(R.string.quick_settings_gps);
-        setGenericLabel();
-        applyGPSChanges();
+        qsc.registerAction(LocationManager.GPS_ENABLED_CHANGE_ACTION, this);
+        qsc.registerAction(LocationManager.GPS_FIX_CHANGE_ACTION, this);
     }
 
     @Override
@@ -68,26 +59,41 @@ public class GPSTile extends QuickSettingsTile implements LocationGpsStateChange
         super.onPostCreate();
     }
 
+    @Override
+    public void onChangeUri(ContentResolver resolver, Uri uri) {
+        applyGPSChanges();
+    }
+
     void applyGPSChanges() {
-        if (enabled && working) {
+        if (working) {
             mDrawable = R.drawable.stat_sys_gps_acquiring_anim;
-        } else if (enabled) {
+        } else if (enabled && mEnabled) {
             mDrawable = R.drawable.stat_gps_on;
         } else {
             mDrawable = R.drawable.stat_gps_off;
         }
+        setGenericLabel();
         updateQuickSettings();
     }
 
     @Override
-    public void onLocationGpsStateChanged(boolean inUse, String description) {
-        working = inUse;
-        if (description != null) {
-            mLabel = description;
+    public void onReceive(Context context, Intent intent) {
+        final String action = intent.getAction();
+        enabled = Settings.Secure.isLocationProviderEnabled(mContentResolver, LocationManager.GPS_PROVIDER);
+        boolean GPSenabled = intent.getBooleanExtra(LocationManager.EXTRA_GPS_ENABLED, false);
+        if (action.equals(LocationManager.GPS_FIX_CHANGE_ACTION) && GPSenabled) {
+            mEnabled = GPSenabled;
+            working = false;
+            applyGPSChanges();
+        } else if (action.equals(LocationManager.GPS_ENABLED_CHANGE_ACTION) && !GPSenabled) {
+            mEnabled = false;
+            working = false;
+            applyGPSChanges();
         } else {
-            setGenericLabel();
+            working = true;
+            mEnabled = false;
+            applyGPSChanges();
         }
-        applyGPSChanges();
     }
 
     private void setGenericLabel() {
