@@ -29,8 +29,8 @@ public class BatteryTile extends QuickSettingsTile implements BatteryStateChange
         super(context, inflater, container, qsc);
 
         mTileLayout = R.layout.quick_settings_tile_battery;
-        //batteryLevels = (LevelListDrawable) mContext.getResources().getDrawable(R.drawable.qs_sys_battery);
-        //chargingBatteryLevels = (LevelListDrawable) mContext.getResources().getDrawable(R.drawable.qs_sys_battery_charging);
+        batteryLevels = (LevelListDrawable) mContext.getResources().getDrawable(com.android.internal.R.drawable.stat_sys_battery);
+        chargingBatteryLevels = (LevelListDrawable) mContext.getResources().getDrawable(com.android.internal.R.drawable.stat_sys_battery_charge);
 
         BatteryController controller = new BatteryController(mContext);
         controller.addStateChangedCallback(this);
@@ -57,9 +57,9 @@ public class BatteryTile extends QuickSettingsTile implements BatteryStateChange
     }
 
     void applyBatteryChanges() {
-        //batteryIcon = charging
-        //        ? chargingBatteryLevels :
-        //            batteryLevels;
+        batteryIcon = charging
+                ? chargingBatteryLevels :
+                    batteryLevels;
         if(batteryLevel == 100) {
             mLabel = mContext.getString(R.string.quick_settings_battery_charged_label);
         }else{
@@ -68,7 +68,6 @@ public class BatteryTile extends QuickSettingsTile implements BatteryStateChange
                             batteryLevel)
                     : mContext.getString(R.string.status_bar_settings_battery_meter_format,
                             batteryLevel);
-
         }
         updateQuickSettings();
     }
@@ -78,8 +77,8 @@ public class BatteryTile extends QuickSettingsTile implements BatteryStateChange
         TextView tv = (TextView) mTile.findViewById(R.id.battery_textview);
         tv.setText(mLabel);
         ImageView iv = (ImageView) mTile.findViewById(R.id.battery_image);
-        //iv.setImageDrawable(batteryIcon);
-        //iv.setImageLevel(batteryLevel);
+        iv.setImageDrawable(batteryIcon);
+        iv.setImageLevel(batteryLevel);
     }
 
 }

@@ -70,7 +70,7 @@ public class GPSTile extends QuickSettingsTile implements LocationGpsStateChange
 
     void applyGPSChanges() {
         if (enabled && working) {
-            mDrawable = R.drawable.stat_gps_on;
+            mDrawable = R.drawable.stat_sys_gps_acquiring_anim;
         } else if (enabled) {
             mDrawable = R.drawable.stat_gps_on;
         } else {

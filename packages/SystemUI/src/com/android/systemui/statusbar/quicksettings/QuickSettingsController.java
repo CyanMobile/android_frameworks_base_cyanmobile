@@ -69,7 +69,6 @@ public class QuickSettingsController {
      * Settings PACKAGE.
      */
     public static final String TILE_BATTERY = "toggleBattery";
-    public static final String TILE_SETTINGS = "toggleSettings";
     public static final String TILE_WIFI = "toggleWifi";
     public static final String TILE_GPS = "toggleGPS";
     public static final String TILE_BLUETOOTH = "toggleBluetooth";
@@ -85,11 +84,15 @@ public class QuickSettingsController {
     public static final String TILE_WIMAX = "toggleWimax";
 
     private static final String TILE_DELIMITER = "|";
-    private static final String TILES_DEFAULT = TILE_BRIGHTNESS
-            + TILE_DELIMITER + TILE_SETTINGS
-            + TILE_DELIMITER + TILE_WIFI
+    private static final String TILES_DEFAULT = TILE_WIFI
             + TILE_DELIMITER + TILE_MOBILEDATA
             + TILE_DELIMITER + TILE_BATTERY
+            + TILE_DELIMITER + TILE_GPS
+            + TILE_DELIMITER + TILE_RINGER
+            + TILE_DELIMITER + TILE_SYNC
+            + TILE_DELIMITER + TILE_NETWORKMODE
+            + TILE_DELIMITER + TILE_AUTOROTATE
+            + TILE_DELIMITER + TILE_WIFIAP
             + TILE_DELIMITER + TILE_AIRPLANE
             + TILE_DELIMITER + TILE_BLUETOOTH;
     /**
@@ -193,7 +196,7 @@ public class QuickSettingsController {
         }*/
     }
 
-    void setupQuickSettings() {
+    public void setupQuickSettings() {
         LayoutInflater inflater = LayoutInflater.from(mContext);
         // Clear out old receiver
         if (mReceiver != null) {

@@ -22,7 +22,7 @@ class TelephonyIcons {
     //***** Signal strength icons
 
     //GSM/UMTS
-    static final int[][] TELEPHONY_SIGNAL_STRENGTH = {
+    static final int[][] sSignalImages = {
         { R.drawable.stat_sys_signal_0,
           R.drawable.stat_sys_signal_1,
           R.drawable.stat_sys_signal_2,
@@ -35,20 +35,7 @@ class TelephonyIcons {
           R.drawable.stat_sys_signal_4_fully }
     };
 
-    static final int[][] QS_TELEPHONY_SIGNAL_STRENGTH = {
-        { R.drawable.stat_sys_signal_0,
-          R.drawable.stat_sys_signal_1,
-          R.drawable.stat_sys_signal_2,
-          R.drawable.stat_sys_signal_3,
-          R.drawable.stat_sys_signal_4 },
-        { R.drawable.stat_sys_signal_0_fully,
-          R.drawable.stat_sys_signal_1_fully,
-          R.drawable.stat_sys_signal_2_fully,
-          R.drawable.stat_sys_signal_3_fully,
-          R.drawable.stat_sys_signal_4_fully }
-    };
-
-    static final int[][] TELEPHONY_SIGNAL_STRENGTH_ROAMING = {
+    static final int[][] sSignalImages_r = {
         { R.drawable.stat_sys_r_signal_0,
           R.drawable.stat_sys_r_signal_1,
           R.drawable.stat_sys_r_signal_2,
@@ -61,12 +48,10 @@ class TelephonyIcons {
           R.drawable.stat_sys_r_signal_4_fully }
     };
 
-    static final int[][] DATA_SIGNAL_STRENGTH = TELEPHONY_SIGNAL_STRENGTH;
-
     //***** Data connection icons
 
     //GSM/UMTS
-    static final int[][] DATA_G = {
+    static final int[][] sDataNetType_g = {
             { R.drawable.stat_sys_data_connected_g,
               R.drawable.stat_sys_data_in_g,
               R.drawable.stat_sys_data_out_g,
@@ -77,7 +62,7 @@ class TelephonyIcons {
               R.drawable.stat_sys_data_fully_inandout_g }
         };
 
-    static final int[][] DATA_3G = {
+    static final int[][] sDataNetType_3g = {
             { R.drawable.stat_sys_data_connected_3g,
               R.drawable.stat_sys_data_in_3g,
               R.drawable.stat_sys_data_out_3g,
@@ -88,7 +73,7 @@ class TelephonyIcons {
               R.drawable.stat_sys_data_fully_inandout_3g }
         };
 
-    static final int[][] DATA_E = {
+    static final int[][] sDataNetType_e = {
             { R.drawable.stat_sys_data_connected_e,
               R.drawable.stat_sys_data_in_e,
               R.drawable.stat_sys_data_out_e,
@@ -100,7 +85,7 @@ class TelephonyIcons {
         };
 
     //3.5G
-    static final int[][] DATA_H = {
+    static final int[][] sDataNetType_h = {
             { R.drawable.stat_sys_data_connected_h,
               R.drawable.stat_sys_data_in_h,
               R.drawable.stat_sys_data_out_h,
@@ -112,7 +97,7 @@ class TelephonyIcons {
     };
 
     //HPSPA+
-    static final int[][] DATA_HP = {
+    static final int[][] sDataNetType_4g = {
             { R.drawable.stat_sys_data_connected_4g,
               R.drawable.stat_sys_data_in_4g,
               R.drawable.stat_sys_data_out_4g,
@@ -124,8 +109,264 @@ class TelephonyIcons {
     };
 
     //CDMA
-    // Use 3G icons for EVDO data and 1x icons for 1XRTT data
-    static final int[][] DATA_1X = {
+    static final int[] sRoamingIndicatorImages_cdma = new int[] {
+        R.drawable.stat_sys_roaming_cdma_0, //Standard Roaming Indicator
+        // 1 is Standard Roaming Indicator OFF
+        // TODO T: image never used, remove and put 0 instead?
+        R.drawable.stat_sys_roaming_cdma_0,
+
+        // 2 is Standard Roaming Indicator FLASHING
+        // TODO T: image never used, remove and put 0 instead?
+        R.drawable.stat_sys_roaming_cdma_0,
+
+        // 3-12 Standard ERI
+        R.drawable.stat_sys_roaming_cdma_0, //3
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+
+        // 13-63 Reserved for Standard ERI
+        R.drawable.stat_sys_roaming_cdma_0, //13
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+
+        // 64-127 Reserved for Non Standard (Operator Specific) ERI
+        R.drawable.stat_sys_roaming_cdma_0, //64
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0, //83
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0 //239
+
+        // 240-255 Reserved
+    };
+
+    // EVDO data and 1x icons for 1XRTT data
+    static final int[][] sDataNetType_1x = {
             { R.drawable.stat_sys_data_connected_1x,
               R.drawable.stat_sys_data_in_1x,
               R.drawable.stat_sys_data_out_1x,
@@ -135,19 +376,5 @@ class TelephonyIcons {
               R.drawable.stat_sys_data_fully_out_1x,
               R.drawable.stat_sys_data_fully_inandout_1x }
             };
-
-    // LTE and eHRPD
-    static final int[][] DATA_4G = {
-            { R.drawable.stat_sys_data_connected_4g,
-              R.drawable.stat_sys_data_in_4g,
-              R.drawable.stat_sys_data_out_4g,
-              R.drawable.stat_sys_data_inandout_4g },
-            { R.drawable.stat_sys_data_fully_connected_4g,
-              R.drawable.stat_sys_data_fully_in_4g,
-              R.drawable.stat_sys_data_fully_out_4g,
-              R.drawable.stat_sys_data_fully_inandout_4g }
-        };
-
-
 }
 

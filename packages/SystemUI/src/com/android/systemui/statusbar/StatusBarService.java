@@ -52,7 +52,11 @@ import com.android.systemui.statusbar.powerwidget.PowerWidgetTwo;
 import com.android.systemui.statusbar.powerwidget.PowerWidgetThree;
 import com.android.systemui.statusbar.powerwidget.PowerWidgetFour;
 import com.android.systemui.statusbar.powerwidget.MusicControls;
-import com.android.systemui.statusbar.quicksettings.QuickTileView;
+import com.android.systemui.statusbar.policy.NetworkController;
+import com.android.systemui.statusbar.policy.BatteryController;
+import com.android.systemui.statusbar.policy.LocationController;
+import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
+import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
 import com.android.systemui.R;
 import android.os.IPowerManager;
 import android.provider.Settings.SettingNotFoundException;
@@ -164,6 +168,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private static final int INTRUDER_ALERT_DECAY_MS = 3000;
 
     StatusBarPolicy mIconPolicy;
+    BatteryController mBatteryController;
+    LocationController mLocationController;
+    NetworkController mNetworkController;
 
     CommandQueue mCommandQueue;
     IStatusBarService mBarService;
@@ -193,7 +200,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     LinearLayout mCenterClock;
     LinearLayout mCenterClockex;
     SignalClusterView mCenterIconex;
-    QuickTileView mQuickTile;
     LinearLayout mLeftClock;
     IconMerger mNotificationIcons;
     LinearLayout mStatusIcons;
@@ -228,6 +234,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     TextView mLatestTitle;
     TextView mLatestTitles;
     LinearLayout mLatestItems;
+    QuickSettingsController mQS;
+    QuickSettingsContainerView mQuickContainer;
     ItemTouchDispatcher mTouchDispatcher;
     // position
     int[] mPositionTmp = new int[2];
@@ -633,6 +641,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         // Lastly, call to the icon policy to install/update all the icons.
         mIconPolicy = new StatusBarPolicy(this);
+        mBatteryController = new BatteryController(this);
+        mLocationController = new LocationController(this);
+        mNetworkController = new NetworkController(this);
 
         mContext = getApplicationContext();
 
@@ -902,11 +913,15 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mMusicToggleButton.setOnClickListener(mMusicToggleButtonListener);
         mCenterClockex = (LinearLayout)mExpandedView.findViewById(R.id.centerClockex);
         mCenterIconex = (SignalClusterView)mExpandedView.findViewById(R.id.centerIconex);
-        mQuickTile = (QuickTileView)mExpandedView.findViewById(R.id.quick_tile_view);
-        mQuickTile.setVisibility(View.GONE); // delete this line if you want to see (WIP)
         mSettingsIconButton = (ImageView)mExpandedView.findViewById(R.id.settingIcon);
         mSettingsIconButton.setOnClickListener(mSettingsIconButtonListener);
         mStatusIconsExp = (LinearLayout)mExpandedView.findViewById(R.id.expstatusIcons);
+        mQuickContainer = (QuickSettingsContainerView)mExpandedView.findViewById(R.id.quick_settings_container);
+
+        if (mQuickContainer != null) {
+            mQS = new QuickSettingsController(context, mQuickContainer);
+            mQS.setupQuickSettings();
+        }
 
         mExpandedView.setVisibility(View.GONE);
         mOngoingTitle.setVisibility(View.GONE);
@@ -3280,6 +3295,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
             mEdgeBorder = res.getDimensionPixelSize(R.dimen.status_bar_edge_ignore);
         }
+
+        if (mQS != null) mQS.updateResources();
 
         if (false) Slog.v(TAG, "updateResources");
     }

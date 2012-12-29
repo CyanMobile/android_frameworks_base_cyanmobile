@@ -22,8 +22,6 @@ import com.android.systemui.statusbar.policy.NetworkController.NetworkSignalChan
 public class MobileNetworkTile extends QuickSettingsTile implements NetworkSignalChangedCallback{
 
     private int mDataTypeIconId;
-    private String dataContentDescription;
-    private String signalContentDescription;
     private boolean wifiOn = false;
 
     public MobileNetworkTile(Context context, LayoutInflater inflater,
@@ -64,8 +62,12 @@ public class MobileNetworkTile extends QuickSettingsTile implements NetworkSigna
 
     @Override
     public void onWifiSignalChanged(boolean enabled, int wifiSignalIconId, String description) {
-        wifiOn = enabled;
+        // TODO Auto-generated method stub
+    }
 
+    boolean deviceSupportsTelephony() {
+        PackageManager pm = mContext.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
     }
 
     @Override
@@ -74,15 +76,11 @@ public class MobileNetworkTile extends QuickSettingsTile implements NetworkSigna
         if (deviceSupportsTelephony()) {
             // TODO: If view is in awaiting state, disable
             Resources r = mContext.getResources();
-            mDrawable = enabled && (mobileSignalIconId > 0)
-                    ? mobileSignalIconId
-                    : R.drawable.stat_sys_no_sim;
-            mDataTypeIconId = enabled && (dataTypeIconId > 0) && !wifiOn
+            mDrawable = mobileSignalIconId;
+            mDataTypeIconId = enabled && (dataTypeIconId > 0) 
                     ? dataTypeIconId
                     : 0;
-            mLabel = enabled
-                    ? removeTrailingPeriod(description)
-                    : r.getString(R.string.quick_settings_rssi_emergency_only);
+            mLabel = description;
             updateQuickSettings();
         }
     }
@@ -90,12 +88,6 @@ public class MobileNetworkTile extends QuickSettingsTile implements NetworkSigna
     @Override
     public void onAirplaneModeChanged(boolean enabled) {
         // TODO Auto-generated method stub
-
-    }
-
-    boolean deviceSupportsTelephony() {
-        PackageManager pm = mContext.getPackageManager();
-        return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
     }
 
     @Override
@@ -111,15 +103,4 @@ public class MobileNetworkTile extends QuickSettingsTile implements NetworkSigna
         }
         tv.setText(mLabel);
     }
-
- // Remove the period from the network name
-    public static String removeTrailingPeriod(String string) {
-        if (string == null) return null;
-        final int length = string.length();
-        if (string.endsWith(".")) {
-            string.substring(0, length - 1);
-        }
-        return string;
-    }
-
 }
