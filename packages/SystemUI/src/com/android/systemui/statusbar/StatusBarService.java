@@ -356,7 +356,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private boolean mNaviShow = true;
     private boolean mStatusBarReverse = false;
     private boolean mStatusBarTab = false;
-    private boolean mStatusBarTileView = false;
     private boolean mStatusBarGrid = false;
     private boolean LogoStatusBar = false;
     private boolean mShowCmBatteryStatusBar = false;
@@ -504,10 +503,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
             mSettingsColor = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_SETTINGSCOLOR, defValuesColor));
-            mStatusBarTab = (Settings.System.getInt(resolver,
-                    Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4);
-            mStatusBarTileView = (Settings.System.getInt(resolver,
-                    Settings.System.EXPANDED_VIEW_WIDGET, 1) == 5);
+            mStatusBarTab = ((Settings.System.getInt(resolver,
+                    Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4) || (Settings.System.getInt(resolver,
+                    Settings.System.EXPANDED_VIEW_WIDGET, 1) == 5));
             mStatusBarGrid = (Settings.System.getInt(resolver,
                     Settings.System.EXPANDED_VIEW_WIDGET, 1) == 3);
             mNaviShow = (Settings.System.getInt(resolver,
@@ -708,10 +706,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
             mSettingsColor = (Settings.System.getInt(getContentResolver(),
                     Settings.System.STATUS_BAR_SETTINGSCOLOR, defValuesColor));
-            mStatusBarTab = (Settings.System.getInt(getContentResolver(),
-                    Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4);
-            mStatusBarTileView = (Settings.System.getInt(getContentResolver(),
-                    Settings.System.EXPANDED_VIEW_WIDGET, 1) == 5);
+            mStatusBarTab = ((Settings.System.getInt(getContentResolver(),
+                    Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4) || (Settings.System.getInt(getContentResolver(),
+                    Settings.System.EXPANDED_VIEW_WIDGET, 1) == 5));
             mStatusBarGrid = (Settings.System.getInt(getContentResolver(),
                     Settings.System.EXPANDED_VIEW_WIDGET, 1) == 3);
             mNaviShow = (Settings.System.getInt(getContentResolver(),
@@ -728,7 +725,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             IntruderTime = Settings.System.getInt(getContentResolver(),
                     Settings.System.STATUS_BAR_INTRUDER_TIME, INTRUDER_ALERT_DECAY_MS);
 
-        if (!mStatusBarTab || !mStatusBarTileView) {
+        if (!mStatusBarTab) {
             mExpandedView = (ExpandedView)View.inflate(context,
                                                 R.layout.status_bar_expanded, null);
         } else {
@@ -868,7 +865,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
 
         mExpandedDialog = new ExpandedDialog(context);
-        if (!mStatusBarTab || !mStatusBarTileView) {
+        if (!mStatusBarTab) {
             mExpandedContents = mExpandedView.findViewById(R.id.notificationLinearLayout);
         } else {
             mExpandedContents = mExpandedView.findViewById(R.id.notifications_layout);
@@ -879,7 +876,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mLatestTitle = (TextView)mExpandedView.findViewById(R.id.latestTitle);
         mLatestItems = (LinearLayout)mExpandedView.findViewById(R.id.latestItems);
         mNoNotificationsTitle = (TextView)mExpandedView.findViewById(R.id.noNotificationsTitle);
-        if (mStatusBarTab || mStatusBarTileView) {
+        if (mStatusBarTab) {
             mLatestTitles = (TextView)mExpandedView.findViewById(R.id.latestTitles);
             mNoNotificationsTitles = (TextView)mExpandedView.findViewById(R.id.noNotificationsTitles);
         }
@@ -914,17 +911,17 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mSettingsIconButton = (ImageView)mExpandedView.findViewById(R.id.settingIcon);
         mSettingsIconButton.setOnClickListener(mSettingsIconButtonListener);
         mStatusIconsExp = (LinearLayout)mExpandedView.findViewById(R.id.expstatusIcons);
-        if (mStatusBarTileView) {
+        if (mStatusBarTab) {
             mQuickContainer = (QuickSettingsContainerView)mExpandedView.findViewById(R.id.quick_settings_container);
-        }
-        if (mStatusBarTileView && (mQuickContainer != null)) {
-            mQS = new QuickSettingsController(context, mQuickContainer);
+            if (mQuickContainer != null) {
+                mQS = new QuickSettingsController(context, mQuickContainer);
+            }
         }
 
         mExpandedView.setVisibility(View.GONE);
         mOngoingTitle.setVisibility(View.GONE);
         mLatestTitle.setVisibility(View.GONE);
-        if (mStatusBarTab || mStatusBarTileView) {
+        if (mStatusBarTab) {
             mLatestTitles.setVisibility(View.GONE);
         }
 
@@ -1020,7 +1017,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mTickerText = (TickerView)mStatusBarView.findViewById(R.id.tickerText);
         mTickerText.mTicker = mTicker;
 
-        if (!mStatusBarTab || !mStatusBarTileView) {
+        if (!mStatusBarTab) {
             mTrackingView = (TrackingView)View.inflate(context, R.layout.status_bar_tracking, null);
         } else {
             mTrackingView = (TrackingView)View.inflate(context, R.layout.status_bar_trackingtab, null);
@@ -1063,7 +1060,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mContext=context;
 
-        if (mStatusBarTab || mStatusBarTileView) {
+        if (mStatusBarTab) {
             mPowerCarrier = (LinearLayout)mExpandedView.findViewById(R.id.power_and_carrier_layout);
             mNotifications = (LinearLayout)mExpandedView.findViewById(R.id.notifications_layout);
             mNotificationsToggle = (TextView)mTrackingView.findViewById(R.id.statusbar_notification_toggle);
@@ -1108,7 +1105,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
                });
 
-        if (mStatusBarTab || mStatusBarTileView) {
+        if (mStatusBarTab) {
         mNotificationsToggle.setOnClickListener(new OnClickListener(){
               @Override
               public void onClick(View v) {
@@ -1199,7 +1196,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mButtonText = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_CLEAR_BUTTON, mBlackColor);
 
-        if (mStatusBarTab || mStatusBarTileView) {
+        if (mStatusBarTab) {
             mCompactClearButton.setTextColor(mButtonText);
         } else {
             if (mMoreExpanded) {
@@ -1210,7 +1207,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mNotifyNone = Settings.System
                 .getInt(resolver, Settings.System.COLOR_NOTIFICATION_NONE, defValuesColor);
         mNoNotificationsTitle.setTextColor(mNotifyNone);
-        if ((mStatusBarTab || mStatusBarTileView) && (mNoNotificationsTitles != null)) {
+        if (mStatusBarTab && (mNoNotificationsTitles != null)) {
             mNoNotificationsTitles.setTextColor(mNotifyNone);
         }
         mNotifyTicker = Settings.System
@@ -1220,7 +1217,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mNotifyLatest = Settings.System
                 .getInt(resolver, Settings.System.COLOR_NOTIFICATION_LATEST, defValuesColor);
         mLatestTitle.setTextColor(mNotifyLatest);
-        if (mStatusBarTab || mStatusBarTileView) {
+        if (mStatusBarTab) {
             mLatestTitles.setTextColor(mNotifyLatest);
         }
 
@@ -1597,7 +1594,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mPowerWidgetThree.setupWidget();
         mPowerWidgetFour.setupWidget();
         mMusicControls.setupControls();
-        if (mQS != null) mQS.setupQuickSettings();
+        if ((mStatusBarTab) && (mQS != null)) mQS.setupQuickSettings();
     }
 
     public void addIcon(String slot, int index, int viewIndex, StatusBarIcon icon) {
@@ -1921,7 +1918,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         // (no ongoing notifications are clearable)
         if (mLatest.hasClearableItems()) {
-            if (mStatusBarTab || mStatusBarTileView) {
+            if (mStatusBarTab) {
                 mCompactClearButton.setVisibility(View.VISIBLE); 
                 mClearButton.setVisibility(View.INVISIBLE);
                 mClearOldButton.setVisibility(View.GONE);
@@ -1941,16 +1938,16 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mOngoingTitle.setVisibility(ongoing ? View.VISIBLE : View.GONE);
         mLatestTitle.setVisibility(latest ? View.VISIBLE : View.GONE);
-        if (mStatusBarTab || mStatusBarTileView) {
+        if (mStatusBarTab) {
             mLatestTitles.setVisibility(latest ? View.VISIBLE : View.GONE);
         }
 
         if (latest) {
-            if (mStatusBarTab || mStatusBarTileView) {
+            if (mStatusBarTab) {
                 mNoNotificationsTitles.setVisibility(View.GONE);
             }
         } else {
-            if (mStatusBarTab || mStatusBarTileView) {
+            if (mStatusBarTab) {
                 mNoNotificationsTitles.setVisibility(View.VISIBLE);
             }
         }
@@ -2941,7 +2938,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             final int closePos = mPositionTmp[1];
             int conBot;
 
-            if (!mStatusBarTab || !mStatusBarTileView) {
+            if (!mStatusBarTab) {
                 mExpandedContents.getLocationInWindow(mPositionTmp);
                 conBot = mPositionTmp[1] + mExpandedContents.getHeight();
             } else {
@@ -3071,7 +3068,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     public View.OnClickListener mMusicToggleButtonListener = new View.OnClickListener() {
 	public void onClick(View v) {
-           if (mStatusBarTab || mStatusBarTileView) {
+           if (mStatusBarTab) {
                mPowerCarrier.setVisibility(View.VISIBLE);
                mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
            }
@@ -3282,7 +3279,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         } else {
             mOngoingTitle.setText(getText(R.string.status_bar_ongoing_events_title));
             mLatestTitle.setText(getText(R.string.status_bar_latest_events_title));
-            if (mStatusBarTab || mStatusBarTileView) {
+            if (mStatusBarTab) {
                mLatestTitles.setText(getText(R.string.status_bar_latestnews_events_title));
             }
             mNoNotificationsTitle.setText(getText(R.string.status_bar_no_notifications_title));
@@ -3295,7 +3292,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mEdgeBorder = res.getDimensionPixelSize(R.dimen.status_bar_edge_ignore);
         }
 
-        if (mQS != null) mQS.updateResources();
+        if ((mStatusBarTab) && (mQS != null)) mQS.updateResources();
 
         if (false) Slog.v(TAG, "updateResources");
     }

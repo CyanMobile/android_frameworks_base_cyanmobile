@@ -137,14 +137,13 @@ public class QuickSettingsController {
     public static final int BRIGHTNESS_TILE = 9;
     public static final int MOBILE_NETWORK_TYPE_TILE = 10;
     public static final int BATTERY_TILE = 11;
-    public static final int WIFI_DISPLAY_TILE = 12;
-    public static final int TORCH_TILE = 13;
-    public static final int WIFIAP_TILE = 14;
-    public static final int SYNC_TILE = 15;
-    public static final int SCREENSHOT_TILE = 16;
-    public static final int SCREENTIME_TILE = 17;
-    public static final int LOCKSCREEN_TILE = 18;
-    public static final int SLEEP_TILE = 19;
+    public static final int TORCH_TILE = 12;
+    public static final int WIFIAP_TILE = 13;
+    public static final int SYNC_TILE = 14;
+    public static final int SCREENSHOT_TILE = 15;
+    public static final int SCREENTIME_TILE = 16;
+    public static final int LOCKSCREEN_TILE = 17;
+    public static final int SLEEP_TILE = 18;
 
     public QuickSettingsController(Context context, QuickSettingsContainerView container) {
         mContext = context;

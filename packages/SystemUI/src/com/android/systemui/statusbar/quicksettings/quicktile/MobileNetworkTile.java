@@ -81,9 +81,10 @@ public class MobileNetworkTile extends QuickSettingsTile implements NetworkSigna
         ImageView iov = (ImageView) mTile.findViewById(R.id.rssi_overlay_image);
         iv.setBackgroundResource(mDrawable);
         if (dataOn) {
+            iov.setVisibility(View.VISIBLE);
             iov.setBackgroundResource(mDataTypeIconId);
         } else {
-            iov.setImageDrawable(null);
+            iov.setVisibility(View.GONE);
         }
     }
 }
