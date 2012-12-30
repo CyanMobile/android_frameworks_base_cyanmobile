@@ -100,25 +100,25 @@ public class QuickSettingsController {
             + TILE_DELIMITER + TILE_NETWORKMODE
             + TILE_DELIMITER + TILE_TIME
             + TILE_DELIMITER + TILE_SETTING
+            + TILE_DELIMITER + TILE_BLUETOOTH
             + TILE_DELIMITER + TILE_BRIGHTNESS
             + TILE_DELIMITER + TILE_GPS
             + TILE_DELIMITER + TILE_SYNC
+            + TILE_DELIMITER + TILE_RINGER
+            + TILE_DELIMITER + TILE_AIRPLANE
+            + TILE_DELIMITER + TILE_AUTOROTATE
             + TILE_DELIMITER + TILE_SCREENSHOT
             + TILE_DELIMITER + TILE_SCREENTIME
-            + TILE_DELIMITER + TILE_RINGER
-            + TILE_DELIMITER + TILE_AUTOROTATE
-            + TILE_DELIMITER + TILE_AIRPLANE
             + TILE_DELIMITER + TILE_SLEEP
             + TILE_DELIMITER + TILE_LOCKSCREEN
-            + TILE_DELIMITER + TILE_WIFIAP
-            + TILE_DELIMITER + TILE_BLUETOOTH;
+            + TILE_DELIMITER + TILE_WIFIAP;
 
     /**
      * END OF DATA MATCHING BLOCK
      */
 
     private final Context mContext;
-    private final ViewGroup mContainerView;
+    private final QuickSettingsContainerView mContainerView;
     private final Handler mHandler;
     private BroadcastReceiver mReceiver;
     private ContentObserver mObserver;
@@ -318,80 +318,61 @@ public class QuickSettingsController {
             QuickSettingsTile qs = null;
             switch (entry) {
             case WIFI_TILE:
-                qs = new WiFiTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new WiFiTile(mContext, inflater, mContainerView, this);
                 break;
             case MOBILE_NETWORK_TILE:
-                qs = new MobileNetworkTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new MobileNetworkTile(mContext, inflater, mContainerView, this);
                 break;
             case AIRPLANE_MODE_TILE:
-                qs = new AirplaneModeTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new AirplaneModeTile(mContext, inflater, mContainerView, this);
                 break;
             case BLUETOOTH_TILE:
-                qs = new BluetoothTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new BluetoothTile(mContext, inflater, mContainerView, this);
                 break;
             case RINGER_TILE:
-                qs = new RingerModeTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new RingerModeTile(mContext, inflater, mContainerView, this);
                 break;
             case GPS_TILE:
-                qs = new GPSTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new GPSTile(mContext, inflater, mContainerView, this);
                 break;
             case AUTO_ROTATION_TILE:
-                qs = new AutoRotateTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new AutoRotateTile(mContext, inflater, mContainerView, this);
                 break;
             case BRIGHTNESS_TILE:
-                qs = new BrightnessTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new BrightnessTile(mContext, inflater, mContainerView, this);
                 break;
             case MOBILE_NETWORK_TYPE_TILE:
-                qs = new MobileNetworkTypeTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new MobileNetworkTypeTile(mContext, inflater, mContainerView, this);
                 break;
             case BATTERY_TILE:
-                qs = new BatteryTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new BatteryTile(mContext, inflater, mContainerView, this);
                 break;
             case TORCH_TILE:
-                qs = new TorchTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this, mHandler);
+                qs = new TorchTile(mContext, inflater, mContainerView, this, mHandler);
                 break;
             case WIFIAP_TILE:
-                qs = new WifiAPTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new WifiAPTile(mContext, inflater, mContainerView, this);
                 break;
             case SYNC_TILE:
-                qs = new SyncTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new SyncTile(mContext, inflater, mContainerView, this);
                 break;
             case SETTINGS_TILE:
-                qs = new SettingsTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new SettingsTile(mContext, inflater, mContainerView, this);
                 break;
             case TIME_TILE:
-                qs = new TimeTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new TimeTile(mContext, inflater, mContainerView, this);
                 break;
             case SCREENSHOT_TILE:
-                qs = new ScreenshotTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new ScreenshotTile(mContext, inflater, mContainerView, this);
                 break;
             case SCREENTIME_TILE:
-                qs = new SleepTimeTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new SleepTimeTile(mContext, inflater, mContainerView, this);
                 break;
             case LOCKSCREEN_TILE:
-                qs = new LockscreenTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new LockscreenTile(mContext, inflater, mContainerView, this);
                 break;
             case SLEEP_TILE:
-                qs = new SleepTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
+                qs = new SleepTile(mContext, inflater, mContainerView, this);
                 break;
             }
             if (qs != null) {

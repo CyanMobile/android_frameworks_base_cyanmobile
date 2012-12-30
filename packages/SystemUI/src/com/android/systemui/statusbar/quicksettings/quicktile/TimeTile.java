@@ -1,6 +1,7 @@
 package com.android.systemui.statusbar.quicksettings.quicktile;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 
@@ -19,7 +20,9 @@ public class TimeTile extends QuickSettingsTile {
         mOnClick = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // nothing
+                Intent intent = new Intent(Intent.ACTION_MAIN);
+                intent.setClassName("com.android.deskclock", "com.android.deskclock.DeskClock");
+                startSettingsActivity(intent);
             }
         };
     }

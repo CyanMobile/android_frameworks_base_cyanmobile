@@ -25,14 +25,14 @@
         android:orientation="horizontal"
         android:layout_gravity="center">
         <ImageView
-            android:id="@+id/rssi_image"
+            android:id="@+id/rssi_overlay_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:paddingBottom="10dp"
             />
         <ImageView
-            android:id="@+id/rssi_overlay_image"
+            android:id="@+id/rssi_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
