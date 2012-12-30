@@ -19,7 +19,7 @@ import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 import com.android.systemui.statusbar.policy.NetworkController;
 import com.android.systemui.statusbar.policy.NetworkController.NetworkSignalChangedCallback;
 
-public class MobileNetworkTile extends QuickSettingsTile implements NetworkSignalChangedCallback{
+public class MobileNetworkTile extends QuickSettingsTile implements NetworkSignalChangedCallback {
 
     private int mDataTypeIconId;
     private boolean dataOn = false;
@@ -59,24 +59,18 @@ public class MobileNetworkTile extends QuickSettingsTile implements NetworkSigna
     }
 
     @Override
-    public void onWifiSignalChanged(boolean enabled, int wifiSignalIconId, String description) {
+    public void onWifiSignalChanged(boolean mIsWifiConnected, int mWifiSignalIconId) {
         // TODO Auto-generated method stub
     }
 
     @Override
-    public void onMobileDataSignalChanged(boolean enabled,
-            int mobileSignalIconId, int dataTypeIconId, String description) {
+    public void onMobileDataSignalChanged(boolean mMobileDataEnable, int mPhoneSignalIconId, int mDataSignalIconId, String description) {
         // TODO: If view is in awaiting state, disable
-        dataOn = enabled;
-        mDrawable = mobileSignalIconId;
-        mDataTypeIconId = dataTypeIconId;
+        dataOn = mMobileDataEnable;
+        mDrawable = mPhoneSignalIconId;
+        mDataTypeIconId = mDataSignalIconId;
         mLabel = description;
         updateQuickSettings();
-    }
-
-    @Override
-    public void onAirplaneModeChanged(boolean enabled) {
-        // TODO Auto-generated method stub
     }
 
     @Override
@@ -85,9 +79,9 @@ public class MobileNetworkTile extends QuickSettingsTile implements NetworkSigna
         tv.setText(mLabel);
         ImageView iv = (ImageView) mTile.findViewById(R.id.rssi_image);
         ImageView iov = (ImageView) mTile.findViewById(R.id.rssi_overlay_image);
-        iv.setImageResource(mDrawable);
+        iv.setBackgroundResource(mDrawable);
         if (dataOn) {
-            iov.setImageResource(mDataTypeIconId);
+            iov.setBackgroundResource(mDataTypeIconId);
         } else {
             iov.setImageDrawable(null);
         }

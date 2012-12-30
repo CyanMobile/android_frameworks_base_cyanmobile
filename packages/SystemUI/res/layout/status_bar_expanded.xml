@@ -65,8 +65,6 @@
             android:layout_height="wrap_content"
             />
 
-        <include layout="@layout/quicktile" />
-
         <LinearLayout android:id="@+id/carrier_label_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -234,6 +232,9 @@
             android:orientation="horizontal"/>
 
         </com.android.systemui.statusbar.SignalClusterView>
+
+        <include layout="@layout/quicktile" />
+
     </LinearLayout>
 
     <FrameLayout android:id="@+id/notifications"

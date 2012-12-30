@@ -52,7 +52,6 @@ import com.android.systemui.statusbar.quicksettings.quicktile.ScreenshotTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.SleepTimeTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.SettingsTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.TimeTile;
-import com.android.systemui.statusbar.quicksettings.quicktile.WiFiDisplayTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.WiFiTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.WifiAPTile;
 
@@ -96,23 +95,24 @@ public class QuickSettingsController {
 
     private static final String TILE_DELIMITER = "|";
     private static final String TILES_DEFAULT = TILE_WIFI
+            + TILE_DELIMITER + TILE_BATTERY
+            + TILE_DELIMITER + TILE_MOBILEDATA
+            + TILE_DELIMITER + TILE_NETWORKMODE
             + TILE_DELIMITER + TILE_TIME
             + TILE_DELIMITER + TILE_SETTING
             + TILE_DELIMITER + TILE_BRIGHTNESS
-            + TILE_DELIMITER + TILE_BATTERY
             + TILE_DELIMITER + TILE_GPS
             + TILE_DELIMITER + TILE_SYNC
             + TILE_DELIMITER + TILE_SCREENSHOT
             + TILE_DELIMITER + TILE_SCREENTIME
             + TILE_DELIMITER + TILE_RINGER
-            + TILE_DELIMITER + TILE_NETWORKMODE
             + TILE_DELIMITER + TILE_AUTOROTATE
             + TILE_DELIMITER + TILE_AIRPLANE
-            + TILE_DELIMITER + TILE_MOBILEDATA
             + TILE_DELIMITER + TILE_SLEEP
             + TILE_DELIMITER + TILE_LOCKSCREEN
             + TILE_DELIMITER + TILE_WIFIAP
             + TILE_DELIMITER + TILE_BLUETOOTH;
+
     /**
      * END OF DATA MATCHING BLOCK
      */
@@ -156,7 +156,7 @@ public class QuickSettingsController {
     void loadTiles() {
         // Read the stored list of tiles
         ContentResolver resolver = mContext.getContentResolver();
-        String tiles = null; //Settings.System.getString(resolver, Settings.System.QUICK_SETTINGS_TILES);
+        String tiles = Settings.System.getString(resolver, Settings.System.QUICK_SETTINGS_TILES);
         if (tiles == null) {
             Log.i(TAG, "Default tiles being loaded");
             tiles = TILES_DEFAULT;
@@ -352,10 +352,6 @@ public class QuickSettingsController {
                 break;
             case MOBILE_NETWORK_TYPE_TILE:
                 qs = new MobileNetworkTypeTile(mContext, inflater,
-                        (QuickSettingsContainerView) mContainerView, this);
-                break;
-            case WIFI_DISPLAY_TILE:
-                qs = new WiFiDisplayTile(mContext, inflater,
                         (QuickSettingsContainerView) mContainerView, this);
                 break;
             case BATTERY_TILE:

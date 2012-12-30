@@ -12,7 +12,7 @@ import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
 import com.android.systemui.statusbar.policy.NetworkController;
 import com.android.systemui.statusbar.policy.NetworkController.NetworkSignalChangedCallback;
 
-public class WiFiTile extends QuickSettingsTile implements NetworkSignalChangedCallback{
+public class WiFiTile extends QuickSettingsTile implements NetworkSignalChangedCallback {
 
     public WiFiTile(Context context, LayoutInflater inflater,
             QuickSettingsContainerView container, QuickSettingsController qsc) {
@@ -41,13 +41,12 @@ public class WiFiTile extends QuickSettingsTile implements NetworkSignalChangedC
     }
 
     @Override
-    public void onWifiSignalChanged(boolean enabled, int wifiSignalIconId, String description) {
-        boolean wifiConnected = enabled && (wifiSignalIconId > 0) && (description != null);
-        boolean wifiNotConnected = enabled && (wifiSignalIconId > 0) && (description == null);
-        if (wifiConnected) {
-            mDrawable = wifiSignalIconId;
-            mLabel = description.substring(1, description.length()-1);
-        } else if (wifiNotConnected) {
+    public void onWifiSignalChanged(boolean mIsWifiConnected, int mWifiSignalIconId) {
+        WifiManager wfmg = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
+        if (mIsWifiConnected) {
+            mDrawable = mWifiSignalIconId;
+            mLabel = mContext.getString(R.string.quick_settings_wifi_label_connected);
+        } else if (wfmg.isWifiEnabled()) {
             mDrawable = R.drawable.stat_wifi_on;
             mLabel = mContext.getString(R.string.quick_settings_wifi_label);
         } else {
@@ -58,16 +57,7 @@ public class WiFiTile extends QuickSettingsTile implements NetworkSignalChangedC
     }
 
     @Override
-    public void onMobileDataSignalChanged(boolean enabled,
-            int mobileSignalIconId, int dataTypeIconId, String description) {
+    public void onMobileDataSignalChanged(boolean mMobileDataEnable, int mPhoneSignalIconId, int mDataSignalIconId, String description) {
         // TODO Auto-generated method stub
-
     }
-
-    @Override
-    public void onAirplaneModeChanged(boolean enabled) {
-        // TODO Auto-generated method stub
-
-    }
-
 }

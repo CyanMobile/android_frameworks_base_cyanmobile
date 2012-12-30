@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2008 The Android Open Source Project
+ * Patched by Sven Dawitz; Copyright (C) 2011 CyanogenMod Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,17 +22,14 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.Resources;
 import android.database.ContentObserver;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
-import android.net.wifi.WifiInfo;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.Message;
-import android.os.Messenger;
 import android.os.RemoteException;
 import android.os.SystemProperties;
 import android.provider.Settings;
@@ -42,35 +40,395 @@ import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Slog;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
 
+import com.android.internal.app.IBatteryStats;
 import com.android.internal.telephony.IccCard;
 import com.android.internal.telephony.TelephonyIntents;
-import com.android.internal.telephony.cdma.EriInfo;
-import com.android.internal.telephony.cdma.TtyIntent;
 import com.android.internal.telephony.TelephonyProperties;
+import com.android.internal.telephony.cdma.EriInfo;
+import com.android.server.am.BatteryStatsService;
 import com.android.systemui.R;
 import android.net.wimax.WimaxManagerConstants;
 
-import com.android.internal.app.IBatteryStats;
-import com.android.server.am.BatteryStatsService;
-
-import java.io.FileDescriptor;
-import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.List;
 
-public class NetworkController extends BroadcastReceiver {
-    // debug
-    static final String TAG = "StatusBar.NetworkController";
+/**
+ * This class contains all of the policy about which icons are installed in the status
+ * bar at boot time.  It goes through the normal API for icons, even though it probably
+ * strictly doesn't need to.
+ */
+public class NetworkController {
+    private static final String TAG = "NetworkController";
 
-    // telephony
-    final TelephonyManager mPhone;
-    private int mPhoneSignalIconId;
+    private static final int INET_CONDITION_THRESHOLD = 50;
+
+    private final Context mContext;
+    private final IBatteryStats mBatteryStats;
+
+    // phone
+    private TelephonyManager mPhone;
+    public int mPhoneSignalIconId;
+    public int mWifiSignalIconId;
+    public int mDataSignalIconId;
+    public int mWimaxSignalIconId;
+    public String mNetworkName;
+    private final Handler mHandler;
     public static final int PHONE_SIGNAL_IS_AIRPLANE_MODE = 1;
     public static final int PHONE_SIGNAL_IS_NULL = 2;
     public static final int PHONE_SIGNAL_IS_NORMAL = 0;
+
+    //***** Signal strength icons
+    //GSM/UMTS
+    private static final int[][] sSignalImages = {
+        { R.drawable.stat_sys_signal_0,
+          R.drawable.stat_sys_signal_1,
+          R.drawable.stat_sys_signal_2,
+          R.drawable.stat_sys_signal_3,
+          R.drawable.stat_sys_signal_4 },
+        { R.drawable.stat_sys_signal_0_fully,
+          R.drawable.stat_sys_signal_1_fully,
+          R.drawable.stat_sys_signal_2_fully,
+          R.drawable.stat_sys_signal_3_fully,
+          R.drawable.stat_sys_signal_4_fully }
+    };
+    private static final int[][] sSignalImages_r = {
+        { R.drawable.stat_sys_r_signal_0,
+          R.drawable.stat_sys_r_signal_1,
+          R.drawable.stat_sys_r_signal_2,
+          R.drawable.stat_sys_r_signal_3,
+          R.drawable.stat_sys_r_signal_4 },
+        { R.drawable.stat_sys_r_signal_0_fully,
+          R.drawable.stat_sys_r_signal_1_fully,
+          R.drawable.stat_sys_r_signal_2_fully,
+          R.drawable.stat_sys_r_signal_3_fully,
+          R.drawable.stat_sys_r_signal_4_fully }
+    };
+    private static final int[] sRoamingIndicatorImages_cdma = new int[] {
+        R.drawable.stat_sys_roaming_cdma_0, //Standard Roaming Indicator
+        // 1 is Standard Roaming Indicator OFF
+        // TODO T: image never used, remove and put 0 instead?
+        R.drawable.stat_sys_roaming_cdma_0,
+
+        // 2 is Standard Roaming Indicator FLASHING
+        // TODO T: image never used, remove and put 0 instead?
+        R.drawable.stat_sys_roaming_cdma_0,
+
+        // 3-12 Standard ERI
+        R.drawable.stat_sys_roaming_cdma_0, //3
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+
+        // 13-63 Reserved for Standard ERI
+        R.drawable.stat_sys_roaming_cdma_0, //13
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+
+        // 64-127 Reserved for Non Standard (Operator Specific) ERI
+        R.drawable.stat_sys_roaming_cdma_0, //64
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0, //83
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0,
+        R.drawable.stat_sys_roaming_cdma_0 //239
+
+        // 240-255 Reserved
+    };
+
+    //***** Data connection icons
+    private int[] mDataIconList = sDataNetType_g[0];
+    //GSM/UMTS
+    private static final int[][] sDataNetType_g = {
+            { R.drawable.stat_sys_data_connected_g,
+              R.drawable.stat_sys_data_in_g,
+              R.drawable.stat_sys_data_out_g,
+              R.drawable.stat_sys_data_inandout_g },
+            { R.drawable.stat_sys_data_fully_connected_g,
+              R.drawable.stat_sys_data_fully_in_g,
+              R.drawable.stat_sys_data_fully_out_g,
+              R.drawable.stat_sys_data_fully_inandout_g }
+        };
+    private static final int[][] sDataNetType_3g = {
+            { R.drawable.stat_sys_data_connected_3g,
+              R.drawable.stat_sys_data_in_3g,
+              R.drawable.stat_sys_data_out_3g,
+              R.drawable.stat_sys_data_inandout_3g },
+            { R.drawable.stat_sys_data_fully_connected_3g,
+              R.drawable.stat_sys_data_fully_in_3g,
+              R.drawable.stat_sys_data_fully_out_3g,
+              R.drawable.stat_sys_data_fully_inandout_3g }
+        };
+    private static final int[][] sDataNetType_e = {
+            { R.drawable.stat_sys_data_connected_e,
+              R.drawable.stat_sys_data_in_e,
+              R.drawable.stat_sys_data_out_e,
+              R.drawable.stat_sys_data_inandout_e },
+            { R.drawable.stat_sys_data_fully_connected_e,
+              R.drawable.stat_sys_data_fully_in_e,
+              R.drawable.stat_sys_data_fully_out_e,
+              R.drawable.stat_sys_data_fully_inandout_e }
+        };
+    //3.5G
+    private static final int[][] sDataNetType_h = {
+            { R.drawable.stat_sys_data_connected_h,
+              R.drawable.stat_sys_data_in_h,
+              R.drawable.stat_sys_data_out_h,
+              R.drawable.stat_sys_data_inandout_h },
+            { R.drawable.stat_sys_data_fully_connected_h,
+              R.drawable.stat_sys_data_fully_in_h,
+              R.drawable.stat_sys_data_fully_out_h,
+              R.drawable.stat_sys_data_fully_inandout_h }
+    };
+    //CDMA
+    // Use 3G icons for EVDO data and 1x icons for 1XRTT data
+    private static final int[][] sDataNetType_1x = {
+            { R.drawable.stat_sys_data_connected_1x,
+              R.drawable.stat_sys_data_in_1x,
+              R.drawable.stat_sys_data_out_1x,
+              R.drawable.stat_sys_data_inandout_1x },
+            { R.drawable.stat_sys_data_fully_connected_1x,
+              R.drawable.stat_sys_data_fully_in_1x,
+              R.drawable.stat_sys_data_fully_out_1x,
+              R.drawable.stat_sys_data_fully_inandout_1x }
+            };
+
+    //LTE, + stuff like HSPAP+, which is still
+    //3.5G but carriers like to pretend it's 4G
+    private static final int[][] sDataNetType_4g = {
+            { R.drawable.stat_sys_data_connected_4g,
+              R.drawable.stat_sys_data_in_4g,
+              R.drawable.stat_sys_data_out_4g,
+              R.drawable.stat_sys_data_inandout_4g },
+            { R.drawable.stat_sys_data_fully_connected_4g,
+              R.drawable.stat_sys_data_fully_in_4g,
+              R.drawable.stat_sys_data_fully_out_4g,
+              R.drawable.stat_sys_data_fully_inandout_4g }
+    };
+
 
     // Assume it's all good unless we hear otherwise.  We don't always seem
     // to get broadcasts that it *is* there.
@@ -82,57 +440,111 @@ public class NetworkController extends BroadcastReceiver {
     SignalStrength mSignalStrength;
 
     // flag for signal strength behavior
-    boolean mAlwaysUseCdmaRssi;
+    private boolean mAlwaysUseCdmaRssi;
 
     // data connection
-    private int mDataSignalIconId;
-    boolean mHspaDataDistinguishable;
+    private boolean mDataIconVisible;
+    private boolean mHspaDataDistinguishable;
 
-    int mLastWifiSignalLevel = -1;
-    boolean mIsWifiConnected = false;
+    // wifi
+    private static final int[][] sWifiSignalImages = {
+            { R.drawable.stat_sys_wifi_signal_1,
+              R.drawable.stat_sys_wifi_signal_2,
+              R.drawable.stat_sys_wifi_signal_3,
+              R.drawable.stat_sys_wifi_signal_4 },
+            { R.drawable.stat_sys_wifi_signal_1_fully,
+              R.drawable.stat_sys_wifi_signal_2_fully,
+              R.drawable.stat_sys_wifi_signal_3_fully,
+              R.drawable.stat_sys_wifi_signal_4_fully }
+        };
+    private static final int sWifiTemporarilyNotConnectedImage =
+            R.drawable.stat_sys_wifi_signal_0;
 
-    private boolean mIsWimaxEnabled = false;
-    private int mWifiIconId;
-    boolean mWifiEnabled;
-    private int mWimaxSignal = 0;
-    private int mWimaxState = 0;
-    private int mWimaxExtraState = 0;
-    private int mInetCondition = 0;
-    private static final int INET_CONDITION_THRESHOLD = 50;
-
-    private boolean mAirplaneMode = false;
-    private boolean mLastAirplaneMode = true;
-
-    private int[] mDataIconList = TelephonyIcons.sDataNetType_g[0];
-
-    boolean mMobileDataEnable;
+    private int mLastWifiSignalLevel = -1;
+    public boolean mIsWifiConnected = false;
+    public boolean mMobileDataEnable = false;
     private boolean mShowSpn;
     private String mSpn;
     private boolean mShowPlmn;
     private String mPlmn;
     private int mCarrierLabelType;
     private String mCarrierLabelCustom;
-    String mNetworkName;
-    String mWifiSsid;
-    private boolean mShowFourG;
     private static final int TYPE_DEFAULT = 0;
     private static final int TYPE_SPN = 1;
     private static final int TYPE_PLMN = 2;
     private static final int TYPE_CUSTOM = 3;
-    private boolean mWimaxSupported;
-    Handler mHandler;
-    IBatteryStats mBatteryStats;
 
-    // our ui
-    Context mContext;
+    //4G
+    private static final int[][] sWimaxSignalImages = {
+            { R.drawable.stat_sys_data_wimax_signal_0,
+              R.drawable.stat_sys_data_wimax_signal_1,
+              R.drawable.stat_sys_data_wimax_signal_2,
+              R.drawable.stat_sys_data_wimax_signal_3 },
+            { R.drawable.stat_sys_data_wimax_signal_0_fully,
+              R.drawable.stat_sys_data_wimax_signal_1_fully,
+              R.drawable.stat_sys_data_wimax_signal_2_fully,
+              R.drawable.stat_sys_data_wimax_signal_3_fully }
+        };
+    private static final int sWimaxDisconnectedImg =
+            R.drawable.stat_sys_data_wimax_signal_disconnected;
+    private static final int sWimaxIdleImg = R.drawable.stat_sys_data_wimax_signal_idle;
+    private boolean mIsWimaxEnabled = false;
+    private int mWimaxSignal = 0;
+    private int mWimaxState = 0;
+    private int mWimaxExtraState = 0;
+
+    private boolean mShowFourG;
+
+    // state of inet connection - 0 not connected, 100 connected
+    private int mInetCondition = 0;
+
     ArrayList<NetworkSignalChangedCallback> mSignalsChangedCallbacks =
             new ArrayList<NetworkSignalChangedCallback>();
 
     public interface NetworkSignalChangedCallback {
-        void onWifiSignalChanged(boolean enabled, int wifiSignalIconId, String description);
-        void onMobileDataSignalChanged(boolean enabled, int mobileSignalIconId, int dataTypeIconId, String description);
-        void onAirplaneModeChanged(boolean enabled);
+        public void onWifiSignalChanged(boolean mIsWifiConnected, int mWifiSignalIconId);
+        public void onMobileDataSignalChanged(boolean mMobileDataEnable, int mPhoneSignalIconId, int mDataSignalIconId, String description);
     }
+
+    public void addNetworkSignalChangedCallback(NetworkSignalChangedCallback cb) {
+        mSignalsChangedCallbacks.add(cb);
+        notifySignalsChangedCallbacks(cb);
+    }
+
+    private BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION) ||
+                    action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION) ||
+                    action.equals(WifiManager.RSSI_CHANGED_ACTION)) {
+                updateWifi(intent);
+                refreshViews();
+            } else if (action.equals(TelephonyIntents.ACTION_SIM_STATE_CHANGED)) {
+                updateSimState(intent);
+                refreshViews();
+            } else if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION) ||
+                     action.equals(ConnectivityManager.INET_CONDITION_ACTION)) {
+                // TODO - stop using other means to get wifi/mobile info
+                updateConnectivity(intent);
+                refreshViews();
+            } else if (action.equals(WimaxManagerConstants.WIMAX_ENABLED_STATUS_CHANGED) ||
+                     action.equals(WimaxManagerConstants.SIGNAL_LEVEL_CHANGED_ACTION) ||
+                     action.equals(WimaxManagerConstants.WIMAX_STATE_CHANGED_ACTION) ||
+                     action.equals(WimaxManagerConstants.NETWORK_STATE_CHANGED_ACTION) ||
+                     action.equals(WimaxManagerConstants.WIMAX_ENABLED_CHANGED_ACTION) ||
+                     action.equals(WimaxManagerConstants.RSSI_CHANGED_ACTION)) {
+                updateWiMAX(intent);
+                refreshViews();
+            } else if (Telephony.Intents.SPN_STRINGS_UPDATED_ACTION.equals(action)) {
+                updateNetworkName(intent.getBooleanExtra(Telephony.Intents.EXTRA_SHOW_SPN, false),
+                        intent.getStringExtra(Telephony.Intents.EXTRA_SPN),
+                        intent.getBooleanExtra(Telephony.Intents.EXTRA_SHOW_PLMN, false),
+                        intent.getStringExtra(Telephony.Intents.EXTRA_PLMN));
+                refreshViews();
+            }
+        }
+    };
 
     class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
@@ -144,53 +556,61 @@ public class NetworkController extends BroadcastReceiver {
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUS_BAR_FOURG), false, this);
             resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.CARRIER_LABEL_TYPE),
-                    false, this);
+                    Settings.System.getUriFor(Settings.System.CARRIER_LABEL_TYPE), false, this);
             resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.CARRIER_LABEL_CUSTOM_STRING),
-                    false, this);
+                    Settings.System.getUriFor(Settings.System.CARRIER_LABEL_CUSTOM_STRING), false, this);
+            onChange(true);
         }
 
         @Override 
         public void onChange(boolean selfChange) {
-           ContentResolver resolver = mContext.getContentResolver();
-           mShowFourG = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_FOURG, 0) == 1);
-           mCarrierLabelType = Settings.System.getInt(resolver,
-                Settings.System.CARRIER_LABEL_TYPE, TYPE_DEFAULT);
-           mCarrierLabelCustom = Settings.System.getString(resolver,
-                Settings.System.CARRIER_LABEL_CUSTOM_STRING);
-           updateAirplaneMode();
+            updateSettings();
         }
     }
 
-    /**
-     * Construct this controller object and register for updates.
-     */
     public NetworkController(Context context) {
         mContext = context;
-
         mHandler = new Handler();
         mSignalStrength = new SignalStrength();
+        mBatteryStats = BatteryStatsService.getService();
 
-        // settings observer for cm-battery change
         SettingsObserver settingsObserver = new SettingsObserver(mHandler);
         settingsObserver.observe();
+        updateSettings();
 
-        // telephony
+        // phone_signal
         mPhone = (TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
-        mPhone.listen(mPhoneStateListener,
+        mPhoneSignalIconId = R.drawable.stat_sys_signal_null;
+        mAlwaysUseCdmaRssi = mContext.getResources().getBoolean(
+            com.android.internal.R.bool.config_alwaysUseCdmaRssi);
+
+        // register for phone state notifications.
+        ((TelephonyManager)mContext.getSystemService(Context.TELEPHONY_SERVICE))
+                .listen(mPhoneStateListener,
                           PhoneStateListener.LISTEN_SERVICE_STATE
                         | PhoneStateListener.LISTEN_SIGNAL_STRENGTHS
                         | PhoneStateListener.LISTEN_CALL_STATE
                         | PhoneStateListener.LISTEN_DATA_CONNECTION_STATE
                         | PhoneStateListener.LISTEN_DATA_ACTIVITY);
 
-        mAlwaysUseCdmaRssi = mContext.getResources().getBoolean(
-            com.android.internal.R.bool.config_alwaysUseCdmaRssi);
+        // data_connection
+        mDataSignalIconId = R.drawable.stat_sys_data_connected_g;
 
-        // broadcasts
+        // wifi
+        mWifiSignalIconId = sWifiSignalImages[0][0];
+        // wifi will get updated by the sticky intents
+
+        // wimax
+        //enable/disable wimax depending on the value in config.xml
+        boolean isWimaxEnabled = mContext.getResources().getBoolean(
+                com.android.internal.R.bool.config_wimaxEnabled);
+        if (isWimaxEnabled) {
+            mWimaxSignalIconId = sWimaxDisconnectedImg;
+        }
+
         IntentFilter filter = new IntentFilter();
+
+        // Register for Intent broadcasts for...
         filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         filter.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
         filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
@@ -205,99 +625,86 @@ public class NetworkController extends BroadcastReceiver {
         filter.addAction(WimaxManagerConstants.WIMAX_ENABLED_CHANGED_ACTION);
         filter.addAction(WimaxManagerConstants.NETWORK_STATE_CHANGED_ACTION);
         filter.addAction(WimaxManagerConstants.RSSI_CHANGED_ACTION);
-        context.registerReceiver(this, filter);
+        mContext.registerReceiver(mIntentReceiver, filter, null, mHandler);
 
-        mWimaxSupported = mContext.getResources().getBoolean(
-                com.android.internal.R.bool.config_wimaxEnabled);
+        // load config to determine if to distinguish Hspa data icon
         try {
             mHspaDataDistinguishable = mContext.getResources().getBoolean(
                     R.bool.config_hspa_data_distinguishable);
         } catch (Exception e) {
             mHspaDataDistinguishable = false;
         }
-
-        // AIRPLANE_MODE_CHANGED is sent at boot; we've probably already missed it
-        updateAirplaneMode();
-
-        mBatteryStats = BatteryStatsService.getService();
     }
 
-    public boolean isEmergencyOnly() {
-        return (mServiceState != null && mServiceState.isEmergencyOnly());
-    }
-
-    public void addNetworkSignalChangedCallback(NetworkSignalChangedCallback cb) {
-        mSignalsChangedCallbacks.add(cb);
-        notifySignalsChangedCallbacks(cb);
-    }
-
-    void notifySignalsChangedCallbacks(NetworkSignalChangedCallback cb) {
+    public void notifySignalsChangedCallbacks(NetworkSignalChangedCallback cb) {
         // only show wifi in the cluster if connected or if wifi-only
-        String wifiDesc = mWifiEnabled ?
-                mWifiSsid : null;
-        cb.onWifiSignalChanged(mWifiEnabled, mWifiIconId, wifiDesc);
-
-        if (isEmergencyOnly()) {
-            cb.onMobileDataSignalChanged(false, mPhoneSignalIconId, mDataSignalIconId, null);
-        } else {
-            cb.onMobileDataSignalChanged((mWifiEnabled ? false : mMobileDataEnable), mPhoneSignalIconId, mDataSignalIconId, mNetworkName);
-        }
-        cb.onAirplaneModeChanged(mAirplaneMode);
+        cb.onWifiSignalChanged(mIsWifiConnected, mWifiSignalIconId);
+        cb.onMobileDataSignalChanged(mMobileDataEnable, mPhoneSignalIconId, mDataSignalIconId, mNetworkName);
     }
 
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        final String action = intent.getAction();
-        if (action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION) ||
-                    action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION) ||
-                    action.equals(WifiManager.RSSI_CHANGED_ACTION)) {
-            updateWifiState(intent);
-        } else if (action.equals(TelephonyIntents.ACTION_SIM_STATE_CHANGED)) {
-            updateSimState(intent);
-        } else if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION) ||
-                     action.equals(ConnectivityManager.INET_CONDITION_ACTION)) {
-            updateConnectivity(intent);
-        } else if (action.equals(Intent.ACTION_CONFIGURATION_CHANGED)) {
-            updateAirplaneMode();
-        } else if (action.equals(Intent.ACTION_AIRPLANE_MODE_CHANGED)) {
-            updateAirplaneMode();
-        } else if (action.equals(WimaxManagerConstants.WIMAX_ENABLED_STATUS_CHANGED) ||
-                     action.equals(WimaxManagerConstants.SIGNAL_LEVEL_CHANGED_ACTION) ||
-                     action.equals(WimaxManagerConstants.WIMAX_STATE_CHANGED_ACTION) ||
-                     action.equals(WimaxManagerConstants.NETWORK_STATE_CHANGED_ACTION) ||
-                     action.equals(WimaxManagerConstants.WIMAX_ENABLED_CHANGED_ACTION) ||
-                     action.equals(WimaxManagerConstants.RSSI_CHANGED_ACTION)) {
+    private void updateConnectivity(Intent intent) {
+        NetworkInfo info = (NetworkInfo)(intent.getParcelableExtra(
+                ConnectivityManager.EXTRA_NETWORK_INFO));
+        int connectionStatus = intent.getIntExtra(ConnectivityManager.EXTRA_INET_CONDITION, 0);
+
+        int inetCondition = (connectionStatus > INET_CONDITION_THRESHOLD ? 1 : 0);
+
+        switch (info.getType()) {
+        case ConnectivityManager.TYPE_MOBILE:
+            mInetCondition = inetCondition;
+            updateDataNetType(info.getSubtype());
+            updateDataIcon();
+            updateSignalStrength(); // apply any change in connectionStatus
+            break;
+        case ConnectivityManager.TYPE_WIFI:
+            mInetCondition = inetCondition;
+            if (info.isConnected()) {
+                mIsWifiConnected = true;
+                int iconId = sWifiSignalImages[mInetCondition][0];
+                if (mLastWifiSignalLevel == -1) {
+                    iconId = sWifiSignalImages[mInetCondition][0];
+                } else {
+                    iconId = sWifiSignalImages[mInetCondition][mLastWifiSignalLevel];
+                }
+                mWifiSignalIconId = iconId;
+            } else {
+                mLastWifiSignalLevel = -1;
+                mIsWifiConnected = false;
+                mWifiSignalIconId = sWifiSignalImages[0][0];
+            }
+            updateSignalStrength(); // apply any change in mInetCondition
+            break;
+        case ConnectivityManager.TYPE_WIMAX:
+            mInetCondition = inetCondition;
             updateWiMAX(intent);
-        } else if (Telephony.Intents.SPN_STRINGS_UPDATED_ACTION.equals(action)) {
-                updateNetworkName(intent.getBooleanExtra(Telephony.Intents.EXTRA_SHOW_SPN, false),
-                        intent.getStringExtra(Telephony.Intents.EXTRA_SPN),
-                        intent.getBooleanExtra(Telephony.Intents.EXTRA_SHOW_PLMN, false),
-                        intent.getStringExtra(Telephony.Intents.EXTRA_PLMN));
+            break;
         }
     }
-
-    // ===== Telephony ==============================================================
 
     private PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
         @Override
         public void onSignalStrengthsChanged(SignalStrength signalStrength) {
             mSignalStrength = signalStrength;
-            updateTelephonySignalStrength();
+            updateSignalStrength();
+            refreshViews();
         }
 
         @Override
         public void onServiceStateChanged(ServiceState state) {
             mServiceState = state;
-            updateTelephonySignalStrength();
+            updateSignalStrength();
+            updateCdmaRoamingIcon(state);
             updateDataIcon();
+            refreshViews();
         }
 
         @Override
         public void onCallStateChanged(int state, String incomingNumber) {
             // In cdma, if a voice call is made, RSSI should switch to 1x.
             if (isCdma()) {
-                updateTelephonySignalStrength();
+                updateSignalStrength();
             }
+            refreshViews();
         }
 
         @Override
@@ -305,12 +712,14 @@ public class NetworkController extends BroadcastReceiver {
             mDataState = state;
             updateDataNetType(networkType);
             updateDataIcon();
+            refreshViews();
         }
 
         @Override
         public void onDataActivity(int direction) {
             mDataActivity = direction;
             updateDataIcon();
+            refreshViews();
         }
     };
 
@@ -336,6 +745,7 @@ public class NetworkController extends BroadcastReceiver {
         } else {
             mSimState = IccCard.State.UNKNOWN;
         }
+        updateDataIcon();
     }
 
     private boolean isCdma() {
@@ -366,25 +776,25 @@ public class NetworkController extends BroadcastReceiver {
         }
     }
 
-    private void updateAirplaneMode() {
-        mAirplaneMode = (Settings.System.getInt(mContext.getContentResolver(),
-            Settings.System.AIRPLANE_MODE_ON, 0) == 1);
-    }
-
-    private final void updateTelephonySignalStrength() {
+    private final void updateSignalStrength() {
         int iconLevel = -1;
         int[] iconList;
 
         // Display signal strength while in "emergency calls only" mode
         if (mServiceState == null || (!hasService() && !mServiceState.isEmergencyOnly())) {
-            //Slog.d(TAG, "updateSignalStrength: no service");
-            if (mAirplaneMode) {
+            if (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.AIRPLANE_MODE_ON, 0) == 1) {
                 mPhoneSignalIconId = R.drawable.stat_sys_signal_flightmode;
+                updateSignalStrengthDbm(PHONE_SIGNAL_IS_AIRPLANE_MODE);
             } else {
                 mPhoneSignalIconId = R.drawable.stat_sys_signal_null;
+                updateSignalStrengthDbm(PHONE_SIGNAL_IS_NULL);
             }
             return;
         }
+
+        // calculate and update the dBm value of the signal strength
+        updateSignalStrengthDbm(PHONE_SIGNAL_IS_NORMAL);
 
         if (!isCdma()) {
             int asu = mSignalStrength.getGsmSignalStrength();
@@ -401,13 +811,12 @@ public class NetworkController extends BroadcastReceiver {
 
             // Though mPhone is a Manager, this call is not an IPC
             if (mPhone.isNetworkRoaming()) {
-                iconList = TelephonyIcons.sSignalImages_r[mInetCondition];
+                iconList = sSignalImages_r[mInetCondition];
             } else {
-                iconList = TelephonyIcons.sSignalImages[mInetCondition];
+                iconList = sSignalImages[mInetCondition];
             }
-            mPhoneSignalIconId = iconList[iconLevel];
         } else {
-            iconList = TelephonyIcons.sSignalImages[mInetCondition];
+            iconList = sSignalImages[mInetCondition];
 
             // If 3G(EV) and 1x network are available than 3G should be
             // displayed, displayed RSSI should be from the EV side.
@@ -426,57 +835,22 @@ public class NetworkController extends BroadcastReceiver {
                 if ((mPhoneState == TelephonyManager.CALL_STATE_IDLE) && isEvdo()
                     && !mAlwaysUseCdmaRssi) {
                     iconLevel = getEvdoLevel();
+                    if (false) {
+                        Slog.d(TAG, "use Evdo level=" + iconLevel + " to replace Cdma Level=" + getCdmaLevel());
+                    }
                 } else {
                     if ((mPhoneState == TelephonyManager.CALL_STATE_IDLE) && isEvdo()){
                         iconLevel = getEvdoLevel();
+                        if (false) {
+                            Slog.d(TAG, "use Evdo level=" + iconLevel + " to replace Cdma Level=" + getCdmaLevel());
+                        }
                     } else {
                         iconLevel = getCdmaLevel();
                     }
                 }
             }
-            mPhoneSignalIconId = iconList[iconLevel];
         }
-    }
-
-    // ===== Full or limited Internet connectivity ==================================
-
-    private void updateConnectivity(Intent intent) {
-        NetworkInfo info = (NetworkInfo)(intent.getParcelableExtra(
-                ConnectivityManager.EXTRA_NETWORK_INFO));
-        int connectionStatus = intent.getIntExtra(ConnectivityManager.EXTRA_INET_CONDITION, 0);
-
-        int inetCondition = (connectionStatus > INET_CONDITION_THRESHOLD ? 1 : 0);
-
-        switch (info.getType()) {
-        case ConnectivityManager.TYPE_MOBILE:
-            mInetCondition = inetCondition;
-            updateDataNetType(info.getSubtype());
-            updateDataIcon();
-            updateTelephonySignalStrength(); // apply any change in connectionStatus
-            break;
-        case ConnectivityManager.TYPE_WIFI:
-            mInetCondition = inetCondition;
-            if (info.isConnected()) {
-                mIsWifiConnected = true;
-                int iconId = WifiIcons.sWifiSignalImages[mInetCondition][0];
-                if (mLastWifiSignalLevel == -1) {
-                    iconId = WifiIcons.sWifiSignalImages[mInetCondition][0];
-                } else {
-                    iconId = WifiIcons.sWifiSignalImages[mInetCondition][mLastWifiSignalLevel];
-                }
-                mWifiIconId = iconId;
-            } else {
-                mLastWifiSignalLevel = -1;
-                mIsWifiConnected = false;
-                mWifiIconId = WifiIcons.sWifiSignalImages[0][0];
-            }
-            updateTelephonySignalStrength(); // apply any change in mInetCondition
-            break;
-        case ConnectivityManager.TYPE_WIMAX:
-            mInetCondition = inetCondition;
-            updateWiMAX(intent);
-            break;
-        }
+        mPhoneSignalIconId = iconList[iconLevel];
     }
 
     private int getCdmaLevel() {
@@ -522,6 +896,25 @@ public class NetworkController extends BroadcastReceiver {
         return (levelEvdoDbm < levelEvdoSnr) ? levelEvdoDbm : levelEvdoSnr;
     }
 
+    public void updateSignalStrengthDbm(int phoneSignalStatus) {
+        int dBm = -1;
+
+        if(!mSignalStrength.isGsm()) {
+            dBm = mSignalStrength.getCdmaDbm();
+        } else {
+            int gsmSignalStrength = mSignalStrength.getGsmSignalStrength();
+            int asu = (gsmSignalStrength == 99 ? -1 : gsmSignalStrength);
+            if (asu != -1) {
+                dBm = -113 + 2*asu;
+            }
+        }
+
+        Intent dbmIntent = new Intent(Intent.ACTION_SIGNAL_DBM_CHANGED);
+        dbmIntent.putExtra("dbm", dBm);
+        dbmIntent.putExtra("signal_status", phoneSignalStatus);
+        mContext.sendBroadcast(dbmIntent);
+    }
+
     private final void updateDataNetType(int net) {
         ContentResolver resolver = mContext.getContentResolver();
 
@@ -530,13 +923,13 @@ public class NetworkController extends BroadcastReceiver {
 
         switch (net) {
         case TelephonyManager.NETWORK_TYPE_EDGE:
-            mDataIconList = TelephonyIcons.sDataNetType_e[mInetCondition];
+            mDataIconList = sDataNetType_e[mInetCondition];
             break;
         case TelephonyManager.NETWORK_TYPE_UMTS:
             if (mShowFourG) {
-                mDataIconList = TelephonyIcons.sDataNetType_4g[mInetCondition];
+                mDataIconList = sDataNetType_4g[mInetCondition];
             } else {
-                mDataIconList = TelephonyIcons.sDataNetType_3g[mInetCondition];
+                mDataIconList = sDataNetType_3g[mInetCondition];
             }
             break;
         case TelephonyManager.NETWORK_TYPE_HSDPA:
@@ -544,94 +937,201 @@ public class NetworkController extends BroadcastReceiver {
         case TelephonyManager.NETWORK_TYPE_HSPA:
             if (mHspaDataDistinguishable) {
                 if (mShowFourG) {
-                    mDataIconList = TelephonyIcons.sDataNetType_4g[mInetCondition];
+                    mDataIconList = sDataNetType_4g[mInetCondition];
                 } else {
-                    mDataIconList = TelephonyIcons.sDataNetType_h[mInetCondition];
+                    mDataIconList = sDataNetType_h[mInetCondition];
                 }
             } else {
                 if (mShowFourG) {
-                    mDataIconList = TelephonyIcons.sDataNetType_4g[mInetCondition];
+                    mDataIconList = sDataNetType_4g[mInetCondition];
                 } else {
-                    mDataIconList = TelephonyIcons.sDataNetType_3g[mInetCondition];
+                    mDataIconList = sDataNetType_3g[mInetCondition];
                 }
             }
             break;
         case TelephonyManager.NETWORK_TYPE_CDMA:
             // display 1xRTT for IS95A/B
-            mDataIconList = TelephonyIcons.sDataNetType_1x[mInetCondition];
+            mDataIconList = sDataNetType_1x[mInetCondition];
             break;
         case TelephonyManager.NETWORK_TYPE_1xRTT:
-            mDataIconList = TelephonyIcons.sDataNetType_1x[mInetCondition];
+            mDataIconList = sDataNetType_1x[mInetCondition];
             break;
         case TelephonyManager.NETWORK_TYPE_EVDO_0: //fall through
         case TelephonyManager.NETWORK_TYPE_EVDO_A:
         case TelephonyManager.NETWORK_TYPE_EVDO_B:
         case TelephonyManager.NETWORK_TYPE_EHRPD:
             if (mShowFourG) {
-                mDataIconList = TelephonyIcons.sDataNetType_4g[mInetCondition];
+                mDataIconList = sDataNetType_4g[mInetCondition];
             } else {
-                mDataIconList = TelephonyIcons.sDataNetType_3g[mInetCondition];
+                mDataIconList = sDataNetType_3g[mInetCondition];
             }
             break;
         case TelephonyManager.NETWORK_TYPE_LTE:
         case TelephonyManager.NETWORK_TYPE_HSPAP:
-            mDataIconList = TelephonyIcons.sDataNetType_4g[mInetCondition];
+            mDataIconList = sDataNetType_4g[mInetCondition];
             break;
         default:
-            mDataIconList = TelephonyIcons.sDataNetType_g[mInetCondition];
+            mDataIconList = sDataNetType_g[mInetCondition];
         break;
         }
     }
 
     private final void updateDataIcon() {
+        int iconId;
+        boolean visible = true;
+
         if (!isCdma()) {
             // GSM case, we have to check also the sim state
             if (mSimState == IccCard.State.READY || mSimState == IccCard.State.UNKNOWN) {
                 if (hasService() && mDataState == TelephonyManager.DATA_CONNECTED) {
                     switch (mDataActivity) {
                         case TelephonyManager.DATA_ACTIVITY_IN:
-                            mDataSignalIconId = mDataIconList[1];
+                            iconId = mDataIconList[1];
                             break;
                         case TelephonyManager.DATA_ACTIVITY_OUT:
-                            mDataSignalIconId = mDataIconList[2];
+                            iconId = mDataIconList[2];
                             break;
                         case TelephonyManager.DATA_ACTIVITY_INOUT:
-                            mDataSignalIconId = mDataIconList[3];
+                            iconId = mDataIconList[3];
                             break;
                         default:
-                            mDataSignalIconId = mDataIconList[0];
+                            iconId = mDataIconList[0];
                             break;
                     }
-                    mMobileDataEnable = true;
+                    mDataSignalIconId = iconId;
+                } else {
+                    visible = false;
                 }
             } else {
                 mDataSignalIconId = R.drawable.stat_sys_no_sim;
-                mMobileDataEnable = false;
             }
         } else {
             // CDMA case, mDataActivity can be also DATA_ACTIVITY_DORMANT
             if (hasService() && mDataState == TelephonyManager.DATA_CONNECTED) {
                 switch (mDataActivity) {
                     case TelephonyManager.DATA_ACTIVITY_IN:
-                        mDataSignalIconId = mDataIconList[1];
+                        iconId = mDataIconList[1];
                         break;
                     case TelephonyManager.DATA_ACTIVITY_OUT:
-                        mDataSignalIconId = mDataIconList[2];
+                        iconId = mDataIconList[2];
                         break;
                     case TelephonyManager.DATA_ACTIVITY_INOUT:
-                        mDataSignalIconId = mDataIconList[3];
+                        iconId = mDataIconList[3];
                         break;
                     case TelephonyManager.DATA_ACTIVITY_DORMANT:
                     default:
-                        mDataSignalIconId = mDataIconList[0];
+                        iconId = mDataIconList[0];
                         break;
                 }
-                mMobileDataEnable = true;
+                mDataSignalIconId = iconId;
+            } else {
+                visible = false;
+            }
+        }
+
+        long ident = Binder.clearCallingIdentity();
+        try {
+            mBatteryStats.notePhoneDataConnectionState(mPhone.getNetworkType(), visible);
+        } catch (RemoteException e) {
+        } finally {
+            Binder.restoreCallingIdentity(ident);
+        }
+
+        mMobileDataEnable = visible;
+    }
+
+    private final void updateWifi(Intent intent) {
+
+        final String action = intent.getAction();
+
+        if (action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
+            final boolean enabled = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE,
+                    WifiManager.WIFI_STATE_UNKNOWN) == WifiManager.WIFI_STATE_ENABLED;
+        } else if (action.equals(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION)) {
+            final boolean enabled = intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED,
+                                                           false);
+        } else if (action.equals(WifiManager.RSSI_CHANGED_ACTION)) {
+            int iconId;
+            final int newRssi = intent.getIntExtra(WifiManager.EXTRA_NEW_RSSI, -200);
+            int newSignalLevel = WifiManager.calculateSignalLevel(newRssi, sWifiSignalImages[0].length);
+            if (newSignalLevel != mLastWifiSignalLevel) {
+                mLastWifiSignalLevel = newSignalLevel;
+                if (mIsWifiConnected) {
+                    iconId = sWifiSignalImages[mInetCondition][newSignalLevel];
+                } else {
+                    iconId = sWifiTemporarilyNotConnectedImage;
+                }
+                mWifiSignalIconId = iconId;
             }
         }
     }
 
-    void updateNetworkName(boolean showSpn, String spn, boolean showPlmn, String plmn) {
+    private final void updateWiMAX(Intent intent) {
+        final String action = intent.getAction();
+        int iconId = sWimaxDisconnectedImg;
+
+        if (action.equals(WimaxManagerConstants.WIMAX_ENABLED_STATUS_CHANGED)) {
+            int wimaxStatus = intent.getIntExtra(WimaxManagerConstants.EXTRA_WIMAX_STATUS,
+                    WimaxManagerConstants.WIMAX_STATUS_DISABLED);
+            switch(wimaxStatus) {
+                case WimaxManagerConstants.WIMAX_STATUS_ENABLED:
+                    mIsWimaxEnabled = true;
+                    break;
+                case WimaxManagerConstants.WIMAX_STATUS_DISABLED:
+                    mIsWimaxEnabled = false;
+                    break;
+            }
+        } else if (action.equals(WimaxManagerConstants.WIMAX_ENABLED_CHANGED_ACTION)) {
+            int wimaxStatus = intent.getIntExtra(WimaxManagerConstants.CURRENT_WIMAX_ENABLED_STATE,
+                    WimaxManagerConstants.WIMAX_ENABLED_STATE_UNKNOWN);
+            mIsWimaxEnabled = (wimaxStatus == WimaxManagerConstants.WIMAX_ENABLED_STATE_ENABLED);
+        } else if (action.equals(WimaxManagerConstants.SIGNAL_LEVEL_CHANGED_ACTION)) {
+            mWimaxSignal = intent.getIntExtra(WimaxManagerConstants.EXTRA_NEW_SIGNAL_LEVEL, 0);
+        } else if (action.equals(WimaxManagerConstants.RSSI_CHANGED_ACTION)) {
+            int rssi = intent.getIntExtra(WimaxManagerConstants.EXTRA_NEW_RSSI_LEVEL, -200);
+            Slog.d(TAG, "WiMAX RSSI: " + rssi);
+            if (rssi >= 3) {
+                mWimaxSignal = 3;
+            } else if (rssi <= 0) {
+                mWimaxSignal = 0;
+            } else {
+                mWimaxSignal = rssi;
+            }
+        } else if (action.equals(WimaxManagerConstants.WIMAX_STATE_CHANGED_ACTION)) {
+            mWimaxState = intent.getIntExtra(WimaxManagerConstants.EXTRA_WIMAX_STATE,
+                    WimaxManagerConstants.WIMAX_STATE_UNKNOWN);
+            mWimaxExtraState = intent.getIntExtra(
+                    WimaxManagerConstants.EXTRA_WIMAX_STATE_DETAIL,
+                    WimaxManagerConstants.WIMAX_DEREGISTRATION);
+        } else if (action.equals(WimaxManagerConstants.NETWORK_STATE_CHANGED_ACTION)) {
+            final NetworkInfo networkInfo = (NetworkInfo) intent.getParcelableExtra(WimaxManagerConstants.EXTRA_NETWORK_INFO);
+            if (networkInfo != null && networkInfo.isConnected()) {
+                mWimaxState = WimaxManagerConstants.WIMAX_STATE_CONNECTED;
+                mWimaxExtraState = WimaxManagerConstants.WIMAX_STATE_UNKNOWN;
+            } else if (networkInfo != null && networkInfo.isAvailable()) {
+                mWimaxState = WimaxManagerConstants.WIMAX_STATE_CONNECTED;
+                mWimaxExtraState = WimaxManagerConstants.WIMAX_IDLE;
+            } else {
+                mWimaxState = WimaxManagerConstants.WIMAX_STATE_DISCONNECTED;
+                mWimaxExtraState = WimaxManagerConstants.WIMAX_STATE_UNKNOWN;
+            }
+        }
+        switch(mWimaxState) {
+            case WimaxManagerConstants.WIMAX_STATE_DISCONNECTED:
+                iconId = sWimaxDisconnectedImg;
+                break;
+            case WimaxManagerConstants.WIMAX_STATE_CONNECTED:
+                if(mWimaxExtraState == WimaxManagerConstants.WIMAX_IDLE) {
+                    iconId = sWimaxIdleImg;
+                } else {
+                    iconId = sWimaxSignalImages[mInetCondition][mWimaxSignal];
+                }
+                break;
+        }
+        if (mIsWimaxEnabled) mWimaxSignalIconId = iconId;
+    }
+
+    public void updateNetworkName(boolean showSpn, String spn, boolean showPlmn, String plmn) {
         if (false) {
             Slog.d("CarrierLabel", "updateNetworkName showSpn=" + showSpn + " spn=" + spn
                     + " showPlmn=" + showPlmn + " plmn=" + plmn);
@@ -644,7 +1144,8 @@ public class NetworkController extends BroadcastReceiver {
 
         boolean haveSignal = (showPlmn && plmn != null) || (showSpn && spn != null);
         if (!haveSignal) {
-            if (mAirplaneMode) {
+            if (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.AIRPLANE_MODE_ON, 0) == 1) {
                 mNetworkName = "Airplane Mode";
                 return;
             } else {
@@ -694,109 +1195,61 @@ public class NetworkController extends BroadcastReceiver {
         }
     }
 
+    private final void updateCdmaRoamingIcon(ServiceState state) {
+        if (!hasService()) {
+            return;
+        }
 
-    // ===== Wifi ===================================================================
+        if (!isCdma()) {
+            return;
+        }
 
-    private void updateWifiState(Intent intent) {
+        int[] iconList = sRoamingIndicatorImages_cdma;
+        int iconIndex = state.getCdmaEriIconIndex();
+        int iconMode = state.getCdmaEriIconMode();
 
-        final String action = intent.getAction();
-        if (action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
-            mWifiEnabled = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE,
-                    WifiManager.WIFI_STATE_UNKNOWN) == WifiManager.WIFI_STATE_ENABLED;
-        } else if (action.equals(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION)) {
-            mWifiEnabled = intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED,
-                                                           false);
-        } else if (action.equals(WifiManager.RSSI_CHANGED_ACTION)) {
-            int iconId;
-            final int newRssi = intent.getIntExtra(WifiManager.EXTRA_NEW_RSSI, -200);
-            int newSignalLevel = WifiManager.calculateSignalLevel(newRssi,
-                                                                  WifiIcons.sWifiSignalImages[0].length);
-            if (newSignalLevel != mLastWifiSignalLevel) {
-                mLastWifiSignalLevel = newSignalLevel;
-                if (mIsWifiConnected) {
-                    iconId = WifiIcons.sWifiSignalImages[mInetCondition][newSignalLevel];
-                } else {
-                    iconId = WifiIcons.sWifiTemporarilyNotConnectedImage;
+        if (iconIndex == -1) {
+            Slog.e(TAG, "getCdmaEriIconIndex returned null, skipping ERI icon update");
+            return;
+        }
+
+        if (iconMode == -1) {
+            Slog.e(TAG, "getCdmeEriIconMode returned null, skipping ERI icon update");
+            return;
+        }
+
+        if (iconIndex == EriInfo.ROAMING_INDICATOR_OFF) {
+            if (false) Slog.v(TAG, "Cdma ROAMING_INDICATOR_OFF, removing ERI icon");
+            return;
+        }
+
+        switch (iconMode) {
+            case EriInfo.ROAMING_ICON_MODE_NORMAL:
+                if (iconIndex >= iconList.length) {
+                    Slog.e(TAG, "unknown iconIndex " + iconIndex + ", skipping ERI icon update");
+                    return;
                 }
-                mWifiIconId = iconId;
-            }
+                break;
+            case EriInfo.ROAMING_ICON_MODE_FLASH:
+                break;
+
         }
     }
 
-    private String huntForSsid(WifiInfo info) {
-        String ssid = info.getSSID();
-        if (ssid != null) {
-            return ssid;
+    public void refreshViews() {
+        for (NetworkSignalChangedCallback cb : mSignalsChangedCallbacks) {
+             notifySignalsChangedCallbacks(cb);
         }
-        return null;
     }
 
-
-    // ===== Wimax ===================================================================
-    private final void updateWiMAX(Intent intent) {
-        final String action = intent.getAction();
-        int iconId = WimaxIcons.sWimaxDisconnectedImg;
-
-        if (action.equals(WimaxManagerConstants.WIMAX_ENABLED_STATUS_CHANGED)) {
-            int wimaxStatus = intent.getIntExtra(WimaxManagerConstants.EXTRA_WIMAX_STATUS,
-                    WimaxManagerConstants.WIMAX_STATUS_DISABLED);
-            switch(wimaxStatus) {
-                case WimaxManagerConstants.WIMAX_STATUS_ENABLED:
-                    mIsWimaxEnabled = true;
-                    break;
-                case WimaxManagerConstants.WIMAX_STATUS_DISABLED:
-                    mIsWimaxEnabled = false;
-                    break;
-            }
-            //mService.setIconVisibility("wimax", mIsWimaxEnabled);
-        } else if (action.equals(WimaxManagerConstants.WIMAX_ENABLED_CHANGED_ACTION)) {
-            int wimaxStatus = intent.getIntExtra(WimaxManagerConstants.CURRENT_WIMAX_ENABLED_STATE,
-                    WimaxManagerConstants.WIMAX_ENABLED_STATE_UNKNOWN);
-            mIsWimaxEnabled = (wimaxStatus == WimaxManagerConstants.WIMAX_ENABLED_STATE_ENABLED);
-            //mService.setIconVisibility("wimax", mIsWimaxEnabled);
-        } else if (action.equals(WimaxManagerConstants.SIGNAL_LEVEL_CHANGED_ACTION)) {
-            mWimaxSignal = intent.getIntExtra(WimaxManagerConstants.EXTRA_NEW_SIGNAL_LEVEL, 0);
-        } else if (action.equals(WimaxManagerConstants.RSSI_CHANGED_ACTION)) {
-            int rssi = intent.getIntExtra(WimaxManagerConstants.EXTRA_NEW_RSSI_LEVEL, -200);
-            Slog.d(TAG, "WiMAX RSSI: " + rssi);
-            if (rssi >= 3) {
-                mWimaxSignal = 3;
-            } else if (rssi <= 0) {
-                mWimaxSignal = 0;
-            } else {
-                mWimaxSignal = rssi;
-            }
-        } else if (action.equals(WimaxManagerConstants.WIMAX_STATE_CHANGED_ACTION)) {
-            mWimaxState = intent.getIntExtra(WimaxManagerConstants.EXTRA_WIMAX_STATE,
-                    WimaxManagerConstants.WIMAX_STATE_UNKNOWN);
-            mWimaxExtraState = intent.getIntExtra(
-                    WimaxManagerConstants.EXTRA_WIMAX_STATE_DETAIL,
-                    WimaxManagerConstants.WIMAX_DEREGISTRATION);
-        } else if (action.equals(WimaxManagerConstants.NETWORK_STATE_CHANGED_ACTION)) {
-            final NetworkInfo networkInfo = (NetworkInfo) intent.getParcelableExtra(WimaxManagerConstants.EXTRA_NETWORK_INFO);
-            if (networkInfo != null && networkInfo.isConnected()) {
-                mWimaxState = WimaxManagerConstants.WIMAX_STATE_CONNECTED;
-                mWimaxExtraState = WimaxManagerConstants.WIMAX_STATE_UNKNOWN;
-            } else if (networkInfo != null && networkInfo.isAvailable()) {
-                mWimaxState = WimaxManagerConstants.WIMAX_STATE_CONNECTED;
-                mWimaxExtraState = WimaxManagerConstants.WIMAX_IDLE;
-            } else {
-                mWimaxState = WimaxManagerConstants.WIMAX_STATE_DISCONNECTED;
-                mWimaxExtraState = WimaxManagerConstants.WIMAX_STATE_UNKNOWN;
-            }
-        }
-        switch(mWimaxState) {
-            case WimaxManagerConstants.WIMAX_STATE_DISCONNECTED:
-                iconId = WimaxIcons.sWimaxDisconnectedImg;
-                break;
-            case WimaxManagerConstants.WIMAX_STATE_CONNECTED:
-                if(mWimaxExtraState == WimaxManagerConstants.WIMAX_IDLE) {
-                    iconId = WimaxIcons.sWimaxIdleImg;
-                } else {
-                    iconId = WimaxIcons.sWimaxSignalImages[mInetCondition][mWimaxSignal];
-                }
-                break;
-        }
-        //if (mIsWimaxEnabled) mService.setIcon("wimax", iconId, 0);
+    private void updateSettings() {
+        ContentResolver resolver = mContext.getContentResolver();
+        mShowFourG = (Settings.System.getInt(resolver,
+                Settings.System.STATUS_BAR_FOURG, 0) == 1);
+        mCarrierLabelType = Settings.System.getInt(resolver,
+                Settings.System.CARRIER_LABEL_TYPE, TYPE_DEFAULT);
+        mCarrierLabelCustom = Settings.System.getString(resolver,
+                Settings.System.CARRIER_LABEL_CUSTOM_STRING);
+        refreshViews();
     }
 }
