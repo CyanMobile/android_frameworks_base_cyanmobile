@@ -710,7 +710,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.STATUS_BAR_SETTINGSCOLOR, defValuesColor));
             mStatusBarTab = (Settings.System.getInt(getContentResolver(),
                     Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4);
-            mStatusBarTileView = (Settings.System.getInt(resolver,
+            mStatusBarTileView = (Settings.System.getInt(getContentResolver(),
                     Settings.System.EXPANDED_VIEW_WIDGET, 1) == 5);
             mStatusBarGrid = (Settings.System.getInt(getContentResolver(),
                     Settings.System.EXPANDED_VIEW_WIDGET, 1) == 3);
