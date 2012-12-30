@@ -19,7 +19,6 @@ public class AirplaneModeTile extends QuickSettingsTile {
             QuickSettingsContainerView container, QuickSettingsController qsc) {
         super(context, inflater, container, qsc);
 
-        mLabel = mContext.getString(R.string.quick_settings_airplane_mode_label);
         getAirState();
 
         mOnClick = new View.OnClickListener() {
@@ -57,10 +56,12 @@ public class AirplaneModeTile extends QuickSettingsTile {
     }
 
     private void applyAirChanges() {
-        if(mEnabled){
+        if (mEnabled) {
             mDrawable = R.drawable.stat_airplane_on;
-        }else{
+            mLabel = mContext.getString(R.string.quick_settings_airplane_on_label);
+        } else {
             mDrawable = R.drawable.stat_airplane_off;
+            mLabel = mContext.getString(R.string.quick_settings_airplane_off_label);
         }
         updateQuickSettings();
     }

@@ -17,6 +17,7 @@ public class WiFiTile extends QuickSettingsTile implements NetworkSignalChangedC
     public WiFiTile(Context context, LayoutInflater inflater,
             QuickSettingsContainerView container, QuickSettingsController qsc) {
         super(context, inflater, container, qsc);
+
         mOnClick = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -49,6 +50,15 @@ public class WiFiTile extends QuickSettingsTile implements NetworkSignalChangedC
         } else if (wfmg.isWifiEnabled()) {
             mDrawable = R.drawable.stat_wifi_on;
             mLabel = mContext.getString(R.string.quick_settings_wifi_label);
+        } else if (wfmg.getWifiState() == WifiManager.WIFI_STATE_ENABLING) {
+            mDrawable = R.drawable.stat_wifi_on;
+            mLabel = mContext.getString(R.string.quick_settings_wifi_label_turnon);
+        } else if (wfmg.getWifiState() == WifiManager.WIFI_STATE_DISABLING) {
+            mDrawable = R.drawable.stat_wifi_off;
+            mLabel = mContext.getString(R.string.quick_settings_wifi_label_turnoff);
+        } else if (wfmg.getWifiState() == WifiManager.WIFI_STATE_UNKNOWN) {
+            mDrawable = R.drawable.stat_wifi_off;
+            mLabel = mContext.getString(R.string.quick_settings_wifi_label_error);
         } else {
             mDrawable = R.drawable.stat_wifi_off;
             mLabel = mContext.getString(R.string.quick_settings_wifi_off_label);

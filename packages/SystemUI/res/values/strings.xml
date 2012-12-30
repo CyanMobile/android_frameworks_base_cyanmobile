@@ -114,7 +114,8 @@
     <string name="status_bar_settings_signal_meter_wifi_nossid">Wi-Fi connected</string>
 
     <!-- QuickSettings: Airplane mode [CHAR LIMIT=NONE] -->
-    <string name="quick_settings_airplane_mode_label">Airplane mode</string>
+    <string name="quick_settings_airplane_on_label">Airplane On</string>
+    <string name="quick_settings_airplane_off_label">Airplane Off</string>
     <!-- QuickSettings: Battery Charging [CHAR LIMIT=NONE] -->
     <string name="quick_settings_battery_charging_label">Charging, <xliff:g id="number">%d</xliff:g><xliff:g id="percent">%%</xliff:g></string>
     <!-- QuickSettings: Battery Charged [CHAR LIMIT=NONE] -->
@@ -156,6 +157,9 @@
     <!-- QuickSettings: Wifi [CHAR LIMIT=NONE] -->
     <string name="quick_settings_wifi_label">Wi-Fi</string>
     <string name="quick_settings_wifi_label_connected">Connected</string>
+    <string name="quick_settings_wifi_label_turnon">Turning On</string>
+    <string name="quick_settings_wifi_label_turnoff">Turning Off</string>
+    <string name="quick_settings_wifi_label_error">Error</string>
     <!-- QuickSettings: Wifi (Not connected) [CHAR LIMIT=NONE] -->
     <string name="quick_settings_wifi_not_connected">Not Connected</string>
     <!-- QuickSettings: Wifi (No network) [CHAR LIMIT=NONE] -->
