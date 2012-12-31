@@ -457,6 +457,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_NOTIF), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_SHOWRAM), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(Settings.System.QUICK_SETTINGS_TILES), false, this);
             onChange(true);
         }
 
@@ -1474,6 +1475,13 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mCompactCarrierLayout.setVisibility(View.VISIBLE);
         }
 
+        if ((mStatusBarTab) && (mQuickContainer != null)) {
+             if (mQS != null) {
+                 mQuickContainer.removeAllViews();
+                 mQS.setupQuickSettings();
+                 mQuickContainer.requestLayout();
+             }
+        }
     }
 
     private int getNavBarSize() {
