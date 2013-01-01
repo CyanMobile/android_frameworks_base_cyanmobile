@@ -127,6 +127,7 @@ public class NavigationBarView extends LinearLayout {
     private Bitmap mCustomBackIcon;
     private Bitmap mCustomSearchIcon;
     private Bitmap mCustomQuickIcon;
+    private Bitmap mRecentIcon;
     private Bitmap mPowerIcon;
     private Bitmap mHomeIcon;
     private Bitmap mMenuIcon;
@@ -136,6 +137,7 @@ public class NavigationBarView extends LinearLayout {
     private Bitmap mVolUpIcon;
     private Bitmap mVolDownIcon;
     private Bitmap mTouchIcon;
+    private Bitmap mRecentIconNorm;
     private Bitmap mPowerIconNorm;
     private Bitmap mHomeIconNorm;
     private Bitmap mMenuIconNorm;
@@ -144,6 +146,7 @@ public class NavigationBarView extends LinearLayout {
     private Bitmap mQuickIconNorm;
     private Bitmap mVolUpIconNorm;
     private Bitmap mVolDownIconNorm;
+    private Bitmap mRecentIconRot;
     private Bitmap mPowerIconRot;
     private Bitmap mHomeIconRot;
     private Bitmap mMenuIconRot;
@@ -249,6 +252,7 @@ public class NavigationBarView extends LinearLayout {
         }
 
         if (mNVShow) {
+            runIconRecent();
             runIconPower();
             runIconHome();
             runIconMenu();
@@ -592,6 +596,12 @@ public class NavigationBarView extends LinearLayout {
                         updateNaviButtons();
                         mHomeButton.setImageBitmap(mTouchIcon);
                         mHandler.postDelayed(mResetHome, 80);
+                      } else if(mShowHome == 8) {
+                        if(DEBUG) Slog.i(TAG, "Recent clicked");
+                        runTaskSwitcher();
+                        updateNaviButtons();
+                        mHomeButton.setImageBitmap(mTouchIcon);
+                        mHandler.postDelayed(mResetHome, 80);
                       }
                     }
                 }
@@ -682,6 +692,12 @@ public class NavigationBarView extends LinearLayout {
                       } else if(mShowMenu == 7) {
                         if(DEBUG) Slog.i(TAG, "Power clicked");
                         simulateKeypress(KeyEvent.KEYCODE_POWER);
+                        updateNaviButtons();
+                        mMenuButton.setImageBitmap(mTouchIcon);
+                        mHandler.postDelayed(mResetMenu, 80);
+                      } else if(mShowMenu == 8) {
+                        if(DEBUG) Slog.i(TAG, "Recent clicked");
+                        runTaskSwitcher();
                         updateNaviButtons();
                         mMenuButton.setImageBitmap(mTouchIcon);
                         mHandler.postDelayed(mResetMenu, 80);
@@ -778,6 +794,12 @@ public class NavigationBarView extends LinearLayout {
                         updateNaviButtons();
                         mBackButton.setImageBitmap(mTouchIcon);
                         mHandler.postDelayed(mResetBack, 80);
+                      } else if(mShowBack == 8) {
+                        if(DEBUG) Slog.i(TAG, "Recent clicked");
+                        runTaskSwitcher();
+                        updateNaviButtons();
+                        mBackButton.setImageBitmap(mTouchIcon);
+                        mHandler.postDelayed(mResetBack, 80);
                       }
                     }
                 }
@@ -868,6 +890,12 @@ public class NavigationBarView extends LinearLayout {
                       } else if(mShowSearch == 7) {
                         if(DEBUG) Slog.i(TAG, "Power clicked");
                         simulateKeypress(KeyEvent.KEYCODE_POWER);
+                        updateNaviButtons();
+                        mSearchButton.setImageBitmap(mTouchIcon);
+                        mHandler.postDelayed(mResetSearch, 80);
+                      } else if(mShowSearch == 8) {
+                        if(DEBUG) Slog.i(TAG, "Recent clicked");
+                        runTaskSwitcher();
                         updateNaviButtons();
                         mSearchButton.setImageBitmap(mTouchIcon);
                         mHandler.postDelayed(mResetSearch, 80);
@@ -986,6 +1014,12 @@ public class NavigationBarView extends LinearLayout {
                         updateNaviButtons();
                         mQuickButton.setImageBitmap(mTouchIcon);
                         mHandler.postDelayed(mResetQuick, 80);
+                      } else if(mShowQuicker == 7) {
+                        if(DEBUG) Slog.i(TAG, "Recent clicked");
+                        runTaskSwitcher();
+                        updateNaviButtons();
+                        mQuickButton.setImageBitmap(mTouchIcon);
+                        mHandler.postDelayed(mResetQuick, 80);
                       }
                     }
                 }
@@ -1061,6 +1095,7 @@ public class NavigationBarView extends LinearLayout {
 
         if (mShowAnimate == 1) {
             mDisableAnimate = true;
+            runIconRecentRot(180);
             runIconPowerRot(180);
             runIconHomeRot(180);
             runIconMenuRot(180);
@@ -1069,6 +1104,7 @@ public class NavigationBarView extends LinearLayout {
             runIconQuickRot(180);
             runIconVolUpRot(180);
             runIconVolDownRot(180);
+            mRecentIcon = mForceRotate ? mRecentIconRot : mRecentIconNorm;
             mPowerIcon = mForceRotate ? mPowerIconRot : mPowerIconNorm;
             mHomeIcon = mForceRotate ? mHomeIconRot : mHomeIconNorm;
             mMenuIcon = mForceRotate ? mMenuIconRot : mMenuIconNorm;
@@ -1079,6 +1115,7 @@ public class NavigationBarView extends LinearLayout {
             mVolDownIcon = mForceRotate ? mVolDownIconRot : mVolDownIconNorm;
         } else if (mShowAnimate == 0) {
             mDisableAnimate = true;
+            mRecentIcon = mRecentIconNorm;
             mPowerIcon = mPowerIconNorm;
             mHomeIcon = mHomeIconNorm;
             mMenuIcon = mMenuIconNorm;
@@ -1095,6 +1132,7 @@ public class NavigationBarView extends LinearLayout {
     Runnable mResetNormal = new Runnable() {
         public void run() {
              mDisableAnimate = false;
+             mRecentIcon = mRecentIconNorm;
              mPowerIcon = mPowerIconNorm;
              mHomeIcon = mHomeIconNorm;
              mMenuIcon = mMenuIconNorm;
@@ -1115,6 +1153,7 @@ public class NavigationBarView extends LinearLayout {
 
     Runnable mResetRotate30 = new Runnable() {
         public void run() {
+            runIconRecentRot(30);
             runIconPowerRot(30);
             runIconHomeRot(30);
             runIconMenuRot(30);
@@ -1123,6 +1162,7 @@ public class NavigationBarView extends LinearLayout {
             runIconQuickRot(30);
             runIconVolUpRot(30);
             runIconVolDownRot(30);
+             mRecentIcon = mRecentIconRot;
              mPowerIcon = mPowerIconRot;
              mHomeIcon = mHomeIconRot;
              mMenuIcon = mMenuIconRot;
@@ -1142,6 +1182,7 @@ public class NavigationBarView extends LinearLayout {
 
     Runnable mResetRotate60 = new Runnable() {
         public void run() {
+            runIconRecentRot(60);
             runIconPowerRot(60);
             runIconHomeRot(60);
             runIconMenuRot(60);
@@ -1150,6 +1191,7 @@ public class NavigationBarView extends LinearLayout {
             runIconQuickRot(60);
             runIconVolUpRot(60);
             runIconVolDownRot(60);
+             mRecentIcon = mRecentIconRot;
              mPowerIcon = mPowerIconRot;
              mHomeIcon = mHomeIconRot;
              mMenuIcon = mMenuIconRot;
@@ -1169,6 +1211,7 @@ public class NavigationBarView extends LinearLayout {
 
     Runnable mResetRotate90 = new Runnable() {
         public void run() {
+            runIconRecentRot(90);
             runIconPowerRot(90);
             runIconHomeRot(90);
             runIconMenuRot(90);
@@ -1177,6 +1220,7 @@ public class NavigationBarView extends LinearLayout {
             runIconQuickRot(90);
             runIconVolUpRot(90);
             runIconVolDownRot(90);
+             mRecentIcon = mRecentIconRot;
              mPowerIcon = mPowerIconRot;
              mHomeIcon = mHomeIconRot;
              mMenuIcon = mMenuIconRot;
@@ -1196,6 +1240,7 @@ public class NavigationBarView extends LinearLayout {
 
     Runnable mResetRotate120 = new Runnable() {
         public void run() {
+            runIconRecentRot(120);
             runIconPowerRot(120);
             runIconHomeRot(120);
             runIconMenuRot(120);
@@ -1204,6 +1249,7 @@ public class NavigationBarView extends LinearLayout {
             runIconQuickRot(120);
             runIconVolUpRot(120);
             runIconVolDownRot(120);
+             mRecentIcon = mRecentIconRot;
              mPowerIcon = mPowerIconRot;
              mHomeIcon = mHomeIconRot;
              mMenuIcon = mMenuIconRot;
@@ -1223,6 +1269,7 @@ public class NavigationBarView extends LinearLayout {
 
     Runnable mResetRotate150 = new Runnable() {
         public void run() {
+            runIconRecentRot(150);
             runIconPowerRot(150);
             runIconHomeRot(150);
             runIconMenuRot(150);
@@ -1231,6 +1278,7 @@ public class NavigationBarView extends LinearLayout {
             runIconQuickRot(150);
             runIconVolUpRot(150);
             runIconVolDownRot(150);
+             mRecentIcon = mRecentIconRot;
              mPowerIcon = mPowerIconRot;
              mHomeIcon = mHomeIconRot;
              mMenuIcon = mMenuIconRot;
@@ -1250,6 +1298,7 @@ public class NavigationBarView extends LinearLayout {
 
     Runnable mResetRotate180 = new Runnable() {
         public void run() {
+            runIconRecentRot(180);
             runIconPowerRot(180);
             runIconHomeRot(180);
             runIconMenuRot(180);
@@ -1258,6 +1307,7 @@ public class NavigationBarView extends LinearLayout {
             runIconQuickRot(180);
             runIconVolUpRot(180);
             runIconVolDownRot(180);
+             mRecentIcon = mRecentIconRot;
              mPowerIcon = mPowerIconRot;
              mHomeIcon = mHomeIconRot;
              mMenuIcon = mMenuIconRot;
@@ -1277,6 +1327,7 @@ public class NavigationBarView extends LinearLayout {
 
     Runnable mResetRotate210 = new Runnable() {
         public void run() {
+            runIconRecentRot(210);
             runIconPowerRot(210);
             runIconHomeRot(210);
             runIconMenuRot(210);
@@ -1285,6 +1336,7 @@ public class NavigationBarView extends LinearLayout {
             runIconQuickRot(210);
             runIconVolUpRot(210);
             runIconVolDownRot(210);
+             mRecentIcon = mRecentIconRot;
              mPowerIcon = mPowerIconRot;
              mHomeIcon = mHomeIconRot;
              mMenuIcon = mMenuIconRot;
@@ -1304,6 +1356,7 @@ public class NavigationBarView extends LinearLayout {
 
     Runnable mResetRotate240 = new Runnable() {
         public void run() {
+            runIconRecentRot(240);
             runIconPowerRot(240);
             runIconHomeRot(240);
             runIconMenuRot(240);
@@ -1312,6 +1365,7 @@ public class NavigationBarView extends LinearLayout {
             runIconQuickRot(240);
             runIconVolUpRot(240);
             runIconVolDownRot(240);
+             mRecentIcon = mRecentIconRot;
              mPowerIcon = mPowerIconRot;
              mHomeIcon = mHomeIconRot;
              mMenuIcon = mMenuIconRot;
@@ -1331,6 +1385,7 @@ public class NavigationBarView extends LinearLayout {
 
     Runnable mResetRotate270 = new Runnable() {
         public void run() {
+            runIconRecentRot(270);
             runIconPowerRot(270);
             runIconHomeRot(270);
             runIconMenuRot(270);
@@ -1339,6 +1394,7 @@ public class NavigationBarView extends LinearLayout {
             runIconQuickRot(270);
             runIconVolUpRot(270);
             runIconVolDownRot(270);
+             mRecentIcon = mRecentIconRot;
              mPowerIcon = mPowerIconRot;
              mHomeIcon = mHomeIconRot;
              mMenuIcon = mMenuIconRot;
@@ -1358,6 +1414,7 @@ public class NavigationBarView extends LinearLayout {
 
     Runnable mResetRotate300 = new Runnable() {
         public void run() {
+            runIconRecentRot(300);
             runIconPowerRot(300);
             runIconHomeRot(300);
             runIconMenuRot(300);
@@ -1366,6 +1423,7 @@ public class NavigationBarView extends LinearLayout {
             runIconQuickRot(300);
             runIconVolUpRot(300);
             runIconVolDownRot(300);
+             mRecentIcon = mRecentIconRot;
              mPowerIcon = mPowerIconRot;
              mHomeIcon = mHomeIconRot;
              mMenuIcon = mMenuIconRot;
@@ -1385,6 +1443,7 @@ public class NavigationBarView extends LinearLayout {
 
     Runnable mResetRotate330 = new Runnable() {
         public void run() {
+            runIconRecentRot(330);
             runIconPowerRot(330);
             runIconHomeRot(330);
             runIconMenuRot(330);
@@ -1393,6 +1452,7 @@ public class NavigationBarView extends LinearLayout {
             runIconQuickRot(330);
             runIconVolUpRot(330);
             runIconVolDownRot(330);
+             mRecentIcon = mRecentIconRot;
              mPowerIcon = mPowerIconRot;
              mHomeIcon = mHomeIconRot;
              mMenuIcon = mMenuIconRot;
@@ -1501,25 +1561,25 @@ public class NavigationBarView extends LinearLayout {
         // now toggle off unneeded stuff
         if(mShowHome == 0) {
             mHomeButton.setVisibility(View.GONE);
-        } else if(mShowHome == 8) {
+        } else if(mShowHome == 9) {
             mHomeButton.setVisibility(View.INVISIBLE);
         }
 
         if(mShowMenu == 0) {
             mMenuButton.setVisibility(View.GONE);
-        } else if(mShowMenu == 8) {
+        } else if(mShowMenu == 9) {
             mMenuButton.setVisibility(View.INVISIBLE);
         }
 
         if(mShowBack == 0) {
             mBackButton.setVisibility(View.GONE);
-        } else if(mShowBack == 8) {
+        } else if(mShowBack == 9) {
             mBackButton.setVisibility(View.INVISIBLE);
         }
 
         if(mShowSearch == 0) {
             mSearchButton.setVisibility(View.GONE);
-        } else if(mShowSearch == 8) {
+        } else if(mShowSearch == 9) {
             mSearchButton.setVisibility(View.INVISIBLE);
         }
 
@@ -1673,6 +1733,11 @@ public class NavigationBarView extends LinearLayout {
         }
     }
 
+    private void runIconRecent() {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_recent);
+        mRecentIconNorm = asIcon;
+    }
+
     private void runIconPower() {
         Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_power);
         mPowerIconNorm = asIcon;
@@ -1716,6 +1781,16 @@ public class NavigationBarView extends LinearLayout {
     private void runIconTouch() {
         Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.navibar_touch);
         mTouchIcon = asIcon;
+    }
+
+    private void runIconRecentRot(int Degrs) {
+        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_recent);
+        int w = asIcon.getWidth();
+        int h = asIcon.getHeight();
+        Matrix mtx = new Matrix();
+        mtx.postRotate(Degrs);
+        Bitmap asIconS = Bitmap.createBitmap(asIcon, 0, 0, w, h, mtx, true);
+        mRecentIconRot = asIconS;
     }
 
     private void runIconPowerRot(int Degrs) {
@@ -1829,6 +1904,8 @@ public class NavigationBarView extends LinearLayout {
                }
             } else if(mShowHome == 7) {
                mHomeButton.setImageBitmap(mPowerIcon);
+            } else if(mShowHome == 8) {
+               mHomeButton.setImageBitmap(mRecentIcon);
             } else {
                mHomeButton.setImageBitmap(null);
             }
@@ -1866,6 +1943,8 @@ public class NavigationBarView extends LinearLayout {
                }
             } else if(mShowBack == 7) {
                mBackButton.setImageBitmap(mPowerIcon);
+            } else if(mShowBack == 8) {
+               mBackButton.setImageBitmap(mRecentIcon);
             } else {
                mBackButton.setImageBitmap(null);
             }
@@ -1903,6 +1982,8 @@ public class NavigationBarView extends LinearLayout {
                }
             } else if(mShowSearch == 7) {
                mSearchButton.setImageBitmap(mPowerIcon);
+            } else if(mShowSearch == 8) {
+               mSearchButton.setImageBitmap(mRecentIcon);
             } else {
                mSearchButton.setImageBitmap(null);
             }
@@ -1940,6 +2021,8 @@ public class NavigationBarView extends LinearLayout {
                }
             } else if(mShowMenu == 7) {
                mMenuButton.setImageBitmap(mPowerIcon);
+            } else if(mShowMenu == 8) {
+               mMenuButton.setImageBitmap(mRecentIcon);
             } else {
                mMenuButton.setImageBitmap(null);
             }
@@ -1977,6 +2060,8 @@ public class NavigationBarView extends LinearLayout {
                }
             } else if(mShowQuicker == 6) {
                mQuickButton.setImageBitmap(mPowerIcon);
+            } else if(mShowQuicker == 7) {
+               mQuickButton.setImageBitmap(mRecentIcon);
             } else {
                mQuickButton.setImageBitmap(null);
             }

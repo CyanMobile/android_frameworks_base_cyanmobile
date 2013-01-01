@@ -198,7 +198,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     LinearLayout mLeftClock;
     IconMerger mNotificationIcons;
     LinearLayout mStatusIcons;
-    LinearLayout mStatusIconsExp;
     ImageView mSettingsIconButton;
 
     // expanded notifications
@@ -363,6 +362,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private boolean mTinyExpanded = true;
     private boolean mMoreExpanded = true;
     private boolean mShowRam = true;
+    private boolean mShowIconex = true;
 
     // tracks changes to settings, so status bar is moved to top/bottom
     // as soon as cmparts setting is changed
@@ -457,7 +457,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_NOTIF), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_SHOWRAM), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(Settings.System.QUICK_SETTINGS_TILES), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.STATUS_BAR_SHOWICONEX), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.QUICK_SETTINGS_TILES), false, this);
             onChange(true);
         }
 
@@ -492,6 +495,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.STATUS_BAR_NOTIF, 1) == 1);
             mShowRam = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_SHOWRAM, 1) == 1);
+            mShowIconex = (Settings.System.getInt(resolver,
+                    Settings.System.STATUS_BAR_SHOWICONEX, 1) == 1);
             mShowCmBatterySideBar = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_BATTERY, 0) == 4);
             mHasSoftButtons = (Settings.System.getInt(resolver,
@@ -695,6 +700,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.STATUS_BAR_NOTIF, 1) == 1);
             mShowRam = (Settings.System.getInt(getContentResolver(),
                     Settings.System.STATUS_BAR_SHOWRAM, 1) == 1);
+            mShowIconex = (Settings.System.getInt(getContentResolver(),
+                    Settings.System.STATUS_BAR_SHOWICONEX, 1) == 1);
             mShowCmBatterySideBar = (Settings.System.getInt(getContentResolver(),
                 Settings.System.STATUS_BAR_BATTERY, 0) == 4);
             mHasSoftButtons = (Settings.System.getInt(getContentResolver(),
@@ -911,7 +918,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mCenterIconex = (SignalClusterView)mExpandedView.findViewById(R.id.centerIconex);
         mSettingsIconButton = (ImageView)mExpandedView.findViewById(R.id.settingIcon);
         mSettingsIconButton.setOnClickListener(mSettingsIconButtonListener);
-        mStatusIconsExp = (LinearLayout)mExpandedView.findViewById(R.id.expstatusIcons);
         if (mStatusBarTab) {
             mQuickContainer = (QuickSettingsContainerView)mExpandedView.findViewById(R.id.quick_settings_container);
             if (mQuickContainer != null) {
@@ -1403,6 +1409,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
 
         mCenterClockex.setVisibility(mMoreExpanded ? View.VISIBLE : View.GONE);
+        mCenterIconex.setVisibility(mShowIconex ? View.VISIBLE : View.GONE);
         mAvalMemLayout.setVisibility(mShowRam ? View.VISIBLE : View.GONE);
     }
 
@@ -1613,9 +1620,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         StatusBarIconView view = new StatusBarIconView(this, slot);
         view.set(icon);
         mStatusIcons.addView(view, viewIndex, new LinearLayout.LayoutParams(mIconSize, mIconSize));
-        StatusBarIconView viewExp = new StatusBarIconView(this, slot);
-        viewExp.set(icon);
-        mStatusIconsExp.addView(viewExp, viewIndex, new LinearLayout.LayoutParams(mIconSize, mIconSize));
     }
 
     public void updateIcon(String slot, int index, int viewIndex,
@@ -1626,8 +1630,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
         StatusBarIconView view = (StatusBarIconView)mStatusIcons.getChildAt(viewIndex);
         view.set(icon);
-        StatusBarIconView viewExp = (StatusBarIconView)mStatusIconsExp.getChildAt(viewIndex);
-        viewExp.set(icon);
     }
 
     public void removeIcon(String slot, int index, int viewIndex) {
@@ -1635,7 +1637,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             Slog.d(TAG, "removeIcon slot=" + slot + " index=" + index + " viewIndex=" + viewIndex);
         }
         mStatusIcons.removeViewAt(viewIndex);
-        mStatusIconsExp.removeViewAt(viewIndex);
     }
 
     public void addNotification(IBinder key, StatusBarNotification notification) {
@@ -2737,10 +2738,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     public void run() {
                         Slog.d(TAG, "mStatusIcons:");
                         mStatusIcons.debug();
-                        if (mStatusIconsExp != null) {
-                            Slog.d(TAG, "mStatusIconsExp:");
-                            mStatusIconsExp.debug();
-                        }
                     }
                 });
         }

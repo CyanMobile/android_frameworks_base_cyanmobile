@@ -221,16 +221,6 @@
              android:layout_alignParentRight="true"
              />
 
-        <LinearLayout android:id="@+id/expstatusIcons"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:layout_marginRight="2dp"
-            android:layout_gravity="right|center_vertical"
-            android:gravity="right|center_vertical"
-            android:layout_alignParentRight="true"
-            android:orientation="horizontal"/>
-
         </com.android.systemui.statusbar.SignalClusterView>
 
         <include layout="@layout/quicktile" />
