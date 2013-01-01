@@ -39,6 +39,7 @@ import com.android.systemui.statusbar.quicksettings.quicktile.AutoRotateTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.BatteryTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.BluetoothTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.BrightnessTile;
+import com.android.systemui.statusbar.quicksettings.quicktile.CpuTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.TorchTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.GPSTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.MobileNetworkTile;
@@ -53,6 +54,7 @@ import com.android.systemui.statusbar.quicksettings.quicktile.SleepTimeTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.SettingsTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.TimeTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.UserTile;
+import com.android.systemui.statusbar.quicksettings.quicktile.WeatherTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.WiFiTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.WifiAPTile;
 
@@ -94,15 +96,19 @@ public class QuickSettingsController {
     public static final String TILE_WIMAX = "toggleWimax";
     public static final String TILE_LOCKSCREEN = "toggleLockscreen";
     public static final String TILE_USER = "toggleUser";
+    public static final String TILE_CPU = "toggleCpu";
+    public static final String TILE_WEATHER = "toggleWeather";
 
     private static final String TILE_DELIMITER = "|";
     private static final String TILES_DEFAULT = TILE_USER
+            + TILE_DELIMITER + TILE_CPU
+            + TILE_DELIMITER + TILE_WEATHER
             + TILE_DELIMITER + TILE_WIFI
             + TILE_DELIMITER + TILE_BATTERY
             + TILE_DELIMITER + TILE_MOBILEDATA
+            + TILE_DELIMITER + TILE_SETTING
             + TILE_DELIMITER + TILE_TIME
             + TILE_DELIMITER + TILE_NETWORKMODE
-            + TILE_DELIMITER + TILE_SETTING
             + TILE_DELIMITER + TILE_BLUETOOTH
             + TILE_DELIMITER + TILE_BRIGHTNESS
             + TILE_DELIMITER + TILE_GPS
@@ -147,6 +153,8 @@ public class QuickSettingsController {
     public static final int SCREENTIME_TILE = 16;
     public static final int LOCKSCREEN_TILE = 17;
     public static final int SLEEP_TILE = 18;
+    public static final int CPU_TILE = 19;
+    public static final int WEATHER_TILE = 20;
 
     public static final int USER_TILE = 99;
 
@@ -219,6 +227,10 @@ public class QuickSettingsController {
                 mQuickSettings.add(LOCKSCREEN_TILE);
             } else if (tile.equals(TILE_SLEEP)) {
                 mQuickSettings.add(SLEEP_TILE);
+            } else if (tile.equals(TILE_CPU)) {
+                mQuickSettings.add(CPU_TILE);
+            } else if (tile.equals(TILE_WEATHER)) {
+                mQuickSettings.add(WEATHER_TILE);
             } else if (tile.equals(TILE_USER)) {
                 mQuickSettings.add(USER_TILE);
             } else if (tile.equals(TILE_WIMAX)) {
@@ -380,6 +392,12 @@ public class QuickSettingsController {
                 break;
             case SLEEP_TILE:
                 qs = new SleepTile(mContext, inflater, mContainerView, this);
+                break;
+            case CPU_TILE:
+                qs = new CpuTile(mContext, inflater, mContainerView, this);
+                break;
+            case WEATHER_TILE:
+                qs = new WeatherTile(mContext, inflater, mContainerView, this);
                 break;
             case USER_TILE:
                 qs = new UserTile(mContext, inflater, mContainerView, this);
