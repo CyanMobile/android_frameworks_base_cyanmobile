@@ -111,6 +111,11 @@ public class QuickSettingsTile implements OnClickListener {
     @Override
     public final void onClick(View v) {
         mOnClick.onClick(v);
+        ContentResolver resolver = mContext.getContentResolver();
+        boolean shouldCollapse = Settings.System.getInt(resolver, Settings.System.EXPANDED_HIDE_ONCHANGE, 0) == 1;
+        if (shouldCollapse) {
+            startCollapseActivity();
+        }
     }
 
 }
