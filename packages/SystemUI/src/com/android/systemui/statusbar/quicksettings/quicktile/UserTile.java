@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
+import android.net.Uri;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.ImageView;
@@ -33,11 +34,26 @@ public class UserTile extends QuickSettingsTile {
         mOnClick = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //do nothing
+                queryForUserInformation();
             }
         };
+        mOnLongClick = new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Intent intent = new Intent(Intent.ACTION_MAIN);
+                intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.TileViewActivity");
+                startSettingsActivity(intent);
+                return true;
+            }
+        };
+        qsc.registerAction(Intent.ACTION_CONFIGURATION_CHANGED, this);
         qsc.registerObservedContent(Settings.System.getUriFor(Settings.System.USER_MY_NUMBERS)
                 , this);
+    }
+
+    @Override
+    public void onChangeUri(ContentResolver resolver, Uri uri) {
+        queryForUserInformation();
     }
 
     @Override
@@ -62,19 +78,28 @@ public class UserTile extends QuickSettingsTile {
     private void queryForUserInformation() {
         ContentResolver resolver = mContext.getContentResolver();
         String numbers = Settings.System.getString(resolver, Settings.System.USER_MY_NUMBERS);
+        Drawable avatar = null;
         if (numbers.equals("000000000")) {
             numbers = null;
         }
         if (numbers != null) {
             String name = SmsHelper.getName(mContext, numbers);
-            Drawable avatar = null;
             Bitmap rawAvatar = SmsHelper.getContactPicture(mContext, numbers);
             if (rawAvatar != null) {
                 avatar = new BitmapDrawable(mContext.getResources(), rawAvatar);
             } else {
                 avatar = mContext.getResources().getDrawable(com.android.internal.R.drawable.ic_contact_picture);
             }
-            setUserTileInfo(name, avatar);
+            if (name != null) {
+                setUserTileInfo(name, avatar);
+            } else {
+                String names = mContext.getString(R.string.quick_settings_user_label);
+                setUserTileInfo(names, avatar);
+            }
+        } else {
+            String named = mContext.getString(R.string.quick_settings_user_label);
+            avatar = mContext.getResources().getDrawable(com.android.internal.R.drawable.ic_contact_picture);
+            setUserTileInfo(named, avatar);
         }
     }
 
