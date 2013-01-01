@@ -1620,6 +1620,8 @@ public class WifiStateTracker extends NetworkStateTracker {
         intent.putExtra(WifiManager.EXTRA_NETWORK_INFO, mNetworkInfo);
         if (bssid != null)
             intent.putExtra(WifiManager.EXTRA_BSSID, bssid);
+        if (mNetworkInfo.getState() == NetworkInfo.State.CONNECTED)
+            intent.putExtra(WifiManager.EXTRA_WIFI_INFO, new WifiInfo(mWifiInfo));
         mContext.sendStickyBroadcast(intent);
     }
 

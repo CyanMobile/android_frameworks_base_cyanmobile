@@ -42,11 +42,15 @@ public class WiFiTile extends QuickSettingsTile implements NetworkSignalChangedC
     }
 
     @Override
-    public void onWifiSignalChanged(boolean mIsWifiConnected, int mWifiSignalIconId) {
+    public void onWifiSignalChanged(boolean mIsWifiConnected, int mWifiSignalIconId, String wifiDesc) {
         WifiManager wfmg = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
         if (mIsWifiConnected) {
             mDrawable = mWifiSignalIconId;
-            mLabel = mContext.getString(R.string.quick_settings_wifi_label_connected);
+            if (wifiDesc != null) {
+                mLabel = wifiDesc;
+            } else {
+                mLabel = mContext.getString(R.string.quick_settings_wifi_label_connected);
+            }
         } else if (wfmg.isWifiEnabled()) {
             mDrawable = R.drawable.stat_wifi_on;
             mLabel = mContext.getString(R.string.quick_settings_wifi_label);

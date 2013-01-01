@@ -26,6 +26,8 @@ import android.database.ContentObserver;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.Handler;
@@ -51,6 +53,7 @@ import com.android.systemui.R;
 import android.net.wimax.WimaxManagerConstants;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class contains all of the policy about which icons are installed in the status
@@ -473,6 +476,7 @@ public class NetworkController {
     private static final int TYPE_SPN = 1;
     private static final int TYPE_PLMN = 2;
     private static final int TYPE_CUSTOM = 3;
+    public String mWifiSsid;
 
     //4G
     private static final int[][] sWimaxSignalImages = {
@@ -492,7 +496,7 @@ public class NetworkController {
     private int mWimaxSignal = 0;
     private int mWimaxState = 0;
     private int mWimaxExtraState = 0;
-
+    final WifiManager mWifiManager;
     private boolean mShowFourG;
 
     // state of inet connection - 0 not connected, 100 connected
@@ -502,7 +506,7 @@ public class NetworkController {
             new ArrayList<NetworkSignalChangedCallback>();
 
     public interface NetworkSignalChangedCallback {
-        public void onWifiSignalChanged(boolean mIsWifiConnected, int mWifiSignalIconId);
+        public void onWifiSignalChanged(boolean mIsWifiConnected, int mWifiSignalIconId, String wifiDesc);
         public void onMobileDataSignalChanged(boolean mMobileDataEnable, int mPhoneSignalIconId, int mDataSignalIconId, String description);
     }
 
@@ -599,6 +603,7 @@ public class NetworkController {
         // wifi
         mWifiSignalIconId = sWifiSignalImages[0][0];
         // wifi will get updated by the sticky intents
+        mWifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 
         // wimax
         //enable/disable wimax depending on the value in config.xml
@@ -637,8 +642,10 @@ public class NetworkController {
     }
 
     public void notifySignalsChangedCallbacks(NetworkSignalChangedCallback cb) {
+        String wifiDesc = mIsWifiConnected ?
+                mWifiSsid : null;
         // only show wifi in the cluster if connected or if wifi-only
-        cb.onWifiSignalChanged(mIsWifiConnected, mWifiSignalIconId);
+        cb.onWifiSignalChanged(mIsWifiConnected, mWifiSignalIconId, wifiDesc);
         cb.onMobileDataSignalChanged(mMobileDataEnable, mPhoneSignalIconId, mDataSignalIconId, mNetworkName);
     }
 
@@ -1050,6 +1057,26 @@ public class NetworkController {
         } else if (action.equals(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION)) {
             final boolean enabled = intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED,
                                                            false);
+        } else if (action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
+            final NetworkInfo networkInfo = (NetworkInfo)
+                    intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+            boolean wasConnected = mIsWifiConnected;
+            mIsWifiConnected = networkInfo != null && networkInfo.isConnected();
+            // If we just connected, grab the inintial signal strength and ssid
+            if (mIsWifiConnected && !wasConnected) {
+                // try getting it out of the intent first
+                WifiInfo info = (WifiInfo) intent.getParcelableExtra(WifiManager.EXTRA_WIFI_INFO);
+                if (info == null) {
+                    info = mWifiManager.getConnectionInfo();
+                }
+                if (info != null) {
+                    mWifiSsid = huntForSsid(info);
+                } else {
+                    mWifiSsid = null;
+                }
+            } else if (!mIsWifiConnected) {
+                mWifiSsid = null;
+            }
         } else if (action.equals(WifiManager.RSSI_CHANGED_ACTION)) {
             int iconId;
             final int newRssi = intent.getIntExtra(WifiManager.EXTRA_NEW_RSSI, -200);
@@ -1234,6 +1261,21 @@ public class NetworkController {
                 break;
 
         }
+    }
+
+    private String huntForSsid(WifiInfo info) {
+        String ssid = info.getSSID();
+        if (ssid != null) {
+            return ssid;
+        }
+        // OK, it's not in the connectionInfo; we have to go hunting for it
+        List<WifiConfiguration> networks = mWifiManager.getConfiguredNetworks();
+        for (WifiConfiguration net : networks) {
+            if (net.networkId == info.getNetworkId()) {
+                return net.SSID;
+            }
+        }
+        return null;
     }
 
     public void refreshViews() {
