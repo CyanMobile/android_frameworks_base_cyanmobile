@@ -3980,6 +3980,13 @@ public final class Settings {
          */
         public static final String QUICK_SETTINGS_TILES = "quick_settings_tiles";
 
+        /**
+         * Tile View to Use
+         *
+         * @hide
+         */
+        public static final String USER_MY_NUMBERS = "user_my_numbers";
+
         /** 
         * Notification Power Widget - Custom Brightness Mode
         * @hide

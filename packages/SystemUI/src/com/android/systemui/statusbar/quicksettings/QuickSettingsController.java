@@ -52,6 +52,7 @@ import com.android.systemui.statusbar.quicksettings.quicktile.ScreenshotTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.SleepTimeTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.SettingsTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.TimeTile;
+import com.android.systemui.statusbar.quicksettings.quicktile.UserTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.WiFiTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.WifiAPTile;
 
@@ -92,13 +93,15 @@ public class QuickSettingsController {
     public static final String TILE_TORCH = "toggleFlashlight";  // Keep old string for compatibility
     public static final String TILE_WIMAX = "toggleWimax";
     public static final String TILE_LOCKSCREEN = "toggleLockscreen";
+    public static final String TILE_USER = "toggleUser";
 
     private static final String TILE_DELIMITER = "|";
-    private static final String TILES_DEFAULT = TILE_WIFI
+    private static final String TILES_DEFAULT = TILE_USER
+            + TILE_DELIMITER + TILE_WIFI
             + TILE_DELIMITER + TILE_BATTERY
             + TILE_DELIMITER + TILE_MOBILEDATA
-            + TILE_DELIMITER + TILE_NETWORKMODE
             + TILE_DELIMITER + TILE_TIME
+            + TILE_DELIMITER + TILE_NETWORKMODE
             + TILE_DELIMITER + TILE_SETTING
             + TILE_DELIMITER + TILE_BLUETOOTH
             + TILE_DELIMITER + TILE_BRIGHTNESS
@@ -144,6 +147,8 @@ public class QuickSettingsController {
     public static final int SCREENTIME_TILE = 16;
     public static final int LOCKSCREEN_TILE = 17;
     public static final int SLEEP_TILE = 18;
+
+    public static final int USER_TILE = 99;
 
     public QuickSettingsController(Context context, QuickSettingsContainerView container) {
         mContext = context;
@@ -214,6 +219,8 @@ public class QuickSettingsController {
                 mQuickSettings.add(LOCKSCREEN_TILE);
             } else if (tile.equals(TILE_SLEEP)) {
                 mQuickSettings.add(SLEEP_TILE);
+            } else if (tile.equals(TILE_USER)) {
+                mQuickSettings.add(USER_TILE);
             } else if (tile.equals(TILE_WIMAX)) {
                 // Not available yet
             }
@@ -373,6 +380,9 @@ public class QuickSettingsController {
                 break;
             case SLEEP_TILE:
                 qs = new SleepTile(mContext, inflater, mContainerView, this);
+                break;
+            case USER_TILE:
+                qs = new UserTile(mContext, inflater, mContainerView, this);
                 break;
             }
             if (qs != null) {
