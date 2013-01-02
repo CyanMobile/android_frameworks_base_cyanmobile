@@ -64,19 +64,16 @@ public class MobileNetworkTile extends QuickSettingsTile implements NetworkSigna
     }
 
     @Override
-    public void onMobileDataSignalChanged(boolean mMobileDataEnable, int mPhoneSignalIconId, int mDataSignalIconId, String description) {
+    public void onMobileDataSignalChanged(boolean mMobileDataEnable, int mPhoneSignalIconId, int mDataSignalIconId) {
         // TODO: If view is in awaiting state, disable
         dataOn = mMobileDataEnable;
         mDrawable = mPhoneSignalIconId;
         mDataTypeIconId = mDataSignalIconId;
-        mLabel = description;
         updateQuickSettings();
     }
 
     @Override
     void updateQuickSettings() {
-        TextView tv = (TextView) mTile.findViewById(R.id.rssi_textview);
-        tv.setText(mLabel);
         ImageView iv = (ImageView) mTile.findViewById(R.id.rssi_image);
         ImageView iov = (ImageView) mTile.findViewById(R.id.rssi_overlay_image);
         iv.setBackgroundResource(mDrawable);

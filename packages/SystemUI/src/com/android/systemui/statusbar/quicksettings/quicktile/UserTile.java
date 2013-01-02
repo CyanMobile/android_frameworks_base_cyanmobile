@@ -11,6 +11,7 @@ import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.net.Uri;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -46,7 +47,10 @@ public class UserTile extends QuickSettingsTile {
                 return true;
             }
         };
+        qsc.registerAction(Intent.ACTION_BATTERY_CHANGED, this);
         qsc.registerAction(Intent.ACTION_CONFIGURATION_CHANGED, this);
+        qsc.registerAction(Intent.ACTION_TIME_CHANGED, this);
+        qsc.registerAction(Intent.ACTION_TIMEZONE_CHANGED, this);
         qsc.registerObservedContent(Settings.System.getUriFor(Settings.System.USER_MY_NUMBERS)
                 , this);
     }
@@ -58,7 +62,13 @@ public class UserTile extends QuickSettingsTile {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        queryForUserInformation();
+        String action = intent.getAction();
+        if (action.equals(Intent.ACTION_TIME_CHANGED) ||
+                action.equals(Intent.ACTION_TIMEZONE_CHANGED) ||
+                action.equals(Intent.ACTION_BATTERY_CHANGED) ||
+                action.equals(Intent.ACTION_CONFIGURATION_CHANGED)) {
+             queryForUserInformation();
+        }
     }
 
     @Override
@@ -79,7 +89,7 @@ public class UserTile extends QuickSettingsTile {
         ContentResolver resolver = mContext.getContentResolver();
         String numbers = Settings.System.getString(resolver, Settings.System.USER_MY_NUMBERS);
         Drawable avatar = null;
-        if (numbers.equals("000000000")) {
+        if (numbers.equals("000000000") || numbers.equals("") || TextUtils.isEmpty(numbers)) {
             numbers = null;
         }
         if (numbers != null) {

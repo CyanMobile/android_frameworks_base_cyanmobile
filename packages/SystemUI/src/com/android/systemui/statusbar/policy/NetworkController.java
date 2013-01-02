@@ -74,7 +74,6 @@ public class NetworkController {
     public int mWifiSignalIconId;
     public int mDataSignalIconId;
     public int mWimaxSignalIconId;
-    public String mNetworkName;
     private final Handler mHandler;
     public static final int PHONE_SIGNAL_IS_AIRPLANE_MODE = 1;
     public static final int PHONE_SIGNAL_IS_NULL = 2;
@@ -466,16 +465,6 @@ public class NetworkController {
     private int mLastWifiSignalLevel = -1;
     public boolean mIsWifiConnected = false;
     public boolean mMobileDataEnable = false;
-    private boolean mShowSpn;
-    private String mSpn;
-    private boolean mShowPlmn;
-    private String mPlmn;
-    private int mCarrierLabelType;
-    private String mCarrierLabelCustom;
-    private static final int TYPE_DEFAULT = 0;
-    private static final int TYPE_SPN = 1;
-    private static final int TYPE_PLMN = 2;
-    private static final int TYPE_CUSTOM = 3;
     public String mWifiSsid;
 
     //4G
@@ -507,7 +496,7 @@ public class NetworkController {
 
     public interface NetworkSignalChangedCallback {
         public void onWifiSignalChanged(boolean mIsWifiConnected, int mWifiSignalIconId, String wifiDesc);
-        public void onMobileDataSignalChanged(boolean mMobileDataEnable, int mPhoneSignalIconId, int mDataSignalIconId, String description);
+        public void onMobileDataSignalChanged(boolean mMobileDataEnable, int mPhoneSignalIconId, int mDataSignalIconId);
     }
 
     public void addNetworkSignalChangedCallback(NetworkSignalChangedCallback cb) {
@@ -540,11 +529,8 @@ public class NetworkController {
                      action.equals(WimaxManagerConstants.RSSI_CHANGED_ACTION)) {
                 updateWiMAX(intent);
                 refreshViews();
-            } else if (Telephony.Intents.SPN_STRINGS_UPDATED_ACTION.equals(action)) {
-                updateNetworkName(intent.getBooleanExtra(Telephony.Intents.EXTRA_SHOW_SPN, false),
-                        intent.getStringExtra(Telephony.Intents.EXTRA_SPN),
-                        intent.getBooleanExtra(Telephony.Intents.EXTRA_SHOW_PLMN, false),
-                        intent.getStringExtra(Telephony.Intents.EXTRA_PLMN));
+            } else if (Intent.ACTION_BATTERY_CHANGED.equals(action) ||
+                 Intent.ACTION_CONFIGURATION_CHANGED.equals(action)) {
                 refreshViews();
             }
         }
@@ -560,9 +546,7 @@ public class NetworkController {
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUS_BAR_FOURG), false, this);
             resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.CARRIER_LABEL_TYPE), false, this);
-            resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.CARRIER_LABEL_CUSTOM_STRING), false, this);
+                    Settings.System.getUriFor(Settings.System.AIRPLANE_MODE_ON), false, this);
             onChange(true);
         }
 
@@ -616,6 +600,8 @@ public class NetworkController {
         IntentFilter filter = new IntentFilter();
 
         // Register for Intent broadcasts for...
+        filter.addAction(Intent.ACTION_BATTERY_CHANGED);
+        filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
         filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         filter.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
         filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
@@ -646,7 +632,7 @@ public class NetworkController {
                 mWifiSsid : null;
         // only show wifi in the cluster if connected or if wifi-only
         cb.onWifiSignalChanged(mIsWifiConnected, mWifiSignalIconId, wifiDesc);
-        cb.onMobileDataSignalChanged(mMobileDataEnable, mPhoneSignalIconId, mDataSignalIconId, mNetworkName);
+        cb.onMobileDataSignalChanged(mMobileDataEnable, mPhoneSignalIconId, mDataSignalIconId);
     }
 
     private void updateConnectivity(Intent intent) {
@@ -693,7 +679,7 @@ public class NetworkController {
         public void onSignalStrengthsChanged(SignalStrength signalStrength) {
             mSignalStrength = signalStrength;
             updateSignalStrength();
-            refreshViews();
+            updateSettings();
         }
 
         @Override
@@ -702,7 +688,7 @@ public class NetworkController {
             updateSignalStrength();
             updateCdmaRoamingIcon(state);
             updateDataIcon();
-            refreshViews();
+            updateSettings();
         }
 
         @Override
@@ -711,7 +697,7 @@ public class NetworkController {
             if (isCdma()) {
                 updateSignalStrength();
             }
-            refreshViews();
+            updateSettings();
         }
 
         @Override
@@ -719,14 +705,14 @@ public class NetworkController {
             mDataState = state;
             updateDataNetType(networkType);
             updateDataIcon();
-            refreshViews();
+            updateSettings();
         }
 
         @Override
         public void onDataActivity(int direction) {
             mDataActivity = direction;
             updateDataIcon();
-            refreshViews();
+            updateSettings();
         }
     };
 
@@ -1158,70 +1144,6 @@ public class NetworkController {
         if (mIsWimaxEnabled) mWimaxSignalIconId = iconId;
     }
 
-    public void updateNetworkName(boolean showSpn, String spn, boolean showPlmn, String plmn) {
-        if (false) {
-            Slog.d("CarrierLabel", "updateNetworkName showSpn=" + showSpn + " spn=" + spn
-                    + " showPlmn=" + showPlmn + " plmn=" + plmn);
-        }
-
-        mShowSpn = showSpn;
-        mSpn = spn;
-        mShowPlmn = showPlmn;
-        mPlmn = plmn;
-
-        boolean haveSignal = (showPlmn && plmn != null) || (showSpn && spn != null);
-        if (!haveSignal) {
-            if (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.AIRPLANE_MODE_ON, 0) == 1) {
-                mNetworkName = "Airplane Mode";
-                return;
-            } else {
-                mNetworkName = mContext.getString(com.android.internal.R.string.lockscreen_carrier_default);
-                return;
-            }
-        }
-
-        String realPlmn = SystemProperties.get(TelephonyProperties.PROPERTY_OPERATOR_ALPHA);
-        int carrierLabelType = mCarrierLabelType;
-
-        if (plmn != null && !(plmn.equals(realPlmn))) {
-            carrierLabelType = TYPE_DEFAULT;
-        }
-
-        switch (carrierLabelType) {
-            default:
-            case TYPE_DEFAULT:
-                StringBuilder str = new StringBuilder();
-                if (showPlmn) {
-                    if (plmn != null) {
-                        str.append(plmn);
-                    } else {
-                        str.append(mContext.getText(com.android.internal.R.string.lockscreen_carrier_default));
-                    }
-                }
-                if (showSpn && spn != null) {
-                    if (showPlmn) {
-                        str.append('\n');
-                    }
-                    str.append(spn);
-                }
-                mNetworkName = str.toString();
-                break;
-
-            case TYPE_SPN:
-                mNetworkName = spn;
-                break;
-
-            case TYPE_PLMN:
-                mNetworkName = plmn;
-                break;
-
-            case TYPE_CUSTOM:
-                mNetworkName = mCarrierLabelCustom;
-                break;
-        }
-    }
-
     private final void updateCdmaRoamingIcon(ServiceState state) {
         if (!hasService()) {
             return;
@@ -1288,10 +1210,6 @@ public class NetworkController {
         ContentResolver resolver = mContext.getContentResolver();
         mShowFourG = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_FOURG, 0) == 1);
-        mCarrierLabelType = Settings.System.getInt(resolver,
-                Settings.System.CARRIER_LABEL_TYPE, TYPE_DEFAULT);
-        mCarrierLabelCustom = Settings.System.getString(resolver,
-                Settings.System.CARRIER_LABEL_CUSTOM_STRING);
         refreshViews();
     }
 }

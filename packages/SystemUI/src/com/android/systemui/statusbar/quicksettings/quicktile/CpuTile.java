@@ -56,6 +56,7 @@ public class CpuTile extends QuickSettingsTile {
                 return true;
             }
         };
+        qsc.registerAction(Intent.ACTION_BATTERY_CHANGED, this);
         qsc.registerAction(Intent.ACTION_CONFIGURATION_CHANGED, this);
         qsc.registerAction(Intent.ACTION_TIME_CHANGED, this);
         qsc.registerAction(Intent.ACTION_TIMEZONE_CHANGED, this);
@@ -70,7 +71,9 @@ public class CpuTile extends QuickSettingsTile {
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
         if (action.equals(Intent.ACTION_TIME_CHANGED) ||
-                action.equals(Intent.ACTION_TIMEZONE_CHANGED)) {
+                action.equals(Intent.ACTION_TIMEZONE_CHANGED) ||
+                action.equals(Intent.ACTION_BATTERY_CHANGED) ||
+                action.equals(Intent.ACTION_CONFIGURATION_CHANGED)) {
             queryForCpuInformation();
         }
     }
