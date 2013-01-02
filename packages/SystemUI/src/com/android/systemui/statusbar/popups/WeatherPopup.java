@@ -96,7 +96,7 @@ public class WeatherPopup extends QuickSettings {
                     mWeatherCondition.setText(com.android.internal.R.string.weather_refreshing);
                 }
 
-                if (!mHandler.hasMessages(QUERY_WEATHER)) {
+                if (!mWeatherRefreshing) {
                    mHandler.sendEmptyMessage(QUERY_WEATHER);
                 }
             }
@@ -113,6 +113,7 @@ public class WeatherPopup extends QuickSettings {
     private static WeatherInfo mWeatherInfo = new WeatherInfo();
     private static final int QUERY_WEATHER = 0;
     private static final int UPDATE_WEATHER = 1;
+    private boolean mWeatherRefreshing;
 
     private Handler mHandler = new Handler() {
         @Override
@@ -168,6 +169,7 @@ public class WeatherPopup extends QuickSettings {
                         mHandler.sendMessage(msg);
                     }
                 });
+                mWeatherRefreshing = true;
                 queryWeather.setPriority(Thread.MIN_PRIORITY);
                 queryWeather.start();
                 break;
@@ -182,6 +184,7 @@ public class WeatherPopup extends QuickSettings {
                         w = parseXml(getDocument(woeid));
                     } catch (Exception e) {
                     }
+                    mWeatherRefreshing = false;
                     if (w == null) {
                         setNoWeatherData();
                     } else {
@@ -189,6 +192,7 @@ public class WeatherPopup extends QuickSettings {
                         mWeatherInfo = w;
                     }
                 } else {
+                    mWeatherRefreshing = false;
                     if (mWeatherInfo.temp.equals(WeatherInfo.NODATA)) {
                         setNoWeatherData();
                     } else {
@@ -209,7 +213,9 @@ public class WeatherPopup extends QuickSettings {
                     Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
             boolean manualSync = (interval == 0);
             if (!manualSync && (((System.currentTimeMillis() - mWeatherInfo.last_sync) / 60000) >= interval)) {
-                mHandler.sendEmptyMessage(QUERY_WEATHER);
+                if (!mWeatherRefreshing) {
+                    mHandler.sendEmptyMessage(QUERY_WEATHER);
+                }
             } else if (manualSync && mWeatherInfo.last_sync == 0) {
                 setNoWeatherData();
             } else {
