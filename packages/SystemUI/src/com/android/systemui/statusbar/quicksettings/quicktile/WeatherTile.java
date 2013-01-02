@@ -65,7 +65,7 @@ public class WeatherTile extends QuickSettingsTile {
             public void onClick(View v) {
                 updating = true;
                 updateQuickSettings();
-                if (!mWeatherRefreshing) {
+                if (!mWeatherRefreshing && !mHandler.hasMessages(QUERY_WEATHER)) {
                     mHandler.sendEmptyMessage(QUERY_WEATHER);
                 }
             }
@@ -212,7 +212,7 @@ public class WeatherTile extends QuickSettingsTile {
             if (!manualSync && (((System.currentTimeMillis() - mWeatherInfo.last_sync) / 60000) >= interval)) {
                 updating = true;
                 updateQuickSettings();
-                if (!mWeatherRefreshing) {
+                if (!mWeatherRefreshing && !mHandler.hasMessages(QUERY_WEATHER)) {
                     mHandler.sendEmptyMessage(QUERY_WEATHER);
                 }
             } else if (manualSync && mWeatherInfo.last_sync == 0) {
