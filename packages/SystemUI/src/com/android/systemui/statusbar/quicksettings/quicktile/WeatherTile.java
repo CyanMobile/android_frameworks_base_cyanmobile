@@ -32,6 +32,7 @@ import com.android.internal.util.weather.HttpRetriever;
 import com.android.internal.util.weather.WeatherInfo;
 import com.android.internal.util.weather.WeatherXmlParser;
 import com.android.internal.util.weather.YahooPlaceFinder;
+import android.view.View;
 
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -50,6 +51,8 @@ public class WeatherTile extends QuickSettingsTile {
     private String humY;
     private String date;
     private String time;
+    private String mLoc;
+    private String mDate;
     private Drawable drwb;
     private boolean addDrwb = false;
     private boolean updating = false;
@@ -243,9 +246,11 @@ public class WeatherTile extends QuickSettingsTile {
             addDrwb = false;
         }
         mLabel = (w.temp + " | " + w.humidity) ;
+        mLoc = w.city;
         Date lastTime = new Date(mWeatherInfo.last_sync);
         date = DateFormat.getDateFormat(mContext).format(lastTime);
         time = DateFormat.getTimeFormat(mContext).format(lastTime);
+        mDate = (date + " " + time);
         updateQuickSettings();
     }
 
@@ -260,19 +265,25 @@ public class WeatherTile extends QuickSettingsTile {
             }
         }
         TextView mWeatherTemp = (TextView) mTile.findViewById(R.id.weatherone_textview);
+        TextView mWeatherLoc = (TextView) mTile.findViewById(R.id.weatherthree_textview);
         TextView mWeatherUpdateTime = (TextView) mTile.findViewById(R.id.weathertwo_textview);
-        if (mWeatherTemp != null && mWeatherUpdateTime != null) {
+        if ((mWeatherTemp != null) && (mWeatherUpdateTime != null) && (mWeatherLoc != null)) {
             if (updating) {
                 mWeatherTemp.setText(com.android.internal.R.string.weather_refreshing);
-                mWeatherUpdateTime.setText(com.android.internal.R.string.weather_refreshing);
+                mWeatherUpdateTime.setVisibility(View.GONE);
+                mWeatherLoc.setVisibility(View.GONE);
                 updating = false;
             } else {
                 if (!addDrwb) {
                     mWeatherTemp.setText(com.android.internal.R.string.weather_tap_to_refresh);
-                    mWeatherUpdateTime.setText("N/A");
+                    mWeatherUpdateTime.setVisibility(View.GONE);
+                    mWeatherLoc.setVisibility(View.GONE);
                 } else {
                     mWeatherTemp.setText(mLabel);
-                    mWeatherUpdateTime.setText(date + " " + time);
+                    mWeatherLoc.setVisibility(View.VISIBLE);
+                    mWeatherLoc.setText(mLoc);
+                    mWeatherUpdateTime.setVisibility(View.VISIBLE);
+                    mWeatherUpdateTime.setText(mDate);
                 }
             }
         }
