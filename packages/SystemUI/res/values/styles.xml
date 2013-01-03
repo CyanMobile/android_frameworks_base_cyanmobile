@@ -79,7 +79,7 @@
         <item name="android:drawablePadding">6dp</item>
         <item name="android:textSize">10dp</item>
         <item name="android:textStyle">normal</item>
-        <item name="android:textColor">#CCCCCC</item>
+        <item name="android:textColor">@*android:color/color_default_cyanmobile</item>
         <item name="android:singleLine">true</item>
         <item name="android:ellipsize">marquee</item>
         <item name="android:fadingEdge">horizontal</item>
@@ -92,7 +92,7 @@
         <item name="android:drawablePadding">4dp</item>
         <item name="android:textSize">8dp</item>
         <item name="android:textStyle">normal</item>
-        <item name="android:textColor">#CCCCCC</item>
+        <item name="android:textColor">@*android:color/color_default_cyanmobile</item>
         <item name="android:singleLine">true</item>
         <item name="android:ellipsize">marquee</item>
         <item name="android:fadingEdge">horizontal</item>
@@ -108,7 +108,7 @@
 
     <style name="TextAppearance.QuickSettings.Alarm" parent="@style/TextAppearance.QuickSettings.TileView">
         <item name="android:textSize">14dp</item>
-        <item name="android:textColor">#ff3a3b39</item>
+        <item name="android:textColor">@*android:color/color_default_cyanmobile</item>
     </style>
 
     <style name="BaseBrightnessDialogContainer">

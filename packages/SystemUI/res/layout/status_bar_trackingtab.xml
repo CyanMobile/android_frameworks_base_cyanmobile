@@ -45,7 +45,7 @@
         android:orientation="horizontal"
         android:gravity="bottom"
         android:layout_gravity="bottom"
-        android:background="@drawable/title_bar_portrait"
+        android:background="@android:color/transparent"
         android:id="@+id/expanded_bottom_bar"
         >
           <TextView
@@ -57,6 +57,7 @@
              android:text="@string/status_bar_powerwidget"
              android:gravity="center"
              android:id="@+id/statusbar_buttons_toggle"
+             android:background="@drawable/qs_tile_background"
              android:clickable="true"
              />
           <TextView
@@ -69,6 +70,7 @@
              android:layout_toRightOf="@+id/statusbar_buttons_toggle"
              android:gravity="center"
              android:id="@+id/statusbar_notification_toggle"
+             android:background="@drawable/qs_tile_background"
              android:clickable="true"
              />
         </LinearLayout>
