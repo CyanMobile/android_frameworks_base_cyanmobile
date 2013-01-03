@@ -40,7 +40,7 @@ import com.android.systemui.statusbar.clocks.PowerClock;
 import com.android.systemui.statusbar.clocks.ClockExpand;
 import com.android.systemui.statusbar.cmcustom.BackLogo;
 import com.android.systemui.statusbar.dates.DateView;
-import com.android.systemui.statusbar.dates.PowerDateView;
+import com.android.systemui.statusbar.dates.ExDateView;
 import com.android.systemui.statusbar.popups.BrightnessPanel;
 import com.android.systemui.statusbar.popups.QuickSettingsPopupWindow;
 import com.android.systemui.statusbar.popups.ShortcutPopupWindow;
@@ -919,7 +919,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mCenterIconex = (SignalClusterView)mExpandedView.findViewById(R.id.centerIconex);
         mSettingsIconButton = (ImageView)mExpandedView.findViewById(R.id.settingIcon);
         if (mStatusBarTab) {
-            mSettingsIconButton.setImageResource(R.drawable.ic_dialog_dialer);
+            mSettingsIconButton.setImageResource(R.drawable.ic_qs_panel);
             NotifEnable = true;
         } else {
             mSettingsIconButton.setImageResource(R.drawable.ic_sysbar_set);
@@ -3121,29 +3121,29 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     };
 
     private void ToggleNotif() {
-          mSettingsIconButton.setImageResource(R.drawable.ic_dialog_dialer);
+          mSettingsIconButton.setImageResource(R.drawable.ic_qs_panel);
           mButtonsToggle.setTextColor(mClockColor);
           mNotificationsToggle.setTextColor(Color.parseColor("#666666"));
           LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
           parent.setBackgroundResource(R.drawable.title_bar_portrait);
           mPowerCarrier.setVisibility(View.VISIBLE);
-          mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
+          mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.slide_in_left, null));
           mNotifications.setVisibility(View.GONE);
-          mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
+          mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.slide_out_left, null));
           updateExpandedViewPos(EXPANDED_FULL_OPEN);
           NotifEnable = true;
     }
 
     private void TogglePower() {
-          mSettingsIconButton.setImageResource(R.drawable.ic_lock_menu);
+          mSettingsIconButton.setImageResource(R.drawable.ic_qs_notif);
           mNotificationsToggle.setTextColor(mClockColor);
           mButtonsToggle.setTextColor(Color.parseColor("#666666"));
           LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
           parent.setBackgroundResource(R.drawable.title_bar_portrait);
-          mPowerCarrier.setVisibility(View.GONE);
-          mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
           mNotifications.setVisibility(View.VISIBLE);
-          mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
+          mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.slide_in_right, null));
+          mPowerCarrier.setVisibility(View.GONE);
+          mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.slide_out_right, null));
           updateExpandedViewPos(EXPANDED_FULL_OPEN);
           NotifEnable = false;
     }
@@ -3250,7 +3250,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     if (clockExp != null) {
                         clockExp.invalidate();
                     }
-                    PowerDateView powDateView = (PowerDateView)mExpandedView.findViewById(R.id.datestats);
+                    ExDateView powDateView = (ExDateView)mExpandedView.findViewById(R.id.datestats);
                     if (powDateView != null) {
                         powDateView.invalidate();
                     }

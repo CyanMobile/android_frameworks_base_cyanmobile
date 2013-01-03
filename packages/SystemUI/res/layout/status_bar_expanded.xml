@@ -30,9 +30,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingTop="3dp"
         android:paddingBottom="5dp"
-        android:paddingRight="3dp"
         >
 
         <com.android.systemui.statusbar.powerwidget.PowerWidget android:id="@+id/exp_power_stat"
@@ -98,7 +96,7 @@
 
         <include layout="@layout/status_bar_expanded_header"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/notification_panel_header_height"
+            android:layout_height="wrap_content"
             />
 
         <LinearLayout android:id="@+id/memlabel_layout"

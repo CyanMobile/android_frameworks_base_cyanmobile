@@ -86,6 +86,8 @@
     <string name="status_bar_date_formatter">%1$s\n%2$s</string>
     <string name="powerwidget_screen_timeout_toast">Screen timeout set to: %1$d %2$s</string>
     <string name="powerwidget_screen_timeout_tile">STout: %1$d %2$s</string>
+    <string name="status_bar_date_formats">%1$s</string>
+    <string name="abbrev_wday_month_day_no_year">E MMM d</string>
 
     <!-- Color Picker -->
     <string name="title_color_picker">Pick a color</string>

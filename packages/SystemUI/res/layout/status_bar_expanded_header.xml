@@ -17,42 +17,45 @@
 
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:systemui="http://schemas.android.com/apk/res/com.android.systemui"
     android:id="@+id/centerClockex"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="@dimen/notification_panel_header_height"
+    android:background="@drawable/notification_header_bg"
     android:orientation="horizontal"
     android:gravity="center_vertical"
     android:baselineAligned="false"
     >
-    <com.android.systemui.statusbar.clocks.PowerClock
-        android:id="@+id/centerCloex"
+    <RelativeLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="2dp"
-        android:singleLine="true"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Clock"
-        />
+        android:layout_height="match_parent"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:background="@drawable/ic_notify_button_bg"
+        >
+        <com.android.systemui.statusbar.clocks.PowerClock
+            android:id="@+id/centerCloex"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="8dp"
+            android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Clock"
+            android:layout_centerVertical="true"
+            />
 
-    <com.android.systemui.statusbar.dates.PowerDateView android:id="@+id/datestats"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="4dp"
-        android:layout_marginRight="4dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Date"
-        />
+        <com.android.systemui.statusbar.dates.ExDateView android:id="@+id/datestats"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Date"
+            android:layout_toRightOf="@+id/centerCloex"
+            android:layout_alignBaseline="@+id/centerCloex"
+            />
+    </RelativeLayout>
 
-        <ImageView android:id="@+id/settingIcon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
+        <ImageView android:id="@+id/clear_all_button"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:scaleType="center"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
+            android:background="@drawable/ic_notify_button_bg"
+            android:src="@drawable/ic_notify_clear"
             />
 
     <Space
@@ -61,13 +64,16 @@
         android:layout_weight="1"
         />
 
-        <ImageView android:id="@+id/clear_all_button"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
+    <FrameLayout
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginLeft="12dp"
+        >
+        <ImageView android:id="@+id/settingIcon"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:scaleType="center"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:src="@drawable/ic_notify_clear"
+            android:background="@drawable/ic_notify_button_bg"
             />
+    </FrameLayout>
 </LinearLayout>
