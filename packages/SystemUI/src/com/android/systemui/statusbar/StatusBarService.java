@@ -1935,6 +1935,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         if (latest) {
             if (mStatusBarTab) {
                 mNoNotificationsTitles.setVisibility(View.GONE);
+                TogglePower();
             }
         } else {
             if (mStatusBarTab) {

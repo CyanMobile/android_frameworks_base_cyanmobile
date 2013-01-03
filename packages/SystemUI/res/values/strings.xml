@@ -155,7 +155,9 @@
     <!-- QuickSettings: User [CHAR LIMIT=NONE] -->
     <string name="quick_settings_user_label">Me</string>
     <!-- QuickSettings: Wifi [CHAR LIMIT=NONE] -->
-    <string name="quick_settings_wifi_label">Wi-Fi</string>
+    <string name="quick_settings_wifiap_label">Wi-Fi Hotspot On</string>
+    <string name="quick_settings_wifiap_off_label">Wi-Fi Hotspot Off</string>
+    <string name="quick_settings_wifi_label">Wi-Fi On</string>
     <string name="quick_settings_wifi_label_connected">Connected</string>
     <string name="quick_settings_wifi_label_turnon">Turning On</string>
     <string name="quick_settings_wifi_label_turnoff">Turning Off</string>

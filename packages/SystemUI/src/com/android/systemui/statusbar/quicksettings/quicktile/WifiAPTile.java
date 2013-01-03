@@ -63,15 +63,20 @@ public class WifiAPTile extends QuickSettingsTile {
         int state = mWifiManager.getWifiApState();
         switch (state) {
             case WifiManager.WIFI_AP_STATE_ENABLING:
+                mLabel = mContext.getString(R.string.quick_settings_wifi_label_turnon);
+                mDrawable = R.drawable.stat_wifi_ap_off;
+                break;
             case WifiManager.WIFI_AP_STATE_ENABLED:
-                mLabel = mContext.getString(R.string.quick_settings_label_enabled);
+                mLabel = mContext.getString(R.string.quick_settings_wifiap_label);
                 mDrawable = R.drawable.stat_wifi_ap_on;
                 break;
             case WifiManager.WIFI_AP_STATE_DISABLING:
+                mLabel = mContext.getString(R.string.quick_settings_wifi_label_turnoff);
+                mDrawable = R.drawable.stat_wifi_ap_on;
             case WifiManager.WIFI_AP_STATE_DISABLED:
             default:
+                mLabel = mContext.getString(R.string.quick_settings_wifiap_off_label);
                 mDrawable = R.drawable.stat_wifi_ap_off;
-                mLabel = mContext.getString(R.string.quick_settings_label_disabled);
                 break;
         }
     }
@@ -85,7 +90,7 @@ public class WifiAPTile extends QuickSettingsTile {
         if (enable && ((wifiState == WifiManager.WIFI_STATE_ENABLING) ||
                     (wifiState == WifiManager.WIFI_STATE_ENABLED))) {
             mWifiManager.setWifiEnabled(false);
-            //Settings.System.putInt(cr, Settings.System.WIFI_SAVED_STATE, 1);
+            Settings.Secure.putInt(cr, Settings.Secure.WIFI_SAVED_STATE, 1);
         }
 
         // Turn on the Wifi AP
@@ -96,14 +101,14 @@ public class WifiAPTile extends QuickSettingsTile {
          */
         if (!enable) {
             int wifiSavedState = 0;
-            /*try {
-                wifiSavedState = Settings.System.getInt(cr, Settings.System.WIFI_SAVED_STATE);
+            try {
+                wifiSavedState = Settings.Secure.getInt(cr, Settings.Secure.WIFI_SAVED_STATE);
             } catch (Settings.SettingNotFoundException e) {
                 // Do nothing here
-            }*/
+            }
             if (wifiSavedState == 1) {
                 mWifiManager.setWifiEnabled(true);
-                //Settings.System.putInt(cr, Settings.System.WIFI_SAVED_STATE, 0);
+                Settings.System.putInt(cr, Settings.Secure.WIFI_SAVED_STATE, 0);
             }
         }
     }
