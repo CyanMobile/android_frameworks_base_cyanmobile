@@ -69,8 +69,7 @@ public final class DateView extends TextView {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (action.equals(Intent.ACTION_TIME_TICK)
-                    || action.equals(Intent.ACTION_TIMEZONE_CHANGED)) {
+            if (action.equals(Intent.ACTION_TIMEZONE_CHANGED)) {
                 updateSettings();
             }
             updateClock();

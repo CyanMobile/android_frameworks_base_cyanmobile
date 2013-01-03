@@ -363,6 +363,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private boolean mMoreExpanded = true;
     private boolean mShowRam = true;
     private boolean mShowIconex = true;
+    private boolean NotifEnable = true;
 
     // tracks changes to settings, so status bar is moved to top/bottom
     // as soon as cmparts setting is changed
@@ -917,6 +918,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mCenterClockex = (LinearLayout)mExpandedView.findViewById(R.id.centerClockex);
         mCenterIconex = (SignalClusterView)mExpandedView.findViewById(R.id.centerIconex);
         mSettingsIconButton = (ImageView)mExpandedView.findViewById(R.id.settingIcon);
+        if (mStatusBarTab) {
+            mSettingsIconButton.setImageResource(R.drawable.ic_dialog_dialer);
+            NotifEnable = true;
+        } else {
+            mSettingsIconButton.setImageResource(R.drawable.ic_sysbar_set);
+        }
         mSettingsIconButton.setOnClickListener(mSettingsIconButtonListener);
         if (mStatusBarTab) {
             mQuickContainer = (QuickSettingsContainerView)mExpandedView.findViewById(R.id.quick_settings_container);
@@ -1113,36 +1120,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                });
 
         if (mStatusBarTab) {
-        mNotificationsToggle.setOnClickListener(new OnClickListener(){
-              @Override
-              public void onClick(View v) {
-                 mNotificationsToggle.setTextColor(mClockColor);
-                 mButtonsToggle.setTextColor(Color.parseColor("#666666"));
-                 LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
-                 parent.setBackgroundResource(R.drawable.title_bar_portrait);
-                 mPowerCarrier.setVisibility(View.GONE);
-                 mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
-                 mNotifications.setVisibility(View.VISIBLE);
-                 mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
-                 updateExpandedViewPos(EXPANDED_FULL_OPEN);
-              }
-        });
-      
-        mButtonsToggle.setOnClickListener(new OnClickListener(){
-              @Override
-              public void onClick(View v) {
-                 mButtonsToggle.setTextColor(mClockColor);
-                 mNotificationsToggle.setTextColor(Color.parseColor("#666666"));
-                 LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
-                 parent.setBackgroundResource(R.drawable.title_bar_portrait);
-                 mPowerCarrier.setVisibility(View.VISIBLE);
-                 mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
-                 mNotifications.setVisibility(View.GONE);
-                 mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
-                 updateExpandedViewPos(EXPANDED_FULL_OPEN);
-              }
-        });
+            mNotificationsToggle.setOnClickListener(mTogglePowerListener);
+            mButtonsToggle.setOnClickListener(mToggleNotifListener);
         }
+
         updateColors();
         updateLayout();
         updateCarrierLabel();
@@ -3100,19 +3081,71 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     private View.OnClickListener mSettingsIconButtonListener = new View.OnClickListener() {
         public void onClick(View v) {
-                mSettingsIconButton.clearColorFilter();
+              mSettingsIconButton.clearColorFilter();
+              if (mStatusBarTab) {
+                if (NotifEnable) {
+                    TogglePower();
+                } else {
+                    ToggleNotif();
+                }
+              } else {
                 Intent intent = new Intent(Intent.ACTION_MAIN);
                 intent.setClassName("com.android.settings", "com.android.settings.MainSettings");
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 v.getContext().startActivity(intent);
-                mHandler.postDelayed(new Runnable() {
+                animateCollapse();
+              }
+              mHandler.postDelayed(new Runnable() {
                        public void run() {
                            mSettingsIconButton.setColorFilter(mSettingsColor, Mode.MULTIPLY);
                        }
                    }, 100);
-                animateCollapse();
         }
     };
+
+    private View.OnClickListener mTogglePowerListener = new View.OnClickListener() {
+        public void onClick(View v) {
+             if (NotifEnable) {
+                 TogglePower();
+             }
+        }
+    };
+
+    private View.OnClickListener mToggleNotifListener = new View.OnClickListener() {
+        public void onClick(View v) {
+            if (!NotifEnable) {
+                ToggleNotif();
+            }
+        }
+    };
+
+    private void ToggleNotif() {
+          mSettingsIconButton.setImageResource(R.drawable.ic_dialog_dialer);
+          mButtonsToggle.setTextColor(mClockColor);
+          mNotificationsToggle.setTextColor(Color.parseColor("#666666"));
+          LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
+          parent.setBackgroundResource(R.drawable.title_bar_portrait);
+          mPowerCarrier.setVisibility(View.VISIBLE);
+          mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
+          mNotifications.setVisibility(View.GONE);
+          mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
+          updateExpandedViewPos(EXPANDED_FULL_OPEN);
+          NotifEnable = true;
+    }
+
+    private void TogglePower() {
+          mSettingsIconButton.setImageResource(R.drawable.ic_lock_menu);
+          mNotificationsToggle.setTextColor(mClockColor);
+          mButtonsToggle.setTextColor(Color.parseColor("#666666"));
+          LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
+          parent.setBackgroundResource(R.drawable.title_bar_portrait);
+          mPowerCarrier.setVisibility(View.GONE);
+          mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.fade_out, null));
+          mNotifications.setVisibility(View.VISIBLE);
+          mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
+          updateExpandedViewPos(EXPANDED_FULL_OPEN);
+          NotifEnable = false;
+    }
 
     private static Bitmap getNinePatch(int id,int x, int y, Context context){
         Bitmap bitmap = BitmapFactory.decodeResource(
