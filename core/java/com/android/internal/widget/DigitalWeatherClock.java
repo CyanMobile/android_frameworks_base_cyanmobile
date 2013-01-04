@@ -412,10 +412,10 @@ public class DigitalWeatherClock extends LinearLayout {
      * 'Tap to reload' message
      */
     private void setNoWeatherData() {
-        mLabel = mContext.getString(com.android.internal.R.string.weather_no_data);
-        mLoc = mContext.getString(com.android.internal.R.string.weather_no_data);
-        mCond = mContext.getString(com.android.internal.R.string.weather_no_data);
-        mDate = mContext.getString(com.android.internal.R.string.weather_no_data);
+        mLabel = mContext.getString(R.string.weather_no_data);
+        mLoc = mContext.getString(R.string.weather_no_data);
+        mCond = mContext.getString(R.string.weather_no_data);
+        mDate = mContext.getString(R.string.weather_no_data);
         addDrwb = false;
         updateTime();
     }
@@ -480,7 +480,7 @@ public class DigitalWeatherClock extends LinearLayout {
             if (addDrwb) {
                 mWeatherImage.setImageDrawable(drwb);
             } else {
-                mWeatherImage.setImageResource(com.android.internal.R.drawable.weather_na);
+                mWeatherImage.setImageResource(R.drawable.weather_na);
             }
         }
         if ((mWeatherTemp != null) && (mWeatherUpdateTime != null) && (mWeatherLoc != null) && (mWeatherCond != null)) {
