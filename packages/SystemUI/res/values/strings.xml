@@ -123,7 +123,7 @@
     <!-- QuickSettings: Battery Charged [CHAR LIMIT=NONE] -->
     <string name="quick_settings_battery_charged_label">Charged</string>
     <!-- QuickSettings: Bluetooth [CHAR LIMIT=NONE] -->
-    <string name="quick_settings_bluetooth_label">Bluetooth</string>
+    <string name="quick_settings_bluetooth_label">Bluetooth On</string>
     <string name="quick_settings_bluetooth_label_connected">Connected</string>
     <string name="quick_settings_bluetooth_label_turnon">Turning On</string>
     <string name="quick_settings_bluetooth_label_turnoff">Turning Off</string>
