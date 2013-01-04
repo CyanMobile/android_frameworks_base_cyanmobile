@@ -47,10 +47,10 @@ public class AutoRotateTile extends QuickSettingsTile {
 
     void applyAutoRotationChanges() {
         if(getAutoRotation()){
-            mDrawable = R.drawable.stat_orientation_on;
+            mDrawable = R.drawable.ic_qs_rotation_locked;
             mLabel = mContext.getString(R.string.quick_settings_rotation_unlocked_label);
         } else {
-            mDrawable = R.drawable.stat_orientation_off;
+            mDrawable = R.drawable.ic_qs_auto_rotate;
             mLabel = mContext.getString(R.string.quick_settings_rotation_locked_label);
         }
         updateQuickSettings();

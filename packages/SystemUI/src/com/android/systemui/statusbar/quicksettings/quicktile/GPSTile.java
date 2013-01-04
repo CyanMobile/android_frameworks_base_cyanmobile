@@ -99,13 +99,13 @@ public class GPSTile extends QuickSettingsTile {
         ImageView iv = (ImageView) mTile.findViewById(R.id.gps_image);
         if (iv != null) {
            if (enabled && !mEnabled && working) {
-              iv.setBackgroundResource(R.drawable.stat_sys_gps_acquiring_anim);
+              iv.setBackgroundResource(R.drawable.qs_gps_acquiring_anim);
               AnimationDrawable gpsAnimation = (AnimationDrawable) iv.getBackground();
               gpsAnimation.start();
            } else if (enabled && mEnabled) {
-              iv.setBackgroundResource(R.drawable.stat_gps_on);
+              iv.setBackgroundResource(R.drawable.ic_qs_gps_on);
            } else {
-              iv.setBackgroundResource(R.drawable.stat_gps_off);
+              iv.setBackgroundResource(R.drawable.ic_qs_gps_off);
            }
         }
     }

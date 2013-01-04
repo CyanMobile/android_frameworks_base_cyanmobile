@@ -130,27 +130,27 @@ public class MobileNetworkTypeTile extends QuickSettingsTile {
 
         switch (mState) {
             case STATE_UNEXPECTED:
-                mDrawable = R.drawable.stat_2g3g_off;
+                mDrawable = R.drawable.ic_qs_2g_on;
                 break;
             case STATE_2G_ONLY:
-                mDrawable = R.drawable.stat_2g3g_off;
+                mDrawable = R.drawable.ic_qs_2g_on;
                 break;
             case STATE_2G_AND_3G:
                 if (mMode == Phone.NT_MODE_WCDMA_ONLY) {
-                    mDrawable = R.drawable.stat_3g_on;
+                    mDrawable = R.drawable.ic_qs_3g_on;
                 } else {
-                    mDrawable = R.drawable.stat_2g3g_on;
+                    mDrawable = R.drawable.ic_qs_2g3g_on;
                 }
                 break;
             case STATE_INTERMEDIATE:
                 if (mInternalState == STATE_TURNING_ON) {
                     if (mIntendedMode == Phone.NT_MODE_WCDMA_ONLY) {
-                        mDrawable = R.drawable.stat_3g_on;
+                        mDrawable = R.drawable.ic_qs_3g_on;
                     } else {
-                        mDrawable = R.drawable.stat_2g3g_on;
+                        mDrawable = R.drawable.ic_qs_2g3g_on;
                     }
                 } else {
-                    mDrawable = R.drawable.stat_2g3g_off;
+                    mDrawable = R.drawable.ic_qs_2g_on;
                 }
                 break;
         }

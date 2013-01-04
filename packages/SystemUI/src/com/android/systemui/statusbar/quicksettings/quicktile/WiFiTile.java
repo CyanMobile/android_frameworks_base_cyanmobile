@@ -52,19 +52,19 @@ public class WiFiTile extends QuickSettingsTile implements NetworkSignalChangedC
                 mLabel = mContext.getString(R.string.quick_settings_wifi_label_connected);
             }
         } else if (wfmg.isWifiEnabled()) {
-            mDrawable = R.drawable.stat_wifi_on;
+            mDrawable = R.drawable.ic_qs_wifi_4;
             mLabel = mContext.getString(R.string.quick_settings_wifi_label);
         } else if (wfmg.getWifiState() == WifiManager.WIFI_STATE_ENABLING) {
-            mDrawable = R.drawable.stat_wifi_on;
+            mDrawable = R.drawable.ic_qs_wifi_4;
             mLabel = mContext.getString(R.string.quick_settings_wifi_label_turnon);
         } else if (wfmg.getWifiState() == WifiManager.WIFI_STATE_DISABLING) {
-            mDrawable = R.drawable.stat_wifi_off;
+            mDrawable = R.drawable.ic_qs_wifi_0;
             mLabel = mContext.getString(R.string.quick_settings_wifi_label_turnoff);
         } else if (wfmg.getWifiState() == WifiManager.WIFI_STATE_UNKNOWN) {
-            mDrawable = R.drawable.stat_wifi_off;
+            mDrawable = R.drawable.ic_qs_wifi_0;
             mLabel = mContext.getString(R.string.quick_settings_wifi_label_error);
         } else {
-            mDrawable = R.drawable.stat_wifi_off;
+            mDrawable = R.drawable.ic_qs_wifi_0;
             mLabel = mContext.getString(R.string.quick_settings_wifi_off_label);
         }
         updateQuickSettings();

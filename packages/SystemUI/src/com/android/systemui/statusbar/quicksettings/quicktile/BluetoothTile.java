@@ -122,22 +122,22 @@ public class BluetoothTile extends QuickSettingsTile {
 
     private void applyBluetoothChanges(){
         if (enabled) {
-            mDrawable = R.drawable.stat_bluetooth_on;
+            mDrawable = R.drawable.ic_qs_bluetooth_not_connected;
             mLabel = mContext.getString(R.string.quick_settings_bluetooth_label);
         } else if (turningOn) {
-            mDrawable = R.drawable.stat_bluetooth_off;
+            mDrawable = R.drawable.ic_qs_bluetooth_off;
             mLabel = mContext.getString(R.string.quick_settings_bluetooth_label_turnon);
         } else if (turningOff) {
-            mDrawable = R.drawable.stat_bluetooth_off;
+            mDrawable = R.drawable.ic_qs_bluetooth_not_connected;
             mLabel = mContext.getString(R.string.quick_settings_bluetooth_label_turnoff);
         } else if (errored) {
-            mDrawable = R.drawable.stat_bluetooth_off;
+            mDrawable = R.drawable.ic_qs_bluetooth_neutral;
             mLabel = mContext.getString(R.string.quick_settings_bluetooth_label_error);
         } else if (enabled && connected) {
-            mDrawable = R.drawable.stat_sys_data_bluetooth_connected;
+            mDrawable = R.drawable.ic_qs_bluetooth_on;
             mLabel = mContext.getString(R.string.quick_settings_bluetooth_label_connected);
         } else {
-            mDrawable = R.drawable.stat_bluetooth_off;
+            mDrawable = R.drawable.ic_qs_bluetooth_off;
             mLabel = mContext.getString(R.string.quick_settings_bluetooth_off_label);
         }
         updateQuickSettings();

@@ -194,7 +194,11 @@
     <string name="quick_settings_vibration_off">Vibration off</string>
     <string name="quick_settings_label_enabled">On</string>
     <string name="quick_settings_label_disabled">Off</string>
-    <string name="quick_settings_ringer_normal">Sound</string>
+    <string name="quick_settings_ringer_onn">Ring On</string>
+    <string name="quick_settings_vibrate">Vibrate</string>
+    <string name="quick_settings_ringer_offf">Ring Off</string>
+    <string name="quick_settings_ringer_silent">Silent</string>
+    <string name="quick_settings_ringer_vibrate">Ring and Vibrate</string>
     <string name="quick_settings_lockscreen">Lock screen</string>
     <string name="quick_settings_network_type">Network mode</string>
     <string name="quick_settings_report_bug">Report bug</string>

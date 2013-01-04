@@ -50,7 +50,7 @@ public class SleepTile extends QuickSettingsTile {
     }
 
     void applySleepChanges() {
-        mDrawable = R.drawable.stat_sleep;
+        mDrawable = R.drawable.ic_qs_sleep;
         mLabel = mContext.getString(R.string.quick_settings_sleep);
         updateQuickSettings();
     }

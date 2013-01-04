@@ -53,10 +53,10 @@ public class TorchTile extends QuickSettingsTile {
 
         // Show OFF next to the label when in OFF state, ON/IN USE is indicated by the color
         if(enabled) {
-            mDrawable = R.drawable.stat_flashlight_on;
+            mDrawable = R.drawable.ic_qs_torch_on;
             mLabel = label;
         } else {
-            mDrawable = R.drawable.stat_flashlight_off;
+            mDrawable = R.drawable.ic_qs_torch_off;
             mLabel = label + " " + mContext.getString(R.string.quick_settings_label_disabled);
         }
     }

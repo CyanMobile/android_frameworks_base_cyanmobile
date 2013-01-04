@@ -99,23 +99,25 @@ public class RingerModeTile extends QuickSettingsTile {
     }
 
     protected void updateState() {
-        // The title does not change
-        mLabel = mContext.getString(R.string.quick_settings_ringer_normal);
 
         // The icon will change depending on index
         findCurrentState();
         switch (mRingersIndex) {
             case 0:
-                mDrawable = R.drawable.stat_silent;
+                mDrawable = R.drawable.ic_qs_ring_off;
+                mLabel = mContext.getString(R.string.quick_settings_ringer_offf);
                 break;
             case 1:
-                mDrawable = R.drawable.stat_vibrate_off;
+                mDrawable = R.drawable.ic_qs_vibrate_on;
+                mLabel = mContext.getString(R.string.quick_settings_vibrate);
                 break;
             case 2:
-                mDrawable = R.drawable.stat_ring_on;
+                mDrawable = R.drawable.ic_qs_ring_on;
+                mLabel = mContext.getString(R.string.quick_settings_ringer_onn);
                 break;
             case 3:
-                mDrawable = R.drawable.stat_ring_vibrate_on;
+                mDrawable = R.drawable.ic_qs_ring_vibrate_on;
+                mLabel = mContext.getString(R.string.quick_settings_ringer_vibrate);
                 break;
         }
 

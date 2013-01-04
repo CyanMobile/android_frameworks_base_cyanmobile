@@ -45,7 +45,7 @@ public class ScreenshotTile extends QuickSettingsTile {
     }
 
     void applyScreenShotChanges() {
-        mDrawable = R.drawable.stat_screenshot;
+        mDrawable = R.drawable.ic_qs_screenshot;
         mLabel = mContext.getString(R.string.quick_settings_screenshot);
         updateQuickSettings();
     }

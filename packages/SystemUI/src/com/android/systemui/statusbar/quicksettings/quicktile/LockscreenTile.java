@@ -75,10 +75,10 @@ public class LockscreenTile extends QuickSettingsTile {
 
     void applyLockChanges() {
         if (!mDisabledLockscreen) {
-            mDrawable = R.drawable.stat_lock_screen_on;
+            mDrawable = R.drawable.ic_qs_lock_screen_on;
             mLabel = mContext.getString(R.string.quick_settings_lockon);
         } else {
-            mDrawable = R.drawable.stat_lock_screen_off;
+            mDrawable = R.drawable.ic_qs_lock_screen_off;
             mLabel = mContext.getString(R.string.quick_settings_lockoff);
         }
         updateQuickSettings();

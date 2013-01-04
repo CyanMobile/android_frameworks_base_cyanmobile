@@ -14,7 +14,7 @@ public class SettingsTile extends QuickSettingsTile {
             QuickSettingsContainerView container, QuickSettingsController qsc) {
         super(context, inflater, container, qsc);
 
-        mDrawable = R.drawable.ic_sysbar_set;
+        mDrawable = R.drawable.ic_qs_settings;
         mLabel = context.getString(R.string.quick_settings_settings_label);
 
         mOnClick = new View.OnClickListener() {

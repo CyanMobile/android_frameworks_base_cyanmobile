@@ -28,8 +28,8 @@ public class BatteryTile extends QuickSettingsTile {
         super(context, inflater, container, qsc);
 
         mTileLayout = R.layout.quick_settings_tile_battery;
-        batteryLevels = (LevelListDrawable) mContext.getResources().getDrawable(com.android.internal.R.drawable.stat_sys_battery);
-        chargingBatteryLevels = (LevelListDrawable) mContext.getResources().getDrawable(com.android.internal.R.drawable.stat_sys_battery_charge);
+        batteryLevels = (LevelListDrawable) mContext.getResources().getDrawable(R.drawable.qs_sys_battery);
+        chargingBatteryLevels = (LevelListDrawable) mContext.getResources().getDrawable(R.drawable.qs_sys_battery_charging);
 
         mOnClick = new View.OnClickListener() {
             @Override

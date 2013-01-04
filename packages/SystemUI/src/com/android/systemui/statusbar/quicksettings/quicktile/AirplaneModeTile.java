@@ -57,10 +57,10 @@ public class AirplaneModeTile extends QuickSettingsTile {
 
     private void applyAirChanges() {
         if (mEnabled) {
-            mDrawable = R.drawable.stat_airplane_on;
+            mDrawable = R.drawable.ic_qs_airplane_on;
             mLabel = mContext.getString(R.string.quick_settings_airplane_on_label);
         } else {
-            mDrawable = R.drawable.stat_airplane_off;
+            mDrawable = R.drawable.ic_qs_airplane_off;
             mLabel = mContext.getString(R.string.quick_settings_airplane_off_label);
         }
         updateQuickSettings();

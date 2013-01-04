@@ -78,9 +78,9 @@ public class SyncTile extends QuickSettingsTile {
         mLabel = mContext.getString(R.string.quick_settings_sync);
 
         if (getSyncState()) {
-            mDrawable = R.drawable.stat_sync_on;
+            mDrawable = R.drawable.ic_qs_sync_on;
         } else {
-            mDrawable = R.drawable.stat_sync_off;
+            mDrawable = R.drawable.ic_qs_sync_off;
             mLabel += " " + mContext.getString(R.string.quick_settings_label_disabled);
         }
     }

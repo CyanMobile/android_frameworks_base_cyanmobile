@@ -92,7 +92,7 @@ public class UserTile extends QuickSettingsTile {
             if (rawAvatar != null) {
                 avatar = new BitmapDrawable(mContext.getResources(), rawAvatar);
             } else {
-                avatar = mContext.getResources().getDrawable(com.android.internal.R.drawable.ic_contact_picture);
+                avatar = mContext.getResources().getDrawable(R.drawable.ic_qs_default_user);
             }
             if (name != null) {
                 setUserTileInfo(name, avatar);

@@ -82,16 +82,16 @@ public class NetworkController {
     //***** Signal strength icons
     //GSM/UMTS
     private static final int[][] sSignalImages = {
-        { R.drawable.stat_sys_signal_0,
-          R.drawable.stat_sys_signal_1,
-          R.drawable.stat_sys_signal_2,
-          R.drawable.stat_sys_signal_3,
-          R.drawable.stat_sys_signal_4 },
-        { R.drawable.stat_sys_signal_0_fully,
-          R.drawable.stat_sys_signal_1_fully,
-          R.drawable.stat_sys_signal_2_fully,
-          R.drawable.stat_sys_signal_3_fully,
-          R.drawable.stat_sys_signal_4_fully }
+        { R.drawable.ic_qs_signal_0,
+          R.drawable.ic_qs_signal_1,
+          R.drawable.ic_qs_signal_2,
+          R.drawable.ic_qs_signal_3,
+          R.drawable.ic_qs_signal_4 },
+        { R.drawable.ic_qs_signal_full_0,
+          R.drawable.ic_qs_signal_full_1,
+          R.drawable.ic_qs_signal_full_2,
+          R.drawable.ic_qs_signal_full_3,
+          R.drawable.ic_qs_signal_full_4 }
     };
     private static final int[][] sSignalImages_r = {
         { R.drawable.stat_sys_r_signal_0,
@@ -450,14 +450,14 @@ public class NetworkController {
 
     // wifi
     private static final int[][] sWifiSignalImages = {
-            { R.drawable.stat_sys_wifi_signal_1,
-              R.drawable.stat_sys_wifi_signal_2,
-              R.drawable.stat_sys_wifi_signal_3,
-              R.drawable.stat_sys_wifi_signal_4 },
-            { R.drawable.stat_sys_wifi_signal_1_fully,
-              R.drawable.stat_sys_wifi_signal_2_fully,
-              R.drawable.stat_sys_wifi_signal_3_fully,
-              R.drawable.stat_sys_wifi_signal_4_fully }
+            { R.drawable.ic_qs_wifi_1,
+              R.drawable.ic_qs_wifi_2,
+              R.drawable.ic_qs_wifi_3,
+              R.drawable.ic_qs_wifi_4 },
+            { R.drawable.ic_qs_wifi_full_1,
+              R.drawable.ic_qs_wifi_full_2,
+              R.drawable.ic_qs_wifi_full_3,
+              R.drawable.ic_qs_wifi_full_4 }
         };
     private static final int sWifiTemporarilyNotConnectedImage =
             R.drawable.stat_sys_wifi_signal_0;
@@ -568,7 +568,7 @@ public class NetworkController {
 
         // phone_signal
         mPhone = (TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
-        mPhoneSignalIconId = R.drawable.stat_sys_signal_null;
+        mPhoneSignalIconId = R.drawable.ic_qs_signal_no_signal;
         mAlwaysUseCdmaRssi = mContext.getResources().getBoolean(
             com.android.internal.R.bool.config_alwaysUseCdmaRssi);
 
@@ -777,10 +777,10 @@ public class NetworkController {
         if (mServiceState == null || (!hasService() && !mServiceState.isEmergencyOnly())) {
             if (Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.AIRPLANE_MODE_ON, 0) == 1) {
-                mPhoneSignalIconId = R.drawable.stat_sys_signal_flightmode;
+                mPhoneSignalIconId = R.drawable.ic_qs_airplane_on;
                 updateSignalStrengthDbm(PHONE_SIGNAL_IS_AIRPLANE_MODE);
             } else {
-                mPhoneSignalIconId = R.drawable.stat_sys_signal_null;
+                mPhoneSignalIconId = R.drawable.ic_qs_signal_no_signal;
                 updateSignalStrengthDbm(PHONE_SIGNAL_IS_NULL);
             }
             return;

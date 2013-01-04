@@ -21,7 +21,7 @@
         android:id="@+id/user_imageview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:src="@*android:drawable/ic_contact_picture"
+        android:src="@drawable/ic_qs_default_user"
         android:scaleType="centerCrop"
         />
     <TextView

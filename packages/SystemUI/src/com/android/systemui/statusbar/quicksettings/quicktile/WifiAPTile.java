@@ -64,19 +64,19 @@ public class WifiAPTile extends QuickSettingsTile {
         switch (state) {
             case WifiManager.WIFI_AP_STATE_ENABLING:
                 mLabel = mContext.getString(R.string.quick_settings_wifi_label_turnon);
-                mDrawable = R.drawable.stat_wifi_ap_off;
+                mDrawable = R.drawable.ic_qs_wifi_ap_off;
                 break;
             case WifiManager.WIFI_AP_STATE_ENABLED:
                 mLabel = mContext.getString(R.string.quick_settings_wifiap_label);
-                mDrawable = R.drawable.stat_wifi_ap_on;
+                mDrawable = R.drawable.ic_qs_wifi_ap_on;
                 break;
             case WifiManager.WIFI_AP_STATE_DISABLING:
                 mLabel = mContext.getString(R.string.quick_settings_wifi_label_turnoff);
-                mDrawable = R.drawable.stat_wifi_ap_on;
+                mDrawable = R.drawable.ic_qs_wifi_ap_on;
             case WifiManager.WIFI_AP_STATE_DISABLED:
             default:
                 mLabel = mContext.getString(R.string.quick_settings_wifiap_off_label);
-                mDrawable = R.drawable.stat_wifi_ap_off;
+                mDrawable = R.drawable.ic_qs_wifi_ap_off;
                 break;
         }
     }

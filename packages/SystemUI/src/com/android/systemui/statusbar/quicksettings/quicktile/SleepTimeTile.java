@@ -191,11 +191,11 @@ public class SleepTimeTile extends QuickSettingsTile {
         int timeout = getScreenTimeout(mContext);
 
         if (timeout <= SCREEN_TIMEOUT_LOW) {
-            mDrawable = R.drawable.stat_screen_timeout_off;
+            mDrawable = R.drawable.ic_qs_screen_timeout_off;
         } else if (timeout <= SCREEN_TIMEOUT_HIGH) {
-            mDrawable = R.drawable.stat_screen_timeout_off;
+            mDrawable = R.drawable.ic_qs_screen_timeout_off;
         } else {
-            mDrawable = R.drawable.stat_screen_timeout_on;
+            mDrawable = R.drawable.ic_qs_screen_timeout_on;
         }
         mLabel = makeTimeoutString(mContext, timeout);
         updateQuickSettings();
