@@ -2630,4 +2630,5 @@
     <string name="weather_no_data">No data</string>
     <string name="weather_tap_to_refresh">Tap to refresh</string>
     <string name="weather_refreshing">Refreshing</string>
+    <string name="weather_warning">Error! Auto sync disabled!</string>
 </resources>

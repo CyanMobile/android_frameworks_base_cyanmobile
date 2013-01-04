@@ -19,7 +19,7 @@ package com.android.internal.policy.impl;
 import com.android.internal.R;
 import com.android.internal.telephony.IccCard;
 import com.android.internal.telephony.TelephonyProperties;
-import com.android.internal.widget.DigitalClock;
+import com.android.internal.widget.DigitalWeatherClock;
 import com.android.internal.widget.FuzzyClock;
 import com.android.internal.widget.KanjiClock;
 import com.android.internal.widget.LockPatternUtils;
@@ -128,7 +128,7 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
 
     private TextView mCarrier;
     private TextView mCusText;
-    private DigitalClock mClock;
+    private DigitalWeatherClock mClock;
     private FuzzyClock mFuzzyClock;
     private KanjiClock mKanjiClock;
     private UnlockRing mSelector;
@@ -692,7 +692,7 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         } else if (mUseKanjiClock){
             mKanjiClock = (KanjiClock) findViewById(R.id.time);
         } else {
-            mClock = (DigitalClock) findViewById(R.id.time);
+            mClock = (DigitalWeatherClock) findViewById(R.id.time);
         }
         mTime = (TextView) findViewById(R.id.timeDisplay);
         mTime.setTextColor(CColours);
