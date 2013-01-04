@@ -412,7 +412,10 @@ public class DigitalWeatherClock extends LinearLayout {
      * 'Tap to reload' message
      */
     private void setNoWeatherData() {
-        mLabel = mContext.getString(com.android.internal.R.string.weather_tap_to_refresh);
+        mLabel = mContext.getString(com.android.internal.R.string.weather_no_data);
+        mLoc = mContext.getString(com.android.internal.R.string.weather_no_data);
+        mCond = mContext.getString(com.android.internal.R.string.weather_no_data);
+        mDate = mContext.getString(com.android.internal.R.string.weather_no_data);
         addDrwb = false;
         updateTime();
     }
@@ -492,7 +495,7 @@ public class DigitalWeatherClock extends LinearLayout {
                     mWeatherTemp.setVisibility(View.GONE);
                     mWeatherUpdateTime.setVisibility(View.GONE);
                     mWeatherLoc.setVisibility(View.GONE);
-                    mWeatherCond.setText(R.string.weather_warning);
+                    mWeatherCond.setText(R.string.weather_no_data);
                 } else {
                     mWeatherTemp.setVisibility(View.VISIBLE);
                     mWeatherTemp.setText(mLabel);
