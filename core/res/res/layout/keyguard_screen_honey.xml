@@ -97,6 +97,14 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:gravity="center" >
+                <ImageView
+                    android:id="@+id/weather_image"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:layout_gravity="center_horizontal"
+                    android:gravity="center" 
+                    android:scaleType="centerCrop"
+                    />
                 <TextView android:id="@+id/timeDisplay"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -110,16 +118,6 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
                     android:shadowDx="0"
                     android:shadowDy="0"
                     android:shadowRadius="3.0"
-                    android:layout_marginBottom="6dip"
-                    />
-
-                <ImageView
-                    android:id="@+id/weather_image"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_gravity="center_horizontal"
-                    android:gravity="center" 
-                    android:scaleType="centerCrop"
                     />
             </FrameLayout>
         <LinearLayout
