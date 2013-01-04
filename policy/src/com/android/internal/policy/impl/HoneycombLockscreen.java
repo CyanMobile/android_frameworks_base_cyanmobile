@@ -20,8 +20,8 @@ import com.android.internal.R;
 import com.android.internal.telephony.IccCard;
 import com.android.internal.telephony.TelephonyProperties;
 import com.android.internal.widget.DigitalWeatherClock;
-import com.android.internal.widget.FuzzyClock;
-import com.android.internal.widget.KanjiClock;
+import com.android.internal.widget.FuzzyWeatherClock;
+import com.android.internal.widget.KanjiWeatherClock;
 import com.android.internal.widget.LockPatternUtils;
 import com.android.internal.widget.UnlockRing;
 import com.android.internal.widget.CircularSelector;
@@ -129,8 +129,8 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
     private TextView mCarrier;
     private TextView mCusText;
     private DigitalWeatherClock mClock;
-    private FuzzyClock mFuzzyClock;
-    private KanjiClock mKanjiClock;
+    private FuzzyWeatherClock mFuzzyClock;
+    private KanjiWeatherClock mKanjiClock;
     private UnlockRing mSelector;
     private CircularSelector mCircularSelector;
     private SenseLikeLock mSenseRingSelector;
@@ -688,9 +688,9 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         mCusText.setTextColor(CColours);
 
         if (mUseFuzzyClock){
-            mFuzzyClock = (FuzzyClock) findViewById(R.id.time);
+            mFuzzyClock = (FuzzyWeatherClock) findViewById(R.id.time);
         } else if (mUseKanjiClock){
-            mKanjiClock = (KanjiClock) findViewById(R.id.time);
+            mKanjiClock = (KanjiWeatherClock) findViewById(R.id.time);
         } else {
             mClock = (DigitalWeatherClock) findViewById(R.id.time);
         }
