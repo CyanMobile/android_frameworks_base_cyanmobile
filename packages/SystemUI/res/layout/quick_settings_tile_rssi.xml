@@ -22,21 +22,27 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:orientation="horizontal"
-        android:layout_gravity="center">
+        android:paddingBottom="10dp" >
+       <FrameLayout
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content" >
+            <ImageView
+                android:id="@+id/rssi_overlay_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                />
+            <ImageView
+                android:id="@+id/rssi_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                />
+        </FrameLayout>
         <ImageView
-            android:id="@+id/rssi_overlay_image"
+            android:id="@+id/rssi_inout_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:paddingBottom="10dp"
-            />
-        <ImageView
-            android:id="@+id/rssi_image"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:paddingBottom="10dp"
             />
     </LinearLayout>
     <com.android.systemui.statusbar.carrierlabels.CarrierLabelTile

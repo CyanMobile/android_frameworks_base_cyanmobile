@@ -22,6 +22,7 @@ import com.android.systemui.statusbar.policy.NetworkController.NetworkSignalChan
 public class MobileNetworkTile extends QuickSettingsTile implements NetworkSignalChangedCallback {
 
     private int mDataTypeIconId;
+    private int mDataDirectIconId;
     private boolean dataOn = false;
 
     public MobileNetworkTile(Context context, LayoutInflater inflater,
@@ -64,10 +65,11 @@ public class MobileNetworkTile extends QuickSettingsTile implements NetworkSigna
     }
 
     @Override
-    public void onMobileDataSignalChanged(boolean mMobileDataEnable, int mPhoneSignalIconId, int mDataSignalIconId) {
+    public void onMobileDataSignalChanged(boolean mMobileDataEnable, int mPhoneSignalIconId, int mDataDirection, int mDataSignalIconId) {
         // TODO: If view is in awaiting state, disable
         dataOn = mMobileDataEnable;
         mDrawable = mPhoneSignalIconId;
+        mDataDirectIconId = mDataDirection;
         mDataTypeIconId = mDataSignalIconId;
         updateQuickSettings();
     }
@@ -75,12 +77,20 @@ public class MobileNetworkTile extends QuickSettingsTile implements NetworkSigna
     @Override
     void updateQuickSettings() {
         ImageView iv = (ImageView) mTile.findViewById(R.id.rssi_image);
+        ImageView ivv = (ImageView) mTile.findViewById(R.id.rssi_inout_image);
         ImageView iov = (ImageView) mTile.findViewById(R.id.rssi_overlay_image);
         iv.setBackgroundResource(mDrawable);
         if (dataOn) {
+            if (mDataDirectIconId != 0) {
+                ivv.setVisibility(View.VISIBLE);
+                ivv.setBackgroundResource(mDataDirectIconId);
+            } else {
+                ivv.setVisibility(View.GONE);
+            }
             iov.setVisibility(View.VISIBLE);
             iov.setBackgroundResource(mDataTypeIconId);
         } else {
+            ivv.setVisibility(View.GONE);
             iov.setVisibility(View.GONE);
         }
     }

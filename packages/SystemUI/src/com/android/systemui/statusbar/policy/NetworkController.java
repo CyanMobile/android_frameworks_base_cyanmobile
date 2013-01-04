@@ -73,6 +73,7 @@ public class NetworkController {
     public int mPhoneSignalIconId;
     public int mWifiSignalIconId;
     public int mDataSignalIconId;
+    public int mDataDirection;
     public int mWimaxSignalIconId;
     private final Handler mHandler;
     public static final int PHONE_SIGNAL_IS_AIRPLANE_MODE = 1;
@@ -94,16 +95,16 @@ public class NetworkController {
           R.drawable.ic_qs_signal_full_4 }
     };
     private static final int[][] sSignalImages_r = {
-        { R.drawable.stat_sys_r_signal_0,
-          R.drawable.stat_sys_r_signal_1,
-          R.drawable.stat_sys_r_signal_2,
-          R.drawable.stat_sys_r_signal_3,
-          R.drawable.stat_sys_r_signal_4 },
-        { R.drawable.stat_sys_r_signal_0_fully,
-          R.drawable.stat_sys_r_signal_1_fully,
-          R.drawable.stat_sys_r_signal_2_fully,
-          R.drawable.stat_sys_r_signal_3_fully,
-          R.drawable.stat_sys_r_signal_4_fully }
+        { R.drawable.ic_qs_signal_0,
+          R.drawable.ic_qs_signal_1,
+          R.drawable.ic_qs_signal_2,
+          R.drawable.ic_qs_signal_3,
+          R.drawable.ic_qs_signal_4 },
+        { R.drawable.ic_qs_signal_full_0,
+          R.drawable.ic_qs_signal_full_1,
+          R.drawable.ic_qs_signal_full_2,
+          R.drawable.ic_qs_signal_full_3,
+          R.drawable.ic_qs_signal_full_4 }
     };
     private static final int[] sRoamingIndicatorImages_cdma = new int[] {
         R.drawable.stat_sys_roaming_cdma_0, //Standard Roaming Indicator
@@ -363,72 +364,83 @@ public class NetworkController {
 
     //***** Data connection icons
     private int[] mDataIconList = sDataNetType_g[0];
+    //roaming
+    private static final int[][] sDataNetType_r = {
+            { R.drawable.ic_qs_signal_r,
+              R.drawable.ic_qs_signal_r,
+              R.drawable.ic_qs_signal_r,
+              R.drawable.ic_qs_signal_r },
+            { R.drawable.ic_qs_signal_full_r,
+              R.drawable.ic_qs_signal_full_r,
+              R.drawable.ic_qs_signal_full_r,
+              R.drawable.ic_qs_signal_full_r }
+        };
     //GSM/UMTS
     private static final int[][] sDataNetType_g = {
-            { R.drawable.stat_sys_data_connected_g,
-              R.drawable.stat_sys_data_in_g,
-              R.drawable.stat_sys_data_out_g,
-              R.drawable.stat_sys_data_inandout_g },
-            { R.drawable.stat_sys_data_fully_connected_g,
-              R.drawable.stat_sys_data_fully_in_g,
-              R.drawable.stat_sys_data_fully_out_g,
-              R.drawable.stat_sys_data_fully_inandout_g }
+            { R.drawable.ic_qs_signal_g,
+              R.drawable.ic_qs_signal_g,
+              R.drawable.ic_qs_signal_g,
+              R.drawable.ic_qs_signal_g },
+            { R.drawable.ic_qs_signal_full_g,
+              R.drawable.ic_qs_signal_full_g,
+              R.drawable.ic_qs_signal_full_g,
+              R.drawable.ic_qs_signal_full_g }
         };
     private static final int[][] sDataNetType_3g = {
-            { R.drawable.stat_sys_data_connected_3g,
-              R.drawable.stat_sys_data_in_3g,
-              R.drawable.stat_sys_data_out_3g,
-              R.drawable.stat_sys_data_inandout_3g },
-            { R.drawable.stat_sys_data_fully_connected_3g,
-              R.drawable.stat_sys_data_fully_in_3g,
-              R.drawable.stat_sys_data_fully_out_3g,
-              R.drawable.stat_sys_data_fully_inandout_3g }
+            { R.drawable.ic_qs_signal_3g,
+              R.drawable.ic_qs_signal_3g,
+              R.drawable.ic_qs_signal_3g,
+              R.drawable.ic_qs_signal_3g },
+            { R.drawable.ic_qs_signal_full_3g,
+              R.drawable.ic_qs_signal_full_3g,
+              R.drawable.ic_qs_signal_full_3g,
+              R.drawable.ic_qs_signal_full_3g }
         };
     private static final int[][] sDataNetType_e = {
-            { R.drawable.stat_sys_data_connected_e,
-              R.drawable.stat_sys_data_in_e,
-              R.drawable.stat_sys_data_out_e,
-              R.drawable.stat_sys_data_inandout_e },
-            { R.drawable.stat_sys_data_fully_connected_e,
-              R.drawable.stat_sys_data_fully_in_e,
-              R.drawable.stat_sys_data_fully_out_e,
-              R.drawable.stat_sys_data_fully_inandout_e }
+            { R.drawable.ic_qs_signal_e,
+              R.drawable.ic_qs_signal_e,
+              R.drawable.ic_qs_signal_e,
+              R.drawable.ic_qs_signal_e },
+            { R.drawable.ic_qs_signal_full_e,
+              R.drawable.ic_qs_signal_full_e,
+              R.drawable.ic_qs_signal_full_e,
+              R.drawable.ic_qs_signal_full_e }
         };
     //3.5G
     private static final int[][] sDataNetType_h = {
-            { R.drawable.stat_sys_data_connected_h,
-              R.drawable.stat_sys_data_in_h,
-              R.drawable.stat_sys_data_out_h,
-              R.drawable.stat_sys_data_inandout_h },
-            { R.drawable.stat_sys_data_fully_connected_h,
-              R.drawable.stat_sys_data_fully_in_h,
-              R.drawable.stat_sys_data_fully_out_h,
-              R.drawable.stat_sys_data_fully_inandout_h }
+            { R.drawable.ic_qs_signal_h,
+              R.drawable.ic_qs_signal_h,
+              R.drawable.ic_qs_signal_h,
+              R.drawable.ic_qs_signal_h },
+            { R.drawable.ic_qs_signal_full_h,
+              R.drawable.ic_qs_signal_full_h,
+              R.drawable.ic_qs_signal_full_h,
+              R.drawable.ic_qs_signal_full_h }
     };
     //CDMA
     // Use 3G icons for EVDO data and 1x icons for 1XRTT data
     private static final int[][] sDataNetType_1x = {
-            { R.drawable.stat_sys_data_connected_1x,
-              R.drawable.stat_sys_data_in_1x,
-              R.drawable.stat_sys_data_out_1x,
-              R.drawable.stat_sys_data_inandout_1x },
-            { R.drawable.stat_sys_data_fully_connected_1x,
-              R.drawable.stat_sys_data_fully_in_1x,
-              R.drawable.stat_sys_data_fully_out_1x,
-              R.drawable.stat_sys_data_fully_inandout_1x }
+            { R.drawable.ic_qs_signal_1x,
+              R.drawable.ic_qs_signal_1x,
+              R.drawable.ic_qs_signal_1x,
+              R.drawable.ic_qs_signal_1x },
+            { R.drawable.ic_qs_signal_full_1x,
+              R.drawable.ic_qs_signal_full_1x,
+              R.drawable.ic_qs_signal_full_1x,
+              R.drawable.ic_qs_signal_full_1x }
             };
 
     //LTE, + stuff like HSPAP+, which is still
     //3.5G but carriers like to pretend it's 4G
     private static final int[][] sDataNetType_4g = {
-            { R.drawable.stat_sys_data_connected_4g,
-              R.drawable.stat_sys_data_in_4g,
-              R.drawable.stat_sys_data_out_4g,
-              R.drawable.stat_sys_data_inandout_4g },
-            { R.drawable.stat_sys_data_fully_connected_4g,
-              R.drawable.stat_sys_data_fully_in_4g,
-              R.drawable.stat_sys_data_fully_out_4g,
-              R.drawable.stat_sys_data_fully_inandout_4g }
+            { R.drawable.ic_qs_signal_4g,
+              R.drawable.ic_qs_signal_4g,
+              R.drawable.ic_qs_signal_4g,
+              R.drawable.ic_qs_signal_4g },
+            { R.drawable.ic_qs_signal_full_4g,
+              R.drawable.ic_qs_signal_full_4g,
+              R.drawable.ic_qs_signal_full_4g,
+              R.drawable.ic_qs_signal_full_4g }
     };
 
 
@@ -460,7 +472,7 @@ public class NetworkController {
               R.drawable.ic_qs_wifi_full_4 }
         };
     private static final int sWifiTemporarilyNotConnectedImage =
-            R.drawable.stat_sys_wifi_signal_0;
+            R.drawable.ic_qs_wifi_no_network;
 
     private int mLastWifiSignalLevel = -1;
     public boolean mIsWifiConnected = false;
@@ -496,7 +508,7 @@ public class NetworkController {
 
     public interface NetworkSignalChangedCallback {
         public void onWifiSignalChanged(boolean mIsWifiConnected, int mWifiSignalIconId, String wifiDesc);
-        public void onMobileDataSignalChanged(boolean mMobileDataEnable, int mPhoneSignalIconId, int mDataSignalIconId);
+        public void onMobileDataSignalChanged(boolean mMobileDataEnable, int mPhoneSignalIconId, int mDataDirection, int mDataSignalIconId);
     }
 
     public void addNetworkSignalChangedCallback(NetworkSignalChangedCallback cb) {
@@ -582,7 +594,8 @@ public class NetworkController {
                         | PhoneStateListener.LISTEN_DATA_ACTIVITY);
 
         // data_connection
-        mDataSignalIconId = R.drawable.stat_sys_data_connected_g;
+        mDataSignalIconId = R.drawable.ic_qs_signal_g;
+        mDataDirection = 0;
 
         // wifi
         mWifiSignalIconId = sWifiSignalImages[0][0];
@@ -632,7 +645,7 @@ public class NetworkController {
                 mWifiSsid : null;
         // only show wifi in the cluster if connected or if wifi-only
         cb.onWifiSignalChanged(mIsWifiConnected, mWifiSignalIconId, wifiDesc);
-        cb.onMobileDataSignalChanged(mMobileDataEnable, mPhoneSignalIconId, mDataSignalIconId);
+        cb.onMobileDataSignalChanged(mMobileDataEnable, mPhoneSignalIconId, mDataDirection, mDataSignalIconId);
     }
 
     private void updateConnectivity(Intent intent) {
@@ -967,6 +980,14 @@ public class NetworkController {
             mDataIconList = sDataNetType_g[mInetCondition];
         break;
         }
+
+        if (isCdma()) {
+            if (isCdmaEri()) {
+                mDataIconList = sDataNetType_r[mInetCondition];
+            }
+        } else if (mPhone.isNetworkRoaming()) {
+                mDataIconList = sDataNetType_r[mInetCondition];
+        }
     }
 
     private final void updateDataIcon() {
@@ -980,15 +1001,19 @@ public class NetworkController {
                     switch (mDataActivity) {
                         case TelephonyManager.DATA_ACTIVITY_IN:
                             iconId = mDataIconList[1];
+                            mDataDirection = R.drawable.ic_qs_signal_in;
                             break;
                         case TelephonyManager.DATA_ACTIVITY_OUT:
                             iconId = mDataIconList[2];
+                            mDataDirection = R.drawable.ic_qs_signal_out;
                             break;
                         case TelephonyManager.DATA_ACTIVITY_INOUT:
                             iconId = mDataIconList[3];
+                            mDataDirection = R.drawable.ic_qs_signal_inout;
                             break;
                         default:
                             iconId = mDataIconList[0];
+                            mDataDirection = 0;
                             break;
                     }
                     mDataSignalIconId = iconId;
@@ -997,6 +1022,7 @@ public class NetworkController {
                 }
             } else {
                 mDataSignalIconId = R.drawable.stat_sys_no_sim;
+                mDataDirection = 0;
             }
         } else {
             // CDMA case, mDataActivity can be also DATA_ACTIVITY_DORMANT
@@ -1004,16 +1030,20 @@ public class NetworkController {
                 switch (mDataActivity) {
                     case TelephonyManager.DATA_ACTIVITY_IN:
                         iconId = mDataIconList[1];
+                        mDataDirection = R.drawable.ic_qs_signal_in;
                         break;
                     case TelephonyManager.DATA_ACTIVITY_OUT:
                         iconId = mDataIconList[2];
+                        mDataDirection = R.drawable.ic_qs_signal_out;
                         break;
                     case TelephonyManager.DATA_ACTIVITY_INOUT:
                         iconId = mDataIconList[3];
+                        mDataDirection = R.drawable.ic_qs_signal_inout;
                         break;
                     case TelephonyManager.DATA_ACTIVITY_DORMANT:
                     default:
                         iconId = mDataIconList[0];
+                        mDataDirection = 0;
                         break;
                 }
                 mDataSignalIconId = iconId;
@@ -1142,6 +1172,20 @@ public class NetworkController {
                 break;
         }
         if (mIsWimaxEnabled) mWimaxSignalIconId = iconId;
+    }
+
+    private boolean isCdmaEri() {
+        if (mServiceState != null) {
+            final int iconIndex = mServiceState.getCdmaEriIconIndex();
+            if (iconIndex != EriInfo.ROAMING_INDICATOR_OFF) {
+                final int iconMode = mServiceState.getCdmaEriIconMode();
+                if (iconMode == EriInfo.ROAMING_ICON_MODE_NORMAL
+                        || iconMode == EriInfo.ROAMING_ICON_MODE_FLASH) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private final void updateCdmaRoamingIcon(ServiceState state) {

@@ -130,7 +130,7 @@ public class MobileNetworkTypeTile extends QuickSettingsTile {
 
         switch (mState) {
             case STATE_UNEXPECTED:
-                mDrawable = R.drawable.ic_qs_2g_on;
+                mDrawable = R.drawable.ic_qs_unexpected_network;
                 break;
             case STATE_2G_ONLY:
                 mDrawable = R.drawable.ic_qs_2g_on;

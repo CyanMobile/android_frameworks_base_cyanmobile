@@ -71,7 +71,7 @@ public class WiFiTile extends QuickSettingsTile implements NetworkSignalChangedC
     }
 
     @Override
-    public void onMobileDataSignalChanged(boolean mMobileDataEnable, int mPhoneSignalIconId, int mDataSignalIconId) {
+    public void onMobileDataSignalChanged(boolean mMobileDataEnable, int mPhoneSignalIconId, int mDataDirection, int mDataSignalIconId) {
         // TODO Auto-generated method stub
     }
 }
