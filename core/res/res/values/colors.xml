@@ -20,8 +20,8 @@
 <resources>
 	<drawable name="screen_background_light">#ffffffff</drawable>
 	<drawable name="screen_background_dark">#ff000000</drawable>
-    <drawable name="status_bar_closed_default_background">#00000000</drawable>
-    <drawable name="status_bar_opened_default_background">#00000000</drawable>
+    <drawable name="status_bar_closed_default_background">#ff000000</drawable>
+    <drawable name="status_bar_opened_default_background">#ff000000</drawable>
     <drawable name="search_bar_default_color">#ff000000</drawable>
     <drawable name="safe_mode_background">#60000000</drawable>
     <!-- Background drawable that can be used for a transparent activity to
@@ -69,15 +69,15 @@
     <drawable name="input_method_fullscreen_background">#fff9f9f9</drawable>
 
     <!-- For date picker widget -->
-    <drawable name="selected_day_background">#ff0092f4</drawable>
+    <drawable name="selected_day_background">#ff12bdd0</drawable>
 
     <!-- For settings framework -->
     <color name="lighter_gray">#ddd</color>
     <color name="darker_gray">#aaa</color>
 
     <!-- For security permissions -->
-    <color name="perms_dangerous_grp_color">#dd6826</color>
-    <color name="perms_dangerous_perm_color">#dd6826</color>
+    <color name="perms_dangerous_grp_color">#ff80d6de</color>
+    <color name="perms_dangerous_perm_color">#ff12bdd0</color>
     <color name="shadow">#cc222222</color>
 
     <!-- For search-related UIs -->
