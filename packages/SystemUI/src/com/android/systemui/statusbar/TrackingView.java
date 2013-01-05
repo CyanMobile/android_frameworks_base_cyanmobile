@@ -17,6 +17,7 @@
 package com.android.systemui.statusbar;
 
 import android.content.Context;
+import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.Display;
 import android.view.KeyEvent;
@@ -25,22 +26,19 @@ import android.widget.LinearLayout;
 
 
 public class TrackingView extends LinearLayout {
-    final Display mDisplay;
     StatusBarService mService;
     boolean mTracking;
     int mStartX, mStartY;
     boolean mIsAttachedToWindow;
+    Handler mHandler = new Handler();
 
     public TrackingView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        mDisplay = ((WindowManager)context.getSystemService(
-                Context.WINDOW_SERVICE)).getDefaultDisplay();
     }
     
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        mService.updateExpandedHeight();
     }
 
     @Override
@@ -68,5 +66,18 @@ public class TrackingView extends LinearLayout {
         super.onDetachedFromWindow();
         mService.onTrackingViewDetached();
         mIsAttachedToWindow = false;
+    }
+
+    @Override
+    protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(visibility);
+        if (visibility == VISIBLE) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mService.updateExpandedViewPos(StatusBarService.EXPANDED_LEAVE_ALONE);
+                }
+            });
+        }
     }
 }
