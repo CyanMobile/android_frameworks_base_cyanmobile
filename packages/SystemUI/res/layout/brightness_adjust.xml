@@ -4,28 +4,28 @@
     android:layout_height="wrap_content"
     android:background="@*android:drawable/panel_background"
     android:orientation="vertical"
-    android:gravity="center_horizontal"
     >
     <LinearLayout
         android:id="@+id/display_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:layout_gravity="center_horizontal"
         android:gravity="center"
         >
-        <ImageView
-            android:id="@+id/brightness_icon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/stat_brightness_mid"
-            android:paddingBottom="12dp"
-            />
         <TextView
             android:id="@+id/brightness_text"
-            android:textSize="28sp"
+            android:textAppearance="?android:attr/textAppearanceMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/carrier_label_text_color"
+            android:textColor="@*android:color/color_default_cyanmobile"
+            android:drawablePadding="4dip"
         />
+        <ProgressBar
+               android:id="@+id/brightness_progress"
+               style="?android:attr/progressBarStyleHorizontal"
+               android:layout_width="match_parent"
+               android:layout_height="5dp"
+               android:progress="0" />
     </LinearLayout>
 </LinearLayout>
