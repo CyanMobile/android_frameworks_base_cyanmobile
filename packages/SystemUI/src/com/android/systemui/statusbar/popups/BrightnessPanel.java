@@ -17,6 +17,7 @@
 package com.android.systemui.statusbar.popups;
 
 import java.lang.Math;
+import android.content.res.Resources;
 import android.view.Gravity;
 import android.content.Context;
 import android.os.Handler;
@@ -29,6 +30,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.graphics.drawable.Drawable;
+import android.widget.ProgressBar;
 
 import com.android.systemui.R;
 
@@ -50,9 +53,11 @@ public class BrightnessPanel extends Handler
     private final Toast mToast;
     /** Dialog's content view */
     private final View mView;
+    private Drawable mIcon = null;
 
     /** View displaying the current brightness */
     private TextView mText;
+    private ProgressBar mBrightProg;
 
     public BrightnessPanel(final Context context) {
         mContext = context;
@@ -61,6 +66,8 @@ public class BrightnessPanel extends Handler
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View view = mView = inflater.inflate(R.layout.brightness_adjust, null);
         mText = (TextView) mView.findViewById(R.id.brightness_text);
+        mBrightProg = (ProgressBar) mView.findViewById(R.id.brightness_progress);
+        mIcon = context.getResources().getDrawable(R.drawable.ic_stats_brightness);
     }
 
     public void postBrightnessChanged(final int value, final int max) {
@@ -75,6 +82,9 @@ public class BrightnessPanel extends Handler
      */
     protected void onBrightnessChanged(final int value, final int max) {
         mText.setText(Integer.toString(Math.round(value * 100.0f / max)) + "%");
+        mText.setCompoundDrawablesWithIntrinsicBounds(mIcon, null, null, null);
+	int progress = (int) (Math.round(value * 100.0f / max));
+	mBrightProg.setProgress(progress);
         mToast.setView(mView);
         mToast.setDuration(Toast.LENGTH_SHORT);
         mToast.setGravity(Gravity.TOP, 0, 0);
