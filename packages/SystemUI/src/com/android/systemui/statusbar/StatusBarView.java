@@ -107,6 +107,12 @@ public class StatusBarView extends FrameLayout {
     }
 
     @Override
+    protected void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mService.updateDisplaySize();
+    }
+
+    @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         mService.onBarViewDetached();

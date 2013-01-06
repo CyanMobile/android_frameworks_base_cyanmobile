@@ -40,7 +40,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:gravity="center"
-        android:background="@android:color/transparent"
+        android:background="#CC000000"
         />
     <TextView
         style="@style/TextAppearance.QuickSettings.TileView"

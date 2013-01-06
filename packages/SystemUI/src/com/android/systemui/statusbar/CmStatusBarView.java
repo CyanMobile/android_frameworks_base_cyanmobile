@@ -129,25 +129,17 @@ public class CmStatusBarView extends StatusBarView {
             ContentResolver resolver = mContext.getContentResolver();
             int defValue;
 
-            defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_BOTTOM_STATUS_BAR) ? 1 : 0);
-            mIsBottom = (Settings.System.getInt(resolver,
-                    Settings.System.STATUS_BAR_BOTTOM, defValue) == 1);
-            mHasSoftButtons = (Settings.System.getInt(resolver,
-                    Settings.System.USE_SOFT_BUTTONS, 0) == 1);
-            defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SOFT_BUTTONS_LEFT) ? 1 : 0);
-            mIsLeft = (Settings.System.getInt(resolver,
-                    Settings.System.SOFT_BUTTONS_LEFT, defValue) == 1);
-            mShowHome = Settings.System.getInt(resolver,
-                    Settings.System.SOFT_BUTTON_SHOW_HOME, 1);
-            mShowMenu = Settings.System.getInt(resolver,
-                    Settings.System.SOFT_BUTTON_SHOW_MENU, 4);
-            mShowBack = Settings.System.getInt(resolver,
-                    Settings.System.SOFT_BUTTON_SHOW_BACK, 2);
-            mShowSearch = Settings.System.getInt(resolver,
-                    Settings.System.SOFT_BUTTON_SHOW_SEARCH, 3);
+            defValue = (CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_BOTTOM_STATUS_BAR) ? 1 : 0);
+            mIsBottom = (Settings.System.getInt(resolver, Settings.System.STATUS_BAR_BOTTOM, defValue) == 1);
+            mHasSoftButtons = (Settings.System.getInt(resolver, Settings.System.USE_SOFT_BUTTONS, 0) == 1);
+            defValue = (CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SOFT_BUTTONS_LEFT) ? 1 : 0);
+            mIsLeft = (Settings.System.getInt(resolver, Settings.System.SOFT_BUTTONS_LEFT, defValue) == 1);
+            mShowHome = Settings.System.getInt(resolver, Settings.System.SOFT_BUTTON_SHOW_HOME, 1);
+            mShowMenu = Settings.System.getInt(resolver, Settings.System.SOFT_BUTTON_SHOW_MENU, 4);
+            mShowBack = Settings.System.getInt(resolver, Settings.System.SOFT_BUTTON_SHOW_BACK, 2);
+            mShowSearch = Settings.System.getInt(resolver, Settings.System.SOFT_BUTTON_SHOW_SEARCH, 3);
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SHOW_SOFT_QUICK_NA) ? 1 : 0);
-            mShowQuickNa = (Settings.System.getInt(resolver,
-                    Settings.System.SOFT_BUTTON_SHOW_QUICK_NA, defValue) == 1);
+            mShowQuickNa = (Settings.System.getInt(resolver, Settings.System.SOFT_BUTTON_SHOW_QUICK_NA, defValue) == 1);
             updateSoftButtons();
             updateQuickNaImage();
         }
@@ -163,42 +155,38 @@ public class CmStatusBarView extends StatusBarView {
 
         // load config to determine if we want statusbar buttons
         ContentResolver resolver = mContext.getContentResolver();
-        mHasSoftButtons = (Settings.System.getInt(resolver,
-                    Settings.System.USE_SOFT_BUTTONS, 0) == 1);
-        mHandler=new Handler();
+        mHasSoftButtons = (Settings.System.getInt(resolver, Settings.System.USE_SOFT_BUTTONS, 0) == 1);
+        mHandler = new Handler();
         mSoftButtons = (ViewGroup)findViewById(R.id.buttons);
 
-        if(!mHasSoftButtons)
-            mSoftButtons.setVisibility(View.GONE);
+        if(!mHasSoftButtons) mSoftButtons.setVisibility(View.GONE);
 
         /**
          * All this is skipped if CmSystem.getDefaultBool(CM_HAS_SOFT_BUTTONS) is false
          * If true then add statusbar buttons and set listeners and intents
          */
         if (mHasSoftButtons) {
-            mHomeButton = (ImageButton)findViewById(R.id.status_home);
-            mHomeButton.setOnClickListener(
-                new ImageButton.OnClickListener() {
+            mHomeButton = (ImageButton) findViewById(R.id.status_home);
+            mHomeButton.setOnClickListener(new ImageButton.OnClickListener() {
                     public void onClick(View v) {
-                        if(mService.mExpanded)
-                            mQuickNaButton.performClick();
-                      if(mShowHome == 1) {
-                        if(DEBUG) Slog.i(TAG, "Home clicked");
+                      if(mService.mExpanded) mQuickNaButton.performClick();
+                      if (mShowHome == 1) {
+                        if (DEBUG) Slog.i(TAG, "Home clicked");
                         simulateKeypress(KeyEvent.KEYCODE_HOME);
                         updateSoftButtons();
                         mHandler.postDelayed(mResetHome, 70);
-                      } else if(mShowHome == 4) {
-                        if(DEBUG) Slog.i(TAG, "Menu clicked");
+                      } else if (mShowHome == 4) {
+                        if (DEBUG) Slog.i(TAG, "Menu clicked");
                         simulateKeypress(KeyEvent.KEYCODE_MENU);
                         updateSoftButtons();
                         mHandler.postDelayed(mResetHome, 70);
-                      } else if(mShowHome == 2) {
-                        if(DEBUG) Slog.i(TAG, "Back clicked");
+                      } else if (mShowHome == 2) {
+                        if (DEBUG) Slog.i(TAG, "Back clicked");
                         simulateKeypress(KeyEvent.KEYCODE_BACK);
                         updateSoftButtons();
                         mHandler.postDelayed(mResetHome, 70);
-                      } else if(mShowHome == 3) {
-                        if(DEBUG) Slog.i(TAG, "Search clicked");
+                      } else if (mShowHome == 3) {
+                        if (DEBUG) Slog.i(TAG, "Search clicked");
                         simulateKeypress(KeyEvent.KEYCODE_SEARCH);
                         updateSoftButtons();
                         mHandler.postDelayed(mResetHome, 70);
@@ -209,18 +197,18 @@ public class CmStatusBarView extends StatusBarView {
             mHomeButton.setOnLongClickListener(
                     new ImageButton.OnLongClickListener() {
                         public boolean onLongClick(View v) {
-                          if(mShowHome == 1) {
+                          if (mShowHome == 1) {
                              Intent intent = new Intent(Intent.ACTION_MAIN);
                              intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowHome == 4) {
+                          } else if (mShowHome == 4) {
                              return false;
-                          } else if(mShowHome == 2) {
+                          } else if (mShowHome == 2) {
                              simulateKeypress(KEYCODE_VIRTUAL_BACK_LONG);
                              return true;
-                          } else if(mShowHome == 3) {
+                          } else if (mShowHome == 3) {
                              runCustomAppSearch();
                              return true;
                           } else {
@@ -229,27 +217,26 @@ public class CmStatusBarView extends StatusBarView {
                         }
                     }
                 );
-            mMenuButton = (ImageButton)findViewById(R.id.status_menu);
-            mMenuButton.setOnClickListener(
-                new ImageButton.OnClickListener() {
+            mMenuButton = (ImageButton) findViewById(R.id.status_menu);
+            mMenuButton.setOnClickListener(new ImageButton.OnClickListener() {
                     public void onClick(View v) {
-                      if(mShowMenu == 1) {
-                        if(DEBUG) Slog.i(TAG, "Home clicked");
+                      if (mShowMenu == 1) {
+                        if (DEBUG) Slog.i(TAG, "Home clicked");
                         simulateKeypress(KeyEvent.KEYCODE_HOME);
                         updateSoftButtons();
                         mHandler.postDelayed(mResetMenu, 70);
-                      } else if(mShowMenu == 4) {
-                        if(DEBUG) Slog.i(TAG, "Menu clicked");
+                      } else if (mShowMenu == 4) {
+                        if (DEBUG) Slog.i(TAG, "Menu clicked");
                         simulateKeypress(KeyEvent.KEYCODE_MENU);
                         updateSoftButtons();
                         mHandler.postDelayed(mResetMenu, 70);
-                      } else if(mShowMenu == 2) {
-                        if(DEBUG) Slog.i(TAG, "Back clicked");
+                      } else if (mShowMenu == 2) {
+                        if (DEBUG) Slog.i(TAG, "Back clicked");
                         simulateKeypress(KeyEvent.KEYCODE_BACK);
                         updateSoftButtons();
                         mHandler.postDelayed(mResetMenu, 70);
-                      } else if(mShowMenu == 3) {
-                        if(DEBUG) Slog.i(TAG, "Search clicked");
+                      } else if (mShowMenu == 3) {
+                        if (DEBUG) Slog.i(TAG, "Search clicked");
                         simulateKeypress(KeyEvent.KEYCODE_SEARCH);
                         updateSoftButtons();
                         mHandler.postDelayed(mResetMenu, 70);
@@ -260,18 +247,18 @@ public class CmStatusBarView extends StatusBarView {
             mMenuButton.setOnLongClickListener(
                     new ImageButton.OnLongClickListener() {
                         public boolean onLongClick(View v) {
-                          if(mShowMenu == 1) {
+                          if (mShowMenu == 1) {
                              Intent intent = new Intent(Intent.ACTION_MAIN);
                              intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowMenu == 4) {
+                          } else if (mShowMenu == 4) {
                              return false;
-                          } else if(mShowMenu == 2) {
+                          } else if (mShowMenu == 2) {
                              simulateKeypress(KEYCODE_VIRTUAL_BACK_LONG);
                              return true;
-                          } else if(mShowMenu == 3) {
+                          } else if (mShowMenu == 3) {
                              runCustomAppSearch();
                              return true;
                           } else {
@@ -280,27 +267,26 @@ public class CmStatusBarView extends StatusBarView {
                         }
                     }
                 );
-            mBackButton = (ImageButton)findViewById(R.id.status_back);
-            mBackButton.setOnClickListener(
-                new ImageButton.OnClickListener() {
+            mBackButton = (ImageButton) findViewById(R.id.status_back);
+            mBackButton.setOnClickListener(new ImageButton.OnClickListener() {
                     public void onClick(View v) {
-                      if(mShowBack == 1) {
-                        if(DEBUG) Slog.i(TAG, "Home clicked");
+                      if (mShowBack == 1) {
+                        if (DEBUG) Slog.i(TAG, "Home clicked");
                         simulateKeypress(KeyEvent.KEYCODE_HOME);
                         updateSoftButtons();
                         mHandler.postDelayed(mResetBack, 70);
-                      } else if(mShowBack == 4) {
-                        if(DEBUG) Slog.i(TAG, "Menu clicked");
+                      } else if (mShowBack == 4) {
+                        if (DEBUG) Slog.i(TAG, "Menu clicked");
                         simulateKeypress(KeyEvent.KEYCODE_MENU);
                         updateSoftButtons();
                         mHandler.postDelayed(mResetBack, 70);
-                      } else if(mShowBack == 2) {
-                        if(DEBUG) Slog.i(TAG, "Back clicked");
+                      } else if (mShowBack == 2) {
+                        if (DEBUG) Slog.i(TAG, "Back clicked");
                         simulateKeypress(KeyEvent.KEYCODE_BACK);
                         updateSoftButtons();
                         mHandler.postDelayed(mResetBack, 70);
-                      } else if(mShowBack == 3) {
-                        if(DEBUG) Slog.i(TAG, "Search clicked");
+                      } else if (mShowBack == 3) {
+                        if (DEBUG) Slog.i(TAG, "Search clicked");
                         simulateKeypress(KeyEvent.KEYCODE_SEARCH);
                         updateSoftButtons();
                         mHandler.postDelayed(mResetBack, 70);
@@ -311,18 +297,18 @@ public class CmStatusBarView extends StatusBarView {
             mBackButton.setOnLongClickListener(
                     new ImageButton.OnLongClickListener() {
                         public boolean onLongClick(View v) {
-                          if(mShowBack == 1) {
+                          if (mShowBack == 1) {
                              Intent intent = new Intent(Intent.ACTION_MAIN);
                              intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowBack == 4) {
+                          } else if (mShowBack == 4) {
                              return false;
-                          } else if(mShowBack == 2) {
+                          } else if (mShowBack == 2) {
                              simulateKeypress(KEYCODE_VIRTUAL_BACK_LONG);
                              return true;
-                          } else if(mShowBack == 3) {
+                          } else if (mShowBack == 3) {
                              runCustomAppSearch();
                              return true;
                           } else {
@@ -331,27 +317,26 @@ public class CmStatusBarView extends StatusBarView {
                         }
                     }
                 );
-            mSearchButton = (ImageButton)findViewById(R.id.status_search);
-            mSearchButton.setOnClickListener(
-                new ImageButton.OnClickListener() {
+            mSearchButton = (ImageButton) findViewById(R.id.status_search);
+            mSearchButton.setOnClickListener(new ImageButton.OnClickListener() {
                     public void onClick(View v) {
-                      if(mShowSearch == 1) {
-                        if(DEBUG) Slog.i(TAG, "Home clicked");
+                      if (mShowSearch == 1) {
+                        if (DEBUG) Slog.i(TAG, "Home clicked");
                         simulateKeypress(KeyEvent.KEYCODE_HOME);
                         updateSoftButtons();
                         mHandler.postDelayed(mResetSearch, 70);
-                      } else if(mShowSearch == 4) {
-                        if(DEBUG) Slog.i(TAG, "Menu clicked");
+                      } else if (mShowSearch == 4) {
+                        if (DEBUG) Slog.i(TAG, "Menu clicked");
                         simulateKeypress(KeyEvent.KEYCODE_MENU);
                         updateSoftButtons();
                         mHandler.postDelayed(mResetSearch, 70);
-                      } else if(mShowSearch == 2) {
-                        if(DEBUG) Slog.i(TAG, "Back clicked");
+                      } else if (mShowSearch == 2) {
+                        if (DEBUG) Slog.i(TAG, "Back clicked");
                         simulateKeypress(KeyEvent.KEYCODE_BACK);
                         updateSoftButtons();
                         mHandler.postDelayed(mResetSearch, 70);
-                      } else if(mShowSearch == 3) {
-                        if(DEBUG) Slog.i(TAG, "Search clicked");
+                      } else if (mShowSearch == 3) {
+                        if (DEBUG) Slog.i(TAG, "Search clicked");
                         simulateKeypress(KeyEvent.KEYCODE_SEARCH);
                         updateSoftButtons();
                         mHandler.postDelayed(mResetSearch, 70);
@@ -362,18 +347,18 @@ public class CmStatusBarView extends StatusBarView {
             mSearchButton.setOnLongClickListener(
                     new ImageButton.OnLongClickListener() {
                         public boolean onLongClick(View v) {
-                          if(mShowSearch == 1) {
+                          if (mShowSearch == 1) {
                              Intent intent = new Intent(Intent.ACTION_MAIN);
                              intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                              getContext().startActivity(intent);
                              return true;
-                          } else if(mShowSearch == 4) {
+                          } else if (mShowSearch == 4) {
                              return false;
-                          } else if(mShowSearch == 2) {
+                          } else if (mShowSearch == 2) {
                              simulateKeypress(KEYCODE_VIRTUAL_BACK_LONG);
                              return true;
-                          } else if(mShowSearch == 3) {
+                          } else if (mShowSearch == 3) {
                              runCustomAppSearch();
                              return true;
                           } else {
@@ -382,23 +367,21 @@ public class CmStatusBarView extends StatusBarView {
                         }
                     }
                 );
-            mQuickNaButton = (ImageButton)findViewById(R.id.status_quick_na);
-            mQuickNaButton.setOnClickListener(
-                new ImageButton.OnClickListener() {
+            mQuickNaButton = (ImageButton) findViewById(R.id.status_quick_na);
+            mQuickNaButton.setOnClickListener(new ImageButton.OnClickListener() {
                     public void onClick(View v) {
-                        if(mService.mExpanded){
+                        if (mService.mExpanded) {
                             mService.animateCollapse(); // with regards to flawed sources. doesnt work without animating call. blame google (:
                             mService.performCollapse();
-                        }else {
+                        } else {
                             mService.performExpand();
                         }
-                        if(DEBUG) Slog.i(TAG, "Quick Notification Area clicked");
+                        if (DEBUG) Slog.i(TAG, "Quick Notification Area clicked");
                     }
                 }
             );
-            mHideButton = (ImageButton)findViewById(R.id.status_hide);
-            mHideButton.setOnClickListener(
-                new ImageButton.OnClickListener() {
+            mHideButton = (ImageButton) findViewById(R.id.status_hide);
+            mHideButton.setOnClickListener(new ImageButton.OnClickListener() {
                     public void onClick(View v) {
                         if(isStillActive(mFsCallerProcess, mFsCallerActivity))
                             mContext.sendBroadcast(mFsForceIntent);
@@ -407,14 +390,14 @@ public class CmStatusBarView extends StatusBarView {
                 }
             );
 
-            mEdgeLeft = (ImageButton)findViewById(R.id.status_edge_left);
-            mEdgeRight = (ImageButton)findViewById(R.id.status_edge_right);
-            mSeperator1 = (ImageButton)findViewById(R.id.status_sep1);
-            mSeperator2 = (ImageButton)findViewById(R.id.status_sep2);
-            mSeperator3 = (ImageButton)findViewById(R.id.status_sep3);
-            mSeperator4 = (ImageButton)findViewById(R.id.status_sep4);
-            mSeperator5 = (ImageButton)findViewById(R.id.status_sep5);
-            mIcons = (ViewGroup)findViewById(R.id.icons);
+            mEdgeLeft = (ImageButton) findViewById(R.id.status_edge_left);
+            mEdgeRight = (ImageButton) findViewById(R.id.status_edge_right);
+            mSeperator1 = (ImageButton) findViewById(R.id.status_sep1);
+            mSeperator2 = (ImageButton) findViewById(R.id.status_sep2);
+            mSeperator3 = (ImageButton) findViewById(R.id.status_sep3);
+            mSeperator4 = (ImageButton) findViewById(R.id.status_sep4);
+            mSeperator5 = (ImageButton) findViewById(R.id.status_sep5);
+            mIcons = (ViewGroup) findViewById(R.id.icons);
 
             // set up settings observer
             SettingsObserver settingsObserver = new SettingsObserver(mHandler);
@@ -423,8 +406,8 @@ public class CmStatusBarView extends StatusBarView {
             // catching fullscreen attempts
             FullscreenReceiver fullscreenReceiver = new FullscreenReceiver();
             mContext.registerReceiver(fullscreenReceiver, new IntentFilter("android.intent.action.FULLSCREEN_ATTEMPT"));
-            mFsForceIntent=new Intent("android.intent.action.FORCE_FULLSCREEN");
-            mFsOffIntent=new Intent("android.intent.action.FULLSCREEN_REAL_OFF");
+            mFsForceIntent = new Intent("android.intent.action.FORCE_FULLSCREEN");
+            mFsOffIntent = new Intent("android.intent.action.FULLSCREEN_REAL_OFF");
         }
     }
 
@@ -436,8 +419,7 @@ public class CmStatusBarView extends StatusBarView {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent event){
-        boolean skipService=
-            (isEventInButton(mHomeButton, event)
+        boolean skipService = (isEventInButton(mHomeButton, event)
                 || isEventInButton(mMenuButton, event)
                 || isEventInButton(mBackButton, event)
                 || isEventInButton(mSearchButton, event)
@@ -445,17 +427,17 @@ public class CmStatusBarView extends StatusBarView {
 
         return super.onInterceptTouchEvent(event, skipService);
     }
+
     private boolean isEventInButton(final ImageButton button, final MotionEvent event) {
         return mHasSoftButtons && button != null
             && button.getLeft() <= event.getRawX()
             && button.getRight() >= event.getRawX()
             && button.getTop() <= event.getRawY()
             && button.getBottom() >= event.getRawY();
-        }
+    }
 
     public void updateQuickNaImage(){
-        if(!mHasSoftButtons || getParent()==null)
-            return;
+        if (!mHasSoftButtons || getParent() == null) return;
 
         int resCollapsed=mIsBottom ? R.drawable.ic_statusbar_na_up_bottom : R.drawable.ic_statusbar_na_down_top;
         int resExpanded=mIsBottom ? R.drawable.ic_statusbar_na_down_bottom : R.drawable.ic_statusbar_na_up_top;
@@ -465,26 +447,26 @@ public class CmStatusBarView extends StatusBarView {
     }
 
     public boolean onTouchEvent(final MotionEvent event){
-        if(!mHasSoftButtons)
+        if (!mHasSoftButtons)
             return super.onTouchEvent(event);
 
-        if(isEventInButton(mHomeButton, event)) {
+        if (isEventInButton(mHomeButton, event)) {
             mHomeButton.onTouchEvent(event);
             return true;
         }
-        if(isEventInButton(mMenuButton, event)) {
+        if (isEventInButton(mMenuButton, event)) {
             mMenuButton.onTouchEvent(event);
             return true;
         }
-        if(isEventInButton(mBackButton, event)) {
+        if (isEventInButton(mBackButton, event)) {
             mBackButton.onTouchEvent(event);
             return true;
         }
-        if(isEventInButton(mSearchButton, event)) {
+        if (isEventInButton(mSearchButton, event)) {
             mSearchButton.onTouchEvent(event);
             return true;
         }
-        if(isEventInButton(mQuickNaButton, event)) {
+        if (isEventInButton(mQuickNaButton, event)) {
             mQuickNaButton.onTouchEvent(event);
             return true;
         }
@@ -498,21 +480,21 @@ public class CmStatusBarView extends StatusBarView {
     HideButtonEnabler mHideButtonEnabler = new HideButtonEnabler();
     public class HideButtonEnabler implements Runnable {
         public void run(){
-            Entry e=null;;
+            Entry e = null;;
 
             //cancel checking - list either new, or all old callers ended
-            if(mKnownCallers.isEmpty()){
-                if(DEBUG) Slog.i(TAG, "HideButtonEnabler - mKnownCallers is empty - stopping to monitor active app");
+            if (mKnownCallers.isEmpty()) {
+                if (DEBUG) Slog.i(TAG, "HideButtonEnabler - mKnownCallers is empty - stopping to monitor active app");
                 return;
             }
 
-            RunningAppProcessInfo current=getForegroundApp();
-            if(current!=null)
-                e=getEntryByPid(current.pid);
-            if(e!=null){
-                ComponentName c=getActivityForApp(current);
-                if(c==null || (c.compareTo(e.Activity)==0)){
-                    if(DEBUG) Slog.i(TAG, "HideButtonEnabler - currentFgApp[NAME/PID/ACTIVITY]: " + current.processName +
+            RunningAppProcessInfo current = getForegroundApp();
+            if (current != null)
+                e = getEntryByPid(current.pid);
+            if (e != null) {
+                ComponentName c = getActivityForApp(current);
+                if (c==null || (c.compareTo(e.Activity) == 0)) {
+                    if (DEBUG) Slog.i(TAG, "HideButtonEnabler - currentFgApp[NAME/PID/ACTIVITY]: " + current.processName +
                             "/" + current.pid + "/" + c.toShortString() + " Retrieved Entry[NAME/PID/ACTIVITY]:"
                             + e.ProcessInfo.processName + "/" + e.ProcessInfo.pid + "/" + e.Activity.toShortString());
                     onFullscreenAttempt();
@@ -530,30 +512,30 @@ public class CmStatusBarView extends StatusBarView {
             public ComponentName Activity;
 
             Entry(RunningAppProcessInfo pProcessInfo, ComponentName pActivity){
-                ProcessInfo=pProcessInfo;
-                Activity=pActivity;
+                ProcessInfo = pProcessInfo;
+                Activity = pActivity;
             }
         }
-        private List <Entry> mKnownCallers=new LinkedList <Entry>();
+        private List <Entry> mKnownCallers = new LinkedList <Entry>();
 
         public void addFsCaller(RunningAppProcessInfo processInfo, ComponentName activity){
-            Entry e=new Entry(processInfo, activity);
-            if(!mKnownCallers.contains(e))
+            Entry e = new Entry(processInfo, activity);
+            if (!mKnownCallers.contains(e))
                 mKnownCallers.add(e);
         }
 
         private Entry getEntryByPid(int pid){
-            Iterator <Entry> i=mKnownCallers.iterator();
+            Iterator <Entry> i = mKnownCallers.iterator();
             Entry e;
 
-            while(i.hasNext()){
-                e=i.next();
+            while (i.hasNext()){
+                e = i.next();
                 // return Entry if pid matches
-                if(e.ProcessInfo.pid == pid)
+                if (e.ProcessInfo.pid == pid)
                     return e;
 
                 // remove if process/pid is ended
-                if(!isPidRunning(e.ProcessInfo.pid))
+                if (!isPidRunning(e.ProcessInfo.pid))
                     i.remove();
             }
 
@@ -561,15 +543,15 @@ public class CmStatusBarView extends StatusBarView {
         }
 
         private boolean isPidRunning(int pid){
-            if(mActivityManager==null)
-                mActivityManager = (ActivityManager)mContext.getSystemService(Context.ACTIVITY_SERVICE);
+            if (mActivityManager == null)
+                mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
 
             List <RunningAppProcessInfo> l = mActivityManager.getRunningAppProcesses();
             Iterator <RunningAppProcessInfo> i = l.iterator();
             RunningAppProcessInfo info;
-            while(i.hasNext()){
+            while (i.hasNext()){
                 info = i.next();
-                if(info.pid == pid)
+                if (info.pid == pid)
                     return true;
             }
 
@@ -588,38 +570,38 @@ public class CmStatusBarView extends StatusBarView {
             boolean appStillForeground=false;
 
             // first time initialization - handled delayed, so the system got time to setup ActivityManager correctly
-            if(mFsCallerProcess==null){
-                mFsCallerProcess=getForegroundApp();
-                Slog.i(TAG, "Fullscreen Attempt ProcessName: " + (mFsCallerProcess==null ? "null" : mFsCallerProcess.processName));
+            if (mFsCallerProcess == null) {
+                mFsCallerProcess = getForegroundApp();
+                Slog.i(TAG, "Fullscreen Attempt ProcessName: " + (mFsCallerProcess == null ? "null" : mFsCallerProcess.processName));
                 // can be null in rare cases. see comment in isStillActive() for details
-                mFsCallerActivity=getActivityForApp(mFsCallerProcess);
-                Slog.i(TAG, "Fullscreen Attempt Top Activity: " + (mFsCallerActivity==null ? "null" : mFsCallerActivity.flattenToShortString()));
+                mFsCallerActivity = getActivityForApp(mFsCallerProcess);
+                Slog.i(TAG, "Fullscreen Attempt Top Activity: " + (mFsCallerActivity == null ? "null" : mFsCallerActivity.flattenToShortString()));
 
-                if(mFsCallerProcess!=null)
+                if (mFsCallerProcess != null)
                     mHideButtonEnabler.addFsCaller(mFsCallerProcess, mFsCallerActivity);
 
-                mWasInactiveLastCall=false;
+                mWasInactiveLastCall = false;
             }
 
             // check if caller process and activity are still present
-            if(isStillActive(mFsCallerProcess, mFsCallerActivity)){
-                appStillForeground=true;
-                mWasInactiveLastCall=false;
+            if(isStillActive(mFsCallerProcess, mFsCallerActivity)) {
+                appStillForeground = true;
+                mWasInactiveLastCall = false;
             }
 
             // prepare for a second check (see above comment for details)
-            if(appStillForeground==false && mWasInactiveLastCall==false){
-                mWasInactiveLastCall=true;
+            if(appStillForeground == false && mWasInactiveLastCall == false) {
+                mWasInactiveLastCall = true;
                 mHandler.postDelayed(mHideButtonDisabler, 250);
                 return;
             }
 
             // finally handle pure callback or disabling hide button
-            if(appStillForeground)
+            if (appStillForeground) {
                 mHandler.postDelayed(mHideButtonDisabler, 500);
-            else{
+            } else {
                 mContext.sendBroadcast(mFsOffIntent);
-                mFsCallerProcess=null;
+                mFsCallerProcess = null;
                 mHideButton.setVisibility(View.GONE);
                 mSeperator5.setVisibility(View.GONE);
                 updateSoftButtons();
@@ -636,47 +618,45 @@ public class CmStatusBarView extends StatusBarView {
         // starting rock player when a movie file was clicked. we dont have an activity then,
         // but the package exits as soon as back is hit. so we can ignore the activity
         // in this case
-        if(process==null)
-            return false;
+        if (process == null) return false;
 
-        RunningAppProcessInfo currentFg=getForegroundApp();
-        ComponentName currentActivity=getActivityForApp(currentFg);
+        RunningAppProcessInfo currentFg = getForegroundApp();
+        ComponentName currentActivity = getActivityForApp(currentFg);
 
         // in some cases, we cannot get any foreground app - we ignore that and return still active, since
         // its kinda impossible and is a hint to the system being busy or bad stuff happens
-        if(currentFg==null){
-            if(DEBUG) Slog.i(TAG, "isStillActive() returned no foreground activity. this is impossible and so ignored");
+        if (currentFg == null) {
+            if (DEBUG) Slog.i(TAG, "isStillActive() returned no foreground activity. this is impossible and so ignored");
             return true;
         }
 
-        if(currentFg!=null && currentFg.processName.equals(process.processName) &&
-                (activity==null || currentActivity.compareTo(activity)==0))
+        if (currentFg != null && currentFg.processName.equals(process.processName) &&
+                (activity == null || currentActivity.compareTo(activity) == 0))
             return true;
 
         Slog.i(TAG, "isStillActive returns false - CallerProcess: " + process.processName + " CurrentProcess: "
-                + (currentFg==null ? "null" : currentFg.processName) + " CallerActivity:" + (activity==null ? "null" : activity.toString())
-                + " CurrentActivity: " + (currentActivity==null ? "null" : currentActivity.toString()));
+                + (currentFg == null ? "null" : currentFg.processName) + " CallerActivity:" + (activity == null ? "null" : activity.toString())
+                + " CurrentActivity: " + (currentActivity == null ? "null" : currentActivity.toString()));
         return false;
     }
 
     private ComponentName getActivityForApp(RunningAppProcessInfo target){
-        ComponentName result=null;
+        ComponentName result = null;
         ActivityManager.RunningTaskInfo info;
 
-        if(target==null)
-            return null;
+        if (target == null) return null;
 
-        if(mActivityManager==null)
-            mActivityManager = (ActivityManager)mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        if (mActivityManager == null)
+            mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
         List <ActivityManager.RunningTaskInfo> l = mActivityManager.getRunningTasks(9999);
         Iterator <ActivityManager.RunningTaskInfo> i = l.iterator();
 
-        while(i.hasNext()){
-            info=i.next();
-            if(target.processName.contains(info.baseActivity.getPackageName())){
-                if(DEBUG) Slog.i(TAG, "getActivityForApp(" + target.processName + ") found the following activity (topActivity /// baseActivity): "
+        while (i.hasNext()){
+            info = i.next();
+            if (target.processName.contains(info.baseActivity.getPackageName())) {
+                if (DEBUG) Slog.i(TAG, "getActivityForApp(" + target.processName + ") found the following activity (topActivity /// baseActivity): "
                         + info.topActivity.toString() + " /// " + info.baseActivity.toString());
-                result=info.topActivity;
+                result = info.topActivity;
                 break;
             }
         }
@@ -685,17 +665,17 @@ public class CmStatusBarView extends StatusBarView {
     }
 
     private RunningAppProcessInfo getForegroundApp() {
-        RunningAppProcessInfo result=null, info=null;
+        RunningAppProcessInfo result = null, info = null;
 
-        if(mActivityManager==null)
+        if (mActivityManager == null)
             mActivityManager = (ActivityManager)mContext.getSystemService(Context.ACTIVITY_SERVICE);
         List <RunningAppProcessInfo> l = mActivityManager.getRunningAppProcesses();
         Iterator <RunningAppProcessInfo> i = l.iterator();
-        while(i.hasNext()){
+        while (i.hasNext()) {
             info = i.next();
-            if(info.uid >= Process.FIRST_APPLICATION_UID && info.uid <= Process.LAST_APPLICATION_UID
+            if (info.uid >= Process.FIRST_APPLICATION_UID && info.uid <= Process.LAST_APPLICATION_UID
                     && info.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND){
-                result=info;
+                result = info;
                 break;
             }
         }
@@ -704,19 +684,19 @@ public class CmStatusBarView extends StatusBarView {
 
     private void onFullscreenAttempt()
     {
-        if(mShowQuickNa || (mShowSearch != 0) || (mShowBack != 0) || (mShowMenu != 0) || (mShowHome != 0))
+        if (mShowQuickNa || (mShowSearch != 0) || (mShowBack != 0) || (mShowMenu != 0) || (mShowHome != 0)) {
             mSeperator5.setVisibility(View.VISIBLE);
+        }
         mHideButton.setVisibility(View.VISIBLE);
         updateSoftButtons();
 
-        mFsCallerProcess=null;
-        mFsCallerActivity=null;
+        mFsCallerProcess = null;
+        mFsCallerActivity = null;
         mHandler.postDelayed(mHideButtonDisabler, 500);
     }
 
     private void updateSoftButtons() {
-        if(!mHasSoftButtons)
-            return;
+        if(!mHasSoftButtons) return;
 
         mIcons.removeView(mSoftButtons);
         mIcons.addView(mSoftButtons, mIsLeft ? 0 : mIcons.getChildCount());
@@ -776,7 +756,7 @@ public class CmStatusBarView extends StatusBarView {
         }
 
         // replace resources depending on top or bottom bar
-        if(mIsBottom){
+        if (mIsBottom) {
             mEdgeLeft.setBackgroundResource(R.drawable.ic_statusbar_edge_right_bottom);
             mSeperator1.setBackgroundResource(R.drawable.ic_statusbar_sep_bottom);
             mSeperator2.setBackgroundResource(R.drawable.ic_statusbar_sep_bottom);
@@ -786,7 +766,7 @@ public class CmStatusBarView extends StatusBarView {
             mSeperator5.setBackgroundResource(R.drawable.ic_statusbar_sep_bottom);
             mHideButton.setBackgroundResource(R.drawable.ic_statusbar_hide_bottom);
             mEdgeRight.setBackgroundResource(R.drawable.ic_statusbar_edge_left_bottom);
-        }else{
+        } else {
             mEdgeLeft.setBackgroundResource(R.drawable.ic_statusbar_edge_right_top);
             mSeperator1.setBackgroundResource(R.drawable.ic_statusbar_sep_top);
             mSeperator2.setBackgroundResource(R.drawable.ic_statusbar_sep_top);
@@ -804,34 +784,32 @@ public class CmStatusBarView extends StatusBarView {
     }
 
     public int getSoftButtonsWidth() {
-        if(!mHasSoftButtons)
-            return 0;
+        if (!mHasSoftButtons) return 0;
 
-        int ret=0;
-        if(mShowHome != 0)
-            ret+=mHomeButton.getWidth();
-        if(mShowMenu != 0)
-            ret+=mMenuButton.getWidth()+mSeperator1.getWidth();
+        int ret = 0;
+        if (mShowHome != 0)
+            ret += mHomeButton.getWidth();
+        if (mShowMenu != 0)
+            ret += mMenuButton.getWidth() + mSeperator1.getWidth();
         if(mShowBack != 0)
-            ret+=mBackButton.getWidth()+mSeperator2.getWidth();
-        if(mShowSearch != 0)
-            ret+=mSearchButton.getWidth()+mSeperator3.getWidth();
-        if(mShowQuickNa)
-            ret+=mQuickNaButton.getWidth()+mSeperator4.getWidth();
-        if(mHideButton.getVisibility()==View.VISIBLE)
-            ret+=mHideButton.getWidth()+mSeperator5.getWidth();
-        if(ret>0)
-            ret+=mEdgeLeft.getWidth();
+            ret += mBackButton.getWidth() + mSeperator2.getWidth();
+        if (mShowSearch != 0)
+            ret += mSearchButton.getWidth() + mSeperator3.getWidth();
+        if (mShowQuickNa)
+            ret += mQuickNaButton.getWidth() + mSeperator4.getWidth();
+        if (mHideButton.getVisibility() == View.VISIBLE)
+            ret += mHideButton.getWidth() + mSeperator5.getWidth();
+        if (ret>0) ret += mEdgeLeft.getWidth();
 
         return ret;
     }
 
     private void runCustomAppSearch() {
         // start custom app
-        boolean mCustomLongSearchAppToggle=(Settings.System.getInt(getContext().getContentResolver(),
+        boolean mCustomLongSearchAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
                Settings.System.USE_CUSTOM_LONG_SEARCH_APP_TOGGLE, 0) == 1);
 
-        if(mCustomLongSearchAppToggle){
+        if (mCustomLongSearchAppToggle) {
               runCustomApp(Settings.System.getString(getContext().getContentResolver(),
                       Settings.System.USE_CUSTOM_LONG_SEARCH_APP_ACTIVITY));
         }
@@ -854,21 +832,21 @@ public class CmStatusBarView extends StatusBarView {
 
     Runnable mResetHome = new Runnable() {
         public void run() {
-            if(mShowHome == 1 && mIsBottom) {
+            if (mShowHome == 1 && mIsBottom) {
                mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_home_bottom);
-            } else if(mShowHome == 1 && !mIsBottom) {
+            } else if (mShowHome == 1 && !mIsBottom) {
                mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_home_top);
-            } else if(mShowHome == 2 && mIsBottom) {
+            } else if (mShowHome == 2 && mIsBottom) {
                mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_back_bottom);
-            } else if(mShowHome == 2 && !mIsBottom) {
+            } else if (mShowHome == 2 && !mIsBottom) {
                mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_back_top);
-            } else if(mShowHome == 3 && mIsBottom) {
+            } else if (mShowHome == 3 && mIsBottom) {
                mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_search_bottom);
-            } else if(mShowHome == 3 && !mIsBottom) {
+            } else if (mShowHome == 3 && !mIsBottom) {
                mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_search_top);
-            } else if(mShowHome == 4 && mIsBottom) {
+            } else if (mShowHome == 4 && mIsBottom) {
                mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_menu_bottom);
-            } else if(mShowHome == 4 && !mIsBottom) {
+            } else if (mShowHome == 4 && !mIsBottom) {
                mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_menu_top);
             }
         }
@@ -876,21 +854,21 @@ public class CmStatusBarView extends StatusBarView {
 
     Runnable mResetBack = new Runnable() {
         public void run() {
-            if(mShowBack == 1 && mIsBottom) {
+            if (mShowBack == 1 && mIsBottom) {
                mBackButton.setBackgroundResource(R.drawable.ic_statusbar_home_bottom);
-            } else if(mShowBack == 1 && !mIsBottom) {
+            } else if (mShowBack == 1 && !mIsBottom) {
                mBackButton.setBackgroundResource(R.drawable.ic_statusbar_home_top);
-            } else if(mShowBack == 2 && mIsBottom) {
+            } else if (mShowBack == 2 && mIsBottom) {
                mBackButton.setBackgroundResource(R.drawable.ic_statusbar_back_bottom);
-            } else if(mShowBack == 2 && !mIsBottom) {
+            } else if (mShowBack == 2 && !mIsBottom) {
                mBackButton.setBackgroundResource(R.drawable.ic_statusbar_back_top);
-            } else if(mShowBack == 3 && mIsBottom) {
+            } else if (mShowBack == 3 && mIsBottom) {
                mBackButton.setBackgroundResource(R.drawable.ic_statusbar_search_bottom);
-            } else if(mShowBack == 3 && !mIsBottom) {
+            } else if (mShowBack == 3 && !mIsBottom) {
                mBackButton.setBackgroundResource(R.drawable.ic_statusbar_search_top);
-            } else if(mShowBack == 4 && mIsBottom) {
+            } else if (mShowBack == 4 && mIsBottom) {
                mBackButton.setBackgroundResource(R.drawable.ic_statusbar_menu_bottom);
-            } else if(mShowBack == 4 && !mIsBottom) {
+            } else if (mShowBack == 4 && !mIsBottom) {
                mBackButton.setBackgroundResource(R.drawable.ic_statusbar_menu_top);
             }
         }
@@ -898,21 +876,21 @@ public class CmStatusBarView extends StatusBarView {
 
     Runnable mResetMenu = new Runnable() {
         public void run() {
-            if(mShowMenu == 1 && mIsBottom) {
+            if (mShowMenu == 1 && mIsBottom) {
                mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_home_bottom);
-            } else if(mShowMenu == 1 && !mIsBottom) {
+            } else if (mShowMenu == 1 && !mIsBottom) {
                mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_home_top);
-            } else if(mShowMenu == 2 && mIsBottom) {
+            } else if (mShowMenu == 2 && mIsBottom) {
                mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_back_bottom);
-            } else if(mShowMenu == 2 && !mIsBottom) {
+            } else if (mShowMenu == 2 && !mIsBottom) {
                mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_back_top);
-            } else if(mShowMenu == 3 && mIsBottom) {
+            } else if (mShowMenu == 3 && mIsBottom) {
                mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_search_bottom);
-            } else if(mShowMenu == 3 && !mIsBottom) {
+            } else if (mShowMenu == 3 && !mIsBottom) {
                mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_search_top);
-            } else if(mShowMenu == 4 && mIsBottom) {
+            } else if (mShowMenu == 4 && mIsBottom) {
                mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_menu_bottom);
-            } else if(mShowMenu == 4 && !mIsBottom) {
+            } else if (mShowMenu == 4 && !mIsBottom) {
                mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_menu_top);
             }
         }
@@ -920,21 +898,21 @@ public class CmStatusBarView extends StatusBarView {
 
     Runnable mResetSearch = new Runnable() {
         public void run() {
-            if(mShowSearch == 1 && mIsBottom) {
+            if (mShowSearch == 1 && mIsBottom) {
                mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_home_bottom);
-            } else if(mShowSearch == 1 && !mIsBottom) {
+            } else if (mShowSearch == 1 && !mIsBottom) {
                mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_home_top);
-            } else if(mShowSearch == 2 && mIsBottom) {
+            } else if (mShowSearch == 2 && mIsBottom) {
                mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_back_bottom);
-            } else if(mShowSearch == 2 && !mIsBottom) {
+            } else if (mShowSearch == 2 && !mIsBottom) {
                mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_back_top);
-            } else if(mShowSearch == 3 && mIsBottom) {
+            } else if (mShowSearch == 3 && mIsBottom) {
                mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_search_bottom);
-            } else if(mShowSearch == 3 && !mIsBottom) {
+            } else if (mShowSearch == 3 && !mIsBottom) {
                mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_search_top);
-            } else if(mShowSearch == 4 && mIsBottom) {
+            } else if (mShowSearch == 4 && mIsBottom) {
                mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_menu_bottom);
-            } else if(mShowSearch == 4 && !mIsBottom) {
+            } else if (mShowSearch == 4 && !mIsBottom) {
                mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_menu_top);
             }
         }
@@ -946,7 +924,7 @@ public class CmStatusBarView extends StatusBarView {
      * This is executed in a separate Thread to avoid blocking
      */
     private void simulateKeypress(final int keyCode) {
-        new Thread( new KeyEventInjector( keyCode ) ).start();
+        new Thread(new KeyEventInjector( keyCode ) ).start();
     }
 
     private class KeyEventInjector implements Runnable {
@@ -958,20 +936,16 @@ public class CmStatusBarView extends StatusBarView {
 
         public void run() {
             try {
-                if(! (IWindowManager.Stub
-                    .asInterface(ServiceManager.getService("window")))
-                         .injectKeyEvent(
-                              new KeyEvent(KeyEvent.ACTION_DOWN, keyCode), true) ) {
+                if (!(IWindowManager.Stub.asInterface(ServiceManager.getService("window")))
+                         .injectKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, keyCode), true) ) {
                                    Slog.w(TAG, "Key down event not injected");
                                    return;
-                              }
-                if(! (IWindowManager.Stub
-                    .asInterface(ServiceManager.getService("window")))
-                         .injectKeyEvent(
-                             new KeyEvent(KeyEvent.ACTION_UP, keyCode), true) ) {
+                }
+                if (!(IWindowManager.Stub.asInterface(ServiceManager.getService("window")))
+                         .injectKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, keyCode), true) ) {
                                   Slog.w(TAG, "Key up event not injected");
-                             }
-           } catch(RemoteException ex) {
+                }
+           } catch (RemoteException ex) {
                Slog.w(TAG, "Error injecting key event", ex);
            }
         }
