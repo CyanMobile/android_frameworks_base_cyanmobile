@@ -108,6 +108,7 @@ public class GPSTile extends QuickSettingsTile {
               iv.setBackgroundResource(R.drawable.ic_qs_gps_off);
            }
         }
+        flipTile();
     }
 
     private void setGenericLabel() {

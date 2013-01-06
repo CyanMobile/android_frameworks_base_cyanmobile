@@ -93,5 +93,6 @@ public class MobileNetworkTile extends QuickSettingsTile implements NetworkSigna
             ivv.setVisibility(View.GONE);
             iov.setVisibility(View.GONE);
         }
+        flipTile();
     }
 }
