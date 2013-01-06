@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.ServiceManager;
 import android.os.RemoteException;
 import android.provider.Settings;
+import android.view.animation.AccelerateInterpolator;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -22,6 +23,8 @@ import com.android.systemui.R;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsTileView;
+import com.android.systemui.statusbar.quicksettings.DisplayNextTile;
+import com.android.systemui.statusbar.quicksettings.Tile3dFlipAnimation;
 
 public class QuickSettingsTile implements OnClickListener {
 
@@ -73,6 +76,7 @@ public class QuickSettingsTile implements OnClickListener {
         TextView tv = (TextView) mTile.findViewById(R.id.tile_textview);
         tv.setCompoundDrawablesWithIntrinsicBounds(0, mDrawable, 0, 0);
         tv.setText(mLabel);
+        flipTile();
     }
 
     void startSettingsActivity(String action){
@@ -106,6 +110,23 @@ public class QuickSettingsTile implements OnClickListener {
                     ServiceManager.getService("statusbar"));
         }
         return mStatusBarService;
+    }
+
+    void flipTile() {
+        if (mTile == null) return;
+
+        final float centerX = mTile.getWidth() / 2.0f;
+        final float centerY = mTile.getHeight() / 2.0f;
+
+         // Create a new 3D rotation with the supplied parameter
+         // The animation listener is used to trigger the next animation
+         final Tile3dFlipAnimation rotation =
+                new Tile3dFlipAnimation(0, 90, centerX, centerY);
+         rotation.setDuration(500);
+         rotation.setFillAfter(true);
+         rotation.setInterpolator(new AccelerateInterpolator());
+         rotation.setAnimationListener(new DisplayNextTile(true, mTile, mTile));
+         mTile.startAnimation(rotation);
     }
 
     @Override

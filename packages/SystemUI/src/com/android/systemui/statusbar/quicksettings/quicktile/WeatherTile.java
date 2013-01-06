@@ -287,6 +287,7 @@ public class WeatherTile extends QuickSettingsTile {
                 }
             }
         }
+        flipTile();
     }
 
     /**

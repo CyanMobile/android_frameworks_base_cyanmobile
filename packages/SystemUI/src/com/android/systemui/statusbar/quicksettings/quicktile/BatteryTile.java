@@ -80,6 +80,7 @@ public class BatteryTile extends QuickSettingsTile {
         ImageView iv = (ImageView) mTile.findViewById(R.id.battery_image);
         iv.setImageDrawable(batteryIcon);
         iv.setImageLevel(batteryLevel);
+        flipTile();
     }
 
 }

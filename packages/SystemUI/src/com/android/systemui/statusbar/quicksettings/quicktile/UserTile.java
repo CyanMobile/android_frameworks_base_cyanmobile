@@ -77,6 +77,7 @@ public class UserTile extends QuickSettingsTile {
         TextView tv = (TextView) mTile.findViewById(R.id.user_textview);
         tv.setText(mLabel);
         iv.setImageDrawable(userAvatar);
+        flipTile();
     }
 
     private void queryForUserInformation() {

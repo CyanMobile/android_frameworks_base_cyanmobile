@@ -86,6 +86,7 @@ public class CpuTile extends QuickSettingsTile {
         tvone.setText(curCpu);
         tvtwo.setText(mLabel);
         iv.setImageDrawable(mContext.getResources().getDrawable(R.drawable.ic_settings_performance));
+        flipTile();
     }
 
     private void queryForCpuInformation() {
