@@ -44,7 +44,6 @@ public class RingerModeTile extends QuickSettingsTile {
     private int mRingerValuesIndex = 2;
 
     private AudioManager mAudioManager;
-    protected Vibrator mVibrator;
 
     public RingerModeTile(Context context, LayoutInflater inflater,
             QuickSettingsContainerView container, QuickSettingsController qsc) {
@@ -207,6 +206,9 @@ public class RingerModeTile extends QuickSettingsTile {
 
             mAudioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_RINGER, mVibrateSetting);
             mAudioManager.setRingerMode(mRingerMode);
+            if (mDoHapticFeedback && mHapticFeedback) {
+                mVibrator.vibrate(VIBRATE_DURATION);
+            }
         }
 
         @Override
