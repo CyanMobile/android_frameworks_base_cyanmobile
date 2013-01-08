@@ -1,5 +1,7 @@
 package com.android.systemui.statusbar.quicksettings.quicktile;
 
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -16,6 +18,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.AsyncTask;
 import android.provider.Settings;
 
 import android.util.Log;
@@ -46,6 +49,13 @@ public class WeatherTile extends QuickSettingsTile {
     private static final String TAG = "WeatherTile";
     private static final boolean DEBUG = false;
 
+    private static final String ACTION_LOC_UPDATE = "com.android.systemui.action.LOCATION_UPDATE";
+
+    private static final long MIN_LOC_UPDATE_INTERVAL = 15 * 60 * 1000; /* 15 minutes */
+    private static final float MIN_LOC_UPDATE_DISTANCE = 5000f; /* 5 km */
+
+    private LocationManager mLocManager;
+
     private String tempC;
     private String timed;
     private String humY;
@@ -56,6 +66,8 @@ public class WeatherTile extends QuickSettingsTile {
     private Drawable drwb;
     private boolean addDrwb = false;
     private boolean updating = false;
+    private boolean mForceRefresh;
+    private PendingIntent mLocUpdateIntent;
 
     public WeatherTile(Context context, LayoutInflater inflater,
             QuickSettingsContainerView container, QuickSettingsController qsc) {
@@ -63,14 +75,16 @@ public class WeatherTile extends QuickSettingsTile {
 
         mTileLayout = R.layout.quick_settings_tile_weather;
 
+        mLocManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        mLocUpdateIntent = PendingIntent.getService(context, 0, new Intent(ACTION_LOC_UPDATE), 0);
+        mForceRefresh = false;
+
         mOnClick = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                updating = true;
-                updateQuickSettings();
-                if (!mWeatherRefreshing && !mHandler.hasMessages(QUERY_WEATHER)) {
-                    mHandler.sendEmptyMessage(QUERY_WEATHER);
-                }
+                updateLocationListenerState();
+                mForceRefresh = true;
+                refreshWeather();
             }
         };
         mOnLongClick = new View.OnLongClickListener() {
@@ -95,131 +109,191 @@ public class WeatherTile extends QuickSettingsTile {
 
     @Override
     void onPostCreate() {
-        refreshWeather();
+        updateLocationListenerState();
         super.onPostCreate();
     }
 
     @Override
     public void onChangeUri(ContentResolver resolver, Uri uri) {
+        updateLocationListenerState();
         refreshWeather();
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        refreshWeather();
+        if (ACTION_LOC_UPDATE.equals(intent.getAction())) {
+            Location location = (Location) intent.getParcelableExtra(LocationManager.KEY_LOCATION_CHANGED);
+            triggerLocationQueryWithLocation(location);
+        } else {
+            updateLocationListenerState();
+            refreshWeather();
+        }
     }
 
-    /*
-     * CyanogenMod Lock screen Weather related functionality
-     */
+    //===============================================================================================
+    // Weather related functionality
+    //===============================================================================================
     private static final String URL_YAHOO_API_WEATHER = "http://weather.yahooapis.com/forecastrss?w=%s&u=";
     private static WeatherInfo mWeatherInfo = new WeatherInfo();
-    private static final int QUERY_WEATHER = 0;
-    private static final int UPDATE_WEATHER = 1;
-    private boolean mWeatherRefreshing;
+    private WeatherQueryTask mWeatherQueryTask;
+    private LocationQueryTask mLocationQueryTask;
+    private LocationInfo mLocationInfo = new LocationInfo();
+    private String mLastKnownWoeid;
+    private boolean mNeedsWeatherRefresh;
 
-    private Handler mHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-            case QUERY_WEATHER:
-                Thread queryWeather = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        LocationManager locationManager = (LocationManager) mContext.
-                                getSystemService(Context.LOCATION_SERVICE);
-                        final ContentResolver resolver = mContext.getContentResolver();
-                        boolean useCustomLoc = Settings.System.getInt(resolver,
+    private void updateLocationListenerState() {
+        final ContentResolver resolver = mContext.getContentResolver();
+        boolean useCustomLoc = Settings.System.getInt(resolver,
                                 Settings.System.WEATHER_USE_CUSTOM_LOCATION, 0) == 1;
-                        String customLoc = Settings.System.getString(resolver,
+        String customLoc = Settings.System.getString(resolver,
                                     Settings.System.WEATHER_CUSTOM_LOCATION);
-                        String woeid = null;
+        final long interval = Settings.System.getLong(resolver,
+                    Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
+        boolean manualSync = (interval == 0);
+      if (!manualSync && (((System.currentTimeMillis() - mWeatherInfo.last_sync) / 60000) >= interval)) {
+        if (useCustomLoc && customLoc != null) {
+            mLocManager.removeUpdates(mLocUpdateIntent);
+            mLocationInfo.customLocation = customLoc;
+            triggerLocationQueryWithLocation(null);
+        } else {
+            mLocManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER,
+                    MIN_LOC_UPDATE_INTERVAL, MIN_LOC_UPDATE_DISTANCE, mLocUpdateIntent);
+            mLocationInfo.customLocation = null;
+            triggerLocationQueryWithLocation(mLocManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER));
+        }
+      }
+    }
 
-                        // custom location
-                        if (customLoc != null && useCustomLoc) {
-                            try {
-                                woeid = YahooPlaceFinder.GeoCode(mContext, customLoc);
-                                if (DEBUG)
-                                    Log.d(TAG, "Yahoo location code for " + customLoc + " is " + woeid);
-                            } catch (Exception e) {
-                                Log.e(TAG, "ERROR: Could not get Location code");
-                                e.printStackTrace();
-                            }
-                        // network location
-                        } else {
-                            Criteria crit = new Criteria();
-                            crit.setAccuracy(Criteria.ACCURACY_COARSE);
-                            String bestProvider = locationManager.getBestProvider(crit, true);
-                            Location loc = null;
-                            if (bestProvider != null) {
-                                loc = locationManager.getLastKnownLocation(bestProvider);
-                            } else {
-                                loc = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
-                            }
-                            try {
-                                woeid = YahooPlaceFinder.reverseGeoCode(mContext, loc.getLatitude(),
-                                        loc.getLongitude());
-                                if (DEBUG)
-                                    Log.d(TAG, "Yahoo location code for current geolocation is " + woeid);
-                            } catch (Exception e) {
-                                Log.e(TAG, "ERROR: Could not get Location code");
-                                e.printStackTrace();
-                            }
-                        }
-                        Message msg = Message.obtain();
-                        msg.what = UPDATE_WEATHER;
-                        msg.obj = woeid;
-                        mHandler.sendMessage(msg);
-                    }
-                });
-                mWeatherRefreshing = true;
-                queryWeather.setPriority(Thread.MIN_PRIORITY);
-                queryWeather.start();
-                break;
-            case UPDATE_WEATHER:
-                String woeid = (String) msg.obj;
-                if (woeid != null) {
-                    if (DEBUG) {
-                        Log.d(TAG, "Location code is " + woeid);
-                    }
-                    WeatherInfo w = null;
-                    try {
-                        w = parseXml(getDocument(woeid));
-                    } catch (Exception e) {
-                    }
-                    mWeatherRefreshing = false;
-                    if (w == null) {
-                        setNoWeatherData();
-                    } else {
-                        setWeatherData(w);
-                        mWeatherInfo = w;
-                    }
-                } else {
-                    mWeatherRefreshing = false;
-                    if (mWeatherInfo.temp.equals(WeatherInfo.NODATA)) {
-                        setNoWeatherData();
-                    } else {
-                        setWeatherData(mWeatherInfo);
-                    }
-                }
-                break;
+    private void triggerLocationQueryWithLocation(Location location) {
+        if (DEBUG)
+            Log.d(TAG, "Triggering location query with location " + location);
+
+        if (location != null) {
+            mLocationInfo.location = location;
+        }
+        if (mLocationQueryTask != null) {
+            mLocationQueryTask.cancel(true);
+        }
+        mLocationQueryTask = new LocationQueryTask();
+        mLocationQueryTask.execute(mLocationInfo);
+    }
+
+    private boolean triggerWeatherQuery(boolean force) {
+        if (!force) {
+            if (mLocationQueryTask != null && mLocationQueryTask.getStatus() != AsyncTask.Status.FINISHED) {
+                /* the location query task will trigger the weather query */
+                return true;
             }
         }
-    };
+        if (mWeatherQueryTask != null) {
+            if (force) {
+                mWeatherQueryTask.cancel(true);
+            } else if (mWeatherQueryTask.getStatus() != AsyncTask.Status.FINISHED) {
+                return false;
+            }
+        }
+        mWeatherQueryTask = new WeatherQueryTask();
+        mWeatherQueryTask.execute(mLastKnownWoeid);
+        return true;
+    }
+
+    private static class LocationInfo {
+        Location location;
+        String customLocation;
+    }
+
+    private class LocationQueryTask extends AsyncTask<LocationInfo, Void, String> {
+        @Override
+        protected String doInBackground(LocationInfo... params) {
+            LocationInfo info = params[0];
+
+            try {
+                if (info.customLocation != null) {
+                    String woeid = YahooPlaceFinder.GeoCode(
+                            mContext, info.customLocation);
+                    if (DEBUG)
+                        Log.d(TAG, "Yahoo location code for " + info.customLocation + " is " + woeid);
+                    return woeid;
+                } else if (info.location != null) {
+                    String woeid = YahooPlaceFinder.reverseGeoCode(mContext,
+                            info.location.getLatitude(), info.location.getLongitude());
+                    if (DEBUG)
+                        Log.d(TAG, "Yahoo location code for geolocation " + info.location + " is " + woeid);
+                    return woeid;
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "ERROR: Could not get Location code", e);
+                mNeedsWeatherRefresh = true;
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String woeid) {
+            mLastKnownWoeid = woeid;
+            triggerWeatherQuery(true);
+        }
+    }
+
+    private class WeatherQueryTask extends AsyncTask<String, Void, WeatherInfo> {
+        private Document getDocument(String woeid) throws IOException {
+            final boolean celsius = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.WEATHER_USE_METRIC, 1) == 1;
+            final String urlWithUnit = URL_YAHOO_API_WEATHER + (celsius ? "c" : "f");
+            return new HttpRetriever().getDocumentFromURL(String.format(urlWithUnit, woeid));
+        }
+
+        private WeatherInfo parseXml(Document doc) {
+            WeatherXmlParser parser = new WeatherXmlParser(mContext);
+            return parser.parseWeatherResponse(doc);
+        }
+
+        @Override
+        protected WeatherInfo doInBackground(String... params) {
+            String woeid = params[0];
+
+            if (DEBUG)
+                Log.d(TAG, "Querying weather for woeid " + woeid);
+
+            if (woeid != null) {
+                try {
+                    return parseXml(getDocument(woeid));
+                } catch (Exception e) {
+                    Log.e(TAG, "ERROR: Could not parse weather return info", e);
+                    mNeedsWeatherRefresh = true;
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(WeatherInfo info) {
+            if (info != null) {
+                setWeatherData(info);
+                mWeatherInfo = info;
+            } else if (mWeatherInfo.temp.equals(WeatherInfo.NODATA)) {
+                setNoWeatherData();
+            } else {
+                setWeatherData(mWeatherInfo);
+            }
+        }
+    }
 
     /**
      * Reload the weather forecast
      */
     private void refreshWeather() {
-        final ContentResolver resolver = mContext.getContentResolver();
+            final ContentResolver resolver = mContext.getContentResolver();
             final long interval = Settings.System.getLong(resolver,
                     Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
             boolean manualSync = (interval == 0);
-            if (!manualSync && (((System.currentTimeMillis() - mWeatherInfo.last_sync) / 60000) >= interval)) {
+            if (mForceRefresh || !manualSync && (((System.currentTimeMillis() - mWeatherInfo.last_sync) / 60000) >= interval)) {
                 updating = true;
                 updateQuickSettings();
-                if (!mWeatherRefreshing && !mHandler.hasMessages(QUERY_WEATHER)) {
-                    mHandler.sendEmptyMessage(QUERY_WEATHER);
+                if (triggerWeatherQuery(false)) {
+                    mForceRefresh = false;
                 }
             } else if (manualSync && mWeatherInfo.last_sync == 0) {
                 setNoWeatherData();
@@ -247,7 +321,7 @@ public class WeatherTile extends QuickSettingsTile {
         }
         mLabel = (w.temp + " | " + w.humidity) ;
         mLoc = w.city;
-        Date lastTime = new Date(mWeatherInfo.last_sync);
+        Date lastTime = new Date(w.last_sync);
         date = DateFormat.getDateFormat(mContext).format(lastTime);
         time = DateFormat.getTimeFormat(mContext).format(lastTime);
         mDate = (date + " " + time);
@@ -298,45 +372,5 @@ public class WeatherTile extends QuickSettingsTile {
         mLabel = mContext.getString(com.android.internal.R.string.weather_tap_to_refresh);
         addDrwb = false;
         updateQuickSettings();
-    }
-
-    /**
-     * Get the weather forecast XML document for a specific location
-     * @param woeid
-     * @return
-     */
-    private Document getDocument(String woeid) {
-        try {
-            boolean celcius = Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.WEATHER_USE_METRIC, 1) == 1;
-            String urlWithDegreeUnit;
-
-            if (celcius) {
-                urlWithDegreeUnit = URL_YAHOO_API_WEATHER + "c";
-            } else {
-                urlWithDegreeUnit = URL_YAHOO_API_WEATHER + "f";
-            }
-
-            return new HttpRetriever().getDocumentFromURL(String.format(urlWithDegreeUnit, woeid));
-        } catch (IOException e) {
-            Log.e(TAG, "Error querying Yahoo weather");
-        }
-
-        return null;
-    }
-
-    /**
-     * Parse the weather XML document
-     * @param wDoc
-     * @return
-     */
-    private WeatherInfo parseXml(Document wDoc) {
-        try {
-            return new WeatherXmlParser(mContext).parseWeatherResponse(wDoc);
-        } catch (Exception e) {
-            Log.e(TAG, "Error parsing Yahoo weather XML document");
-            e.printStackTrace();
-        }
-        return null;
     }
 }
