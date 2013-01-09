@@ -493,9 +493,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             shouldTick = (Settings.System.getInt(resolver, Settings.System.STATUS_BAR_INTRUDER_ALERT, 1) == 1);
             mClockColor = (Settings.System.getInt(resolver, Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
             mSettingsColor = (Settings.System.getInt(resolver, Settings.System.STATUS_BAR_SETTINGSCOLOR, defValuesColor));
-            mStatusBarTab = ((Settings.System.getInt(resolver, Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4)
-                      || (Settings.System.getInt(resolver, Settings.System.EXPANDED_VIEW_WIDGET, 1) == 5));
-            mStatusBarGrid = (Settings.System.getInt(resolver, Settings.System.EXPANDED_VIEW_WIDGET, 1) == 3);
+            mStatusBarTab = ((Settings.System.getInt(resolver, Settings.System.EXPANDED_VIEW_WIDGET, 5) == 4)
+                      || (Settings.System.getInt(resolver, Settings.System.EXPANDED_VIEW_WIDGET, 5) == 5));
+            mStatusBarGrid = (Settings.System.getInt(resolver, Settings.System.EXPANDED_VIEW_WIDGET, 5) == 3);
             mNaviShow = (Settings.System.getInt(resolver, Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
             mTinyExpanded = (Settings.System.getInt(resolver, Settings.System.STATUSBAR_TINY_EXPANDED, 1) == 1);
             mMoreExpanded = (Settings.System.getInt(resolver, Settings.System.STATUSBAR_MORE_EXPANDED, 1) == 1);
@@ -679,9 +679,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         shouldTick = (Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_INTRUDER_ALERT, 1) == 1);
         mClockColor = (Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
         mSettingsColor = (Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_SETTINGSCOLOR, defValuesColor));
-        mStatusBarTab = ((Settings.System.getInt(getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4)
-                     || (Settings.System.getInt(getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 1) == 5));
-        mStatusBarGrid = (Settings.System.getInt(getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 1) == 3);
+        mStatusBarTab = ((Settings.System.getInt(getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 5) == 4)
+                     || (Settings.System.getInt(getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 5) == 5));
+        mStatusBarGrid = (Settings.System.getInt(getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 5) == 3);
         mNaviShow = (Settings.System.getInt(getContentResolver(), Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
         mTinyExpanded = (Settings.System.getInt(getContentResolver(), Settings.System.STATUSBAR_TINY_EXPANDED, 1) == 1);
         mMoreExpanded = (Settings.System.getInt(getContentResolver(), Settings.System.STATUSBAR_TINY_EXPANDED, 1) == 1);
@@ -1130,7 +1130,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     private void updateSettings() {
-        int changedVal = Settings.System.getInt(getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 1);
+        int changedVal = Settings.System.getInt(getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 5);
         // check that it's not 0 to not reset the variable
         // this should be the only place mLastPowerToggle is set
         if (changedVal != 0) {
@@ -3039,7 +3039,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     private View.OnClickListener mCarrierButtonListener = new View.OnClickListener() {
         public void onClick(View v) {
-             if(Settings.System.getInt(getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 1) == 0) {
+             if(Settings.System.getInt(getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 5) == 0) {
                 QuickSettingsPopupWindow quickSettingsWindow = new QuickSettingsPopupWindow(v);
                 quickSettingsWindow.showLikeQuickAction();
              }

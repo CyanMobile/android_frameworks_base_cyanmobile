@@ -179,7 +179,6 @@ public class KanjiWeatherClock extends LinearLayout {
         public void onChange(boolean selfChange) {
             KanjiWeatherClock kanjiClock = mClock.get();
             if (kanjiClock != null) {
-                kanjiClock.updateTime();
                 kanjiClock.refreshWeather();
             } else {
                 try {

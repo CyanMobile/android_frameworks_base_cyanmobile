@@ -185,7 +185,6 @@ public class DigitalWeatherClock extends LinearLayout {
             DigitalWeatherClock digitalClock = mClock.get();
             if (digitalClock != null) {
                 digitalClock.setDateFormat();
-                digitalClock.updateTime();
                 digitalClock.refreshWeather();
             } else {
                 try {
