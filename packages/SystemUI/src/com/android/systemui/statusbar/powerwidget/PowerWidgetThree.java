@@ -335,11 +335,11 @@ public class PowerWidgetThree extends FrameLayout {
     private void updateVisibility() {
         // now check if we need to display the widget still
         boolean displayPowerWidget = Settings.System.getInt(mContext.getContentResolver(),
-                   Settings.System.EXPANDED_VIEW_WIDGET, 1) == 3;
+                   Settings.System.EXPANDED_VIEW_WIDGET, 5) == 3;
         boolean displayPowerWidgetGrid = Settings.System.getInt(mContext.getContentResolver(),
                    Settings.System.EXPANDED_VIEW_WIDGET_GRID_THREE, 0) == 1;
         boolean displayPowerWidgetTab = Settings.System.getInt(mContext.getContentResolver(),
-                   Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4;
+                   Settings.System.EXPANDED_VIEW_WIDGET, 5) == 4;
         if(displayPowerWidget && displayPowerWidgetGrid) {
             setVisibility(View.VISIBLE);
         } else if(displayPowerWidgetGrid && displayPowerWidgetTab) {

@@ -208,7 +208,6 @@ public class FuzzyWeatherClock extends LinearLayout {
             FuzzyWeatherClock fuzzyClock = mClock.get();
             if (fuzzyClock != null) {
                 fuzzyClock.setDateFormat();
-                fuzzyClock.updateTime();
                 fuzzyClock.refreshWeather();
             } else {
                 try {

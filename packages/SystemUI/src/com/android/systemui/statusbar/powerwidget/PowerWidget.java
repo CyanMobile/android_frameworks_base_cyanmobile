@@ -374,9 +374,9 @@ public class PowerWidget extends FrameLayout {
     private void updateVisibility() {
         // now check if we need to display the widget still
         boolean displayPowerWidget = Settings.System.getInt(mContext.getContentResolver(),
-                   Settings.System.EXPANDED_VIEW_WIDGET, 1) == 1;
+                   Settings.System.EXPANDED_VIEW_WIDGET, 5) == 1;
         boolean displayPowerWidgetTab = Settings.System.getInt(mContext.getContentResolver(),
-                   Settings.System.EXPANDED_VIEW_WIDGET, 1) == 4;
+                   Settings.System.EXPANDED_VIEW_WIDGET, 5) == 4;
         if (displayPowerWidget) {
             setVisibility(View.VISIBLE);
         } else if (displayPowerWidgetTab) {
