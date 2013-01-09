@@ -1791,7 +1791,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         if (latest) {
             if (mStatusBarTab) {
                 mNoNotificationsTitles.setVisibility(View.GONE);
-                TogglePower();
+                togglePower();
             }
         } else {
             if (mStatusBarTab) {
@@ -2893,7 +2893,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private View.OnClickListener mMusicToggleButtonListener = new View.OnClickListener() {
 	public void onClick(View v) {
            if (mStatusBarTab) {
-               ToggleNotif();
+               toggleNotif();
            }
 	   mMusicControls.visibilityToggled();
 	}
@@ -2937,9 +2937,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
               mSettingsIconButton.clearColorFilter();
               if (mStatusBarTab) {
                 if (NotifEnable) {
-                    TogglePower();
+                    togglePower();
                 } else {
-                    ToggleNotif();
+                    toggleNotif();
                 }
               } else {
                 Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -2959,7 +2959,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private View.OnClickListener mTogglePowerListener = new View.OnClickListener() {
         public void onClick(View v) {
              if (NotifEnable) {
-                 TogglePower();
+                 togglePower();
              }
         }
     };
@@ -2967,12 +2967,14 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private View.OnClickListener mToggleNotifListener = new View.OnClickListener() {
         public void onClick(View v) {
             if (!NotifEnable) {
-                ToggleNotif();
+                toggleNotif();
             }
         }
     };
 
-    void ToggleNotif() {
+    public void toggleNotif() {
+          if (!mStatusBarTab) return;
+
           mSettingsIconButton.setImageResource(R.drawable.ic_qs_panel);
           mButtonsToggle.setTextColor(mClockColor);
           mNotificationsToggle.setTextColor(Color.parseColor("#666666"));
@@ -2986,7 +2988,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
           NotifEnable = true;
     }
 
-    void TogglePower() {
+    public void togglePower() {
+          if (!mStatusBarTab) return;
+
           mSettingsIconButton.setImageResource(R.drawable.ic_qs_notif);
           mNotificationsToggle.setTextColor(mClockColor);
           mButtonsToggle.setTextColor(Color.parseColor("#666666"));
