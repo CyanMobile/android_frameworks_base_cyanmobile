@@ -88,7 +88,7 @@ public class UserTile extends QuickSettingsTile {
         if (numbers.equals("000000000") || numbers.equals("") || TextUtils.isEmpty(numbers)) {
             numberes = null;
         } else {
-            numberes = number;
+            numberes = numbers;
         }
         if (numberes != null) {
             String name = SmsHelper.getName(mContext, numberes);
