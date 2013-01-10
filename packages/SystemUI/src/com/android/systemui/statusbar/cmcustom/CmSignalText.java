@@ -36,7 +36,7 @@ import android.util.TypedValue;
 import android.content.res.Resources;
 import android.util.DisplayMetrics;
 import android.widget.TextView;
-import com.android.systemui.statusbar.StatusBarPolicy;
+import com.android.systemui.statusbar.policy.StatusBarPolicy;
 import com.android.systemui.R;
 
 import java.util.Calendar;

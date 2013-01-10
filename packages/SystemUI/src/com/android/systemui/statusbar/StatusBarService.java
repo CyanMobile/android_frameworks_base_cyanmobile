@@ -55,6 +55,7 @@ import com.android.systemui.statusbar.powerwidget.MusicControls;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
 import com.android.systemui.statusbar.policy.NetworkController;
+import com.android.systemui.statusbar.policy.StatusBarPolicy;
 import com.android.systemui.R;
 import android.os.IPowerManager;
 import android.provider.Settings.SettingNotFoundException;
