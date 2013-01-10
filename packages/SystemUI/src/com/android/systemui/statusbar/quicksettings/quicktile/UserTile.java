@@ -83,12 +83,14 @@ public class UserTile extends QuickSettingsTile {
     private void queryForUserInformation() {
         ContentResolver resolver = mContext.getContentResolver();
         String numbers = Settings.System.getString(resolver, Settings.System.USER_MY_NUMBERS);
-        String numberes;
+        String numberes = null;
         Drawable avatar = null;
-        if (numbers.equals("000000000") || numbers.equals("") || TextUtils.isEmpty(numbers)) {
-            numberes = null;
-        } else {
-            numberes = numbers;
+        if (numbers != null) {
+            if (numbers.equals("000000000") || numbers.equals("") || TextUtils.isEmpty(numbers)) {
+                numberes = null;
+            } else {
+                numberes = numbers;
+            }
         }
         if (numberes != null) {
             String name = SmsHelper.getName(mContext, numberes);
