@@ -113,6 +113,8 @@ public class NavigationBarView extends LinearLayout {
     ImageButton mQuickButton;
 
     private int mNVColor;
+    // private int mNext;
+    // private int mNPrevious;
     private int mNVTrans;
     private boolean mNVShow;
     private boolean mShowNV;
@@ -196,6 +198,10 @@ public class NavigationBarView extends LinearLayout {
                     Settings.System.getUriFor(Settings.System.ENABLE_OVERICON_COLOR), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.OVERSCROLL_COLOR), false, this);
+            /*resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.WATCH_IS_NEXT), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.WATCH_IS_PREVIOUS), false, this);*/
             onChange(true);
         }
 
@@ -214,6 +220,8 @@ public class NavigationBarView extends LinearLayout {
             mOverColorEnable = (Settings.System.getInt(resolver, Settings.System.ENABLE_OVERICON_COLOR, 1) == 1);
             mOverColor = Settings.System.getInt(resolver, Settings.System.OVERICON_COLOR, defValuesColor);
             mShowAnimate = Settings.System.getInt(resolver, Settings.System.NAVI_BUTTONS_ANIMATE, 20000);
+            /*mNext = Settings.System.getInt(resolver, Settings.System.WATCH_IS_NEXT, 0);
+            mPrevious = Settings.System.getInt(resolver, Settings.System.WATCH_IS_PREVIOUS, 1);*/
             updateNaviButtons();
         }
     }
@@ -2099,6 +2107,7 @@ public class NavigationBarView extends LinearLayout {
     }
 
     private void startCollapseActivity() {
+      /*if (mPrevious == 1) {*/
         mHandler.post(new Runnable() { public void run() {
             try {
                  IStatusBarService statusbar = getStatusBarService();
@@ -2110,9 +2119,7 @@ public class NavigationBarView extends LinearLayout {
                  mStatusBarService = null;
             }
         }});
-    }
-
-    private void startExpandActivity() {
+      /*} else if (mPrevious == 0) {
         mHandler.post(new Runnable() { public void run() {
             try {
                  IStatusBarService statusbar = getStatusBarService();
@@ -2124,6 +2131,39 @@ public class NavigationBarView extends LinearLayout {
                  mStatusBarService = null;
             }
         }});
+      } else if (mPrevious == 2) {
+      } else if (mPrevious == 3) {
+      }*/
+    }
+
+    private void startExpandActivity() {
+      /*if (mNext == 0) {*/
+        mHandler.post(new Runnable() { public void run() {
+            try {
+                 IStatusBarService statusbar = getStatusBarService();
+                 if (statusbar != null) {
+                     statusbar.expand();
+                 }
+            } catch (RemoteException ex) {
+                 // re-acquire status bar service next time it is needed.
+                 mStatusBarService = null;
+            }
+        }});
+      /*} else if (mNext == 1) {
+        mHandler.post(new Runnable() { public void run() {
+            try {
+                 IStatusBarService statusbar = getStatusBarService();
+                 if (statusbar != null) {
+                     statusbar.collapse();
+                 }
+            } catch (RemoteException ex) {
+                 // re-acquire status bar service next time it is needed.
+                 mStatusBarService = null;
+            }
+        }});
+      } else if (mNext == 2) {
+      } else if (mNext == 3) {
+      }*/
     }
 
     IStatusBarService getStatusBarService() {

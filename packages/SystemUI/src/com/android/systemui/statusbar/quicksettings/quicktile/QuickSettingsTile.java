@@ -152,7 +152,7 @@ public class QuickSettingsTile implements OnClickListener {
     }
 
     void flipTile() {
-        if (mTile == null) return;
+        if (mTile == null || !enableFlip()) return;
 
         final float centerX = mTile.getWidth() / 2.0f;
         final float centerY = mTile.getHeight() / 2.0f;
@@ -166,6 +166,11 @@ public class QuickSettingsTile implements OnClickListener {
          rotation.setInterpolator(new AccelerateInterpolator());
          rotation.setAnimationListener(new DisplayNextTile(true, mTile, mTile));
          mTile.startAnimation(rotation);
+    }
+
+    boolean enableFlip() {
+        return (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.ENABLE_FLIP_ANIMATE, 1) == 1);
     }
 
     @Override

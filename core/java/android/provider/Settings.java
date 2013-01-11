@@ -3163,6 +3163,13 @@ public final class Settings {
         public static final String NAVI_BUTTONS_ANIMATE = "navi_buttons_animate";
 
         /**
+         * Whether to display the tileview animation
+         * 0: disable animation
+         * @hide
+         */
+        public static final String ENABLE_FLIP_ANIMATE = "enable_filp_animate";
+
+        /**
          * Whether to display the status bar on lockscreen
          * 0: hide status bar on lockscreen
          * 1: show status bar on lockscreen (default for most devices)
