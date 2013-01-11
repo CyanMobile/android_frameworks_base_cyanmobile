@@ -810,7 +810,7 @@ class PackageManagerService extends IPackageManager.Stub {
 
         mContext = context;
         mFactoryTest = factoryTest;
-        mNoDexOpt = "eng".equals(SystemProperties.get("ro.build.type"));
+        mNoDexOpt = "enguser".equals(SystemProperties.get("ro.build.type"));
         mMetrics = new DisplayMetrics();
         mSettings = new Settings();
         mSettings.addSharedUserLP("android.uid.system",
