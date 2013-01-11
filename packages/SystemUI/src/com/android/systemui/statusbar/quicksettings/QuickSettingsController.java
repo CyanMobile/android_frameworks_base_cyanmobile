@@ -44,6 +44,7 @@ import com.android.systemui.statusbar.quicksettings.quicktile.TorchTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.GPSTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.MobileNetworkTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.MobileNetworkTypeTile;
+import com.android.systemui.statusbar.quicksettings.quicktile.NotifTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.QuickSettingsTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.RingerModeTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.SyncTile;
@@ -93,11 +94,11 @@ public class QuickSettingsController {
     public static final String TILE_AUTOROTATE = "toggleAutoRotate";
     public static final String TILE_AIRPLANE = "toggleAirplane";
     public static final String TILE_TORCH = "toggleFlashlight";  // Keep old string for compatibility
-    public static final String TILE_WIMAX = "toggleWimax";
     public static final String TILE_LOCKSCREEN = "toggleLockscreen";
     public static final String TILE_USER = "toggleUser";
     public static final String TILE_CPU = "toggleCpu";
     public static final String TILE_WEATHER = "toggleWeather";
+    public static final String TILE_NOTIF = "toggleNotif";
 
     private static final String TILE_DELIMITER = "|";
     private static final String TILES_DEFAULT = TILE_USER
@@ -155,6 +156,7 @@ public class QuickSettingsController {
     public static final int SLEEP_TILE = 18;
     public static final int CPU_TILE = 19;
     public static final int WEATHER_TILE = 20;
+    public static final int NOTIF_TILE = 21;
 
     public static final int USER_TILE = 99;
 
@@ -231,9 +233,10 @@ public class QuickSettingsController {
                 mQuickSettings.add(CPU_TILE);
             } else if (tile.equals(TILE_WEATHER)) {
                 mQuickSettings.add(WEATHER_TILE);
+            } else if (tile.equals(TILE_NOTIF)) {
+                mQuickSettings.add(NOTIF_TILE);
             } else if (tile.equals(TILE_USER)) {
                 mQuickSettings.add(USER_TILE);
-            } else if (tile.equals(TILE_WIMAX)) {
                 // Not available yet
             }
         }
@@ -398,6 +401,9 @@ public class QuickSettingsController {
                 break;
             case WEATHER_TILE:
                 qs = new WeatherTile(mContext, inflater, mContainerView, this);
+                break;
+            case NOTIF_TILE:
+                qs = new NotifTile(mContext, inflater, mContainerView, this);
                 break;
             case USER_TILE:
                 qs = new UserTile(mContext, inflater, mContainerView, this);
