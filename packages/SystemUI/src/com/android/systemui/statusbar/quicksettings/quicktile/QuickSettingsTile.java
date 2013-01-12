@@ -83,7 +83,6 @@ public class QuickSettingsTile implements OnClickListener {
         TextView tv = (TextView) mTile.findViewById(R.id.tile_textview);
         tv.setCompoundDrawablesWithIntrinsicBounds(0, mDrawable, 0, 0);
         tv.setText(mLabel);
-        flipTile();
     }
 
     void startSettingsActivity(String action){
@@ -177,6 +176,7 @@ public class QuickSettingsTile implements OnClickListener {
     public final void onClick(View v) {
         updateHapticFeedbackSetting();
         mOnClick.onClick(v);
+        flipTile();
         provideHapticFeedback(mClickPattern);
         ContentResolver resolver = mContext.getContentResolver();
         boolean shouldCollapse = Settings.System.getInt(resolver, Settings.System.EXPANDED_HIDE_ONCHANGE, 0) == 1;

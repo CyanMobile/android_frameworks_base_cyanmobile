@@ -141,6 +141,7 @@ public class BluetoothTile extends QuickSettingsTile {
             mLabel = mContext.getString(R.string.quick_settings_bluetooth_off_label);
         }
         updateQuickSettings();
+        flipTile();
     }
 
     @Override

@@ -68,6 +68,7 @@ public class WiFiTile extends QuickSettingsTile implements NetworkSignalChangedC
             mLabel = mContext.getString(R.string.quick_settings_wifi_off_label);
         }
         updateQuickSettings();
+        flipTile();
     }
 
     @Override
