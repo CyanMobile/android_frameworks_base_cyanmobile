@@ -36,6 +36,7 @@ public class UserTile extends QuickSettingsTile {
             @Override
             public void onClick(View v) {
                 queryForUserInformation();
+                flipTile();
             }
         };
         mOnLongClick = new View.OnLongClickListener() {
@@ -68,6 +69,7 @@ public class UserTile extends QuickSettingsTile {
     @Override
     void onPostCreate() {
         queryForUserInformation();
+        if (enableFlip()) mHandler.postDelayed(mResetFlip, 8000); //8 second
         super.onPostCreate();
     }
 
@@ -77,8 +79,14 @@ public class UserTile extends QuickSettingsTile {
         TextView tv = (TextView) mTile.findViewById(R.id.user_textview);
         tv.setText(mLabel);
         iv.setImageDrawable(userAvatar);
-        flipTile();
     }
+
+    Runnable mResetFlip = new Runnable() {
+        public void run() {
+            flipTile();
+            if (enableFlip()) mHandler.postDelayed(mResetFlip, 8000); //8 second
+        }
+    };
 
     private void queryForUserInformation() {
         ContentResolver resolver = mContext.getContentResolver();

@@ -45,6 +45,7 @@ public class CpuTile extends QuickSettingsTile {
             @Override
             public void onClick(View v) {
                 queryForCpuInformation();
+                flipTile();
             }
         };
         mOnLongClick = new View.OnLongClickListener() {
@@ -56,25 +57,12 @@ public class CpuTile extends QuickSettingsTile {
                 return true;
             }
         };
-        qsc.registerAction(Intent.ACTION_BATTERY_CHANGED, this);
-        qsc.registerAction(Intent.ACTION_CONFIGURATION_CHANGED, this);
-        qsc.registerAction(Intent.ACTION_TIME_CHANGED, this);
-        qsc.registerAction(Intent.ACTION_TIMEZONE_CHANGED, this);
-    }
-
-    @Override
-    public void onChangeUri(ContentResolver resolver, Uri uri) {
-        queryForCpuInformation();
-    }
-
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        queryForCpuInformation();
     }
 
     @Override
     void onPostCreate() {
         queryForCpuInformation();
+        if (enableFlip()) mHandler.postDelayed(mResetFlip, 5000); //5 second
         super.onPostCreate();
     }
 
@@ -86,8 +74,20 @@ public class CpuTile extends QuickSettingsTile {
         tvone.setText(curCpu);
         tvtwo.setText(mLabel);
         iv.setImageDrawable(mContext.getResources().getDrawable(R.drawable.ic_settings_performance));
-        flipTile();
     }
+
+    Runnable mResetCpu = new Runnable() {
+        public void run() {
+            queryForCpuInformation();
+        }
+    };
+
+    Runnable mResetFlip = new Runnable() {
+        public void run() {
+            flipTile();
+            if (enableFlip()) mHandler.postDelayed(mResetFlip, 5000); //5 second
+        }
+    };
 
     private void queryForCpuInformation() {
         if (!fileExists(FREQ_CUR_FILE)) {
@@ -96,6 +96,7 @@ public class CpuTile extends QuickSettingsTile {
         curCpu = toMHz(readOneLine(FREQ_CUR_FILE));
         mLabel = readOneLine(GOVERNOR);
         updateQuickSettings();
+        mHandler.postDelayed(mResetCpu, 1000); //1 second
     }
 
     private static String readOneLine(String fname) {

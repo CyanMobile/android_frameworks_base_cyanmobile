@@ -25,7 +25,16 @@ public class TimeTile extends QuickSettingsTile {
                 startSettingsActivity(intent);
             }
         };
+
+        if (enableFlip()) mHandler.postDelayed(mResetFlip, 10000); //10 second
     }
+
+    Runnable mResetFlip = new Runnable() {
+        public void run() {
+            flipTile();
+            if (enableFlip()) mHandler.postDelayed(mResetFlip, 10000); //10 second
+        }
+    };
 
     @Override
     void updateQuickSettings(){}
