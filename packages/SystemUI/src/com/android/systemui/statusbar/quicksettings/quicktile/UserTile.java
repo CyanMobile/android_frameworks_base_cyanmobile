@@ -48,10 +48,7 @@ public class UserTile extends QuickSettingsTile {
                 return true;
             }
         };
-        qsc.registerAction(Intent.ACTION_BATTERY_CHANGED, this);
         qsc.registerAction(Intent.ACTION_CONFIGURATION_CHANGED, this);
-        qsc.registerAction(Intent.ACTION_TIME_CHANGED, this);
-        qsc.registerAction(Intent.ACTION_TIMEZONE_CHANGED, this);
         qsc.registerObservedContent(Settings.System.getUriFor(Settings.System.USER_MY_NUMBERS)
                 , this);
     }

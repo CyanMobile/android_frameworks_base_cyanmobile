@@ -274,7 +274,8 @@ public class QuickSettingsController {
             super(handler);
         }
 
-        public void onChange(boolean selfChange, Uri uri) {
+        @Override
+        public void onChangeUri(Uri uri, boolean selfChange) {
             ContentResolver resolver = mContext.getContentResolver();
             for (QuickSettingsTile tile : mObserverMap.get(uri)) {
                 tile.onChangeUri(resolver, uri);

@@ -52,6 +52,7 @@ import com.android.systemui.statusbar.powerwidget.PowerWidgetTwo;
 import com.android.systemui.statusbar.powerwidget.PowerWidgetThree;
 import com.android.systemui.statusbar.powerwidget.PowerWidgetFour;
 import com.android.systemui.statusbar.powerwidget.MusicControls;
+import com.android.systemui.statusbar.qwidgets.QwikWidgetsPanelView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
 import com.android.systemui.statusbar.policy.NetworkController;
@@ -163,6 +164,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private static final int MSG_SHOW_INTRUDER = 1002;
     private static final int MSG_HIDE_INTRUDER = 1003;
 
+    private static final int MSG_SHOW_WIDGETS_PANEL = 1004;
+    private static final int MSG_HIDE_WIDGETS_PANEL = 1005;
+
     // will likely move to a resource or other tunable param at some point
     private static final int INTRUDER_ALERT_DECAY_MS = 3000;
 
@@ -258,6 +262,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     PowerWidgetTwo mPowerWidgetTwo;
     PowerWidgetThree mPowerWidgetThree;
     PowerWidgetFour mPowerWidgetFour;
+    QwikWidgetsPanelView mWidgetsPanel;
 
     MusicControls mMusicControls;
 
@@ -616,6 +621,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         addStatusBarView();
         addNavigationBar();
         addIntruderView();
+        updateWidgetsPanel();
 
         // Lastly, call to the icon policy to install/update all the icons.
         mIconPolicy = new StatusBarPolicy(this);
@@ -713,6 +719,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mNavigationBarView = (NavigationBarView)View.inflate(context, R.layout.navigation_bar, null);
         mNaviBarContainer = (FrameLayout) mNavigationBarView.findViewById(R.id.navibarBackground);
+
+        mWidgetsPanel = (QwikWidgetsPanelView) View.inflate(context, R.layout.qwik_widgets_panel, null);
+        mWidgetsPanel.setVisibility(View.GONE);
 
         mBackLogoLayout = (BackLogo) mStatusBarView.findViewById(R.id.backlogo);
 
@@ -1408,12 +1417,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL,
-                0
-                | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
-                | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
-                | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    0
+                    | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                    | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                    | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
+                    | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                    | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
                 PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.TOP | Gravity.FILL_HORIZONTAL;
         lp.y += height * 1.5; // FIXME
@@ -1421,6 +1430,22 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         lp.windowAnimations = R.style.Animations_PopDownMenu_Center;
 
         WindowManagerImpl.getDefault().addView(mIntruderAlertView, lp);
+    }
+
+    private void updateWidgetsPanel() {
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL,
+                0
+                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING,
+                PixelFormat.TRANSLUCENT);
+        lp.gravity = Gravity.BOTTOM | Gravity.LEFT;
+        lp.setTitle("QwiksWidget");
+        lp.windowAnimations = R.style.Animations_PopDownMenu_Center;
+
+        WindowManagerImpl.getDefault().addView(mWidgetsPanel, lp);
     }
 
     protected void addStatusBarView() {
@@ -1896,6 +1921,16 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 case MSG_HIDE_INTRUDER:
                     setIntruderAlertVisibility(false);
                     break;
+                case MSG_SHOW_WIDGETS_PANEL:
+                    if (mWidgetsPanel != null) {
+                        mWidgetsPanel.show(true, false);
+                    }
+                    break;
+                case MSG_HIDE_WIDGETS_PANEL:
+                    if (mWidgetsPanel != null && mWidgetsPanel.isShowing()) {
+                        mWidgetsPanel.show(false, false);
+                    }
+                    break;
             }
         }
     }
@@ -1955,6 +1990,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     public void animateCollapse() {
+        toggleHideQwikWidgets();
         if (SPEW) {
             Slog.d(TAG, "animateCollapse(): mExpanded=" + mExpanded
                     + " mExpandedVisible=" + mExpandedVisible
@@ -1997,7 +2033,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mStatusBarView.updateQuickNaImage();
         makeExpandedVisible();
         updateExpandedViewPos(EXPANDED_FULL_OPEN);
-
         if (false) postStartTracing();
     }
 
@@ -3053,6 +3088,18 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     public void setIMEVisible(boolean visible) {
          mNavigationBarView.setIMEVisible(visible);
+    }
+
+    public void toggleQwikWidgets() {
+        int msg = (mWidgetsPanel.getVisibility() == View.VISIBLE)
+            ? MSG_HIDE_WIDGETS_PANEL : MSG_SHOW_WIDGETS_PANEL;
+        mHandler.removeMessages(msg);
+        mHandler.sendEmptyMessage(msg);
+    }
+
+    private void toggleHideQwikWidgets() {
+        mHandler.removeMessages(MSG_HIDE_WIDGETS_PANEL);
+        mHandler.sendEmptyMessage(MSG_HIDE_WIDGETS_PANEL);
     }
 
     private View.OnClickListener mIconButtonListener = new View.OnClickListener() {

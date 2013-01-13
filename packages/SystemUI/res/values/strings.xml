@@ -216,4 +216,15 @@
     <string name="status_bar_settings_battery_meter_min_format" translatable="false">
         <xliff:g id="number">%d</xliff:g>
     </string>
+
+    <!-- Strings for QwikWidgets -->
+    <string name="widget_wifi_title">Wi-Fi</string>
+    <string name="widget_wifiap_title">Hot Spot</string>
+    <string name="widget_gps_title">Gps</string>
+    <string name="widget_sync_title">Sync</string>
+    <string name="widget_bt_title">Bluetooth</string>
+    <string name="widget_mobile_data_title">Mobile Data</string>
+    <string name="widget_auto_rotate_title">Auto Rotate</string>
+    <string name="widget_airplane_title">Airplane Mode</string>
+    <string name="default_qwik_widgets">toggleMobileData|toggleAirplaneMode|toggleWifi|toggleBluetooth|toggleAutoRotate|toggleSync|toggleWifiAp|toggleGps</string>
 </resources>

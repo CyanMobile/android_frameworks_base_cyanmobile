@@ -27,5 +27,6 @@
     <dimen name="quick_settings_cell_height">110dp</dimen>
     <dimen name="quick_settings_cell_gap">4dp</dimen>
     <dimen name="quicktile_cell_gap">4dp</dimen>
+    <dimen name="qwik_widgets_label_width">96dip</dimen>
 </resources>
 

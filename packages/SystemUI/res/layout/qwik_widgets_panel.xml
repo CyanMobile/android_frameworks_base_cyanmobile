@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.android.systemui.statusbar.qwidgets.QwikWidgetsPanelView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widgets_root"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:background="#F0000000"
+    >
+    <ScrollView android:id="@+id/widgets_scroll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center">
+     </ScrollView>
+
+    <ImageView android:id="@+id/close_button"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:scaleType="center"
+        android:src="@drawable/ic_qwik_close"
+        android:layout_gravity="right|top"
+        />
+</com.android.systemui.statusbar.qwidgets.QwikWidgetsPanelView>
+

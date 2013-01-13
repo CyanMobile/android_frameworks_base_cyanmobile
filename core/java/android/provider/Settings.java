@@ -3156,6 +3156,16 @@ public final class Settings {
         public static final String SHOW_NAVI_BUTTONS = "show_navi_buttons";
 
         /**
+         * @hide
+         */
+        public static final String WATCH_IS_NEXT = "watch_is_next";
+
+        /**
+         * @hide
+         */
+        public static final String WATCH_IS_PREVIOUS = "watch_is_previous";
+
+        /**
          * Whether to display the nav buttons animation
          * 0: disable animation
          * @hide
