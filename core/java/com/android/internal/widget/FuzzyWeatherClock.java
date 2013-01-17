@@ -35,7 +35,8 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.ImageView;
-
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Message;
@@ -78,6 +79,8 @@ public class FuzzyWeatherClock extends LinearLayout {
     private static final float MIN_LOC_UPDATE_DISTANCE = 5000f; /* 5 km */
 
     private LocationManager mLocManager;
+    private ConnectivityManager mConnM;
+    private NetworkInfo mInfo;
 
     private final static String M12 = "hh:mm";
     private final static String M24 = "kk:mm";
@@ -227,6 +230,8 @@ public class FuzzyWeatherClock extends LinearLayout {
         super(context, attrs);
 
         mLocManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        mConnM = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        mInfo = mConnM.getActiveNetworkInfo();
         mLocUpdateIntent = PendingIntent.getService(context, 0, new Intent(ACTION_LOC_UPDATE), 0);
         mForceRefresh = false;
     }
@@ -312,6 +317,10 @@ public class FuzzyWeatherClock extends LinearLayout {
     private boolean mNeedsWeatherRefresh;
 
     private void updateLocationListenerState() {
+        if (mInfo == null || !mInfo.isConnected()) {
+            return;
+        }
+
         final ContentResolver resolver = mContext.getContentResolver();
         boolean useCustomLoc = Settings.System.getInt(resolver,
                                 Settings.System.WEATHER_USE_CUSTOM_LOCATION, 0) == 1;
@@ -339,8 +348,9 @@ public class FuzzyWeatherClock extends LinearLayout {
     }
 
     private void triggerLocationQueryWithLocation(Location location) {
-        if (DEBUG)
-            Log.d(TAG, "Triggering location query with location " + location);
+        if (mInfo == null || !mInfo.isConnected()) {
+            return;
+        }
 
         if (location != null) {
             mLocationInfo.location = location;
@@ -353,6 +363,10 @@ public class FuzzyWeatherClock extends LinearLayout {
     }
 
     private boolean triggerWeatherQuery(boolean force) {
+        if (mInfo == null || !mInfo.isConnected()) {
+            return false;
+        }
+
         if (!force) {
             if (mLocationQueryTask != null && mLocationQueryTask.getStatus() != AsyncTask.Status.FINISHED) {
                 /* the location query task will trigger the weather query */
@@ -459,6 +473,10 @@ public class FuzzyWeatherClock extends LinearLayout {
      * Reload the weather forecast
      */
     public void refreshWeather() {
+        if (mInfo == null || !mInfo.isConnected()) {
+            return;
+        }
+
         final ContentResolver resolver = mContext.getContentResolver();
         boolean showWeather = Settings.System.getInt(resolver,
                 Settings.System.LOCKSCREEN_WEATHER, 0) == 1;
@@ -567,7 +585,7 @@ public class FuzzyWeatherClock extends LinearLayout {
         //print the time
         mTimeDisplay.setText(mTimeString);
 
-      if (showWeather) {
+      if (showWeather && (mInfo != null || mInfo.isConnected())) {
         if (mWeatherImage != null) {
             mWeatherImage.setVisibility(View.VISIBLE);
             if (addDrwb) {
