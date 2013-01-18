@@ -1,17 +1,17 @@
 package com.android.systemui.statusbar.quicksettings.quicktile;
 
-import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.net.ConnectivityManager;
-import android.telephony.TelephonyManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnLongClickListener;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import android.provider.Settings;
+import com.android.internal.telephony.Phone;
 
 import com.android.systemui.R;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
@@ -21,23 +21,38 @@ import com.android.systemui.statusbar.policy.NetworkController.NetworkSignalChan
 
 public class MobileNetworkTile extends QuickSettingsTile implements NetworkSignalChangedCallback {
 
+    public static final String ACTION_MODIFY_NETWORK_MODE = "com.android.internal.telephony.MODIFY_NETWORK_MODE";
+    public static final String ACTION_MOBILE_DATA_CHANGED = "com.android.internal.telephony.MOBILE_DATA_CHANGED";
+    public static final String EXTRA_NETWORK_MODE = "networkMode";
+
     private int mDataTypeIconId;
     private int mDataDirectIconId;
+    private ConnectivityManager mConnM;
     private boolean dataOn = false;
 
     public MobileNetworkTile(Context context, LayoutInflater inflater,
             QuickSettingsContainerView container, QuickSettingsController qsc) {
         super(context, inflater, container, qsc);
         mTileLayout = R.layout.quick_settings_tile_rssi;
+        mConnM = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
         mOnClick = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                TelephonyManager tm = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
-                ConnectivityManager conMan = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-                if(tm.getDataState() == TelephonyManager.DATA_DISCONNECTED){
-                    conMan.setMobileDataEnabled(true);
-                }else{
-                    conMan.setMobileDataEnabled(false);
+                if (dataOn) {
+                    if (dataState()) {
+                        Intent intent = new Intent(ACTION_MODIFY_NETWORK_MODE);
+                        intent.putExtra(EXTRA_NETWORK_MODE, Phone.NT_MODE_GSM_ONLY);
+                        mContext.sendBroadcast(intent);
+                    }
+                    mConnM.setMobileDataEnabled(false);
+                } else {
+                    if (dataState()) {
+                        Intent intent = new Intent(ACTION_MODIFY_NETWORK_MODE);
+                        intent.putExtra(EXTRA_NETWORK_MODE, Phone.NT_MODE_WCDMA_PREF);
+                        mContext.sendBroadcast(intent);
+                    }
+                    mConnM.setMobileDataEnabled(true);
                 }
             }
         };
@@ -62,6 +77,11 @@ public class MobileNetworkTile extends QuickSettingsTile implements NetworkSigna
     @Override
     public void onWifiSignalChanged(boolean mIsWifiConnected, int mWifiSignalIconId, String wifiDesc) {
         // TODO Auto-generated method stub
+    }
+
+    private boolean dataState() {
+       return (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.EXPANDED_MOBILEDATANETWORK_MODE, 0) == 1);
     }
 
     @Override
