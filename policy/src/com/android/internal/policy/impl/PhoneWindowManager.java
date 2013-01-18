@@ -2507,8 +2507,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     private final Runnable mScreenshotChordLongPress = new Runnable() {
         public void run() {
-            Intent intent = new Intent("android.intent.action.SCREENSHOT");
-            mContext.sendBroadcast(intent);
+            /*Intent intent = new Intent("android.intent.action.SCREENSHOT");
+            mContext.sendBroadcast(intent);*/
         }
     };
 
