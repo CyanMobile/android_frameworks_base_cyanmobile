@@ -375,9 +375,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     boolean mLongPressBackKill;
     boolean mBackJustKilled;
 
-    private boolean mVolumeDownTriggered;
-    private boolean mPowerDownTriggered;
-
     ShortcutManager mShortcutManager;
     PowerManager.WakeLock mBroadcastWakeLock;
 
@@ -2537,30 +2534,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
             boolean isWakeKey = (policyFlags
                     & (WindowManagerPolicy.FLAG_WAKE | WindowManagerPolicy.FLAG_WAKE_DROPPED)) != 0
-                    || ((keyCode == BTN_MOUSE) && mTrackballWakeScreen)
-                    || ((keyCode == KeyEvent.KEYCODE_VOLUME_UP) && mVolumeWakeScreen)
-                    || ((keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) && mVolumeWakeScreen);
-
-            // Don't wake the screen if we have not set the option "wake with volume" in CMParts
-            // OR if "wake with volume" is set but screen is off due to proximity sensor
-            // regardless if WAKE Flag is set in keylayout
-            final boolean isOffByProx = (mScreenOffReason == WindowManagerPolicy.OFF_BECAUSE_OF_PROX_SENSOR);
-            if (isWakeKey
-                    && (!mVolumeWakeScreen || isOffByProx)
-                    && ((keyCode == KeyEvent.KEYCODE_VOLUME_UP) || (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN))) {
-                isWakeKey = false;
-            }
-
-            // make sure keyevent get's handled as power key on volume-wake
-            if(mVolumeWakeScreen && isWakeKey && ((keyCode == KeyEvent.KEYCODE_VOLUME_UP)
-                    || (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)))
-                keyCode = KeyEvent.KEYCODE_POWER;
+                    || ((keyCode == BTN_MOUSE) && mTrackballWakeScreen);
 
             if (down && isWakeKey) {
                 if (keyguardActive) {
                     // If the keyguard is showing, let it decide what to do with the wake key.
                     mKeyguardMediator.onWakeKeyWhenKeyguardShowingTq(keyCode);
-                } else {
+                } else if ((keyCode != KeyEvent.KEYCODE_VOLUME_UP) && (keyCode != KeyEvent.KEYCODE_VOLUME_DOWN)) {
                     // Otherwise, wake the device ourselves.
                     result |= ACTION_POKE_USER_ACTIVITY;
                 }
@@ -2598,33 +2578,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
               }
             }
             case KeyEvent.KEYCODE_VOLUME_DOWN:
-                if (down) {
-                    if (mPowerDownTriggered) {
-                          mHandler.removeCallbacks(mPowerLongPress);
-                          mPowerKeyHandled = true;
-                          result &= ~ACTION_PASS_TO_USER;
-                          break;
-                    }
-                    mVolumeDownTriggered = true;
-                } else {
-                    mVolumeDownTriggered = false;
-                }
             case KeyEvent.KEYCODE_VOLUME_UP: {
-                // cm71 nightlies: will be replaced by CmPhoneWindowManager's new volume handling
-                if(mVolBtnMusicControls && !down)
-                {
-                    handleVolumeLongPressAbort();
-
-                    // delay handling volume events if mVolBtnMusicControls is desired
-                    if (!mIsLongPress && (result & ACTION_PASS_TO_USER) == 0) {
-                        boolean musicActive = isMusicActive();
-                        if (musicActive || isFmActive()) {
-                            int stream = musicActive ?
-                                    AudioManager.STREAM_MUSIC : AudioManager.STREAM_FM;
-                            handleVolumeKey(stream, keyCode);
-                        }
-                    }
-                }
                 if (down) {
                     ITelephony telephonyService = getTelephonyService();
                     if (telephonyService != null) {
@@ -2659,30 +2613,38 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             Log.w(TAG, "ITelephony threw RemoteException", ex);
                         }
                     }
-
-                    // cm71 nightlies: will be replaced by CmPhoneWindowManager's new volume handling
-                    if ((result & ACTION_PASS_TO_USER) == 0) {
-                        boolean musicActive = isMusicActive();
-
-                        if (musicActive || isFmActive()) {
-                            if (mVolBtnMusicControls) {
-                               // initialize long press flag to false for volume events
-                                mIsLongPress = false;
-
-                                // if the button is held long enough, the following
-                                // procedure will set mIsLongPress=true
-                                handleVolumeLongPress(keyCode);
-                            } else {
-                                // If music is playing but we decided not to pass the key to the
-                                // application, handle the volume change here.
-                                int stream = musicActive ?
-                                        AudioManager.STREAM_MUSIC : AudioManager.STREAM_FM;
-                                handleVolumeKey(stream, keyCode);
+                }
+                // cm71 nightlies: will be replaced by CmPhoneWindowManager's new volume handling
+                if ((isMusicActive() || isFmActive()) && ((result & ACTION_PASS_TO_USER) == 0)) {
+                     if (mVolBtnMusicControls && down) {
+                         mIsLongPress = false;
+                         handleVolumeLongPress(keyCode);
+                         break;
+                     } else {
+                         if (mVolBtnMusicControls && !down) {
+                            handleVolumeLongPressAbort();
+                            if (mIsLongPress) {
+                                break;
                             }
                         }
-                    }
+                        if (!isScreenOn && !mVolumeWakeScreen) {
+                            // If music is playing but we decided not to pass the key to the
+                            // application, handle the volume change here.
+                            int stream = isMusicActive() ?
+                                    AudioManager.STREAM_MUSIC : AudioManager.STREAM_FM;
+                            handleVolumeKey(stream, keyCode);
+                        }
+                     }
                 }
-                break;
+                if (isScreenOn || !mVolumeWakeScreen) {
+                    break;
+                } else if (keyguardActive) {
+                    keyCode = KeyEvent.KEYCODE_POWER;
+                    mKeyguardMediator.onWakeKeyWhenKeyguardShowingTq(keyCode);
+                } else {
+                    result |= ACTION_POKE_USER_ACTIVITY;
+                    break;
+                }
             }
 
             case KeyEvent.KEYCODE_CAMERA: {
@@ -2732,11 +2694,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 }
                 result &= ~ACTION_PASS_TO_USER;
                 if (down) {
-                    if (mVolumeDownTriggered) {
-                            mPowerKeyHandled = true;
-                    }
-                    mPowerDownTriggered = true;
-
                     ITelephony telephonyService = getTelephonyService();
                     boolean hungUp = false;
                     if (telephonyService != null) {
@@ -2758,7 +2715,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     }
                     interceptPowerKeyDown(!isScreenOn || hungUp);
                 } else {
-                    mPowerDownTriggered = false;
                     if (interceptPowerKeyUp(canceled)) {
                         result = (result & ~ACTION_POKE_USER_ACTIVITY) | ACTION_GO_TO_SLEEP;
                     }
