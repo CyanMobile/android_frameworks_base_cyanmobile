@@ -245,6 +245,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     KeyguardViewMediator mKeyguardMediator = null;
     GlobalActions mGlobalActions;
     volatile boolean mPowerKeyHandled;
+    boolean mPendingPowerKeyUpCanceled;
     RecentApplicationsDialog mRecentAppsDialog;
     Handler mHandler;
 
@@ -351,6 +352,16 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     // Behavior of volume wake
     boolean mVolumeWakeScreen;
+
+    // Screenshot trigger states
+    // Time to volume and power must be pressed within this interval of each other.
+    private static final long SCREENSHOT_CHORD_DEBOUNCE_DELAY_MILLIS = 150;
+    private boolean mVolumeDownKeyTriggered;
+    private long mVolumeDownKeyTime;
+    private boolean mVolumeDownKeyConsumedByScreenshotChord;
+    private boolean mVolumeUpKeyTriggered;
+    private boolean mPowerKeyTriggered;
+    private long mPowerKeyTime;
 
     // Behavior of volbtn music controls
     boolean mVolBtnMusicControls;
@@ -1562,6 +1573,18 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     + repeatCount + " keyguardOn=" + keyguardOn + " mHomePressed=" + mHomePressed);
         }
 
+        // If we think we might have a volume down & power key chord on the way
+        // but we're not sure, then tell the dispatcher to wait a little while and
+        // try again later before dispatching.
+        if (canceled) {
+            if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
+                    && mVolumeDownKeyConsumedByScreenshotChord) {
+                if (!down) {
+                    mVolumeDownKeyConsumedByScreenshotChord = false;
+                }
+            }
+        }
+
         // Clear a pending HOME longpress if the user releases Home
         // TODO: This could probably be inside the next bit of logic, but that code
         // turned out to be a bit fragile so I'm doing it here explicitly, for now.
@@ -2482,6 +2505,40 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mHandler.removeCallbacks(mCameraLongPress);
     }
 
+    private final Runnable mScreenshotChordLongPress = new Runnable() {
+        public void run() {
+            Intent intent = new Intent("android.intent.action.SCREENSHOT");
+            mContext.sendBroadcast(intent);
+        }
+    };
+
+    private void cancelPendingPowerKeyAction() {
+        if (!mPowerKeyHandled) {
+            mHandler.removeCallbacks(mPowerLongPress);
+        }
+        if (mPowerKeyTriggered) {
+            mPendingPowerKeyUpCanceled = true;
+        }
+    }
+
+    private void interceptScreenshotChord() {
+        if (mVolumeDownKeyTriggered && mPowerKeyTriggered && !mVolumeUpKeyTriggered) {
+            final long now = SystemClock.uptimeMillis();
+            if (now <= mVolumeDownKeyTime + SCREENSHOT_CHORD_DEBOUNCE_DELAY_MILLIS
+                    && now <= mPowerKeyTime + SCREENSHOT_CHORD_DEBOUNCE_DELAY_MILLIS) {
+                mVolumeDownKeyConsumedByScreenshotChord = true;
+                cancelPendingPowerKeyAction();
+
+                mHandler.postDelayed(mScreenshotChordLongPress,
+                        ViewConfiguration.getGlobalActionKeyTimeout());
+            }
+        }
+    }
+
+    private void cancelPendingScreenshotChordAction() {
+        mHandler.removeCallbacks(mScreenshotChordLongPress);
+    }
+
     /** {@inheritDoc} */
     @Override
     public int interceptKeyBeforeQueueing(long whenNanos, int action, int flags,
@@ -2579,6 +2636,31 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
             case KeyEvent.KEYCODE_VOLUME_DOWN:
             case KeyEvent.KEYCODE_VOLUME_UP: {
+                if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+                    if (down) {
+                        if (isScreenOn && !mVolumeDownKeyTriggered) {
+                            mVolumeDownKeyTriggered = true;
+                            mVolumeDownKeyTime = 150;
+                            mVolumeDownKeyConsumedByScreenshotChord = false;
+                            cancelPendingPowerKeyAction();
+                            interceptScreenshotChord();
+                        }
+                    } else {
+                        mVolumeDownKeyTriggered = false;
+                        cancelPendingScreenshotChordAction();
+                    }
+                } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+                    if (down) {
+                        if (isScreenOn && !mVolumeUpKeyTriggered) {
+                            mVolumeUpKeyTriggered = true;
+                            cancelPendingPowerKeyAction();
+                            cancelPendingScreenshotChordAction();
+                        }
+                    } else {
+                        mVolumeUpKeyTriggered = false;
+                        cancelPendingScreenshotChordAction();
+                    }
+                }
                 if (down) {
                     ITelephony telephonyService = getTelephonyService();
                     if (telephonyService != null) {
@@ -2694,6 +2776,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 }
                 result &= ~ACTION_PASS_TO_USER;
                 if (down) {
+                    if (isScreenOn && !mPowerKeyTriggered) {
+                        mPowerKeyTriggered = true;
+                        mPowerKeyTime = 150;
+                        interceptScreenshotChord();
+                    }
+
                     ITelephony telephonyService = getTelephonyService();
                     boolean hungUp = false;
                     if (telephonyService != null) {
@@ -2713,11 +2801,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             Log.w(TAG, "ITelephony threw RemoteException", ex);
                         }
                     }
-                    interceptPowerKeyDown(!isScreenOn || hungUp);
+                    interceptPowerKeyDown(!isScreenOn || hungUp || mVolumeDownKeyTriggered || mVolumeUpKeyTriggered);
                 } else {
-                    if (interceptPowerKeyUp(canceled)) {
+                    mPowerKeyTriggered = false;
+                    cancelPendingScreenshotChordAction();
+                    if (interceptPowerKeyUp(canceled || mPendingPowerKeyUpCanceled)) {
                         result = (result & ~ACTION_POKE_USER_ACTIVITY) | ACTION_GO_TO_SLEEP;
                     }
+                    mPendingPowerKeyUpCanceled = false;
                 }
                 break;
             }
