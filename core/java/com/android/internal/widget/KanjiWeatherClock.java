@@ -544,7 +544,7 @@ public class KanjiWeatherClock extends LinearLayout {
         //print the time
         mTimeDisplay.setText(mTimeString);
 
-      if (showWeather && (mInfo != null || mInfo.isConnected())) {
+      if (showWeather) {
         if (mWeatherImage != null) {
             mWeatherImage.setVisibility(View.VISIBLE);
             if (addDrwb) {

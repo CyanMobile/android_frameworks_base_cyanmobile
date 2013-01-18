@@ -529,7 +529,7 @@ public class DigitalWeatherClock extends LinearLayout {
         CharSequence newTime = DateFormat.format(mFormat, mCalendar);
         mTimeDisplay.setText(newTime);
         mAmPm.setIsMorning(mCalendar.get(Calendar.AM_PM) == 0);
-      if (showWeather && (mInfo != null || mInfo.isConnected())) {
+      if (showWeather) {
         if (mWeatherImage != null) {
             mWeatherImage.setVisibility(View.VISIBLE);
             if (addDrwb) {
