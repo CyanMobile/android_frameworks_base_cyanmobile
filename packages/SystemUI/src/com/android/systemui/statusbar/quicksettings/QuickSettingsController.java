@@ -55,6 +55,8 @@ import com.android.systemui.statusbar.quicksettings.quicktile.SleepTimeTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.SettingsTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.TimeTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.UserTile;
+import com.android.systemui.statusbar.quicksettings.quicktile.PowerMenuTile;
+import com.android.systemui.statusbar.quicksettings.quicktile.ProfileTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.WeatherTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.WiFiTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.WifiAPTile;
@@ -99,6 +101,8 @@ public class QuickSettingsController {
     public static final String TILE_CPU = "toggleCpu";
     public static final String TILE_WEATHER = "toggleWeather";
     public static final String TILE_NOTIF = "toggleNotif";
+    public static final String TILE_PROFILE = "toggleProfile";
+    public static final String TILE_POWER = "togglePower";
 
     private static final String TILE_DELIMITER = "|";
     private static final String TILES_DEFAULT = TILE_USER
@@ -157,6 +161,8 @@ public class QuickSettingsController {
     public static final int CPU_TILE = 19;
     public static final int WEATHER_TILE = 20;
     public static final int NOTIF_TILE = 21;
+    public static final int PROFILE_TILE = 22;
+    public static final int POWER_TILE = 23;
 
     public static final int USER_TILE = 99;
 
@@ -235,6 +241,10 @@ public class QuickSettingsController {
                 mQuickSettings.add(WEATHER_TILE);
             } else if (tile.equals(TILE_NOTIF)) {
                 mQuickSettings.add(NOTIF_TILE);
+            } else if (tile.equals(TILE_PROFILE)) {
+                mQuickSettings.add(PROFILE_TILE);
+            } else if (tile.equals(TILE_POWER)) {
+                mQuickSettings.add(POWER_TILE);
             } else if (tile.equals(TILE_USER)) {
                 mQuickSettings.add(USER_TILE);
                 // Not available yet
@@ -405,6 +415,12 @@ public class QuickSettingsController {
                 break;
             case NOTIF_TILE:
                 qs = new NotifTile(mContext, inflater, mContainerView, this);
+                break;
+            case PROFILE_TILE:
+                qs = new ProfileTile(mContext, inflater, mContainerView, this);
+                break;
+            case POWER_TILE:
+                qs = new PowerMenuTile(mContext, inflater, mContainerView, this);
                 break;
             case USER_TILE:
                 qs = new UserTile(mContext, inflater, mContainerView, this);
