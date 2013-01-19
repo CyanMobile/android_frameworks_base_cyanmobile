@@ -160,7 +160,7 @@ public class WeatherTile extends QuickSettingsTile {
         final long interval = Settings.System.getLong(resolver,
                     Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
         boolean manualSync = (interval == 0);
-      if (!manualSync && (((System.currentTimeMillis() - mWeatherInfo.last_sync) / 60000) >= interval)) {
+      if (!manualSync && (((System.currentTimeMillis() - mWeatherInfo.getLastSync()) / 60000) >= interval)) {
         if (useCustomLoc && customLoc != null) {
             mLocManager.removeUpdates(mLocUpdateIntent);
             mLocationInfo.customLocation = customLoc;
@@ -288,7 +288,7 @@ public class WeatherTile extends QuickSettingsTile {
             if (info != null) {
                 setWeatherData(info);
                 mWeatherInfo = info;
-            } else if (mWeatherInfo.temp.equals(WeatherInfo.NODATA)) {
+            } else if (mWeatherInfo.getTemp() == 0) {
                 setNoWeatherData();
             } else {
                 setWeatherData(mWeatherInfo);
@@ -308,13 +308,13 @@ public class WeatherTile extends QuickSettingsTile {
             final long interval = Settings.System.getLong(resolver,
                     Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
             boolean manualSync = (interval == 0);
-            if (mForceRefresh || !manualSync && (((System.currentTimeMillis() - mWeatherInfo.last_sync) / 60000) >= interval)) {
+            if (mForceRefresh || !manualSync && (((System.currentTimeMillis() - mWeatherInfo.getLastSync()) / 60000) >= interval)) {
                 updating = true;
                 updateQuickSettings();
                 if (triggerWeatherQuery(false)) {
                     mForceRefresh = false;
                 }
-            } else if (manualSync && mWeatherInfo.last_sync == 0) {
+            } else if (manualSync && mWeatherInfo.getLastSync() == 0) {
                 setNoWeatherData();
             } else {
                 setWeatherData(mWeatherInfo);
@@ -327,22 +327,16 @@ public class WeatherTile extends QuickSettingsTile {
      */
     private void setWeatherData(WeatherInfo w) {
         final Resources res = mContext.getResources();
-        String conditionCode = w.condition_code;
-        String condition_filename = "weather_" + conditionCode;
-        int resID = res.getIdentifier(condition_filename, "drawable",
-                        mContext.getPackageName());
-
-        if (resID != 0) {
+        if (w.getConditionResource() != 0) {
             addDrwb = true;
-            drwb = res.getDrawable(resID);
+            drwb = res.getDrawable(w.getConditionResource());
         } else {
             addDrwb = false;
         }
-        mLabel = (w.temp + " | " + w.humidity) ;
-        mLoc = w.city;
-        Date lastTime = new Date(w.last_sync);
-        date = DateFormat.getDateFormat(mContext).format(lastTime);
-        time = DateFormat.getTimeFormat(mContext).format(lastTime);
+        mLabel = (w.getFormattedTemperature() + " | " + w.getFormattedHumidity()) ;
+        mLoc = w.getCity();
+        date = DateFormat.getDateFormat(mContext).format(w.getTimestamp());
+        time = DateFormat.getTimeFormat(mContext).format(w.getTimestamp());
         mDate = (date + " " + time);
         updateQuickSettings();
     }

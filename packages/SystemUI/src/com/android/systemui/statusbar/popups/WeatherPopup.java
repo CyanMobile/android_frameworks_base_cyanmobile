@@ -152,7 +152,7 @@ public class WeatherPopup extends QuickSettings {
         final long interval = Settings.System.getLong(resolver,
                     Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
         boolean manualSync = (interval == 0);
-      if (!manualSync && (((System.currentTimeMillis() - mWeatherInfo.last_sync) / 60000) >= interval)) {
+      if (!manualSync && (((System.currentTimeMillis() - mWeatherInfo.getLastSync()) / 60000) >= interval)) {
         if (useCustomLoc && customLoc != null) {
             mLocManager.removeUpdates(mLocUpdateIntent);
             mLocationInfo.customLocation = customLoc;
@@ -280,7 +280,7 @@ public class WeatherPopup extends QuickSettings {
             if (info != null) {
                 setWeatherData(info);
                 mWeatherInfo = info;
-            } else if (mWeatherInfo.temp.equals(WeatherInfo.NODATA)) {
+            } else if (mWeatherInfo.getTemp() == 0) {
                 setNoWeatherData();
             } else {
                 setWeatherData(mWeatherInfo);
@@ -300,11 +300,11 @@ public class WeatherPopup extends QuickSettings {
             final long interval = Settings.System.getLong(resolver,
                     Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
             boolean manualSync = (interval == 0);
-            if (mForceRefresh || !manualSync && (((System.currentTimeMillis() - mWeatherInfo.last_sync) / 60000) >= interval)) {
+            if (mForceRefresh || !manualSync && (((System.currentTimeMillis() - mWeatherInfo.getLastSync()) / 60000) >= interval)) {
                 if (triggerWeatherQuery(false)) {
                     mForceRefresh = false;
                 }
-            } else if (manualSync && mWeatherInfo.last_sync == 0) {
+            } else if (manualSync && mWeatherInfo.getLastSync() == 0) {
                 setNoWeatherData();
             } else {
                 setWeatherData(mWeatherInfo);
@@ -326,43 +326,34 @@ public class WeatherPopup extends QuickSettings {
                 Settings.System.WEATHER_INVERT_LOWHIGH, 0) == 1;
 
             if (mWeatherImage != null) {
-                String conditionCode = w.condition_code;
-                String condition_filename = "weather_" + conditionCode;
-                int resID = res.getIdentifier(condition_filename, "drawable",
-                        mContext.getPackageName());
-
-                if (DEBUG)
-                    Log.d("Weather", "Condition:" + conditionCode + " ID:" + resID);
-
-                if (resID != 0) {
-                    mWeatherImage.setImageDrawable(res.getDrawable(resID));
+                if (w.getConditionResource() != 0) {
+                    mWeatherImage.setImageDrawable(res.getDrawable(w.getConditionResource()));
                 } else {
                     mWeatherImage.setImageResource(com.android.internal.R.drawable.weather_na);
                 }
             }
             if (mWeatherTemp != null) {
-                mWeatherTemp.setText(w.temp);
+                mWeatherTemp.setText(w.getFormattedTemperature());
             }
             if (mWeatherCity != null) {
-                mWeatherCity.setText(w.city);
+                mWeatherCity.setText(w.getCity());
                 mWeatherCity.setVisibility(showLocation ? View.VISIBLE : View.GONE);
             }
             if (mWeatherCondition != null) {
-                mWeatherCondition.setText(w.condition);
+                mWeatherCondition.setText(w.getCondition());
             }
             if (mWeatherHumi != null) {
-                mWeatherHumi.setText(w.humidity);
+                mWeatherHumi.setText(w.getFormattedHumidity());
             }
             if (mWeatherWind != null) {
-                mWeatherWind.setText(w.wind);
+                mWeatherWind.setText(w.getWindDirection());
             }
             if (mWeatherLowHigh != null) {
-                mWeatherLowHigh.setText(invertLowhigh ? w.high + " | " + w.low : w.low + " | " + w.high);
+                mWeatherLowHigh.setText(invertLowhigh ? w.getFormattedHigh() + " | " + w.getFormattedLow() : w.getFormattedLow() + " | " + w.getFormattedHigh());
             }
             if (mWeatherUpdateTime != null) {
-                Date lastTime = new Date(w.last_sync);
-                String date = DateFormat.getDateFormat(mContext).format(lastTime);
-                String time = DateFormat.getTimeFormat(mContext).format(lastTime);
+                String date = DateFormat.getDateFormat(mContext).format(w.getTimestamp());
+                String time = DateFormat.getTimeFormat(mContext).format(w.getTimestamp());
                 mWeatherUpdateTime.setText(date + " " + time);
                 mWeatherUpdateTime.setVisibility(showTimestamp ? View.VISIBLE : View.GONE);
             }
