@@ -418,7 +418,6 @@ private:
                 Region                      mInvalidRegion;
                 Region                      mWormholeRegion;
                 bool                        mVisibleRegionsDirty;
-                bool                        mDeferReleaseConsole;
                 bool                        mFreezeDisplay;
                 int32_t                     mElectronBeamAnimationMode;
                 int32_t                     mFreezeCount;
