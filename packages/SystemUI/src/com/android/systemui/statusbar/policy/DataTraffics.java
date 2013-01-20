@@ -183,12 +183,12 @@ public class DataTraffics extends TextView {
         y = (int)what;
         z = (int)(y * BYTE_TO_KILOBIT);
         if ( z < 0 ) {
-           result = "0 KB/s";
+           result = "00.0K/s";
         } else if (z > EXPECTED_SIZE_IN_KILOBIT) {
            z = (int)(y * BYTE_TO_KILOBIT * KILOBIT_TO_MEGABIT);
-           result = mDecimalFormater.format(z)+"MB/s";
+           result = mDecimalFormater.format(z)+"M/s";
         } else {
-           result = mDecimalFormater.format(z)+"KB/s";
+           result = mDecimalFormater.format(z)+"K/s";
         }
         return result;
     }

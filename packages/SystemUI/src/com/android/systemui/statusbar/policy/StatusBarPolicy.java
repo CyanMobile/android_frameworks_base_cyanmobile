@@ -42,6 +42,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
+import android.telephony.SmsMessage;
+import android.os.Bundle;
 import android.os.BatteryManager;
 import android.os.Binder;
 import android.os.Handler;
@@ -949,14 +951,31 @@ public class StatusBarPolicy {
     private void onSmsDialog(Intent intent) {
         Handler hsms = new Handler();
         final ContentResolver cr = mContext.getContentResolver();
-        if ((Settings.System.getInt(cr, Settings.System.USE_POPUP_SMS, 1) == 1)
+        final long dateTaken = System.currentTimeMillis();
+	StringBuilder body = new StringBuilder();// sms content
+	StringBuilder number = new StringBuilder();// sms sender number
+	Bundle bundle = intent.getExtras();
+	if (bundle != null) {
+            Object[] _pdus = (Object[]) bundle.get("pdus");
+            SmsMessage[] message = new SmsMessage[_pdus.length];
+            for (int i = 0; i < _pdus.length; i++) {
+               message[i] = SmsMessage.createFromPdu((byte[]) _pdus[i]);
+            }
+            for (SmsMessage currentMessage : message) {
+               body.append(currentMessage.getDisplayMessageBody());
+               number.append(currentMessage.getDisplayOriginatingAddress());
+            }
+            final String smsBody = body.toString();
+            final String smsNumber = number.toString();
+            if ((Settings.System.getInt(cr, Settings.System.USE_POPUP_SMS, 1) == 1)
                        && mPhoneState == TelephonyManager.CALL_STATE_IDLE) {
-            hsms.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    setSmsInfo(mContext);
-                }
-            },1500);
+               hsms.postDelayed(new Runnable() {
+                  @Override
+                  public void run() {
+                    setSmsInfo(mContext, smsNumber, smsBody, dateTaken);
+                  }
+               },100);
+            }
         }
     }
 
@@ -1133,14 +1152,14 @@ public class StatusBarPolicy {
         }
     }
 
-    private void setSmsInfo(Context context) {
+    private void setSmsInfo(Context context, String smsNumber, String smsBody, long dateTaken) {
         if (mSmsDialog != null) mSmsDialog.dismiss();
 
         smsCount = SmsHelper.getUnreadSmsCount(context);
-        callNumber = SmsHelper.getSmsNumber(context);
+        callNumber = smsNumber;
         callerName = SmsHelper.getName(context, callNumber);
-        inboxMessage = SmsHelper.getSmsBody(context);
-        inboxDate = SmsHelper.getDate(context, 0);
+        inboxMessage = smsBody;
+        inboxDate = SmsHelper.getDate(context, dateTaken);
         messageId = SmsHelper.getSmsId(context);
         contactImage = SmsHelper.getContactPicture(
                 context, callNumber);

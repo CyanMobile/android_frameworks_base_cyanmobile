@@ -22,4 +22,5 @@
     <drawable name="notification_number_text_color">#ffffffff</drawable>
     <color name="carrier_label_text_color">#ffdfdfdf</color>
     <color name="clear_button_text_color">#ff000000</color>
+    <drawable name="intruder_bg_pressed">#ff33B5E5</drawable>
 </resources>

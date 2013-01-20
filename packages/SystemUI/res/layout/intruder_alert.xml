@@ -22,41 +22,31 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_height="wrap_content"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
+    android:id="@+id/intruder_alert_content"
+    android:background="@drawable/qs_tile_background"
     >
 
+    <ImageView android:id="@+id/alertIcon"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:background="@*android:drawable/status_bar_latest_event_panel"
+        android:scaleType="center"
+        />
+
     <LinearLayout
-        android:id="@+id/intruder_alert_content"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:animationCache="false"
-        android:orientation="horizontal"
-        android:background="@android:drawable/alert_dark_frame"
-        android:clickable="true"
-        android:focusable="true"
-        android:descendantFocusability="afterDescendants"
-        >
-        <ImageView
-            android:id="@+id/alertIcon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:gravity="center"
-            android:layout_centerInParent="true"
-            android:layout_gravity="center"
-            android:scaleType="fitCenter"
-            />
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
         >
         <TextView android:id="@+id/alertText"
-            android:textAppearance="@*android:style/TextAppearance.StatusBar.EventContent"
-            android:layout_width="wrap_content"
+            android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Intruder"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:singleLine="false"
             />
-    </LinearLayout>
     </LinearLayout>
 </LinearLayout>
