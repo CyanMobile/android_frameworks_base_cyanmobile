@@ -79,10 +79,7 @@ public class CmTileProfileIndicator extends ImageView {
     public CmTileProfileIndicator(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        // get color from global statusbar style
-        TextAppearanceSpan ta = new TextAppearanceSpan(context,
-                R.style.TextAppearance_StatusBar);
-        mColor = ta.getTextColor().getDefaultColor();
+        mColor = context.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
 
         // initilize paint for later text output
         mPaint = new Paint();
@@ -94,7 +91,7 @@ public class CmTileProfileIndicator extends ImageView {
 
         // get background drawable
         Bitmap bgImmutable = CmSystem.getBitmapFor(context.getResources(),
-                R.drawable.ic_lock_profile);
+                com.android.systemui.R.drawable.ic_qs_profiles);
         mBackground=bgImmutable.copy(Bitmap.Config.ARGB_8888, true);
 
         // replace #ff00ff color in bitmap with color from theme
