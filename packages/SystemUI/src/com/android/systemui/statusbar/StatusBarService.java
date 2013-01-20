@@ -108,6 +108,7 @@ import android.util.TypedValue;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
+import android.view.IWindowManager;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -156,6 +157,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private static final int BRIGHTNESS_CONTROL_LONG_PRESS_TIMEOUT = 750; // ms
     private static final int BRIGHTNESS_CONTROL_LINGER_THRESHOLD = 20;
     private boolean mBrightnessControl;
+
+    public static final int KEYCODE_VIRTUAL_BACK_LONG=KeyEvent.getMaxKeyCode()+2;
 
     private static final int MSG_ANIMATE = 1000;
     private static final int MSG_ANIMATE_REVEAL = 1001;
@@ -549,7 +552,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     };
 
-
     @Override
     public void onCreate() {
         // First set up our views and stuff.
@@ -929,6 +931,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mCarrierLabelLayout = (LinearLayout) mExpandedView.findViewById(R.id.carrier_label_layout);
         mCompactCarrierLayout = (LinearLayout) mExpandedView.findViewById(R.id.compact_carrier_layout);
         mAvalMemLayout = (LinearLayout) mExpandedView.findViewById(R.id.memlabel_layout);
+        mAvalMemLayout.setOnClickListener(mAvalMemLayoutListener);
         memHeader = (TextView) mExpandedView.findViewById(R.id.avail_mem_text);
         avalMemPB = (ProgressBar) mExpandedView.findViewById(R.id.aval_memos);
         mTicker = new MyTicker(context, mStatusBarView);
@@ -2992,6 +2995,13 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     };
 
+    private View.OnClickListener mAvalMemLayoutListener = new View.OnClickListener() {
+        public void onClick(View v) {
+            simulateKeypress(KEYCODE_VIRTUAL_BACK_LONG);
+            getMemInfo();
+        }
+    };
+
     private View.OnClickListener mTogglePowerListener = new View.OnClickListener() {
         public void onClick(View v) {
              if (NotifEnable) {
@@ -3263,4 +3273,37 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             vibrate();
         }
     };
+
+    /**
+     * Runnable to hold simulate a keypress.
+     *
+     * This is executed in a separate Thread to avoid blocking
+     */
+    private void simulateKeypress(final int keyCode) {
+        new Thread(new KeyEventInjector( keyCode ) ).start();
+    }
+
+    private class KeyEventInjector implements Runnable {
+        private int keyCode;
+
+        KeyEventInjector(final int keyCode) {
+            this.keyCode = keyCode;
+        }
+
+        public void run() {
+            try {
+                if (!(IWindowManager.Stub.asInterface(ServiceManager.getService("window")))
+                         .injectKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, keyCode), true) ) {
+                                   Slog.w(TAG, "Key down event not injected");
+                                   return;
+                              }
+                if (!(IWindowManager.Stub.asInterface(ServiceManager.getService("window")))
+                         .injectKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, keyCode), true) ) {
+                                  Slog.w(TAG, "Key up event not injected");
+                             }
+           } catch (RemoteException ex) {
+               Slog.w(TAG, "Error injecting key event", ex);
+           }
+        }
+    }
 }
