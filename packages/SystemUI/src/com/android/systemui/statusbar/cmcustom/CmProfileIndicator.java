@@ -80,9 +80,7 @@ public class CmProfileIndicator extends ImageView {
         super(context, attrs, defStyle);
 
         // get color from global statusbar style
-        TextAppearanceSpan ta = new TextAppearanceSpan(context,
-                R.style.TextAppearance_StatusBar);
-        mColor = ta.getTextColor().getDefaultColor();
+        mColor = context.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
 
         // initilize paint for later text output
         mPaint = new Paint();
