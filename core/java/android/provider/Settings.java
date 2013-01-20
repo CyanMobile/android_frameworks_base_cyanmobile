@@ -4435,7 +4435,7 @@ public final class Settings {
             SHOW_NAVI_BUTTONS,
             WATCH_IS_NEXT,
             WATCH_IS_PREVIOUS,
-            NAVI_BUTTONS_ANIMATE
+            NAVI_BUTTONS_ANIMATE,
             ENABLE_FLIP_ANIMATE,
             SHOW_STATUSBAR_LOCKSCREEN,
             STATUS_BAR_DEAD_ZONE,
