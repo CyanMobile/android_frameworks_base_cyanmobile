@@ -32,7 +32,7 @@ public class PowerMenuTile extends QuickSettingsTile {
         super(context, inflater, container, qsc);
 
         mLabel = mContext.getString(R.string.quick_settings_powermenu_label);
-        mDrawable = com.android.internal.R.drawable.ic_lock_power_off; // need resource here
+        mDrawable = R.drawable.ic_qs_power_off;
 
         mOnClick = new View.OnClickListener() {
             @Override
