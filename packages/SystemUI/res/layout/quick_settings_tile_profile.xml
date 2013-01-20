@@ -13,25 +13,26 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<FrameLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:orientation="vertical">
     <com.android.systemui.statusbar.cmcustom.CmTileProfileIndicator
         android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="10dp"
         />
     <TextView
         style="@style/TextAppearance.QuickSettings.TileView"
         android:id="@+id/user_textview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal|bottom"
+        android:layout_gravity="center_horizontal"
         android:gravity="center"
         android:text="@string/quick_settings_user_label"
-        android:background="#CC000000"
         />
-</FrameLayout>
+</LinearLayout>

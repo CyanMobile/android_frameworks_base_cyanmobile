@@ -34,6 +34,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
+import com.android.systemui.statusbar.quicksettings.quicktile.AlarmTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.AirplaneModeTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.AutoRotateTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.BatteryTile;
@@ -103,6 +104,7 @@ public class QuickSettingsController {
     public static final String TILE_NOTIF = "toggleNotif";
     public static final String TILE_PROFILE = "toggleProfile";
     public static final String TILE_POWER = "togglePower";
+    public static final String TILE_ALARM = "toggleAlarm";
 
     private static final String TILE_DELIMITER = "|";
     private static final String TILES_DEFAULT = TILE_USER
@@ -163,6 +165,7 @@ public class QuickSettingsController {
     public static final int NOTIF_TILE = 21;
     public static final int PROFILE_TILE = 22;
     public static final int POWER_TILE = 23;
+    public static final int ALARM_TILE = 24;
 
     public static final int USER_TILE = 99;
 
@@ -245,6 +248,8 @@ public class QuickSettingsController {
                 mQuickSettings.add(PROFILE_TILE);
             } else if (tile.equals(TILE_POWER)) {
                 mQuickSettings.add(POWER_TILE);
+            } else if (tile.equals(TILE_ALARM)) {
+                mQuickSettings.add(ALARM_TILE);
             } else if (tile.equals(TILE_USER)) {
                 mQuickSettings.add(USER_TILE);
                 // Not available yet
@@ -421,6 +426,9 @@ public class QuickSettingsController {
                 break;
             case POWER_TILE:
                 qs = new PowerMenuTile(mContext, inflater, mContainerView, this);
+                break;
+            case ALARM_TILE:
+                qs = new AlarmTile(mContext, inflater, mContainerView, this);
                 break;
             case USER_TILE:
                 qs = new UserTile(mContext, inflater, mContainerView, this);
