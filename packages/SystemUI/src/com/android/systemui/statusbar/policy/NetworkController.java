@@ -541,8 +541,7 @@ public class NetworkController {
                      action.equals(WimaxManagerConstants.RSSI_CHANGED_ACTION)) {
                 updateWiMAX(intent);
                 refreshViews();
-            } else if (Intent.ACTION_BATTERY_CHANGED.equals(action) ||
-                 Intent.ACTION_CONFIGURATION_CHANGED.equals(action)) {
+            } else if (Intent.ACTION_CONFIGURATION_CHANGED.equals(action)) {
                 refreshViews();
             }
         }
@@ -572,7 +571,6 @@ public class NetworkController {
         mContext = context;
         mHandler = new Handler();
         mSignalStrength = new SignalStrength();
-        mBatteryStats = BatteryStatsService.getService();
 
         SettingsObserver settingsObserver = new SettingsObserver(mHandler);
         settingsObserver.observe();
@@ -613,7 +611,6 @@ public class NetworkController {
         IntentFilter filter = new IntentFilter();
 
         // Register for Intent broadcasts for...
-        filter.addAction(Intent.ACTION_BATTERY_CHANGED);
         filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
         filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         filter.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
@@ -638,6 +635,8 @@ public class NetworkController {
         } catch (Exception e) {
             mHspaDataDistinguishable = false;
         }
+
+        mBatteryStats = BatteryStatsService.getService();
     }
 
     public void notifySignalsChangedCallbacks(NetworkSignalChangedCallback cb) {
