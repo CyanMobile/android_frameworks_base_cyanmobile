@@ -57,6 +57,7 @@ import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
 import com.android.systemui.statusbar.policy.NetworkController;
 import com.android.systemui.statusbar.policy.StatusBarPolicy;
+import com.android.systemui.statusbar.policy.DataTraffics;
 import com.android.systemui.R;
 import android.os.IPowerManager;
 import android.provider.Settings.SettingNotFoundException;
@@ -3165,6 +3166,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     LeftClock clockLeft = (LeftClock) mStatusBarView.findViewById(R.id.clockLe);
                     if (clockLeft != null) {
                         clockLeft.invalidate();
+                    }
+                    DataTraffics dataTraffics = (DataTraffics) mExpandedView.findViewById(R.id.dataTrafficsExp);
+                    if (dataTraffics != null) {
+                        dataTraffics.invalidate();
                     }
                 }
                 repositionNavigationBar();
