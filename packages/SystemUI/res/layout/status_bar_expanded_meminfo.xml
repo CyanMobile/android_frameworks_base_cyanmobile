@@ -20,7 +20,7 @@
     android:id="@+id/memlabel_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/notification_header_bg"
+    android:background="@drawable/meminfo_header_bg"
     android:orientation="vertical"
     android:gravity="center_vertical"
     >

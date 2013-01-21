@@ -96,6 +96,7 @@ public class DataTraffics extends TextView {
                         | PhoneStateListener.LISTEN_DATA_ACTIVITY);
 
         updateSettings();
+        mHandler.postDelayed(mResetData, 1000); //1 second
     }
 
     @Override
@@ -110,6 +111,8 @@ public class DataTraffics extends TextView {
             filter.addAction(Intent.ACTION_TIME_CHANGED);
             filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
             filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
+            filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+            filter.addAction(ConnectivityManager.INET_CONDITION_ACTION);
             filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
             filter.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
             filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
@@ -128,6 +131,13 @@ public class DataTraffics extends TextView {
             mAttached = false;
         }
     }
+
+    Runnable mResetData = new Runnable() {
+        public void run() {
+            updateDatas();
+            mHandler.postDelayed(mResetData, 1000); //1 second
+        }
+    };
 
     private final BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
         @Override
