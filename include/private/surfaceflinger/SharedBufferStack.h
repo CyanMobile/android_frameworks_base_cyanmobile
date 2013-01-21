@@ -65,7 +65,7 @@ public:
     // When changing these values, the COMPILE_TIME_ASSERT at the end of this
     // file need to be updated.
     static const unsigned int NUM_LAYERS_MAX  = 31;
-    static const unsigned int NUM_BUFFER_MAX  = 16;
+    static const unsigned int NUM_BUFFER_MAX  = 32;
     static const unsigned int NUM_BUFFER_MIN  = 2;
     static const unsigned int NUM_DISPLAY_MAX = 4;
 
@@ -123,7 +123,7 @@ public:
 
 // ----------------------------------------------------------------------------
 
-// 32 KB max
+// 64 KB max
 class SharedClient
 {
 public:
@@ -284,6 +284,8 @@ public:
     uint32_t getTransform(int buffer) const;
 
     status_t resize(int newNumBuffers);
+    status_t grow(int newNumBuffers);
+    status_t shrink(int newNumBuffers);
 
     SharedBufferStack::Statistics getStats() const;
     
@@ -345,6 +347,13 @@ private:
     int mNumBuffers;
     BufferList mBufferList;
 
+    struct BuffersAvailableCondition : public ConditionBase {
+        int mNumBuffers;
+        inline BuffersAvailableCondition(SharedBufferServer* sbs,
+                int numBuffers);
+        inline bool operator()() const;
+        inline const char* name() const { return "BuffersAvailableCondition"; }
+    };
 
     struct RetireUpdate : public UpdateBase {
         const int numBuffers;
@@ -385,7 +394,7 @@ struct surface_flinger_cblk_t   // 4KB max
 
 // ---------------------------------------------------------------------------
 
-COMPILE_TIME_ASSERT(sizeof(SharedClient) <= 32768)
+COMPILE_TIME_ASSERT(sizeof(SharedClient) <= 65536)
 COMPILE_TIME_ASSERT(sizeof(surface_flinger_cblk_t) <= 4096)
 
 // ---------------------------------------------------------------------------

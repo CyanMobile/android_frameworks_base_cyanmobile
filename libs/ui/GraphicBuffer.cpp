@@ -80,6 +80,19 @@ GraphicBuffer::GraphicBuffer(uint32_t w, uint32_t h,
     handle = inHandle;
 }
 
+GraphicBuffer::GraphicBuffer(android_native_buffer_t* buffer, bool keepOwnership)
+    : BASE(), mOwner(keepOwnership ? ownHandle : ownNone),
+      mBufferMapper(GraphicBufferMapper::get()),
+      mInitCheck(NO_ERROR), mIndex(-1), mWrappedBuffer(buffer)
+{
+    width  = buffer->width;
+    height = buffer->height;
+    stride = buffer->stride;
+    format = buffer->format;
+    usage  = buffer->usage;
+    handle = buffer->handle;
+}
+
 GraphicBuffer::~GraphicBuffer()
 {
     if (handle) {
@@ -90,12 +103,14 @@ GraphicBuffer::~GraphicBuffer()
 void GraphicBuffer::free_handle()
 {
     if (mOwner == ownHandle) {
+        mBufferMapper.unregisterBuffer(handle);
         native_handle_close(handle);
         native_handle_delete(const_cast<native_handle*>(handle));
     } else if (mOwner == ownData) {
         GraphicBufferAllocator& allocator(GraphicBufferAllocator::get());
         allocator.free(handle);
     }
+    mWrappedBuffer = 0;
 }
 
 status_t GraphicBuffer::initCheck() const {
@@ -265,6 +280,11 @@ status_t GraphicBuffer::unflatten(void const* buffer, size_t size,
     }
 
     mOwner = ownHandle;
+
+    if (handle != 0) {
+        mBufferMapper.registerBuffer(handle);
+    }
+
     return NO_ERROR;
 }
 

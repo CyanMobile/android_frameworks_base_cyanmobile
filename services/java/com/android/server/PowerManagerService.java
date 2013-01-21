@@ -200,11 +200,15 @@ class PowerManagerService extends IPowerManager.Stub
     static final int INITIAL_BUTTON_BRIGHTNESS = Power.BRIGHTNESS_OFF;
     static final int INITIAL_KEYBOARD_BRIGHTNESS = Power.BRIGHTNESS_OFF;
 
+    // Max time (microseconds) to allow a CPU boost for
+    static final int MAX_CPU_BOOST_TIME = 5000000;
+
     private final int MY_UID;
     private final int MY_PID;
 
     private boolean mDoneBooting = false;
     private boolean mBootCompleted = false;
+    private boolean mHeadless = false;
     private int mStayOnConditions = 0;
     private final int[] mBroadcastQueue = new int[] { -1, -1, -1 };
     private final int[] mBroadcastWhy = new int[3];
@@ -307,6 +311,13 @@ class PowerManagerService extends IPowerManager.Stub
     private boolean mFlashlightAffectsLightSensor;
     private boolean mIgnoreLightSensor;
     private float mWindowScaleAnimation;
+
+    // When using software auto-brightness, determines whether (true) button
+    // and keyboard backlights should also be under automatic brightness
+    // control (i.e., for dimmable backlights), or (false) if they should use
+    // hard-coded brightness settings that timeout-to-off in subsequent screen
+    // power states.
+    private boolean mAutoBrightnessButtonKeyboard;
 
     // Must match with the ISurfaceComposer constants in C++.
     private static final int ANIM_SETTING_ON = 0x01;
@@ -604,9 +615,6 @@ class PowerManagerService extends IPowerManager.Stub
         MY_PID = Process.myPid();
         Binder.restoreCallingIdentity(token);
 
-        // XXX remove this when the kernel doesn't timeout wake locks
-        Power.setLastUserActivityTimeout(7*24*3600*1000); // one week
-
         // assume nothing is on yet
         mUserState = mPowerState = 0;
 
@@ -630,6 +638,7 @@ class PowerManagerService extends IPowerManager.Stub
         mAttentionLight = lights.getLight(LightsService.LIGHT_ID_ATTENTION);
         mCapsLight = lights.getLight(LightsService.LIGHT_ID_CAPS);
         mFnLight = lights.getLight(LightsService.LIGHT_ID_FUNC);
+        mHeadless = "1".equals(SystemProperties.get("ro.config.headless", "0"));
 
         mInitComplete = false;
         mScreenBrightnessAnimator = new ScreenBrightnessAnimator("mScreenBrightnessUpdaterThread",
@@ -711,10 +720,13 @@ class PowerManagerService extends IPowerManager.Stub
                 com.android.internal.R.bool.config_flashlight_affects_lightsensor);
         mUseAutoBrightness = resources.getBoolean(
                 com.android.internal.R.bool.config_automatic_brightness_available);
-        if (mUseAutoBrightness) {
             // read config software (or hardware) control for auto-brightness
-            mUseSoftwareAutoBrightness = resources.getBoolean(
+        mUseSoftwareAutoBrightness = mUseAutoBrightness && resources.getBoolean(
                     com.android.internal.R.bool.config_automaticSoftwareBrightness);
+        if (mUseSoftwareAutoBrightness) {
+            mAutoBrightnessButtonKeyboard = true;
+        } else {
+            mAutoBrightnessButtonKeyboard = false;
         }
         if (mUseSoftwareAutoBrightness) {
             mAutoBrightnessLevels = resources.getIntArray(
@@ -925,7 +937,7 @@ class PowerManagerService extends IPowerManager.Stub
             switch (wl.flags & LOCK_MASK)
             {
                 case PowerManager.FULL_WAKE_LOCK:
-                    if (mUseSoftwareAutoBrightness) {
+                    if (mAutoBrightnessButtonKeyboard) {
                         wl.minState = SCREEN_BRIGHT;
                     } else {
                         wl.minState = (mKeyboardVisible ? ALL_BRIGHT : SCREEN_BUTTON_BRIGHT);
@@ -1196,6 +1208,15 @@ class PowerManagerService extends IPowerManager.Stub
         }
     }
 
+    public void cpuBoost(int duration)
+    {
+        if (duration > 0 && duration <= MAX_CPU_BOOST_TIME) {
+            //nativeCpuBoost(duration);
+        } else {
+            Log.e(TAG, "Invalid boost duration: " + duration);
+        }
+    }
+
     private static String lockType(int type)
     {
         switch (type)
@@ -1222,6 +1243,8 @@ class PowerManagerService extends IPowerManager.Stub
                         ? "SCREEN_BRIGHT_BIT " : "")
                 + (((state & SCREEN_ON_BIT) != 0)
                         ? "SCREEN_ON_BIT " : "")
+                + (((state & BUTTON_BRIGHT_BIT) != 0)
+                        ? "BUTTON_BRIGHT_BIT " : "")
                 + (((state & BATTERY_LOW_BIT) != 0)
                         ? "BATTERY_LOW_BIT " : "");
     }
@@ -1294,6 +1317,7 @@ class PowerManagerService extends IPowerManager.Stub
                     + " mLightSensorButtonBrightness=" + mLightSensorButtonBrightness
                     + " mLightSensorKeyboardBrightness=" + mLightSensorKeyboardBrightness);
             pw.println("  mUseSoftwareAutoBrightness=" + mUseSoftwareAutoBrightness);
+            pw.println("  mAutoBrightnessButtonKeyboard=" + mAutoBrightnessButtonKeyboard);
             pw.println("  mAutoBrightessEnabled=" + mAutoBrightessEnabled);
             mScreenBrightnessAnimator.dump(pw, "mScreenBrightnessAnimator: ");
 
@@ -1872,7 +1896,7 @@ class PowerManagerService extends IPowerManager.Stub
                         + " noChangeLights=" + noChangeLights
                         + " reason=" + reason);
             }
-
+            
             if (noChangeLights) {
                 newState = (newState & ~LIGHTS_MASK) | (mPowerState & LIGHTS_MASK);
             }
@@ -1890,7 +1914,7 @@ class PowerManagerService extends IPowerManager.Stub
                 return;
             }
 
-            if (!mBootCompleted && !mUseSoftwareAutoBrightness) {
+            if (!mBootCompleted && !mAutoBrightnessButtonKeyboard) {
                 newState |= ALL_BRIGHT;
             }
 
@@ -1913,6 +1937,10 @@ class PowerManagerService extends IPowerManager.Stub
             }
 
             final boolean stateChanged = mPowerState != newState;
+
+            if (stateChanged && !newScreenOn && reason == WindowManagerPolicy.OFF_BECAUSE_OF_TIMEOUT) {
+            }
+
 
             if (oldScreenOn != newScreenOn) {
                 if (newScreenOn) {
@@ -2019,9 +2047,11 @@ class PowerManagerService extends IPowerManager.Stub
     }
 
     private void updateNativePowerStateLocked() {
-        nativeSetPowerState(
-                (mPowerState & SCREEN_ON_BIT) != 0,
-                (mPowerState & SCREEN_BRIGHT) == SCREEN_BRIGHT);
+        if (!mHeadless) {
+            nativeSetPowerState(
+                    (mPowerState & SCREEN_ON_BIT) != 0,
+                    (mPowerState & SCREEN_BRIGHT) == SCREEN_BRIGHT);
+        }
     }
 
     private int screenOffFinishedAnimatingLocked(int reason) {
@@ -2366,7 +2396,7 @@ class PowerManagerService extends IPowerManager.Stub
                                 + ", highestSensor:" + mHighestLightSensorValue);
                     }
 
-                    if (turningOff && mElectronBeamAnimationOff) {
+                    if (turningOff && !mHeadless && !mAnimateScreenLights) {
                         int mode = mScreenOffReason == OFF_BECAUSE_OF_PROX_SENSOR
                                 ? 0 : mAnimationSetting;
                         if (mDebugLightAnimation) {
@@ -2441,7 +2471,7 @@ class PowerManagerService extends IPowerManager.Stub
 
                 if (target != currentValue) {
                     final boolean doScreenAnim = (mask & (SCREEN_BRIGHT_BIT | SCREEN_ON_BIT)) != 0;
-                    final boolean turningOff = (endValue == Power.BRIGHTNESS_OFF);
+                    final boolean turningOff = endValue == Power.BRIGHTNESS_OFF;
                     if (turningOff && doScreenAnim) {
                         // Cancel all pending animations since we're turning off
                         mScreenBrightnessHandler.removeCallbacksAndMessages(null);
@@ -2502,7 +2532,7 @@ class PowerManagerService extends IPowerManager.Stub
         }
         if (mButtonBrightnessOverride >= 0) {
             brightness = mButtonBrightnessOverride;
-        } else if (mLightSensorButtonBrightness >= 0 && mUseSoftwareAutoBrightness) {
+        } else if (mLightSensorButtonBrightness >= 0 && mAutoBrightnessButtonKeyboard) {
             brightness = mLightSensorButtonBrightness;
         }
         if (brightness > 0) {
@@ -2524,7 +2554,7 @@ class PowerManagerService extends IPowerManager.Stub
             brightness = 0;
         } else if (mButtonBrightnessOverride >= 0) {
             brightness = mButtonBrightnessOverride;
-        } else if (mLightSensorKeyboardBrightness >= 0 && mUseSoftwareAutoBrightness) {
+        } else if (mLightSensorKeyboardBrightness >= 0 && mAutoBrightnessButtonKeyboard) {
             brightness =  mLightSensorKeyboardBrightness;
         }
         if (brightness > 0) {
@@ -2550,8 +2580,8 @@ class PowerManagerService extends IPowerManager.Stub
 
     private boolean isScreenTurningOffLocked() {
         return (mScreenBrightnessAnimator.isAnimating()
-                && (mScreenBrightnessAnimator.endValue == Power.BRIGHTNESS_OFF)
-                && ((mScreenBrightnessAnimator.currentMask & SCREEN_BRIGHT_BIT) != 0));
+                && mScreenBrightnessAnimator.endValue == Power.BRIGHTNESS_OFF
+                && (mScreenBrightnessAnimator.currentMask & SCREEN_BRIGHT_BIT) != 0);
     }
 
     private boolean shouldLog(long time) {
@@ -2672,9 +2702,11 @@ class PowerManagerService extends IPowerManager.Stub
             if (mLastEventTime <= time || force) {
                 mLastEventTime = time;
                 if ((mUserActivityAllowed && !mProximitySensorActive) || force) {
-                    // Only turn on button backlights if a button was pressed
-                    // and auto brightness is disabled
-                    if (eventType == BUTTON_EVENT && !mUseSoftwareAutoBrightness) {
+                    if (!mAutoBrightnessButtonKeyboard) {
+                        // Turn on button (and keyboard) backlights on any event, so that they
+                        // don't suddenly disappear when the lock screen is unlocked (OTHER_EVENT),
+                        // and so capacitive buttons can be found on devices where they lack
+                        // identifying surface features.
                         mUserState = (mKeyboardVisible ? ALL_BRIGHT : SCREEN_BUTTON_BRIGHT);
                     } else {
                         // don't clear button/keyboard backlights when the screen is touched.
@@ -3000,7 +3032,7 @@ class PowerManagerService extends IPowerManager.Stub
                             steps = IMMEDIATE_ANIM_STEPS;
                         } else {
                             synchronized (mScreenBrightnessAnimator) {
-                                if (mScreenBrightnessAnimator.currentValue != lcdValue) {
+                                if (mScreenBrightnessAnimator.currentValue <= lcdValue) {
                                     steps = AUTOBRIGHTNESS_ANIM_STEPS;
                                 } else {
                                     steps = AUTODIMNESS_ANIM_STEPS;
@@ -3012,10 +3044,10 @@ class PowerManagerService extends IPowerManager.Stub
                     }
                     mLastLcdValue = value;
                 }
-                if (mButtonBrightnessOverride < 0) {
+                if (mButtonBrightnessOverride < 0 && mAutoBrightnessButtonKeyboard) {
                     mButtonLight.setBrightness(buttonValue);
                 }
-                if (mButtonBrightnessOverride < 0 || !mKeyboardVisible) {
+                if ((mButtonBrightnessOverride < 0 || !mKeyboardVisible) && mAutoBrightnessButtonKeyboard) {
                     mKeyboardLight.setBrightness(keyboardValue);
                 }
             }
@@ -3508,7 +3540,7 @@ class PowerManagerService extends IPowerManager.Stub
         // wait until sensors are enabled before turning on screen.
         // some devices will not activate the light sensor properly on boot
         // unless we do this.
-        if (mUseSoftwareAutoBrightness) {
+        if (mAutoBrightnessButtonKeyboard) {
             // turn the screen on
             setPowerState(SCREEN_BRIGHT);
         } else {
