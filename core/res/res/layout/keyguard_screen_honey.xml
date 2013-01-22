@@ -52,19 +52,15 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
             android:layout_below="@id/carrier"
             android:orientation="horizontal"
             android:layout_marginTop="3dip"
-            android:layout_marginLeft="20dip"
-            android:layout_marginRight="20dip" >
+            android:layout_marginLeft="16dip"
+            android:layout_marginRight="16dip" >
 
-        <LinearLayout android:id="@+id/timePost"
+         <LinearLayout android:id="@+id/timePost"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical" >
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
+            android:layout_gravity="center"
             android:gravity="center" 
-            android:orientation="horizontal" >
+            android:orientation="vertical" >
             <TextView android:id="@+id/weatherthree_textview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -78,6 +74,21 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
                 android:shadowDy="0"
                 android:shadowRadius="3.0"
                 />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center" 
+                android:orientation="vertical" >
+                <ImageView
+                    android:id="@+id/weather_image"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_gravity="center_horizontal"
+                    android:gravity="center"
+                    android:scaleType="centerCrop"
+                    />
+            </LinearLayout>
             <TextView android:id="@+id/weatherone_textview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -92,40 +103,12 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
                 android:shadowRadius="3.0"
                 />
          </LinearLayout>
-            <FrameLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:gravity="center" >
-                <ImageView
-                    android:id="@+id/weather_image"
-                    android:layout_width="52dp"
-                    android:layout_height="52dp"
-                    android:layout_gravity="center_horizontal"
-                    android:gravity="center" 
-                    android:scaleType="centerCrop"
-                    />
-                <TextView android:id="@+id/timeDisplay"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:singleLine="true"
-                    android:ellipsize="none"
-                    android:textSize="72sp"
-                    android:layout_gravity="center_horizontal"
-                    android:gravity="center" 
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:shadowColor="#C0000000"
-                    android:shadowDx="0"
-                    android:shadowDy="0"
-                    android:shadowRadius="3.0"
-                    />
-            </FrameLayout>
-        <LinearLayout
+         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:gravity="center" 
-            android:orientation="horizontal" >
+            android:orientation="vertical" >
             <TextView android:id="@+id/weatherfour_textview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -139,6 +122,39 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
                 android:shadowDy="0"
                 android:shadowRadius="3.0"
                 />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:gravity="center" 
+                android:orientation="horizontal" >
+                <TextView android:id="@+id/timeDisplay"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:singleLine="true"
+                    android:ellipsize="none"
+                    android:layout_gravity="center_horizontal"
+                    android:gravity="center"
+                    android:textSize="52sp"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:shadowColor="#C0000000"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="3.0"
+                    />
+                 <TextView android:id="@+id/am_pm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:singleLine="true"
+                    android:ellipsize="none"
+                    android:layout_marginLeft="2dip"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:shadowColor="#C0000000"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="3.0"
+                    />
+            </LinearLayout>
             <TextView android:id="@+id/weathertwo_textview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -153,21 +169,6 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
                 android:shadowRadius="3.0"
                 />
          </LinearLayout>
-         </LinearLayout>
-            <TextView android:id="@+id/am_pm"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignBaseline="@id/timePost"
-                android:singleLine="true"
-                android:ellipsize="none"
-                android:textSize="22sp"
-                android:layout_marginLeft="8dip"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:shadowColor="#C0000000"
-                android:shadowDx="0"
-                android:shadowDy="0"
-                android:shadowRadius="3.0"
-                />
         </com.android.internal.widget.DigitalWeatherClock>
 
         <TextView
