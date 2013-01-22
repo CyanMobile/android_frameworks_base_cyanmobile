@@ -62,6 +62,9 @@ public class CarrierLabelExp extends TextView {
 
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.CARRIER_LABEL_TYPE),
+                    false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_CARRIERCOLOR), false, this);
             resolver.registerContentObserver(Settings.System
@@ -144,25 +147,31 @@ public class CarrierLabelExp extends TextView {
                     + " showPlmn=" + showPlmn + " plmn=" + plmn);
         }
 
-        mShowSpn = showSpn;
-        mSpn = spn;
-        mShowPlmn = showPlmn;
-        mPlmn = plmn;
-        int CColours = mCarrierColor;
+        final String str;
+        final boolean plmnValid = (showPlmn && plmn != null);
+        final boolean spnValid = (showSpn && spn != null);
+        final boolean haveSignal = plmnValid || spnValid;
 
-        boolean haveSignal = (showPlmn && plmn != null) || (showSpn && spn != null);
         if (!haveSignal) {
             if (mAirplaneOn) {
-                setText("Airplane Mode");
-                setTextColor(CColours);
+                str = "Airplane Mode";
             } else {
-                setText(com.android.internal.R.string.lockscreen_carrier_default);
-                setTextColor(CColours);
+                str = mContext.getResources().getString(com.android.internal.R.string.lockscreen_carrier_default);
             }
         } else {
-                setText(spn);
-                setTextColor(CColours);
+            if (plmnValid && spnValid) {
+                str = plmn + "|" + spn;
+            } else if (plmnValid) {
+                str = plmn;
+            } else if (spnValid) {
+                str = spn;
+            } else {
+                str = "";
+            }
         }
+
+        setText(str);
+        setTextColor(mCarrierColor);
     }
 
 }
