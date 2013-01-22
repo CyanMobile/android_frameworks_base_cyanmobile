@@ -359,4 +359,7 @@ interface IPackageManager {
     VerifierDeviceIdentity getVerifierDeviceIdentity();
 
     boolean isFirstBoot();
+
+    void setPermissionEnforcement(String permission, int enforcement);
+    int getPermissionEnforcement(String permission);
 }

@@ -822,6 +822,11 @@ public class ActivityStack {
             if (mService.mShuttingDown) {
                 mService.notifyAll();
             }
+            if (topRunningActivityLocked(null) == null) {
+                // If there are no more activities available to run, then
+                // do resume anyway to start something.
+                resumeTopActivityLocked(null);
+            }
         }
         
         if (prev != null) {
@@ -1992,7 +1997,7 @@ public class ActivityStack {
         }
 
         final int perm = mService.checkComponentPermission(aInfo.permission, callingPid,
-                callingUid, aInfo.exported ? -1 : aInfo.applicationInfo.uid);
+                callingUid, aInfo.exported ? -1 : aInfo.applicationInfo.uid, aInfo.exported);
         if (perm != PackageManager.PERMISSION_GRANTED) {
             if (resultRecord != null) {
                 sendActivityResultLocked(-1,
@@ -2772,6 +2777,7 @@ public class ActivityStack {
         IApplicationThread sendThumbnail = null;
         boolean booting = false;
         boolean enableScreen = false;
+        boolean activityRemoved = false;
 
         synchronized (mService) {
             if (token != null) {
@@ -2876,7 +2882,7 @@ public class ActivityStack {
         for (i=0; i<NF; i++) {
             ActivityRecord r = (ActivityRecord)finishes.get(i);
             synchronized (mService) {
-                destroyActivityLocked(r, true);
+                activityRemoved = destroyActivityLocked(r, true);
             }
         }
 
@@ -2896,6 +2902,10 @@ public class ActivityStack {
 
         if (enableScreen) {
             mService.enableScreenAfterBoot();
+        }
+
+        if (activityRemoved) {
+            resumeTopActivityLocked(null);
         }
     }
 
@@ -2937,6 +2947,36 @@ public class ActivityStack {
         return true;
     }
 
+    final void finishActivityResultsLocked(ActivityRecord r, int resultCode, Intent resultData) {
+        // send the result
+        ActivityRecord resultTo = r.resultTo;
+        if (resultTo != null) {
+            if (DEBUG_RESULTS) Slog.v(TAG, "Adding result to " + resultTo
+                    + " who=" + r.resultWho + " req=" + r.requestCode
+                    + " res=" + resultCode + " data=" + resultData);
+            if (r.info.applicationInfo.uid > 0) {
+                mService.grantUriPermissionFromIntentLocked(r.info.applicationInfo.uid,
+                        resultTo.packageName, resultData,
+                        resultTo.getUriPermissionsLocked());
+            }
+            resultTo.addResultLocked(r, r.resultWho, r.requestCode, resultCode,
+                                     resultData);
+            r.resultTo = null;
+        }
+        else if (DEBUG_RESULTS) Slog.v(TAG, "No result destination from " + r);
+
+        // Make sure this HistoryRecord is not holding on to other resources,
+        // because clients have remote IPC references to this object so we
+        // can't assume that will go away and want to avoid circular IPC refs.
+        r.results = null;
+        if(r.pendingResults != null) {
+           r.pendingResults.clear();
+           r.pendingResults = null;
+        }
+        r.newIntents = null;	
+        r.icicle = null;
+    }
+
     /**
      * @return Returns true if this activity has been removed from the history
      * list, or false if it is still in the list and will be removed later.
@@ -2976,34 +3016,7 @@ public class ActivityStack {
             }
         }
 
-        // send the result
-        ActivityRecord resultTo = r.resultTo;
-        if (resultTo != null) {
-            if (DEBUG_RESULTS) Slog.v(TAG, "Adding result to " + resultTo
-                    + " who=" + r.resultWho + " req=" + r.requestCode
-                    + " res=" + resultCode + " data=" + resultData);
-            if (r.info.applicationInfo.uid > 0) {
-                mService.grantUriPermissionFromIntentLocked(r.info.applicationInfo.uid,
-                        resultTo.packageName, resultData, 
-                        resultTo.getUriPermissionsLocked());
-            }
-            resultTo.addResultLocked(r, r.resultWho, r.requestCode, resultCode,
-                                     resultData);
-            r.resultTo = null;
-        }
-        else if (DEBUG_RESULTS) Slog.v(TAG, "No result destination from " + r);
-
-        // Make sure this HistoryRecord is not holding on to other resources,
-        // because clients have remote IPC references to this object so we
-        // can't assume that will go away and want to avoid circular IPC refs.
-        r.results = null;
-        if(r.pendingResults != null) {
-           r.pendingResults.clear();
-           r.pendingResults = null;
-        }
-        r.newIntents = null;
-        r.icicle = null;
-        
+        finishActivityResultsLocked(r, resultCode, resultData);
         if (mService.mPendingThumbnails.size() > 0) {
             // There are clients waiting to receive thumbnails so, in case
             // this is an activity that someone is waiting for, add it
@@ -3090,7 +3103,11 @@ public class ActivityStack {
                 || prevState == ActivityState.INITIALIZING) {
             // If this activity is already stopped, we can just finish
             // it right now.
-            return destroyActivityLocked(r, true) ? null : r;
+            boolean activityRemoved = destroyActivityLocked(r, true);
+            if (activityRemoved) {
+                resumeTopActivityLocked(null);
+            }
+            return activityRemoved ? null : r;
         } else {
             // Need to go through the full pause cycle to get this
             // activity into the stopped state and then finish it.
@@ -3108,7 +3125,7 @@ public class ActivityStack {
      * processing going away, in which case there is no remaining client-side
      * state to destroy so only the cleanup here is needed.
      */
-    final void cleanUpActivityLocked(ActivityRecord r, boolean cleanServices) {
+    final void cleanUpActivityLocked(ActivityRecord r, boolean cleanServices, boolean setState) {
         if (mResumedActivity == r) {
             mResumedActivity = null;
         }
@@ -3118,6 +3135,10 @@ public class ActivityStack {
 
         r.configDestroy = false;
         r.frozenBeforeDestroy = false;
+
+        if (setState) {
+            r.state = ActivityState.DESTROYED;
+        }
 
         // Make sure this record is no longer in the pending finishes list.
         // This could happen, for example, if we are trimming activities
@@ -3149,12 +3170,17 @@ public class ActivityStack {
         }
 
         // Get rid of any pending idle timeouts.
+        removeTimeoutsForActivityLocked(r);
+    }
+
+    private void removeTimeoutsForActivityLocked(ActivityRecord r) {
         mHandler.removeMessages(PAUSE_TIMEOUT_MSG, r);
         mHandler.removeMessages(IDLE_TIMEOUT_MSG, r);
     }
 
-    private final void removeActivityFromHistoryLocked(ActivityRecord r) {
+    final void removeActivityFromHistoryLocked(ActivityRecord r) {
         if (r.state != ActivityState.DESTROYED) {
+            finishActivityResultsLocked(r, Activity.RESULT_CANCELED, null);
             r.makeFinishing();
             mHistory.remove(r);
             r.inHistory = false;
@@ -3202,7 +3228,7 @@ public class ActivityStack {
 
         boolean removedFromHistory = false;
         
-        cleanUpActivityLocked(r, false);
+        cleanUpActivityLocked(r, false, true);
 
         final boolean hadApp = r.app != null;
         
@@ -3274,21 +3300,26 @@ public class ActivityStack {
 
     final void activityDestroyed(IBinder token) {
         synchronized (mService) {
+          final long origId = Binder.clearCallingIdentity();
+          try {
             mHandler.removeMessages(DESTROY_TIMEOUT_MSG, token);
             
             int index = indexOfTokenLocked(token);
             if (index >= 0) {
                 ActivityRecord r = (ActivityRecord)mHistory.get(index);
                 if (r.state == ActivityState.DESTROYING) {
-                    final long origId = Binder.clearCallingIdentity();
+                    cleanUpActivityLocked(r, true, false);
                     removeActivityFromHistoryLocked(r);
-                    Binder.restoreCallingIdentity(origId);
                 }
             }
+            resumeTopActivityLocked(null);
+          } finally {
+            Binder.restoreCallingIdentity(origId);
+          }
         }
     }
     
-    private static void removeHistoryRecordsForAppLocked(ArrayList list, ProcessRecord app) {
+    private void removeHistoryRecordsForAppLocked(ArrayList list, ProcessRecord app) {
         int i = list.size();
         if (localLOGV) Slog.v(
             TAG, "Removing app " + app + " from list " + list
@@ -3301,6 +3332,7 @@ public class ActivityStack {
             if (r.app == app) {
                 if (localLOGV) Slog.v(TAG, "Removing this entry!");
                 list.remove(i);
+                removeTimeoutsForActivityLocked(r);
                 r.resultTo = null;
             }
         }

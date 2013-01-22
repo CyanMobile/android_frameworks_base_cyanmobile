@@ -36,6 +36,7 @@ import static android.view.WindowManager.LayoutParams.TYPE_BASE_APPLICATION;
 import static android.view.WindowManager.LayoutParams.TYPE_INPUT_METHOD;
 import static android.view.WindowManager.LayoutParams.TYPE_INPUT_METHOD_DIALOG;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
+import static android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
 
 import com.android.internal.app.IBatteryStats;
 import com.android.internal.policy.PolicyManager;
@@ -255,6 +256,11 @@ public class WindowManagerService extends IWindowManager.Stub
      * actually disabled the keyguard.
      */
     private boolean mKeyguardDisabled = false;
+
+    private static final int KEYGUARD_NOT_SHOWN     = 0;
+    private static final int KEYGUARD_ANIMATING_IN  = 1;
+    private static final int KEYGUARD_SHOWN         = 2;
+    private static final int KEYGUARD_ANIMATING_OUT = 3;
 
     private static final int ALLOW_DISABLE_YES = 1;
     private static final int ALLOW_DISABLE_NO = 0;
@@ -8999,7 +9005,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
                 boolean tokenMayBeDrawn = false;
                 boolean wallpaperMayChange = false;
-                boolean forceHiding = false;
+                int forceHiding = KEYGUARD_NOT_SHOWN;
 
                 mPolicy.beginAnimationLw(dw, dh);
 
@@ -9009,6 +9015,7 @@ public class WindowManagerService extends IWindowManager.Stub
                     WindowState w = mWindows.get(i);
 
                     final WindowManager.LayoutParams attrs = w.mAttrs;
+                    final int attrFlags = attrs.flags;
 
                     if (w.mSurface != null) {
                         // Execute animation.
@@ -9037,14 +9044,27 @@ public class WindowManagerService extends IWindowManager.Stub
                                         + w);
                                 wallpaperForceHidingChanged = true;
                                 mFocusMayChange = true;
-                            } else if (w.isReadyForDisplay() && ((Settings.System.getInt(mContext.getContentResolver(),
-                                    Settings.System.LOCKSCREEN_SEE_THROUGH, 0) != 0) ||  w.mAnimation == null)) {
-                                forceHiding = (Settings.System.getInt(mContext.getContentResolver(),
-                                    Settings.System.LOCKSCREEN_SEE_THROUGH, 0) != 1) ? true : false;
                             }
+                            if (w.isReadyForDisplay() && (w.mAnimation == null)) {
+                                if (animating) {
+                                    if (w.mAnimationIsEntrance) {
+                                        forceHiding = (Settings.System.getInt(mContext.getContentResolver(),
+                                                Settings.System.LOCKSCREEN_SEE_THROUGH, 0) != 1) ? KEYGUARD_ANIMATING_IN : KEYGUARD_ANIMATING_OUT;
+                                     } else {
+                                        forceHiding = KEYGUARD_ANIMATING_OUT;
+                                     }
+                                 } else {
+                                     forceHiding = (Settings.System.getInt(mContext.getContentResolver(),
+                                                Settings.System.LOCKSCREEN_SEE_THROUGH, 0) != 1) ? KEYGUARD_SHOWN : KEYGUARD_ANIMATING_OUT;
+                                 }
+                             }
                         } else if (mPolicy.canBeForceHidden(w, attrs)) {
+                            final boolean hideWhenLocked =
+                                    (attrFlags & FLAG_SHOW_WHEN_LOCKED) == 0;
                             boolean changed;
-                            if (forceHiding) {
+                            if (((forceHiding == KEYGUARD_ANIMATING_IN)
+                                   && (!w.isAnimating() || hideWhenLocked))
+                                   || ((forceHiding == KEYGUARD_SHOWN) && hideWhenLocked)) {
                                 changed = w.hideLw(false, false);
                                 if (DEBUG_VISIBILITY && changed) Slog.v(TAG,
                                         "Now policy hidden: " + w);
@@ -9444,14 +9464,14 @@ public class WindowManagerService extends IWindowManager.Stub
                     if (mLowerWallpaperTarget == null) {
                         // Whoops, we don't need a special wallpaper animation.
                         // Clear them out.
-                        forceHiding = false;
+                        forceHiding = KEYGUARD_NOT_SHOWN;
                         for (i=N-1; i>=0; i--) {
                             WindowState w = mWindows.get(i);
                             if (w.mSurface != null) {
                                 final WindowManager.LayoutParams attrs = w.mAttrs;
                                 if (mPolicy.doesForceHide(w, attrs) && w.isVisibleLw()) {
                                     if (DEBUG_FOCUS) Slog.i(TAG, "win=" + w + " force hides other windows");
-                                    forceHiding = true;
+                                    forceHiding = KEYGUARD_SHOWN;
                                 } else if (mPolicy.canBeForceHidden(w, attrs)) {
                                     if (!w.mAnimating) {
                                         // We set the animation above so it

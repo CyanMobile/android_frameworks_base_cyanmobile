@@ -64,6 +64,10 @@ import android.content.pm.VerifierDeviceIdentity;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+import static android.content.pm.PackageManager.ENFORCEMENT_DEFAULT;
+import static android.content.pm.PackageManager.ENFORCEMENT_YES;
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+import static android.Manifest.permission.REVOKE_PERMISSIONS;
 import android.content.pm.PackageParser;
 import android.content.pm.PermissionInfo;
 import android.content.pm.PermissionGroupInfo;
@@ -150,6 +154,9 @@ class PackageManagerService extends IPackageManager.Stub {
     private static final boolean DEBUG_UPGRADE = false;
     private static final boolean DEBUG_INSTALL = false;
     private static final boolean DEBUG_STOPPED = false;
+
+    private static final String TAG_WRITE_EXTERNAL_STORAGE = "write-external-storage";
+    private static final String ATTR_ENFORCEMENT = "enforcement";
 
     private static final boolean MULTIPLE_APPLICATION_UIDS = true;
     private static final int RADIO_UID = Process.PHONE_UID;
@@ -1543,7 +1550,15 @@ class PackageManagerService extends IPackageManager.Stub {
             if (p != null) {
                 final PackageSetting ps = (PackageSetting)p.mExtras;
                 final SharedUserSetting suid = ps.sharedUser;
-                return suid != null ? removeInts(suid.gids, suid.revokedGids) : removeInts(ps.gids, ps.revokedGids);
+                int[] gids = suid != null ? removeInts(suid.gids, suid.revokedGids) : removeInts(ps.gids, ps.revokedGids);
+
+                // include GIDs for any unenforced permissions
+                if (!isPermissionEnforcedLocked(WRITE_EXTERNAL_STORAGE)) {
+                    final BasePermission basePerm = mSettings.mPermissions.get(
+                            WRITE_EXTERNAL_STORAGE);
+                    gids = appendInts(gids, basePerm.gids);
+                }
+                return gids;
             }
         }
         // stupid thing to indicate an error.
@@ -1841,6 +1856,12 @@ class PackageManagerService extends IPackageManager.Stub {
                         return PackageManager.PERMISSION_GRANTED;
                     }
                 }
+                if (!isPermissionEnforcedLocked(permName)) {
+                    return PackageManager.PERMISSION_GRANTED;
+                }
+            }
+            if (!isPermissionEnforcedLocked(permName)) {
+                return PackageManager.PERMISSION_GRANTED;
             }
         }
         return PackageManager.PERMISSION_DENIED;
@@ -1862,6 +1883,9 @@ class PackageManagerService extends IPackageManager.Stub {
                 if (perms != null && perms.contains(permName)) {
                     return PackageManager.PERMISSION_GRANTED;
                 }
+            }
+            if (!isPermissionEnforcedLocked(permName)) {
+                return PackageManager.PERMISSION_GRANTED;
             }
         }
         return PackageManager.PERMISSION_DENIED;
@@ -8938,6 +8962,8 @@ class PackageManagerService extends IPackageManager.Stub {
         
         private VerifierDeviceIdentity mVerifierDeviceIdentity;
 
+        int mReadExternalStorageEnforcement = ENFORCEMENT_DEFAULT;
+
         // The user's preferred activities associated with particular intent
         // filters.
         private final IntentResolver<PreferredActivity, PreferredActivity> mPreferredActivities =
@@ -9557,7 +9583,7 @@ class PackageManagerService extends IPackageManager.Stub {
             }
         }
 
-                void writeStoppedLP() {
+        void writeStoppedLP() {
             // Keep the old stopped packages around until we know the new ones have
             // been successfully written.
             if (mStoppedPackagesFilename.exists()) {
@@ -9776,6 +9802,13 @@ class PackageManagerService extends IPackageManager.Stub {
                     serializer.startTag(null, "verifier");
                     serializer.attribute(null, "device", mVerifierDeviceIdentity.toString());
                     serializer.endTag(null, "verifier");
+                }
+
+                if (mReadExternalStorageEnforcement != ENFORCEMENT_DEFAULT) {
+                    serializer.startTag(null, TAG_WRITE_EXTERNAL_STORAGE);
+                    serializer.attribute(
+                        null, ATTR_ENFORCEMENT, Integer.toString(mReadExternalStorageEnforcement));
+                    serializer.endTag(null, TAG_WRITE_EXTERNAL_STORAGE);
                 }
 
                 serializer.startTag(null, "permission-trees");
@@ -10229,8 +10262,14 @@ class PackageManagerService extends IPackageManager.Stub {
                         try {
                            mVerifierDeviceIdentity = VerifierDeviceIdentity.parse(deviceIdentity);
                         } catch (IllegalArgumentException e) {
-                           Slog.w(PackageManagerService.TAG, "Discard invalid verifier device id: "
+                           Slog.w(TAG, "Discard invalid verifier device id: "
                                 + e.getMessage());
+                        }
+                    } else if (TAG_WRITE_EXTERNAL_STORAGE.equals(tagName)) {
+                        final String enforcement = parser.getAttributeValue(null, ATTR_ENFORCEMENT);
+                        try {
+                           mReadExternalStorageEnforcement = Integer.parseInt(enforcement);
+                        } catch (NumberFormatException e) {
                         }
                     } else {
                         Slog.w(TAG, "Unknown element under <packages>: "
@@ -11541,5 +11580,58 @@ class PackageManagerService extends IPackageManager.Stub {
         synchronized (mPackages) {
             return mSettings.getVerifierDeviceIdentityLPw();
         }
+    }
+
+    @Override
+    public void setPermissionEnforcement(String permission, int enforcement) {
+        mContext.enforceCallingOrSelfPermission(REVOKE_PERMISSIONS, null);
+        if (WRITE_EXTERNAL_STORAGE.equals(permission)) {
+            synchronized (mPackages) {
+                if (mSettings.mReadExternalStorageEnforcement != enforcement) {
+                    mSettings.mReadExternalStorageEnforcement = enforcement;
+                    mSettings.writeLP();
+
+                    // kill any non-foreground processes so we restart them and
+                    // grant/revoke the GID.
+                    final IActivityManager am = ActivityManagerNative.getDefault();
+                    if (am != null) {
+                        final long token = Binder.clearCallingIdentity();
+                        try {
+                            am.killProcessesBelowForeground("setPermissionEnforcement");
+                        } catch (RemoteException e) {
+                        } finally {
+                            Binder.restoreCallingIdentity(token);
+                        }
+                    }
+                }
+            }
+        } else {
+            throw new IllegalArgumentException("No selective enforcement for " + permission);
+        }
+    }
+
+    @Override
+    public int getPermissionEnforcement(String permission) {
+        mContext.enforceCallingOrSelfPermission(REVOKE_PERMISSIONS, null);
+        if (WRITE_EXTERNAL_STORAGE.equals(permission)) {
+            synchronized (mPackages) {
+                return mSettings.mReadExternalStorageEnforcement;
+            }
+        } else {
+            throw new IllegalArgumentException("No selective enforcement for " + permission);
+        }
+    }
+
+    private boolean isPermissionEnforcedLocked(String permission) {
+        if (WRITE_EXTERNAL_STORAGE.equals(permission)) {
+            switch (mSettings.mReadExternalStorageEnforcement) {
+                case ENFORCEMENT_DEFAULT:
+                    return false;
+                case ENFORCEMENT_YES:
+                    return true;
+            }
+        }
+
+        return true;
     }
 }

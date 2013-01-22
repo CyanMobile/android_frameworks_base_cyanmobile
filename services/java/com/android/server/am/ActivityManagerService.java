@@ -729,7 +729,7 @@ public final class ActivityManagerService extends ActivityManagerNative
 
                 boolean skip = false;
                 int perm = checkComponentPermission(info.activityInfo.permission,
-                        r.callingPid, r.callingUid, info.activityInfo.applicationInfo.uid);
+                        r.callingPid, r.callingUid, info.activityInfo.exported ? -1 : info.activityInfo.applicationInfo.uid, info.activityInfo.exported);
                 if (perm != PackageManager.PERMISSION_GRANTED) {
                     if (!info.activityInfo.exported) {
                         Slog.w(TAG, "Permission Denial: broadcasting "
@@ -3283,16 +3283,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     if (localLOGV) Slog.v(
                         TAG, "Removing this entry!  frozen=" + r.haveState
                         + " finishing=" + r.finishing);
-                    r.makeFinishing();
-                    mMainStack.mHistory.remove(i);
-
-                    r.inHistory = false;
-                    r.resultTo = null;
-                    mWindowManager.removeAppToken(r);
-                    if (VALIDATE_TOKENS) {
-                        mWindowManager.validateAppTokens(mMainStack.mHistory);
-                    }
-                    r.removeUriPermissionsLocked();
+                    mMainStack.removeActivityFromHistoryLocked(r);
 
                 } else {
                     // We have the current state for this activity, so
@@ -3309,7 +3300,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     }
                 }
 
-                r.stack.cleanUpActivityLocked(r, true);
+                r.stack.cleanUpActivityLocked(r, true, true);
                 r.state = ActivityState.STOPPED;
             }
             atTop = false;
@@ -3732,7 +3723,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 }
                 if (uid == pkgUid || checkComponentPermission(
                         android.Manifest.permission.CLEAR_APP_USER_DATA,
-                        pid, uid, -1)
+                        pid, uid, -1, true)
                         == PackageManager.PERMISSION_GRANTED) {
                     forceStopPackageLocked(packageName, pkgUid);
                 } else {
@@ -3961,8 +3952,9 @@ public final class ActivityManagerService extends ActivityManagerNative
                         procs.add(app);
                     }
                 } else if ((uid > 0 && uid != Process.SYSTEM_UID && app.info.uid == uid)
-                        || app.processName.equals(packageName)
-                        || app.processName.startsWith(procNamePrefix)) {
+                        || ((app.processName.equals(packageName)
+                                 || app.processName.startsWith(procNamePrefix))
+                                && uid < 0)) {
                     if (app.setAdj >= minOomAdj) {
                         if (!doit) {
                             return true;
@@ -4423,8 +4415,17 @@ public final class ActivityManagerService extends ActivityManagerNative
     }
 
     public void dismissKeyguardOnNextActivity() {
-        synchronized (this) {
-            mMainStack.dismissKeyguardOnNextActivityLocked();
+        final long token = Binder.clearCallingIdentity();
+        try {
+            synchronized (this) {
+                if (mLockScreenShown) {
+                    mLockScreenShown = false;
+                    comeOutOfSleepIfNeededLocked();
+                }
+                mMainStack.dismissKeyguardOnNextActivityLocked();
+            }
+        } finally {
+            Binder.restoreCallingIdentity(token);
         }
     }
 
@@ -4673,7 +4674,9 @@ public final class ActivityManagerService extends ActivityManagerNative
         if (rec != null) {
             if (!cancelCurrent) {
                 if (updateCurrent) {
-                    rec.key.requestIntent.replaceExtras(intent);
+                    if (rec.key.requestIntent != null) {
+                        rec.key.requestIntent.replaceExtras(intent != null ? intent : null);
+                    }
                 }
                 return rec;
             }
@@ -4841,7 +4844,7 @@ public final class ActivityManagerService extends ActivityManagerNative
      * This can be called with or without the global lock held.
      */
     int checkComponentPermission(String permission, int pid, int uid,
-            int reqUid) {
+            int reqUid, boolean exported) {
         // We might be performing an operation on behalf of an indirect binder
         // invocation, e.g. via {@link #openContentUri}.  Check and adjust the
         // client identity accordingly before proceeding.
@@ -4892,7 +4895,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         if (permission == null) {
             return PackageManager.PERMISSION_DENIED;
         }
-        return checkComponentPermission(permission, pid, uid, -1);
+        return checkComponentPermission(permission, pid, uid, -1, true);
     }
 
     /**
@@ -5948,12 +5951,12 @@ public final class ActivityManagerService extends ActivityManagerNative
         final int callingPid = (r != null) ? r.pid : Binder.getCallingPid();
         final int callingUid = (r != null) ? r.info.uid : Binder.getCallingUid();
         if (checkComponentPermission(cpi.readPermission, callingPid, callingUid,
-                cpi.exported ? -1 : cpi.applicationInfo.uid)
+                cpi.exported ? -1 : cpi.applicationInfo.uid, cpi.exported)
                 == PackageManager.PERMISSION_GRANTED) {
             return null;
         }
         if (checkComponentPermission(cpi.writePermission, callingPid, callingUid,
-                cpi.exported ? -1 : cpi.applicationInfo.uid)
+                cpi.exported ? -1 : cpi.applicationInfo.uid, cpi.exported)
                 == PackageManager.PERMISSION_GRANTED) {
             return null;
         }
@@ -5965,12 +5968,12 @@ public final class ActivityManagerService extends ActivityManagerNative
                 i--;
                 PathPermission pp = pps[i];
                 if (checkComponentPermission(pp.getReadPermission(), callingPid, callingUid,
-                        cpi.exported ? -1 : cpi.applicationInfo.uid)
+                        cpi.exported ? -1 : cpi.applicationInfo.uid, cpi.exported)
                         == PackageManager.PERMISSION_GRANTED) {
                     return null;
                 }
                 if (checkComponentPermission(pp.getWritePermission(), callingPid, callingUid,
-                        cpi.exported ? -1 : cpi.applicationInfo.uid)
+                        cpi.exported ? -1 : cpi.applicationInfo.uid, cpi.exported)
                         == PackageManager.PERMISSION_GRANTED) {
                     return null;
                 }
@@ -6683,7 +6686,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             
         final int perm = checkComponentPermission(
                 android.Manifest.permission.STOP_APP_SWITCHES, callingPid,
-                callingUid, -1);
+                callingUid, -1, true);
         if (perm == PackageManager.PERMISSION_GRANTED) {
             return true;
         }
@@ -6861,7 +6864,43 @@ public final class ActivityManagerService extends ActivityManagerNative
         }
         return killed;
     }
-    
+
+    @Override
+    public boolean killProcessesBelowForeground(String reason) {
+        if (Binder.getCallingUid() != Process.SYSTEM_UID) {
+            throw new SecurityException("killProcessesBelowForeground() only available to system");
+        }
+
+        return killProcessesBelowAdj(ProcessList.FOREGROUND_APP_ADJ, reason);
+    }
+
+    private boolean killProcessesBelowAdj(int belowAdj, String reason) {
+        if (Binder.getCallingUid() != Process.SYSTEM_UID) {
+            throw new SecurityException("killProcessesBelowAdj() only available to system");
+        }
+
+        boolean killed = false;
+        synchronized (mPidsSelfLocked) {
+            final int size = mPidsSelfLocked.size();
+            for (int i = 0; i < size; i++) {
+                final int pid = mPidsSelfLocked.keyAt(i);
+                final ProcessRecord proc = mPidsSelfLocked.valueAt(i);
+                if (proc == null) continue;
+
+                final int adj = proc.setAdj;
+                if (adj > belowAdj && !proc.killedBackground) {
+                   Slog.w(TAG, "Killing " + proc + " (adj " + adj + "): " + reason);
+                    EventLog.writeEvent(
+                            EventLogTags.AM_KILL, proc.pid, proc.processName, adj, reason);
+                    killed = true;
+                    proc.killedBackground = true;
+                    Process.killProcessQuiet(pid);
+                }
+            }
+        }
+        return killed;
+    }
+
     public final void startRunning(String pkg, String cls, String action,
             String data) {
         synchronized(this) {
@@ -7305,7 +7344,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
         } else {
             ActivityRecord r = mMainStack.topRunningActivityLocked(null);
-            if (r.app == app) {
+            if (r != null && r.app == app) {
                 // If the top running activity is from this crashing
                 // process, then terminate it to avoid getting in a loop.
                 Slog.w(TAG, "  Force finishing activity "
@@ -7736,7 +7775,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
         };
 
-        if (process == null || process.pid == MY_PID) {
+        if (process == null) {
             worker.run();  // We may be about to die -- need to run this synchronously
         } else {
             worker.start();
@@ -9467,8 +9506,16 @@ public final class ActivityManagerService extends ActivityManagerNative
             int callingPid = Binder.getCallingPid();
             int callingUid = Binder.getCallingUid();
             if (checkComponentPermission(r.permission,
-                    callingPid, callingUid, r.exported ? -1 : r.appInfo.uid)
+                    callingPid, callingUid, r.exported ? -1 : r.appInfo.uid, r.exported)
                     != PackageManager.PERMISSION_GRANTED) {
+                if (!r.exported) {
+                    Slog.w(TAG, "Permission Denial: Accessing service " + r.name
+                            + " from pid=" + callingPid
+                            + ", uid=" + callingUid
+                            + " that is not exported from uid " + r.appInfo.uid);
+                    return new ServiceLookupResult(null, "not exported from uid "
+                            + r.appInfo.uid);
+                }
                 Slog.w(TAG, "Permission Denial: Accessing service " + r.name
                         + " from pid=" + callingPid
                         + ", uid=" + callingUid
@@ -9550,8 +9597,16 @@ public final class ActivityManagerService extends ActivityManagerNative
         }
         if (r != null) {
             if (checkComponentPermission(r.permission,
-                    callingPid, callingUid, r.exported ? -1 : r.appInfo.uid)
+                    callingPid, callingUid, r.exported ? -1 : r.appInfo.uid, r.exported)
                     != PackageManager.PERMISSION_GRANTED) {
+                if (!r.exported) {
+                    Slog.w(TAG, "Permission Denial: Accessing service " + r.name
+                            + " from pid=" + Binder.getCallingPid()
+                            + ", uid=" + Binder.getCallingUid()
+                            + " that is not exported from uid " + r.appInfo.uid);
+                    return new ServiceLookupResult(null, "not exported from uid "
+                            + r.appInfo.uid);
+                }
                 Slog.w(TAG, "Permission Denial: Accessing service " + r.name
                         + " from pid=" + Binder.getCallingPid()
                         + ", uid=" + Binder.getCallingUid()
@@ -9611,7 +9666,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     updateOomAdjLocked(r.app);
                 }
                 int flags = 0;
-                if (si.deliveryCount > 0) {
+                if (si.deliveryCount > 1) {
                     flags |= Service.START_FLAG_RETRY;
                 }
                 if (si.doneExecutingCount > 0) {
@@ -11096,7 +11151,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 || uidRemoved) {
             if (checkComponentPermission(
                     android.Manifest.permission.BROADCAST_PACKAGE_REMOVED,
-                    callingPid, callingUid, -1)
+                    callingPid, callingUid, -1, true)
                     == PackageManager.PERMISSION_GRANTED) {
                 if (uidRemoved) {
                     final Bundle intentExtras = intent.getExtras();
@@ -11563,7 +11618,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         boolean skip = false;
         if (filter.requiredPermission != null) {
             int perm = checkComponentPermission(filter.requiredPermission,
-                    r.callingPid, r.callingUid, -1);
+                    r.callingPid, r.callingUid, -1, true);
             if (perm != PackageManager.PERMISSION_GRANTED) {
                 Slog.w(TAG, "Permission Denial: broadcasting "
                         + r.intent.toString()
@@ -11576,7 +11631,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         }
         if (r.requiredPermission != null) {
             int perm = checkComponentPermission(r.requiredPermission,
-                    filter.receiverList.pid, filter.receiverList.uid, -1);
+                    filter.receiverList.pid, filter.receiverList.uid, -1, true);
             if (perm != PackageManager.PERMISSION_GRANTED) {
                 Slog.w(TAG, "Permission Denial: receiving "
                         + r.intent.toString()

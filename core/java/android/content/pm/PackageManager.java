@@ -873,6 +873,11 @@ public abstract class PackageManager {
     public static final String ACTION_CLEAN_EXTERNAL_STORAGE
             = "android.content.pm.CLEAN_EXTERNAL_STORAGE";
 
+    /** {@hide} */
+    public static final int ENFORCEMENT_DEFAULT = 0;
+    /** {@hide} */
+    public static final int ENFORCEMENT_YES = 1;
+
     /**
      * Retrieve overall information about an application package that is
      * installed on the system.

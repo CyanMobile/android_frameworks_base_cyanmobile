@@ -247,7 +247,9 @@ public interface IActivityManager extends IInterface {
     public void noteWakeupAlarm(IIntentSender sender) throws RemoteException;
     
     public boolean killPids(int[] pids, String reason) throws RemoteException;
-    
+
+    public boolean killProcessesBelowForeground(String reason) throws RemoteException;
+
     // Special low-level communication with activity manager.
     public void startRunning(String pkg, String cls, String action,
             String data) throws RemoteException;
@@ -538,4 +540,5 @@ public interface IActivityManager extends IInterface {
     int SHOW_BOOT_MESSAGE_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+118;
     int SET_LOCK_SCREEN_SHOWN_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+119;
     int DISMISS_KEYGUARD_ON_NEXT_ACTIVITY_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+120;
+    int KILL_PROCESSES_BELOW_FOREGROUND_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+121;
 }
