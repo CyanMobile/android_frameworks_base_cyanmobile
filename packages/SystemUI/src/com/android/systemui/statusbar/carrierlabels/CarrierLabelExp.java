@@ -166,7 +166,7 @@ public class CarrierLabelExp extends TextView {
             } else if (spnValid) {
                 str = spn;
             } else {
-                str = "";
+                str = mContext.getResources().getString(com.android.internal.R.string.lockscreen_carrier_default);
             }
         }
 
