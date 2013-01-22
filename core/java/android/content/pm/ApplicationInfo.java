@@ -280,7 +280,13 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
      * @hide
      */
     public static final int FLAG_SUPPORTS_XLARGE_SCREENS = 1<<19;
-    
+
+    /**
+     * Value for {@link #flags}: true if this application's package is in
+     * the stopped state.
+     */
+    public static final int FLAG_STOPPED = 1<<21;
+
     /**
      * Value for {@link #flags}: this is true if the application has set
      * its android:neverEncrypt to true, false otherwise. It is used to specify

@@ -322,6 +322,15 @@ public class IntentResolver<F extends IntentFilter, R extends Object> {
         return true;
     }
 
+    /**
+     * Returns whether the object associated with the given filter is
+     * "stopped," that is whether it should not be included in the result
+     * if the intent requests to excluded stopped objects.
+     */
+    protected boolean isFilterStopped(F filter) {
+        return false;
+    }
+
     protected String packageForFilter(F filter) {
         return null;
     }
@@ -482,6 +491,8 @@ public class IntentResolver<F extends IntentFilter, R extends Object> {
             String resolvedType, String scheme, List<F> src, List<R> dest) {
         Set<String> categories = intent.getCategories();
 
+        final boolean excludingStopped = intent.isExcludingStopped();
+
         final int N = src != null ? src.size() : 0;
         boolean hasNonDefaults = false;
         int i;
@@ -489,6 +500,13 @@ public class IntentResolver<F extends IntentFilter, R extends Object> {
             F filter = src.get(i);
             int match;
             if (debug) Slog.v(TAG, "Matching against filter " + filter);
+
+            if (excludingStopped && isFilterStopped(filter)) {
+                if (debug) {
+                    Slog.v(TAG, "  Filter's target is stopped; skipping");
+                }
+                continue;
+            }
 
             // Do we already have this one?
             if (!allowFilterResult(filter, dest)) {

@@ -224,7 +224,13 @@ interface IPackageManager {
      * As per {@link android.content.pm.PackageManager#getApplicationEnabledSetting}.
      */
     int getApplicationEnabledSetting(in String packageName);
-    
+
+    /**
+     * Set whether the given package should be considered stopped, making
+     * it not visible to implicit intents that filter out stopped packages.
+     */
+    void setPackageStoppedState(String packageName, boolean stopped);
+
     /**
      * Free storage by deleting LRU sorted list of cache files across
      * all applications. If the currently available free storage

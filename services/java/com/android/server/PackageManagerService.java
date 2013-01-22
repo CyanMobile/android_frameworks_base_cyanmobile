@@ -149,6 +149,7 @@ class PackageManagerService extends IPackageManager.Stub {
     private static final boolean DEBUG_PREFERRED = false;
     private static final boolean DEBUG_UPGRADE = false;
     private static final boolean DEBUG_INSTALL = false;
+    private static final boolean DEBUG_STOPPED = false;
 
     private static final boolean MULTIPLE_APPLICATION_UIDS = true;
     private static final int RADIO_UID = Process.PHONE_UID;
@@ -406,6 +407,7 @@ class PackageManagerService extends IPackageManager.Stub {
     static final int MCS_GIVE_UP = 11;
     static final int UPDATED_MEDIA_STATUS = 12;
     static final int WRITE_SETTINGS = 13;
+    static final int WRITE_STOPPED_PACKAGES = 14;
 
     static final int WRITE_SETTINGS_DELAY = 10*1000;  // 10 seconds
 
@@ -680,11 +682,14 @@ class PackageManagerService extends IPackageManager.Stub {
                             sendPackageBroadcast(Intent.ACTION_PACKAGE_ADDED,
                                     res.pkg.applicationInfo.packageName,
                                     category,
-                                    extras, null);
+                                    extras, null, null);
                             if (update) {
                                 sendPackageBroadcast(Intent.ACTION_PACKAGE_REPLACED,
                                         res.pkg.applicationInfo.packageName, category,
-                                        extras, null);
+                                        extras, null, null);
+                                sendPackageBroadcast(Intent.ACTION_MY_PACKAGE_REPLACED,
+                                        null, null, null,
+                                        res.pkg.applicationInfo.packageName, null);
                             }
                             if (res.removedInfo.args != null) {
                                 // Remove the replaced package's older resources safely now
@@ -739,7 +744,16 @@ class PackageManagerService extends IPackageManager.Stub {
                     Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
                     synchronized (mPackages) {
                         removeMessages(WRITE_SETTINGS);
+                        removeMessages(WRITE_STOPPED_PACKAGES);
                         mSettings.writeLP();
+                    }
+                    Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+                } break;
+                case WRITE_STOPPED_PACKAGES: {
+                    Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+                    synchronized (mPackages) {
+                        removeMessages(WRITE_STOPPED_PACKAGES);
+                        mSettings.writeStoppedLP();
                     }
                     Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
                 } break;
@@ -752,7 +766,13 @@ class PackageManagerService extends IPackageManager.Stub {
             mHandler.sendEmptyMessageDelayed(WRITE_SETTINGS, WRITE_SETTINGS_DELAY);
         }
     }
-    
+
+    void scheduleWriteStoppedPackagesLocked() {
+        if (!mHandler.hasMessages(WRITE_STOPPED_PACKAGES)) {
+            mHandler.sendEmptyMessageDelayed(WRITE_STOPPED_PACKAGES, WRITE_SETTINGS_DELAY);
+        }
+    }
+
     static boolean installOnSd(int flags) {
         if (((flags & PackageManager.INSTALL_FORWARD_LOCK) != 0) ||
                 ((flags & PackageManager.INSTALL_INTERNAL) != 0) ||
@@ -1621,6 +1641,7 @@ class PackageManagerService extends IPackageManager.Stub {
                 ps.pkg.applicationInfo.dataDir = getDataPathForPackage(ps.pkg).getPath();
                 ps.pkg.applicationInfo.nativeLibraryDir = ps.nativeLibraryPathString;
                 ps.pkg.mSetEnabled = ps.enabled;
+                ps.pkg.mSetStopped = ps.stopped;
             }
             return generatePackageInfo(ps.pkg, flags);
         }
@@ -4473,6 +4494,18 @@ class PackageManagerService extends IPackageManager.Stub {
         }
 
         @Override
+        protected boolean isFilterStopped(PackageParser.ActivityIntentInfo filter) {
+            PackageParser.Package p = filter.activity.owner;
+            if (p != null) {
+                PackageSetting ps = (PackageSetting)p.mExtras;
+                if (ps != null) {
+                    return ps.stopped;
+                }
+            }
+            return false;
+        }
+
+        @Override
         protected String packageForFilter(PackageParser.ActivityIntentInfo info) {
             return info.activity.owner.packageName;
         }
@@ -4503,6 +4536,7 @@ class PackageManagerService extends IPackageManager.Stub {
             res.labelRes = info.labelRes;
             res.nonLocalizedLabel = info.nonLocalizedLabel;
             res.icon = info.icon;
+            res.system = isSystemApp(res.activityInfo.applicationInfo);
             return res;
         }
 
@@ -4630,6 +4664,18 @@ class PackageManagerService extends IPackageManager.Stub {
         }
 
         @Override
+        protected boolean isFilterStopped(PackageParser.ServiceIntentInfo filter) {
+            PackageParser.Package p = filter.service.owner;
+            if (p != null) {
+                PackageSetting ps = (PackageSetting)p.mExtras;
+                if (ps != null) {
+                    return ps.stopped;
+                }
+            }
+            return false;
+        }
+
+        @Override
         protected String packageForFilter(PackageParser.ServiceIntentInfo info) {
             return info.service.owner.packageName;
         }
@@ -4661,6 +4707,7 @@ class PackageManagerService extends IPackageManager.Stub {
             res.labelRes = info.labelRes;
             res.nonLocalizedLabel = info.nonLocalizedLabel;
             res.icon = info.icon;
+            res.system = isSystemApp(res.serviceInfo.applicationInfo);
             return res;
         }
 
@@ -4718,7 +4765,13 @@ class PackageManagerService extends IPackageManager.Stub {
             v1 = r1.match;
             v2 = r2.match;
             //System.out.println("Comparing: m1=" + m1 + " m2=" + m2);
-            return (v1 > v2) ? -1 : ((v1 < v2) ? 1 : 0);
+            if (v1 != v2) {
+                return (v1 > v2) ? -1 : 1;
+            }
+            if (r1.system != r2.system) {
+                return r1.system ? -1 : 1;
+            }
+            return 0;
         }
     };
 
@@ -4732,7 +4785,7 @@ class PackageManagerService extends IPackageManager.Stub {
     };
 
     private static final void sendPackageBroadcast(String action, String pkg, String intentCategory,
-            Bundle extras, IIntentReceiver finishedReceiver) {
+            Bundle extras, String targetPkg, IIntentReceiver finishedReceiver) {
         IActivityManager am = ActivityManagerNative.getDefault();
         if (am != null) {
             try {
@@ -4740,6 +4793,9 @@ class PackageManagerService extends IPackageManager.Stub {
                         pkg != null ? Uri.fromParts("package", pkg, null) : null);
                 if (extras != null) {
                     intent.putExtras(extras);
+                }
+                if (targetPkg != null) {
+                    intent.setPackage(targetPkg);
                 }
                 intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
                 if (intentCategory != null) {
@@ -4877,13 +4933,13 @@ class PackageManagerService extends IPackageManager.Stub {
                 extras.putInt(Intent.EXTRA_UID, removedUid);
                 extras.putBoolean(Intent.EXTRA_DATA_REMOVED, false);
                 sendPackageBroadcast(Intent.ACTION_PACKAGE_REMOVED, removedPackage, category,
-                        extras, null);
+                        extras, null, null);
             }
             if (addedPackage != null) {
                 Bundle extras = new Bundle(1);
                 extras.putInt(Intent.EXTRA_UID, addedUid);
                 sendPackageBroadcast(Intent.ACTION_PACKAGE_ADDED, addedPackage, category,
-                        extras, null);
+                        extras, null, null);
             }
         }
 
@@ -6892,8 +6948,8 @@ class PackageManagerService extends IPackageManager.Stub {
                 if (info.isThemeApk) {
                     category = Intent.CATEGORY_THEME_PACKAGE_INSTALLED_STATE_CHANGE;
                 }
-                sendPackageBroadcast(Intent.ACTION_PACKAGE_ADDED, packageName, category, extras, null);
-                sendPackageBroadcast(Intent.ACTION_PACKAGE_REPLACED, packageName, category, extras, null);
+                sendPackageBroadcast(Intent.ACTION_PACKAGE_ADDED, packageName, category, extras, null, null);
+                sendPackageBroadcast(Intent.ACTION_PACKAGE_REPLACED, packageName, category, extras, null, null);
             }
         }
         // Force a gc here.
@@ -6930,10 +6986,10 @@ class PackageManagerService extends IPackageManager.Stub {
                 if (isThemeApk) {
                     category = Intent.CATEGORY_THEME_PACKAGE_INSTALLED_STATE_CHANGE;
                 }
-                sendPackageBroadcast(Intent.ACTION_PACKAGE_REMOVED, removedPackage, category, extras, null);
+                sendPackageBroadcast(Intent.ACTION_PACKAGE_REMOVED, removedPackage, category, extras, null, null);
             }
             if (removedUid >= 0) {
-                sendPackageBroadcast(Intent.ACTION_UID_REMOVED, null, null, extras, null);
+                sendPackageBroadcast(Intent.ACTION_UID_REMOVED, null, null, extras, null, null);
             }
         }
     }
@@ -7711,8 +7767,46 @@ class PackageManagerService extends IPackageManager.Stub {
         extras.putStringArray(Intent.EXTRA_CHANGED_COMPONENT_NAME_LIST, nameList);
         extras.putBoolean(Intent.EXTRA_DONT_KILL_APP, killFlag);
         extras.putInt(Intent.EXTRA_UID, packageUid);
-        sendPackageBroadcast(Intent.ACTION_PACKAGE_CHANGED,  packageName, null, extras, null);
+        sendPackageBroadcast(Intent.ACTION_PACKAGE_CHANGED,  packageName, null, extras, null, null);
     }
+
+    public void setPackageStoppedState(String packageName, boolean stopped) {
+        PackageSetting pkgSetting;
+        final int uid = Binder.getCallingUid();
+        final int permission = mContext.checkCallingOrSelfPermission(
+                android.Manifest.permission.CHANGE_COMPONENT_ENABLED_STATE);
+        final boolean allowedByPermission = (permission == PackageManager.PERMISSION_GRANTED);
+        synchronized (mPackages) {
+            pkgSetting = mSettings.mPackages.get(packageName);
+            if (pkgSetting == null) {
+                throw new IllegalArgumentException("Unknown package: " + packageName);
+            }
+            if (!allowedByPermission && (uid != pkgSetting.userId)) {
+                throw new SecurityException(
+                        "Permission Denial: attempt to change stopped state from pid="
+                        + Binder.getCallingPid()
+                        + ", uid=" + uid + ", package uid=" + pkgSetting.userId);
+            }
+            if (DEBUG_STOPPED && stopped) {
+                RuntimeException e = new RuntimeException("here");
+                e.fillInStackTrace();
+                Slog.i(TAG, "Stopping package " + packageName, e);
+            }
+            if (pkgSetting.stopped != stopped) {
+                pkgSetting.stopped = stopped;
+                pkgSetting.pkg.mSetStopped = stopped;
+                if (pkgSetting.notLaunched) {
+                    if (pkgSetting.installerPackageName != null) {
+                        sendPackageBroadcast(Intent.ACTION_PACKAGE_FIRST_LAUNCH,
+                                pkgSetting.installerPackageName, null, null,
+                                pkgSetting.name, null);
+                    }
+                    pkgSetting.notLaunched = false;
+                }
+                scheduleWriteStoppedPackagesLocked();
+            }
+        }
+     }
 
     public String getInstallerPackageName(String packageName) {
         synchronized (mPackages) {
@@ -8067,11 +8161,15 @@ class PackageManagerService extends IPackageManager.Stub {
                             date.setTime(ps.firstInstallTime); pw.println(sdf.format(date));
                     pw.print("    lastUpdateTime=");
                             date.setTime(ps.lastUpdateTime); pw.println(sdf.format(date));
+                    if (ps.installerPackageName != null) {
+                        pw.print("    installerPackageName="); pw.println(ps.installerPackageName);
+                    }
                     pw.print("    signatures="); pw.println(ps.signatures);
                     pw.print("    permissionsFixed="); pw.print(ps.permissionsFixed);
                             pw.print(" haveGids="); pw.println(ps.haveGids);
                     pw.print("    pkgFlags=0x"); pw.print(Integer.toHexString(ps.pkgFlags));
                             pw.print(" installStatus="); pw.print(ps.installStatus);
+                            pw.print(" stopped="); pw.print(ps.stopped);
                             pw.print(" enabled="); pw.println(ps.enabled);
                     if (ps.disabledComponents.size() > 0) {
                         pw.println("    disabledComponents:");
@@ -8611,6 +8709,13 @@ class PackageManagerService extends IPackageManager.Stub {
         boolean permissionsFixed;
         boolean haveGids;
 
+        // Whether this package is currently stopped, thus can not be
+        // started until explicitly launched by the user.
+        public boolean stopped;
+
+        // Set to true if we have never launched this app.
+        public boolean notLaunched;
+
         /* Explicitly disabled components */
         HashSet<String> disabledComponents = new HashSet<String>(0);
         /* Explicitly enabled components */
@@ -8655,6 +8760,8 @@ class PackageManagerService extends IPackageManager.Stub {
 
             permissionsFixed = base.permissionsFixed;
             haveGids = base.haveGids;
+            stopped = base.stopped;
+            notLaunched = base.notLaunched;
 
             disabledComponents = (HashSet<String>) base.disabledComponents.clone();
 
@@ -8715,6 +8822,8 @@ class PackageManagerService extends IPackageManager.Stub {
             signatures = base.signatures;
             permissionsFixed = base.permissionsFixed;
             haveGids = base.haveGids;
+            stopped = base.stopped;
+            notLaunched = base.notLaunched;
             disabledComponents = base.disabledComponents;
             enabledComponents = base.enabledComponents;
             enabled = base.enabled;
@@ -8813,6 +8922,8 @@ class PackageManagerService extends IPackageManager.Stub {
         private final File mSettingsFilename;
         private final File mBackupSettingsFilename;
         private final File mPackageListFilename;
+        private final File mStoppedPackagesFilename;
+        private final File mBackupStoppedPackagesFilename;
         private final HashMap<String, PackageSetting> mPackages =
                 new HashMap<String, PackageSetting>();
         // List of replaced system applications
@@ -8914,6 +9025,8 @@ class PackageManagerService extends IPackageManager.Stub {
             mSettingsFilename = new File(systemDir, "packages.xml");
             mBackupSettingsFilename = new File(systemDir, "packages-backup.xml");
             mPackageListFilename = new File(systemDir, "packages.list");
+            mStoppedPackagesFilename = new File(systemDir, "packages-stopped.xml");
+            mBackupStoppedPackagesFilename = new File(systemDir, "packages-stopped-backup.xml");
         }
 
         PackageSetting getPackageLP(PackageParser.Package pkg, PackageSetting origPackage,
@@ -9169,6 +9282,16 @@ class PackageManagerService extends IPackageManager.Stub {
                             nativeLibraryPathString, vc, pkgFlags);
                     p.setTimeStamp(codePath.lastModified());
                     p.sharedUser = sharedUser;
+                    // If this is not a system app, it starts out stopped.
+                    if ((pkgFlags&ApplicationInfo.FLAG_SYSTEM) == 0) {
+                        if (DEBUG_STOPPED) {
+                            RuntimeException e = new RuntimeException("here");
+                            e.fillInStackTrace();
+                            Slog.i(TAG, "Stopping package " + name, e);
+                        }
+                        p.stopped = true;
+                        p.notLaunched = true;
+                    }
                     if (sharedUser != null) {
                         p.userId = sharedUser.userId;
                     } else if (MULTIPLE_APPLICATION_UIDS) {
@@ -9217,6 +9340,7 @@ class PackageManagerService extends IPackageManager.Stub {
         private void insertPackageSettingLP(PackageSetting p, PackageParser.Package pkg) {
             p.pkg = pkg;
             pkg.mSetEnabled = p.enabled;
+            pkg.mSetStopped = p.stopped;
             final String codePath = pkg.applicationInfo.sourceDir;
             final String resourcePath = pkg.applicationInfo.publicSourceDir;
             // Update code path if needed
@@ -9433,6 +9557,180 @@ class PackageManagerService extends IPackageManager.Stub {
             }
         }
 
+                void writeStoppedLP() {
+            // Keep the old stopped packages around until we know the new ones have
+            // been successfully written.
+            if (mStoppedPackagesFilename.exists()) {
+                // Presence of backup settings file indicates that we failed
+                // to persist packages earlier. So preserve the older
+                // backup for future reference since the current packages
+                // might have been corrupted.
+                if (!mBackupStoppedPackagesFilename.exists()) {
+                    if (!mStoppedPackagesFilename.renameTo(mBackupStoppedPackagesFilename)) {
+                        Log.wtf(TAG, "Unable to backup package manager stopped packages, "
+                                + "current changes will be lost at reboot");
+                        return;
+                    }
+                } else {
+                    mStoppedPackagesFilename.delete();
+                    Slog.w(TAG, "Preserving older stopped packages backup");
+                }
+            }
+
+            try {
+                FileOutputStream fstr = new FileOutputStream(mStoppedPackagesFilename);
+                BufferedOutputStream str = new BufferedOutputStream(fstr);
+
+                //XmlSerializer serializer = XmlUtils.serializerInstance();
+                XmlSerializer serializer = new FastXmlSerializer();
+                serializer.setOutput(str, "utf-8");
+                serializer.startDocument(null, true);
+                serializer.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true);
+
+                serializer.startTag(null, "stopped-packages");
+
+                for (PackageSetting pkg : mPackages.values()) {
+                    if (pkg.stopped) {
+                        serializer.startTag(null, "pkg");
+                        serializer.attribute(null, "name", pkg.name);
+                        if (pkg.notLaunched) {
+                            serializer.attribute(null, "nl", "1");
+                        }
+                        serializer.endTag(null, "pkg");
+                    }
+                }
+
+                serializer.endTag(null, "stopped-packages");
+
+                serializer.endDocument();
+
+                str.flush();
+                FileUtils.sync(fstr);
+                str.close();
+
+                // New settings successfully written, old ones are no longer
+                // needed.
+                mBackupStoppedPackagesFilename.delete();
+                FileUtils.setPermissions(mStoppedPackagesFilename.toString(),
+                        FileUtils.S_IRUSR|FileUtils.S_IWUSR
+                        |FileUtils.S_IRGRP|FileUtils.S_IWGRP
+                        |FileUtils.S_IROTH,
+                        -1, -1);
+
+                // Done, all is good!
+                return;
+
+            } catch(java.io.IOException e) {
+                Log.wtf(TAG, "Unable to write package manager stopped packages, "
+                        + " current changes will be lost at reboot", e);
+            }
+
+            // Clean up partially written files
+            if (mStoppedPackagesFilename.exists()) {
+                if (!mStoppedPackagesFilename.delete()) {
+                    Log.i(TAG, "Failed to clean up mangled file: " + mStoppedPackagesFilename);
+                }
+            }
+        }
+
+        // Note: assumed "stopped" field is already cleared in all packages.
+        void readStoppedLP() {
+            FileInputStream str = null;
+            if (mBackupStoppedPackagesFilename.exists()) {
+                try {
+                    str = new FileInputStream(mBackupStoppedPackagesFilename);
+                    mReadMessages.append("Reading from backup stopped packages file\n");
+                    reportSettingsProblem(Log.INFO, "Need to read from backup stopped packages file");
+                    if (mSettingsFilename.exists()) {
+                        // If both the backup and normal file exist, we
+                        // ignore the normal one since it might have been
+                        // corrupted.
+                        Slog.w(TAG, "Cleaning up stopped packages file "
+                                + mStoppedPackagesFilename);
+                        mStoppedPackagesFilename.delete();
+                    }
+                } catch (java.io.IOException e) {
+                    // We'll try for the normal settings file.
+                }
+            }
+
+            try {
+                if (str == null) {
+                    if (!mStoppedPackagesFilename.exists()) {
+                        mReadMessages.append("No stopped packages file found\n");
+                        reportSettingsProblem(Log.INFO, "No stopped packages file file; "
+                                + "assuming all started");
+                        // At first boot, make sure no packages are stopped.
+                        // We usually want to have third party apps initialize
+                        // in the stopped state, but not at first boot.
+                        for (PackageSetting pkg : mPackages.values()) {
+                            pkg.stopped = false;
+                            pkg.notLaunched = false;
+                        }
+                        return;
+                    }
+                    str = new FileInputStream(mStoppedPackagesFilename);
+                }
+                XmlPullParser parser = Xml.newPullParser();
+                parser.setInput(str, null);
+
+                int type;
+                while ((type=parser.next()) != XmlPullParser.START_TAG
+                           && type != XmlPullParser.END_DOCUMENT) {
+                    ;
+                }
+
+                if (type != XmlPullParser.START_TAG) {
+                    mReadMessages.append("No start tag found in stopped packages file\n");
+                    reportSettingsProblem(Log.WARN,
+                            "No start tag found in package manager stopped packages");
+                    return;
+                }
+
+                int outerDepth = parser.getDepth();
+                while ((type=parser.next()) != XmlPullParser.END_DOCUMENT
+                       && (type != XmlPullParser.END_TAG
+                               || parser.getDepth() > outerDepth)) {
+                    if (type == XmlPullParser.END_TAG
+                            || type == XmlPullParser.TEXT) {
+                        continue;
+                    }
+
+                    String tagName = parser.getName();
+                    if (tagName.equals("pkg")) {
+                        String name = parser.getAttributeValue(null, "name");
+                        PackageSetting ps = mPackages.get(name);
+                        if (ps != null) {
+                            ps.stopped = true;
+                            if ("1".equals(parser.getAttributeValue(null, "nl"))) {
+                                ps.notLaunched = true;
+                            }
+                        } else {
+                            Slog.w(TAG, "No package known for stopped package: " + name);
+                        }
+                        XmlUtils.skipCurrentTag(parser);
+                    } else {
+                        Slog.w(TAG, "Unknown element under <stopped-packages>: "
+                              + parser.getName());
+                        XmlUtils.skipCurrentTag(parser);
+                    }
+                }
+
+                str.close();
+
+            } catch(XmlPullParserException e) {
+                mReadMessages.append("Error reading: " + e.toString());
+                reportSettingsProblem(Log.ERROR, "Error reading stopped packages: " + e);
+                Log.wtf(TAG, "Error reading package manager stopped packages", e);
+
+            } catch(java.io.IOException e) {
+                mReadMessages.append("Error reading: " + e.toString());
+                reportSettingsProblem(Log.ERROR, "Error reading settings: " + e);
+                Log.wtf(TAG, "Error reading package manager stopped packages", e);
+
+            }
+        }
+
         void writeLP() {
             //Debug.startMethodTracing("/data/system/packageprof", 8 * 1024 * 1024);
 
@@ -9445,7 +9743,8 @@ class PackageManagerService extends IPackageManager.Stub {
                 // might have been corrupted.
                 if (!mBackupSettingsFilename.exists()) {
                     if (!mSettingsFilename.renameTo(mBackupSettingsFilename)) {
-                        Slog.w(TAG, "Unable to backup package manager settings, current changes will be lost at reboot");
+                        Log.wtf(TAG, "Unable to backup package manager settings, "
+                                + " current changes will be lost at reboot");
                         return;
                     }
                 } else {
@@ -9621,17 +9920,21 @@ class PackageManagerService extends IPackageManager.Stub {
                         |FileUtils.S_IROTH,
                         -1, -1);
 
+                writeStoppedLP();
+
                 return;
 
             } catch(XmlPullParserException e) {
-                Slog.w(TAG, "Unable to write package manager settings, current changes will be lost at reboot", e);
+                Log.wtf(TAG, "Unable to write package manager settings, "
+                        + "current changes will be lost at reboot", e);
             } catch(java.io.IOException e) {
-                Slog.w(TAG, "Unable to write package manager settings, current changes will be lost at reboot", e);
+                Log.wtf(TAG, "Unable to write package manager settings, "
+                        + "current changes will be lost at reboot", e);
             }
             // Clean up partially written files
             if (mSettingsFilename.exists()) {
                 if (!mSettingsFilename.delete()) {
-                    Log.i(TAG, "Failed to clean up mangled file: " + mSettingsFilename);
+                    Log.wtf(TAG, "Failed to clean up mangled file: " + mSettingsFilename);
                 }
             }
             //Debug.stopMethodTracing();
@@ -9869,6 +10172,7 @@ class PackageManagerService extends IPackageManager.Stub {
                 if (type != XmlPullParser.START_TAG) {
                     mReadMessages.append("No start tag found in settings file\n");
                     reportSettingsProblem(Log.WARN, "No start tag found in package manager settings");
+                    Log.wtf(TAG, "No start tag found in package manager settings");
                     return false;
                 }
 
@@ -9940,12 +10244,12 @@ class PackageManagerService extends IPackageManager.Stub {
             } catch(XmlPullParserException e) {
                 mReadMessages.append("Error reading: " + e.toString());
                 reportSettingsProblem(Log.ERROR, "Error reading settings: " + e);
-                Slog.e(TAG, "Error reading package manager settings", e);
+                Log.wtf(TAG, "Error reading package manager settings", e);
 
             } catch(java.io.IOException e) {
                 mReadMessages.append("Error reading: " + e.toString());
                 reportSettingsProblem(Log.ERROR, "Error reading settings: " + e);
-                Slog.e(TAG, "Error reading package manager settings", e);
+                Log.wtf(TAG, "Error reading package manager settings", e);
 
             }
 
@@ -9991,6 +10295,8 @@ class PackageManagerService extends IPackageManager.Stub {
                   disabledPs.sharedUser = (SharedUserSetting) id;
                 }
             }
+
+            readStoppedLP();
 
             mReadMessages.append("Read completed successfully: "
                     + mPackages.size() + " packages, "
@@ -10813,7 +11119,7 @@ class PackageManagerService extends IPackageManager.Stub {
            }
            String action = mediaStatus ? Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE
                    : Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE;
-           sendPackageBroadcast(action, null, null, extras, finishedReceiver);
+           sendPackageBroadcast(action, null, null, extras, null, finishedReceiver);
        }
    }
 

@@ -29,6 +29,7 @@ import android.util.PrintWriterPrinter;
 import android.util.TimeUtils;
 
 import java.io.PrintWriter;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -47,6 +48,7 @@ class BroadcastRecord extends Binder {
     final List receivers;   // contains BroadcastFilter and ResolveInfo
     IIntentReceiver resultTo; // who receives final result if non-null
     long dispatchTime;      // when dispatch started on this set of receivers
+    long dispatchClockTime; // the clock time the dispatch started
     long receiverTime;      // when current receiver started for timeouts.
     long finishTime;        // when we finished the broadcast.
     int resultCode;         // current result code value.
@@ -57,6 +59,7 @@ class BroadcastRecord extends Binder {
     IBinder receiver;       // who is currently running, null if none.
     int state;
     int anrCount;           // has this broadcast record hit any ANRs?
+    ActivityManagerService.BroadcastQueue queue;   // the outbound queue handling this broadcast
 
     static final int IDLE = 0;
     static final int APP_RECEIVE = 1;
@@ -115,6 +118,8 @@ class BroadcastRecord extends Binder {
         if (requiredPermission != null) {
             pw.print(prefix); pw.print("requiredPermission="); pw.println(requiredPermission);
         }
+        pw.print(prefix); pw.print("dispatchClockTime=");
+                pw.println(new Date(dispatchClockTime));
         pw.print(prefix); pw.print("dispatchTime=");
                 TimeUtils.formatDuration(dispatchTime, now, pw);
         if (finishTime != 0) {
@@ -181,11 +186,13 @@ class BroadcastRecord extends Binder {
         }
     }
 
-    BroadcastRecord(Intent _intent, ProcessRecord _callerApp, String _callerPackage,
+    BroadcastRecord(ActivityManagerService.BroadcastQueue _queue,
+            Intent _intent, ProcessRecord _callerApp, String _callerPackage,
             int _callingPid, int _callingUid, String _requiredPermission,
             List _receivers, IIntentReceiver _resultTo, int _resultCode,
             String _resultData, Bundle _resultExtras, boolean _serialized,
             boolean _sticky, boolean _initialSticky) {
+        queue = _queue;
         intent = _intent;
         callerApp = _callerApp;
         callerPackage = _callerPackage;
