@@ -221,6 +221,11 @@ public class WindowManagerService extends IWindowManager.Stub
      */
     static final int DIM_DURATION_MULTIPLIER = 6;
 
+    /**	
+     * Frame rate. TODO: Replace with Display.getRefreshRate() when that is reliable.
+     */
+    static final int FRAME_RATE = 48;
+
     /**
      * If true, the window manager will do its own custom freezing and general
      * management of the screen during rotation.
@@ -419,6 +424,7 @@ public class WindowManagerService extends IWindowManager.Stub
     boolean mSystemBooted = false;
     boolean mForceDisplayEnabled = false;
     boolean mShowingBootMessages = false;
+    final Object mDisplaySizeLock = new Object();
     int mInitialDisplayWidth = 0;
     int mInitialDisplayHeight = 0;
     int mBaseDisplayWidth = 0;
@@ -692,8 +698,8 @@ public class WindowManagerService extends IWindowManager.Stub
         filter.addAction(DevicePolicyManager.ACTION_DEVICE_POLICY_MANAGER_STATE_CHANGED);
         mContext.registerReceiver(mBroadcastReceiver, filter);
 
-        mHoldingScreenWakeLock = pmc.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,
-                "KEEP_SCREEN_ON_FLAG");
+        mHoldingScreenWakeLock = pmc.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK
+                | PowerManager.ON_AFTER_RELEASE, "KEEP_SCREEN_ON_FLAG");
         mHoldingScreenWakeLock.setReferenceCounted(false);
 
         mInputManager = new InputManager(context, this);
@@ -4351,6 +4357,16 @@ public class WindowManagerService extends IWindowManager.Stub
 
     public boolean isKeyguardSecure() {
         return mPolicy.isKeyguardSecure();
+    }
+
+    public void dismissKeyguard() {
+        if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.DISABLE_KEYGUARD)
+                != PackageManager.PERMISSION_GRANTED) {
+            throw new SecurityException("Requires DISABLE_KEYGUARD permission");
+        }
+        synchronized(mWindowMap) {
+            mPolicy.dismissKeyguardLw();
+        }
     }
 
     public void closeSystemDialogs(String reason) {
@@ -10064,7 +10080,7 @@ public class WindowManagerService extends IWindowManager.Stub
         if (needRelayout) {
             requestAnimationLocked(0);
         } else if (animating) {
-            requestAnimationLocked(currentTime+(1000/60)-SystemClock.uptimeMillis());
+            requestAnimationLocked(currentTime+(1000/FRAME_RATE)-SystemClock.uptimeMillis());
         }
         
         mInputMonitor.updateInputWindowsLw();

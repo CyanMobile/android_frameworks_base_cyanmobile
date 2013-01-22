@@ -97,14 +97,14 @@ class TaskRecord {
         if (intent != null) {
             StringBuilder sb = new StringBuilder(128);
             sb.append(prefix); sb.append("intent={");
-            intent.toShortString(sb, true, false);
+            intent.toShortString(sb, false, true, false);
             sb.append('}');
             pw.println(sb.toString());
         }
         if (affinityIntent != null) {
             StringBuilder sb = new StringBuilder(128);
             sb.append(prefix); sb.append("affinityIntent={");
-            affinityIntent.toShortString(sb, true, false);
+            affinityIntent.toShortString(sb, false, true, false);
             sb.append('}');
             pw.println(sb.toString());
         }

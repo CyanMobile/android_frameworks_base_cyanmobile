@@ -78,6 +78,9 @@ public final class BridgeWindow implements IWindow {
         // pass for now.
     }
 
+    public void dismissKeyguard() {	
+    }
+
     public void closeSystemDialogs(String reason) {
         // pass for now.
     }

@@ -108,6 +108,7 @@ interface IWindowManager
     boolean inKeyguardRestrictedInputMode();
     boolean isKeyguardLocked();
     boolean isKeyguardSecure();
+    void dismissKeyguard();
 
     void closeSystemDialogs(String reason);
     
