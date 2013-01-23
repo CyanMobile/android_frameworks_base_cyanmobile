@@ -196,6 +196,12 @@ public class Build {
          * Newest version of Android, version 2.3.3.
          */
         public static final int GINGERBREAD_MR1 = 10;
+
+        /**
+         * Newest version of Android, version 3.0.0.
+         */
+        public static final int HONEYCOMB = 11;
+
     }
     
     /** The type of build, like "user" or "eng". */

@@ -1496,13 +1496,25 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
                 canvas.setDensity(mDensity);
             } catch (Surface.OutOfResourcesException e) {
                 Log.e(TAG, "OutOfResourcesException locking surface", e);
-                // TODO: we should ask the window manager to do something!
-                // for now we just do nothing
+                try {
+                    if (!sWindowSession.outOfMemory(mWindow)) {
+                        Slog.w(TAG, "No processes killed for memory; killing self");
+                        Process.killProcess(Process.myPid());
+                    }
+                } catch (RemoteException ex) {
+                }
+                mLayoutRequested = true;    // ask wm for a new surface next time.
                 return;
             } catch (IllegalArgumentException e) {
                 Log.e(TAG, "IllegalArgumentException locking surface", e);
-                // TODO: we should ask the window manager to do something!
-                // for now we just do nothing
+                try {
+                    if (!sWindowSession.outOfMemory(mWindow)) {
+                        Slog.w(TAG, "No processes killed for memory; killing self");
+                        Process.killProcess(Process.myPid());
+                    }
+                } catch (RemoteException ex) {
+                }
+                mLayoutRequested = true;    // ask wm for a new surface next time.
                 return;
             }
 

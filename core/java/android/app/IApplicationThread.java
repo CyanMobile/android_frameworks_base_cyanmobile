@@ -48,6 +48,7 @@ public interface IApplicationThread extends IInterface {
     void scheduleStopActivity(IBinder token, boolean showWindow,
             int configChanges) throws RemoteException;
     void scheduleWindowVisibility(IBinder token, boolean showWindow) throws RemoteException;
+    void scheduleSleeping(IBinder token, boolean sleeping) throws RemoteException;
     void scheduleResumeActivity(IBinder token, boolean isForward) throws RemoteException;
     void scheduleSendResult(IBinder token, List<ResultInfo> results) throws RemoteException;
     void scheduleLaunchActivity(Intent intent, IBinder token, int ident,
@@ -72,8 +73,8 @@ public interface IApplicationThread extends IInterface {
             Intent intent, boolean rebind) throws RemoteException;
     void scheduleUnbindService(IBinder token,
             Intent intent) throws RemoteException;
-    void scheduleServiceArgs(IBinder token, int startId, int flags, Intent args)
-            throws RemoteException;
+    void scheduleServiceArgs(IBinder token, boolean taskRemoved, int startId,
+            int flags, Intent args) throws RemoteException;
     void scheduleStopService(IBinder token) throws RemoteException;
     static final int DEBUG_OFF = 0;
     static final int DEBUG_ON = 1;
@@ -81,7 +82,8 @@ public interface IApplicationThread extends IInterface {
     void bindApplication(String packageName, ApplicationInfo info, List<ProviderInfo> providers,
             ComponentName testName, String profileName, Bundle testArguments, 
             IInstrumentationWatcher testWatcher, int debugMode, boolean restrictedBackupMode,
-            boolean persistent, Configuration config, Map<String, IBinder> services) throws RemoteException;
+            boolean persistent, Configuration config, Map<String, IBinder> services,
+            Bundle coreSettings) throws RemoteException;
     void scheduleExit() throws RemoteException;
     void scheduleSuicide() throws RemoteException;
     void requestThumbnail(IBinder token) throws RemoteException;
@@ -103,7 +105,8 @@ public interface IApplicationThread extends IInterface {
     static final int EXTERNAL_STORAGE_UNAVAILABLE = 1;
     void dispatchPackageBroadcast(int cmd, String[] packages) throws RemoteException;
     void scheduleCrash(String msg) throws RemoteException;
-    
+    void setCoreSettings(Bundle coreSettings) throws RemoteException;
+
     String descriptor = "android.app.IApplicationThread";
 
     int SCHEDULE_PAUSE_ACTIVITY_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION;
@@ -131,7 +134,7 @@ public interface IApplicationThread extends IInterface {
     int SCHEDULE_LOW_MEMORY_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+23;
     int SCHEDULE_ACTIVITY_CONFIGURATION_CHANGED_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+24;
     int SCHEDULE_RELAUNCH_ACTIVITY_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+25;
-
+    int SCHEDULE_SLEEPING_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+26;
     int PROFILER_CONTROL_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+27;
     int SET_SCHEDULING_GROUP_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+28;
     int SCHEDULE_CREATE_BACKUP_AGENT_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+29;
@@ -140,4 +143,5 @@ public interface IApplicationThread extends IInterface {
     int SCHEDULE_SUICIDE_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+32;
     int DISPATCH_PACKAGE_BROADCAST_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+33;
     int SCHEDULE_CRASH_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+34;
+    int SET_CORE_SETTINGS = IBinder.FIRST_CALL_TRANSACTION+35;
 }

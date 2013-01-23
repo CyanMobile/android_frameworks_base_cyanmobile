@@ -238,6 +238,14 @@ public final class ActivityThread {
             nextIdle = null;
         }
 
+        public boolean isPreHoneycomb() {
+            if (activity != null) {
+                return activity.getApplicationInfo().targetSdkVersion
+                        < android.os.Build.VERSION_CODES.HONEYCOMB;
+            }
+            return false;	
+        }
+
         public String toString() {
             ComponentName componentName = intent.getComponent();
             return "ActivityRecord{"
@@ -320,6 +328,7 @@ public final class ActivityThread {
 
     private static final class ServiceArgsData {
         IBinder token;
+        boolean taskRemoved;
         int startId;
         int flags;
         Intent args;
@@ -343,6 +352,7 @@ public final class ActivityThread {
         boolean persistent;
         Configuration config;
         boolean handlingProfiling;
+        Bundle coreSettings;
         public String toString() {
             return "AppBindData{appInfo=" + appInfo + "}";
         }
@@ -404,6 +414,10 @@ public final class ActivityThread {
             queueOrSendMessage(
                 showWindow ? H.SHOW_WINDOW : H.HIDE_WINDOW,
                 token);
+        }
+
+        public final void scheduleSleeping(IBinder token, boolean sleeping) {
+            queueOrSendMessage(H.SLEEPING, token, sleeping ? 1 : 0);
         }
 
         public final void scheduleResumeActivity(IBinder token, boolean isForward) {
@@ -527,10 +541,11 @@ public final class ActivityThread {
             queueOrSendMessage(H.UNBIND_SERVICE, s);
         }
 
-        public final void scheduleServiceArgs(IBinder token, int startId,
+        public final void scheduleServiceArgs(IBinder token, boolean taskRemoved, int startId,
             int flags ,Intent args) {
             ServiceArgsData s = new ServiceArgsData();
             s.token = token;
+            s.taskRemoved = taskRemoved;
             s.startId = startId;
             s.flags = flags;
             s.args = args;
@@ -547,7 +562,7 @@ public final class ActivityThread {
                 ComponentName instrumentationName, String profileFile,
                 Bundle instrumentationArgs, IInstrumentationWatcher instrumentationWatcher,
                 int debugMode, boolean isRestrictedBackupMode, boolean persistent, Configuration config,
-                Map<String, IBinder> services) {
+                Map<String, IBinder> services, Bundle coreSettings) {
 
             if (services != null) {
                 // Setup the service cache in the ServiceManager
@@ -566,6 +581,7 @@ public final class ActivityThread {
             data.restrictedBackupMode = isRestrictedBackupMode;
             data.persistent = persistent;
             data.config = config;
+            data.coreSettings = coreSettings;
             queueOrSendMessage(H.BIND_APPLICATION, data);
         }
 
@@ -851,6 +867,10 @@ public final class ActivityThread {
         private void printRow(PrintWriter pw, String format, Object...objs) {
             pw.println(String.format(format, objs));
         }
+
+        public void setCoreSettings(Bundle settings) {
+            queueOrSendMessage(H.SET_CORE_SETTINGS, settings);
+        }
     }
 
     private final class H extends Handler {
@@ -889,6 +909,8 @@ public final class ActivityThread {
         public static final int ENABLE_JIT              = 132;
         public static final int DISPATCH_PACKAGE_BROADCAST = 133;
         public static final int SCHEDULE_CRASH          = 134;
+        public static final int SLEEPING                = 135;
+        public static final int SET_CORE_SETTINGS       = 136;
         String codeToString(int code) {
             if (DEBUG_MESSAGES) {
                 switch (code) {
@@ -927,6 +949,8 @@ public final class ActivityThread {
                     case ENABLE_JIT: return "ENABLE_JIT";
                     case DISPATCH_PACKAGE_BROADCAST: return "DISPATCH_PACKAGE_BROADCAST";
                     case SCHEDULE_CRASH: return "SCHEDULE_CRASH";
+                    case SLEEPING: return "SLEEPING";
+                    case SET_CORE_SETTINGS: return "SET_CORE_SETTINGS";
                 }
             }
             return "(unknown)";
@@ -1053,6 +1077,12 @@ public final class ActivityThread {
                     break;
                 case SCHEDULE_CRASH:
                     throw new RemoteServiceException((String)msg.obj);
+                case SLEEPING:
+                    handleSleeping((IBinder)msg.obj, msg.arg1 != 0);
+                    break;
+                case SET_CORE_SETTINGS:
+                    handleSetCoreSettings((Bundle) msg.obj);
+                    break;
             }
             if (DEBUG_MESSAGES) Slog.v(TAG, "<<< done: " + msg.what);
         }
@@ -2208,7 +2238,13 @@ public final class ActivityThread {
                 if (data.args != null) {
                     data.args.setExtrasClassLoader(s.getClassLoader());
                 }
-                int res = s.onStartCommand(data.args, data.flags, data.startId);
+                int res;
+                if (!data.taskRemoved) {
+                    res = s.onStartCommand(data.args, data.flags, data.startId);
+                } else {
+                    s.onTaskRemoved(data.args);
+                    res = Service.START_TASK_REMOVED_COMPLETE;
+                }
 
                 QueuedWork.waitToFinish();
 
@@ -2460,14 +2496,14 @@ public final class ActivityThread {
             }
 
             r.activity.mConfigChangeFlags |= configChanges;
-            Bundle state = performPauseActivity(token, finished, true);
+            performPauseActivity(token, finished, r.isPreHoneycomb());
 
             // Make sure any pending writes are now committed.
             QueuedWork.waitToFinish();
             
             // Tell the activity manager we have paused.
             try {
-                ActivityManagerNative.getDefault().activityPaused(token, state);
+                ActivityManagerNative.getDefault().activityPaused(token);
             } catch (RemoteException ex) {
             }
         }
@@ -2507,6 +2543,8 @@ public final class ActivityThread {
                 state = new Bundle();
                 mInstrumentation.callActivityOnSaveInstanceState(r.activity, state);
                 r.state = state;
+            } else {
+                r.state = null;
             }
             // Now we are idle.
             r.activity.mCalled = false;
@@ -2544,9 +2582,9 @@ public final class ActivityThread {
         return state;
     }
 
-    final void performStopActivity(IBinder token) {
+    final void performStopActivity(IBinder token, boolean saveState) {
         ActivityClientRecord r = mActivities.get(token);
-        performStopActivityInner(r, null, false);
+        performStopActivityInner(r, null, false, saveState);
     }
 
     private static class StopInfo {
@@ -2561,9 +2599,18 @@ public final class ActivityThread {
         }
     }
 
+    /**
+     * Core implementation of stopping an activity.  Note this is a little
+     * tricky because the server's meaning of stop is slightly different
+     * than our client -- for the server, stop means to save state and give
+     * it the result when it is done, but the window may still be visible.
+     * For the client, we want to call onStop()/onStart() to indicate when
+     * the activity's UI visibillity changes.
+     */
     private final void performStopActivityInner(ActivityClientRecord r,
-            StopInfo info, boolean keepShown) {
+            StopInfo info, boolean keepShown, boolean saveState) {
         if (localLOGV) Slog.v(TAG, "Performing stop of " + r);
+        Bundle state = null;
         if (r != null) {
             if (!keepShown && r.stopped) {
                 if (r.activity.mFinished) {
@@ -2607,6 +2654,17 @@ public final class ActivityThread {
                         Log.e("BigThumbnailAddon", e.toString());
                     }
                 }
+
+            // Next have the activity save its current state and managed dialogs...
+            if (!r.activity.mFinished && saveState) {
+                if (r.state == null) {
+                    state = new Bundle();
+                    mInstrumentation.callActivityOnSaveInstanceState(r.activity, state);
+                    r.state = state;
+                } else {
+                    state = r.state;
+                }
+            }
 
             if (!keepShown) {
                 try {
@@ -2659,7 +2717,7 @@ public final class ActivityThread {
         r.activity.mConfigChangeFlags |= configChanges;
 
         StopInfo info = new StopInfo();
-        performStopActivityInner(r, info, show);
+        performStopActivityInner(r, info, show, true);
 
         if (localLOGV) Slog.v(
             TAG, "Finishing stop of " + r + ": show=" + show
@@ -2670,7 +2728,7 @@ public final class ActivityThread {
         // Tell activity manager we have been stopped.
         try {
             ActivityManagerNative.getDefault().activityStopped(
-                r.token, info.thumbnail, info.description);
+                r.token, r.state, info.thumbnail, info.description);
         } catch (RemoteException ex) {
         }
     }
@@ -2686,7 +2744,7 @@ public final class ActivityThread {
     private final void handleWindowVisibility(IBinder token, boolean show) {
         ActivityClientRecord r = mActivities.get(token);
         if (!show && !r.stopped) {
-            performStopActivityInner(r, null, show);
+            performStopActivityInner(r, null, show, false);
         } else if (show && r.stopped) {
             // If we are getting ready to gc after going to the background, well
             // we are back active so skip it.
@@ -2699,6 +2757,50 @@ public final class ActivityThread {
             if (Config.LOGV) Slog.v(
                 TAG, "Handle window " + r + " visibility: " + show);
             updateVisibility(r, show);
+        }
+    }
+
+    private final void handleSleeping(IBinder token, boolean sleeping) {
+        ActivityClientRecord r = mActivities.get(token);
+
+        if (r == null) {
+            Log.w(TAG, "handleWindowVisibility: no activity for token " + token);
+            return;
+        }
+
+        if (sleeping) {
+            if (!r.stopped) {
+                try {
+                    // Now we are idle.
+                    r.activity.performStop();
+                } catch (Exception e) {
+                    if (!mInstrumentation.onException(r.activity, e)) {
+                        throw new RuntimeException(
+                                "Unable to stop activity "
+                                + r.intent.getComponent().toShortString()
+                                + ": " + e.toString(), e);
+                    }
+                }
+                r.stopped = true;
+            }
+            // Tell activity manager we slept.
+            try {
+                ActivityManagerNative.getDefault().activitySlept(r.token);
+            } catch (RemoteException ex) {
+            }
+        } else {
+            if (r.stopped && r.activity.mVisibleFromServer) {
+                r.activity.performRestart();
+                r.stopped = false;
+            }
+        }
+    }
+
+    private void handleSetCoreSettings(Bundle coreSettings) {
+        if (mBoundApplication != null) {
+            synchronized (mBoundApplication) {
+                mBoundApplication.coreSettings = coreSettings;
+            }
         }
     }
 
@@ -2987,7 +3089,7 @@ public final class ActivityThread {
 
         Bundle savedState = null;
         if (!r.paused) {
-            savedState = performPauseActivity(r.token, false, true);
+            savedState = performPauseActivity(r.token, false, r.isPreHoneycomb());
         }
 
         handleDestroyActivity(r.token, false, configChanges, true);
@@ -3890,6 +3992,20 @@ public final class ActivityThread {
         if (providers != null) {
             installContentProviders(mInitialApplication,
                                     (List<ProviderInfo>)providers);
+        }
+    }
+
+    public int getIntCoreSetting(String key, int defaultValue) {
+        if (mBoundApplication == null) {
+            return defaultValue;
+        }
+        synchronized (mBoundApplication) {
+            Bundle coreSettings = mBoundApplication.coreSettings;
+            if (coreSettings != null) {
+                return coreSettings.getInt(key, defaultValue);
+            } else {
+                return defaultValue;
+            }
         }
     }
 

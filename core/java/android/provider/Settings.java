@@ -5378,6 +5378,12 @@ public final class Settings {
             "enabled_accessibility_services";
 
         /**
+         * The timout for considering a press to be a long press in milliseconds.
+         * @hide
+         */
+        public static final String LONG_PRESS_TIMEOUT = "long_press_timeout";
+
+        /**
          * Setting to always use the default text-to-speech settings regardless
          * of the application settings.
          * 1 = override application settings,

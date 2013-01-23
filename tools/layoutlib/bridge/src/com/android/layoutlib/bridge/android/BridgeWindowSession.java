@@ -69,6 +69,10 @@ public final class BridgeWindowSession implements IWindowSession {
         return 0;
     }
 
+    public boolean outOfMemory(IWindow window) throws RemoteException {	
+        return false;	
+    }
+
     public void getDisplayFrame(IWindow window, Rect outDisplayFrame) {
         // pass for now.
     }

@@ -97,6 +97,15 @@ public abstract class ApplicationThreadNative extends Binder
             return true;
         }
 
+        case SCHEDULE_SLEEPING_TRANSACTION:
+        {
+            data.enforceInterface(IApplicationThread.descriptor);
+            IBinder b = data.readStrongBinder();
+            boolean sleeping = data.readInt() != 0;
+            scheduleSleeping(b, sleeping);
+            return true;
+        }
+
         case SCHEDULE_RESUME_ACTIVITY_TRANSACTION:
         {
             data.enforceInterface(IApplicationThread.descriptor);
@@ -210,6 +219,7 @@ public abstract class ApplicationThreadNative extends Binder
         {
             data.enforceInterface(IApplicationThread.descriptor);
             IBinder token = data.readStrongBinder();
+            boolean taskRemoved = data.readInt() != 0;
             int startId = data.readInt();
             int fl = data.readInt();
             Intent args;
@@ -218,7 +228,7 @@ public abstract class ApplicationThreadNative extends Binder
             } else {
                 args = null;
             }
-            scheduleServiceArgs(token, startId, fl, args);
+            scheduleServiceArgs(token, taskRemoved, startId, fl, args);
             return true;
         }
 
@@ -249,10 +259,11 @@ public abstract class ApplicationThreadNative extends Binder
             boolean persistent = (data.readInt() != 0);
             Configuration config = Configuration.CREATOR.createFromParcel(data);
             HashMap<String, IBinder> services = data.readHashMap(null);
+            Bundle coreSettings = data.readBundle();
             bindApplication(packageName, info,
                             providers, testName, profileName,
                             testArgs, testWatcher, testMode, restrictedBackupMode, persistent,
-                            config, services);
+                            config, services, coreSettings);
             return true;
         }
         
@@ -405,6 +416,13 @@ public abstract class ApplicationThreadNative extends Binder
             scheduleCrash(msg);
             return true;
         }
+
+        case SET_CORE_SETTINGS: {
+            data.enforceInterface(IApplicationThread.descriptor);
+            Bundle settings = data.readBundle();
+            setCoreSettings(settings);
+            return true;
+        }
         }
 
         return super.onTransact(code, data, reply, flags);
@@ -459,6 +477,17 @@ class ApplicationThreadProxy implements IApplicationThread {
         data.writeStrongBinder(token);
         data.writeInt(showWindow ? 1 : 0);
         mRemote.transact(SCHEDULE_WINDOW_VISIBILITY_TRANSACTION, data, null,
+                IBinder.FLAG_ONEWAY);
+        data.recycle();
+    }
+
+    public final void scheduleSleeping(IBinder token,
+            boolean sleeping) throws RemoteException {
+        Parcel data = Parcel.obtain();
+        data.writeInterfaceToken(IApplicationThread.descriptor);
+        data.writeStrongBinder(token);
+        data.writeInt(sleeping ? 1 : 0);
+        mRemote.transact(SCHEDULE_SLEEPING_TRANSACTION, data, null,
                 IBinder.FLAG_ONEWAY);
         data.recycle();
     }
@@ -620,11 +649,12 @@ class ApplicationThreadProxy implements IApplicationThread {
         data.recycle();
     }
 
-    public final void scheduleServiceArgs(IBinder token, int startId,
+    public final void scheduleServiceArgs(IBinder token, boolean taskRemoved, int startId,
 	    int flags, Intent args) throws RemoteException {
         Parcel data = Parcel.obtain();
         data.writeInterfaceToken(IApplicationThread.descriptor);
         data.writeStrongBinder(token);
+        data.writeInt(taskRemoved ? 1 : 0);
         data.writeInt(startId);
         data.writeInt(flags);
         if (args != null) {
@@ -652,7 +682,7 @@ class ApplicationThreadProxy implements IApplicationThread {
             List<ProviderInfo> providers, ComponentName testName,
             String profileName, Bundle testArgs, IInstrumentationWatcher testWatcher, int debugMode,
             boolean restrictedBackupMode, boolean persistent, Configuration config,
-            Map<String, IBinder> services) throws RemoteException {
+            Map<String, IBinder> services, Bundle coreSettings) throws RemoteException {
         Parcel data = Parcel.obtain();
         data.writeInterfaceToken(IApplicationThread.descriptor);
         data.writeString(packageName);
@@ -672,6 +702,7 @@ class ApplicationThreadProxy implements IApplicationThread {
         data.writeInt(persistent ? 1 : 0);
         config.writeToParcel(data, 0);
         data.writeMap(services);
+        data.writeBundle(coreSettings);
         mRemote.transact(BIND_APPLICATION_TRANSACTION, data, null,
                 IBinder.FLAG_ONEWAY);
         data.recycle();
@@ -831,6 +862,13 @@ class ApplicationThreadProxy implements IApplicationThread {
                 IBinder.FLAG_ONEWAY);
         data.recycle();
         
+    }
+
+    public void setCoreSettings(Bundle coreSettings) throws RemoteException {
+        Parcel data = Parcel.obtain();
+        data.writeInterfaceToken(IApplicationThread.descriptor);
+        data.writeBundle(coreSettings);
+        mRemote.transact(SET_CORE_SETTINGS, data, null, IBinder.FLAG_ONEWAY);
     }
 }
 

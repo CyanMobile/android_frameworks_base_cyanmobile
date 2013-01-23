@@ -414,6 +414,81 @@ public class ActivityManager {
     }
 
     /**
+     * Remove some end of a task's activity stack that is not part of
+     * the main application.  The selected activities will be finished, so
+     * they are no longer part of the main task.
+     *
+     * @param taskId The identifier of the task.
+     * @param subTaskIndex The number of the sub-task; this corresponds
+     * to the index of the thumbnail returned by {@link #getTaskThumbnails(int)}.
+     * @return Returns true if the sub-task was found and was removed.
+     *	
+     * @hide
+     */
+    public boolean removeSubTask(int taskId, int subTaskIndex)
+            throws SecurityException {
+        try {
+            return ActivityManagerNative.getDefault().removeSubTask(taskId, subTaskIndex);
+        } catch (RemoteException e) {
+            // System dead, we will be dead too soon!
+            return false;
+        }
+    }
+
+    /**
+     * If set, the process of the root activity of the task will be killed
+     * as part of removing the task.
+     * @hide
+     */
+    public static final int REMOVE_TASK_KILL_PROCESS = 0x0001;
+
+    /**
+     * Completely remove the given task.
+     *
+     * @param taskId Identifier of the task to be removed.
+     * @param flags Additional operational flags.  May be 0 or
+     * {@link #REMOVE_TASK_KILL_PROCESS}.
+     * @return Returns true if the given task was found and removed.
+     *
+     * @hide
+     */
+    public boolean removeTask(int taskId, int flags)
+            throws SecurityException {
+        try {
+            return ActivityManagerNative.getDefault().removeTask(taskId, flags);
+        } catch (RemoteException e) {
+            // System dead, we will be dead too soon!
+            return false;
+        }
+    }
+
+    /**
+     * Flag for {@link #moveTaskToFront(int, int)}: also move the "home"
+     * activity along with the task, so it is positioned immediately behind
+     * the task.
+     */
+    public static final int MOVE_TASK_WITH_HOME = 0x00000001;
+
+    /**
+     * Ask that the task associated with a given task ID be moved to the
+     * front of the stack, so it is now visible to the user.  Requires that
+     * the caller hold permission {@link android.Manifest.permission#REORDER_TASKS}
+     * or a SecurityException will be thrown.
+     *
+     * @param taskId The identifier of the task to be moved, as found in
+     * {@link RunningTaskInfo} or {@link RecentTaskInfo}.
+     * @param flags Additional operational flags, 0 or more of
+     * {@link #MOVE_TASK_WITH_HOME}.
+     */
+    public void moveTaskToFront(int taskId, int flags) {
+        try {
+            ActivityManagerNative.getDefault().moveTaskToFront(taskId, flags);
+        } catch (RemoteException e) {
+            // System dead, we will be dead too soon!
+        }
+    }
+
+    /**
      * Information you can retrieve about a particular Service that is
      * currently running in the system.
      */

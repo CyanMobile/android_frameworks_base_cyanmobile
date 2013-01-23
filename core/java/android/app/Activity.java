@@ -2946,6 +2946,30 @@ public class Activity extends ContextThemeWrapper
     }
 
     /**
+     * Launch a new activity.  You will not receive any information about when
+     * the activity exits.  This implementation overrides the base version,
+     * providing information about
+     * the activity performing the launch.  Because of this additional
+     * information, the {@link Intent#FLAG_ACTIVITY_NEW_TASK} launch flag is not
+     * required; if not specified, the new activity will be added to the
+     * task of the caller.
+     *
+     * <p>This method throws {@link android.content.ActivityNotFoundException}
+     * if there was no Activity found to run the given Intent.
+     *
+     * @param intents The intents to start.
+     *
+     * @throws android.content.ActivityNotFoundException
+     *
+     * @see #startActivityForResult
+     */
+    @Override
+    public void startActivities(Intent[] intents) {
+        mInstrumentation.execStartActivities(this, mMainThread.getApplicationThread(),
+                mToken, this, intents);
+    }
+
+    /**
      * Like {@link #startActivity(Intent)}, but taking a IntentSender
      * to start; see
      * {@link #startIntentSenderForResult(IntentSender, int, Intent, int, int, int)}
@@ -3385,7 +3409,7 @@ public class Activity extends ContextThemeWrapper
                 ActivityManagerNative.getDefault().getIntentSender(
                         IActivityManager.INTENT_SENDER_ACTIVITY_RESULT, packageName,
                         mParent == null ? mToken : mParent.mToken,
-                        mEmbeddedID, requestCode, data, null, flags);
+                        mEmbeddedID, requestCode, new Intent[] { data }, null, flags);
             return target != null ? new PendingIntent(target) : null;
         } catch (RemoteException e) {
             // Empty
@@ -3861,13 +3885,13 @@ public class Activity extends ContextThemeWrapper
     final void performPause() {
         mCalled = false;
         onPause();
+        mResumed = false;
         if (!mCalled && getApplicationInfo().targetSdkVersion
                 >= android.os.Build.VERSION_CODES.GINGERBREAD) {
             throw new SuperNotCalledException(
                     "Activity " + mComponent.toShortString() +
                     " did not call through to super.onPause()");
         }
-        mResumed = false;
     }
     
     final void performUserLeaving() {

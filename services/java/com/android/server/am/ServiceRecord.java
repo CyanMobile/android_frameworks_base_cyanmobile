@@ -84,7 +84,6 @@ class ServiceRecord extends Binder {
     boolean startRequested; // someone explicitly called start?
     boolean stopIfKilled;   // last onStart() said to stop if service killed?
     boolean callStart;      // last onStart() has asked to alway be called on restart.
-    int lastStartId;        // identifier of most recent start request.
     int executeNesting;     // number of outstanding operations keeping foreground.
     long executingStart;    // start time of last execute request.
     int crashCount;         // number of times proc has crashed with service running
@@ -95,9 +94,12 @@ class ServiceRecord extends Binder {
     long nextRestartTime;   // time when restartDelay will expire.
 
     String stringName;      // caching of toString
-    
+
+    private int lastStartId;    // identifier of most recent start request.
+
     static class StartItem {
         final ServiceRecord sr;
+        final boolean taskRemoved;
         final int id;
         final Intent intent;
         final int targetPermissionUid;
@@ -108,8 +110,10 @@ class ServiceRecord extends Binder {
 
         String stringName;      // caching of toString
 
-        StartItem(ServiceRecord _sr, int _id, Intent _intent, int _targetPermissionUid) {
+        StartItem(ServiceRecord _sr, boolean _taskRemoved, int _id, Intent _intent,
+                int _targetPermissionUid) {
             sr = _sr;
+            taskRemoved = _taskRemoved;
             id = _id;
             intent = _intent;
             targetPermissionUid = _targetPermissionUid;
@@ -320,7 +324,19 @@ class ServiceRecord extends Binder {
         
         return null;
     }
-    
+
+    public int getLastStartId() {
+        return lastStartId;
+    }
+
+    public int makeNextStartId() {
+        lastStartId++;	
+        if (lastStartId < 1) {
+            lastStartId = 1;	
+        }
+        return lastStartId;	
+    }
+
     public void postNotification() {
         final int appUid = appInfo.uid;
         final int appPid = app.pid;

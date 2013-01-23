@@ -1281,6 +1281,7 @@
   <public type="attr" name="hand_hours" />
   <public type="attr" name="hand_minutes" />
   <public type="attr" name="hand_seconds" />
+  <public type="attr" name="stopWithTask" />
 
   <!-- presence drawables for videochat or audiochat capable contacts -->
   <public type="drawable" name="presence_video_away" id="0x010800ac" />
