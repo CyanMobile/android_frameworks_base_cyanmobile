@@ -890,7 +890,9 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         } else {
            centerWidget(mClock);
         }
-        centerWidget(mDate);
+        if (mUseFuzzyClock || mUseKanjiClock){
+            centerWidget(mDate);
+        }
         centerWidget(mStatusCharging);
         centerWidget(mStatusAlarm);
         centerWidget(mStatusCalendar);
@@ -932,7 +934,9 @@ class HoneycombLockscreen extends LinearLayout implements KeyguardScreen,
         } else {
             alignWidgetToRight(mClock);
         }
-        alignWidgetToRight(mDate);
+        if (mUseFuzzyClock || mUseKanjiClock){
+            alignWidgetToRight(mDate);
+        }
         alignWidgetToRight(mStatusCharging);
         alignWidgetToRight(mStatusAlarm);
         alignWidgetToRight(mStatusCalendar);

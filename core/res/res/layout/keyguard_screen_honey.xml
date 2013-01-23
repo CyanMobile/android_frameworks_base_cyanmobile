@@ -168,25 +168,29 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
                 android:shadowDy="0"
                 android:shadowRadius="3.0"
                 />
+            <TextView
+                android:id="@+id/date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:ellipsize="none"
+                android:layout_gravity="center_horizontal"
+                android:gravity="center"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:shadowColor="#C0000000"
+                android:shadowDx="0"
+                android:shadowDy="0"
+                android:shadowRadius="3.0"
+                />
          </LinearLayout>
         </com.android.internal.widget.DigitalWeatherClock>
-
-        <TextView
-            android:id="@+id/date"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/time"
-            android:layout_marginLeft="24dip"
-            android:layout_marginRight="24dip"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            />
 
         <!-- "emergency calls only" shown when sim is missing or PUKd -->
         <TextView
             android:id="@+id/emergencyCallText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/date"
+            android:layout_below="@id/time"
             android:layout_alignParentRight="true"
             android:layout_marginTop="0dip"
             android:layout_marginRight="8dip"
@@ -201,7 +205,7 @@ xmlns:tabunlock="http://schemas.android.com/apk/res/com.android.tabunlock"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_below="@id/date">
+            android:layout_below="@id/time">
 
             <TextView
                 android:id="@+id/status_charging"
