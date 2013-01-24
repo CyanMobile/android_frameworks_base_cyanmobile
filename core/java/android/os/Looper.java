@@ -69,7 +69,7 @@ public class Looper {
       * {@link #loop()} after calling this method, and end it by calling
       * {@link #quit()}.
       */
-    public static final void prepare() {
+    public static void prepare() {
         if (sThreadLocal.get() != null) {
             throw new RuntimeException("Only one Looper may be created per thread");
         }
@@ -82,7 +82,7 @@ public class Looper {
      * {@link #prepare()}
      */
      
-    public static final void prepareMainLooper() {
+    public static void prepareMainLooper() {
         prepare();
         setMainLooper(myLooper());
         if (Process.supportsProcesses()) {
@@ -96,7 +96,7 @@ public class Looper {
     
     /** Returns the application's main looper, which lives in the main thread of the application.
      */
-    public synchronized static final Looper getMainLooper() {
+    public synchronized static Looper getMainLooper() {
         return mMainLooper;
     }
 
@@ -104,7 +104,7 @@ public class Looper {
      *  Run the message queue in this thread. Be sure to call
      * {@link #quit()} to end the loop.
      */
-    public static final void loop() {
+    public static void loop() {
         Looper me = myLooper();
         MessageQueue queue = me.mQueue;
         
@@ -123,14 +123,29 @@ public class Looper {
                     // No target is a magic identifier for the quit message.
                     return;
                 }
-                if (me.mLogging!= null) me.mLogging.println(
-                        ">>>>> Dispatching to " + msg.target + " "
-                        + msg.callback + ": " + msg.what
-                        );
+                long wallStart = 0;
+                long threadStart = 0;
+
+                // This must be in a local variable, in case a UI event sets the logger
+                Printer logging = me.mLogging;
+                if (logging != null) {
+                    logging.println(">>>>> Dispatching to " + msg.target + " " +
+                            msg.callback + ": " + msg.what);
+                    wallStart = System.currentTimeMillis();
+                    threadStart = SystemClock.currentThreadTimeMillis();
+                }
+
                 msg.target.dispatchMessage(msg);
-                if (me.mLogging!= null) me.mLogging.println(
-                        "<<<<< Finished to    " + msg.target + " "
-                        + msg.callback);
+
+                if (logging != null) {
+                    long wallTime = System.currentTimeMillis() - wallStart;
+                    long threadTime = SystemClock.currentThreadTimeMillis() - threadStart;
+
+                    logging.println("<<<<< Finished to " + msg.target + " " + msg.callback);
+                    if (logging instanceof Profiler) {
+                        ((Profiler) logging).profile(msg, wallStart, wallTime, threadTime);
+                    }
+                }
                 
                 // Make sure that during the course of dispatching the
                 // identity of the thread wasn't corrupted.
@@ -152,7 +167,7 @@ public class Looper {
      * Return the Looper object associated with the current thread.  Returns
      * null if the calling thread is not associated with a Looper.
      */
-    public static final Looper myLooper() {
+    public static Looper myLooper() {
         return (Looper)sThreadLocal.get();
     }
 
@@ -174,7 +189,7 @@ public class Looper {
      * thread.  This must be called from a thread running a Looper, or a
      * NullPointerException will be thrown.
      */
-    public static final MessageQueue myQueue() {
+    public static MessageQueue myQueue() {
         return myLooper().mQueue;
     }
 
@@ -225,24 +240,14 @@ public class Looper {
     }
 
     public String toString() {
-        return "Looper{"
-            + Integer.toHexString(System.identityHashCode(this))
-            + "}";
+        return "Looper{" + Integer.toHexString(System.identityHashCode(this)) + "}";
     }
 
-    static class HandlerException extends Exception {
-
-        HandlerException(Message message, Throwable cause) {
-            super(createMessage(cause), cause);
-        }
-
-        static String createMessage(Throwable cause) {
-            String causeMsg = cause.getMessage();
-            if (causeMsg == null) {
-                causeMsg = cause.toString();
-            }
-            return causeMsg;
-        }
+    /**	
+     * @hide
+     */
+    public static interface Profiler {
+        void profile(Message message, long wallStart, long wallTime, long threadTime);
     }
 }
 

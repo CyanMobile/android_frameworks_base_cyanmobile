@@ -865,8 +865,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * @param startingIndex The zero-based position at which bookmarks in this file should begin
      */
     private int loadBookmarks(SQLiteDatabase db, int startingIndex) {
-        Intent intent = new Intent(Intent.ACTION_MAIN, null);
-        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        Intent intent = Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_LAUNCHER);
         ContentValues values = new ContentValues();
 
         PackageManager packageManager = mContext.getPackageManager();

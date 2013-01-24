@@ -225,7 +225,7 @@ public class WindowManagerService extends IWindowManager.Stub
     /**	
      * Frame rate. TODO: Replace with Display.getRefreshRate() when that is reliable.
      */
-    static final int FRAME_RATE = 48;
+    static final int FRAME_RATE = 60;
 
     /**
      * If true, the window manager will do its own custom freezing and general
@@ -2925,7 +2925,7 @@ public class WindowManagerService extends IWindowManager.Stub
     // Application Window Tokens
     // -------------------------------------------------------------
 
-    public void validateAppTokens(List tokens) {
+    public void validateAppTokens(List<IBinder> tokens) {
         int v = tokens.size()-1;
         int m = mAppTokens.size()-1;
         while (v >= 0 && m >= 0) {
@@ -7731,6 +7731,9 @@ public class WindowManagerService extends IWindowManager.Stub
         // Last visibility state we reported to the app token.
         boolean reportedVisible;
 
+        // Last drawn state we reported to the app token.
+        boolean reportedDrawn;
+
         // Set to true when the token has been removed from the window mgr.
         boolean removed;
 
@@ -7926,6 +7929,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
             int numInteresting = 0;
             int numVisible = 0;
+            int numDrawn = 0;
             boolean nowGone = true;
 
             if (DEBUG_VISIBILITY) Slog.v(TAG, "Update reported visibility: " + this);
@@ -7956,6 +7960,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 }
                 numInteresting++;
                 if (win.isDrawnLw()) {
+                    numDrawn++;
                     if (!win.isAnimating()) {
                         numVisible++;
                     }
@@ -7965,9 +7970,27 @@ public class WindowManagerService extends IWindowManager.Stub
                 }
             }
 
+            boolean nowDrawn = numInteresting > 0 && numDrawn >= numInteresting;
             boolean nowVisible = numInteresting > 0 && numVisible >= numInteresting;
+            if (!nowGone) {
+                // If the app is not yet gone, then it can only become visible/drawn.
+                if (!nowDrawn) {
+                   nowDrawn = reportedDrawn;
+                }
+                if (!nowVisible) {
+                   nowVisible = reportedVisible;
+                }
+            }
             if (DEBUG_VISIBILITY) Slog.v(TAG, "VIS " + this + ": interesting="
                     + numInteresting + " visible=" + numVisible);
+            if (nowDrawn != reportedDrawn) {
+                if (nowDrawn) {
+                   Message m = mH.obtainMessage(
+                        H.REPORT_APPLICATION_TOKEN_DRAWN, this);
+                   mH.sendMessage(m);
+                }
+                reportedDrawn = nowDrawn;
+            }
             if (nowVisible != reportedVisible) {
                 if (DEBUG_VISIBILITY) Slog.v(
                         TAG, "Visibility changed in " + this
@@ -8009,6 +8032,7 @@ public class WindowManagerService extends IWindowManager.Stub
             pw.print(prefix); pw.print("hiddenRequested="); pw.print(hiddenRequested);
                     pw.print(" clientHidden="); pw.print(clientHidden);
                     pw.print(" willBeHidden="); pw.print(willBeHidden);
+                    pw.print(" reportedDrawn="); pw.print(reportedDrawn);
                     pw.print(" reportedVisible="); pw.println(reportedVisible);
             if (paused || freezingScreen) {
                 pw.print(prefix); pw.print("paused="); pw.print(paused);
@@ -8104,6 +8128,7 @@ public class WindowManagerService extends IWindowManager.Stub
         public static final int REMOVE_STARTING = 6;
         public static final int FINISHED_STARTING = 7;
         public static final int REPORT_APPLICATION_TOKEN_WINDOWS = 8;
+        public static final int REPORT_APPLICATION_TOKEN_DRAWN = 9;
         public static final int WINDOW_FREEZE_TIMEOUT = 11;
         public static final int HOLD_SCREEN_CHANGED = 12;
         public static final int APP_TRANSITION_TIMEOUT = 13;
@@ -8314,6 +8339,17 @@ public class WindowManagerService extends IWindowManager.Stub
                         } catch (Exception e) {
                             Slog.w(TAG, "Exception when removing starting window", e);
                         }
+                    }
+                } break;
+
+                case REPORT_APPLICATION_TOKEN_DRAWN: {
+                    final AppWindowToken wtoken = (AppWindowToken)msg.obj;
+
+                    try {
+                        if (DEBUG_VISIBILITY) Slog.v(
+                                TAG, "Reporting drawn in " + wtoken);
+                        wtoken.appToken.windowsDrawn();
+                    } catch (RemoteException ex) {
                     }
                 } break;
 

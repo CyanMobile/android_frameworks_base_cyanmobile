@@ -28,6 +28,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.Message;
 import android.os.Process;
 import android.os.RemoteException;
@@ -46,9 +47,10 @@ import java.util.HashSet;
 /**
  * An entry in the history stack, representing an activity.
  */
-class ActivityRecord extends IApplicationToken.Stub {
+class ActivityRecord {
     final ActivityManagerService service; // owner
     final ActivityStack stack; // owner
+    final IApplicationToken.Stub appToken; // window manager token
     final ActivityInfo info; // all about me
     final int launchedFromUid; // always the uid who started the activity.
     final Intent intent;    // the original intent that generated us
@@ -72,6 +74,7 @@ class ActivityRecord extends IApplicationToken.Stub {
     TaskRecord task;        // the task this is in.
     long launchTime;        // when we starting launching this activity
     long startTime;         // last time this activity was started
+    long lastVisibleTime;   // last time this activity became visible
     long cpuTimeAtResume;   // the cpu time of host process at the time of resuming activity
     Configuration configuration; // configuration activity was last running in
     ActivityRecord resultTo; // who started this entry, so will get our reply
@@ -215,6 +218,70 @@ class ActivityRecord extends IApplicationToken.Stub {
         }
     }
 
+    static class Token extends IApplicationToken.Stub {
+        final WeakReference<ActivityRecord> weakActivity;
+
+        Token(ActivityRecord activity) {
+            weakActivity = new WeakReference<ActivityRecord>(activity);
+        }
+
+        @Override public void windowsDrawn() throws RemoteException {
+            ActivityRecord activity = weakActivity.get();
+            if (activity != null) {
+                activity.windowsDrawn();
+            }
+        }
+
+        @Override public void windowsVisible() throws RemoteException {
+            ActivityRecord activity = weakActivity.get();
+            if (activity != null) {
+                activity.windowsVisible();
+            }
+        }
+
+        @Override public void windowsGone() throws RemoteException {
+            ActivityRecord activity = weakActivity.get();
+            if (activity != null) {
+                activity.windowsGone();
+            }
+        }
+
+        @Override public boolean keyDispatchingTimedOut() throws RemoteException {
+            ActivityRecord activity = weakActivity.get();
+            if (activity != null) {
+                return activity.keyDispatchingTimedOut();
+            }
+            return false;
+        }
+
+        @Override public long getKeyDispatchingTimeout() throws RemoteException {
+            ActivityRecord activity = weakActivity.get();
+            if (activity != null) {
+                return activity.getKeyDispatchingTimeout();
+            }
+            return 0;
+        }
+
+        public String toString() {
+            StringBuilder sb = new StringBuilder(128);
+            sb.append("Token{");
+            sb.append(Integer.toHexString(System.identityHashCode(this)));
+            sb.append(' ');
+            sb.append(weakActivity.get());
+            sb.append('}');
+            return sb.toString();
+        }
+    }
+
+    static ActivityRecord forToken(IBinder token) {
+        try {
+            return token != null ? ((Token)token).weakActivity.get() : null;
+        } catch (ClassCastException e) {
+            Slog.w(ActivityManagerService.TAG, "Bad activity token: " + token, e);
+            return null;
+        }
+    }
+
     ActivityRecord(ActivityManagerService _service, ActivityStack _stack, ProcessRecord _caller,
             int _launchedFromUid, Intent _intent, String _resolvedType,
             ActivityInfo aInfo, Configuration _configuration,
@@ -222,6 +289,7 @@ class ActivityRecord extends IApplicationToken.Stub {
             boolean _componentSpecified) {
         service = _service;
         stack = _stack;
+        appToken = new Token(this);
         info = aInfo;
         launchedFromUid = _launchedFromUid;
         intent = _intent;
@@ -440,7 +508,7 @@ class ActivityRecord extends IApplicationToken.Stub {
                 ar.add(intent);
                 service.grantUriPermissionFromIntentLocked(callingUid, packageName,
                         intent, getUriPermissionsLocked());
-                app.thread.scheduleNewIntent(ar, this);
+                app.thread.scheduleNewIntent(ar, appToken);
                 sent = true;
             } catch (RemoteException e) {
                 Slog.w(ActivityManagerService.TAG,
@@ -465,14 +533,14 @@ class ActivityRecord extends IApplicationToken.Stub {
     void pauseKeyDispatchingLocked() {
         if (!keysPaused) {
             keysPaused = true;
-            service.mWindowManager.pauseKeyDispatching(this);
+            service.mWindowManager.pauseKeyDispatching(appToken);
         }
     }
 
     void resumeKeyDispatchingLocked() {
         if (keysPaused) {
             keysPaused = false;
-            service.mWindowManager.resumeKeyDispatching(this);
+            service.mWindowManager.resumeKeyDispatching(appToken);
         }
     }
 
@@ -488,18 +556,18 @@ class ActivityRecord extends IApplicationToken.Stub {
     
     public void startFreezingScreenLocked(ProcessRecord app, int configChanges) {
         if (mayFreezeScreenLocked(app)) {
-            service.mWindowManager.startAppFreezingScreen(this, configChanges);
+            service.mWindowManager.startAppFreezingScreen(appToken, configChanges);
         }
     }
     
     public void stopFreezingScreenLocked(boolean force) {
         if (force || frozenBeforeDestroy) {
             frozenBeforeDestroy = false;
-            service.mWindowManager.stopAppFreezingScreen(this, force);
+            service.mWindowManager.stopAppFreezingScreen(appToken, force);
         }
     }
     
-    public void windowsVisible() {
+    public void windowsDrawn() {
         synchronized(service) {
             if (launchTime != 0) {
                 final long curTime = SystemClock.uptimeMillis();
@@ -531,11 +599,17 @@ class ActivityRecord extends IApplicationToken.Stub {
                 stack.mInitialStartTime = 0;
             }
             startTime = 0;
+         }
+    }
+
+    public void windowsVisible() {
+        synchronized(service) {
             stack.reportActivityVisibleLocked(this);
             if (ActivityManagerService.DEBUG_SWITCH) Log.v(
                     ActivityManagerService.TAG, "windowsVisible(): " + this);
             if (!nowVisible) {
                 nowVisible = true;
+                lastVisibleTime = SystemClock.uptimeMillis();
                 if (!idle) {
                     // Instead of doing the full stop routine here, let's just
                     // hide any activities we now can, and let them stop when
@@ -658,7 +732,7 @@ class ActivityRecord extends IApplicationToken.Stub {
         }
         if (app != null && app.thread != null) {
             try {
-                app.thread.scheduleSleeping(this, _sleeping);
+                app.thread.scheduleSleeping(appToken, _sleeping);
                 if (sleeping && !stack.mGoingToSleepActivities.contains(this)) {
                     stack.mGoingToSleepActivities.add(this);
                 }

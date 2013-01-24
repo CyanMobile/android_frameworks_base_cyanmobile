@@ -2184,6 +2184,9 @@ class PackageManagerService extends IPackageManager.Stub {
     ResolveInfo findPreferredActivity(Intent intent, String resolvedType,
             int flags, List<ResolveInfo> query, int priority) {
         synchronized (mPackages) {
+            if (intent.getSelector() != null) {
+                intent = intent.getSelector(); 
+            }
             if (DEBUG_PREFERRED) intent.addFlags(Intent.FLAG_DEBUG_LOG_RESOLUTION);
             List<PreferredActivity> prefs =
                     mSettings.mPreferredActivities.queryIntent(intent, resolvedType,
@@ -2254,6 +2257,12 @@ class PackageManagerService extends IPackageManager.Stub {
     public List<ResolveInfo> queryIntentActivities(Intent intent,
             String resolvedType, int flags) {
         ComponentName comp = intent.getComponent();
+        if (comp == null) {
+            if (intent.getSelector() != null) {
+                intent = intent.getSelector(); 
+                comp = intent.getComponent();
+            }
+        }
         if (comp != null) {
             List<ResolveInfo> list = new ArrayList<ResolveInfo>(1);
             ActivityInfo ai = getActivityInfo(comp, flags);
@@ -2446,6 +2455,12 @@ class PackageManagerService extends IPackageManager.Stub {
     public List<ResolveInfo> queryIntentReceivers(Intent intent,
             String resolvedType, int flags) {
         ComponentName comp = intent.getComponent();
+        if (comp == null) {
+            if (intent.getSelector() != null) {
+                intent = intent.getSelector(); 
+                comp = intent.getComponent();
+            }
+        }
         if (comp != null) {
             List<ResolveInfo> list = new ArrayList<ResolveInfo>(1);
             ActivityInfo ai = getReceiverInfo(comp, flags);
@@ -2489,6 +2504,12 @@ class PackageManagerService extends IPackageManager.Stub {
     public List<ResolveInfo> queryIntentServices(Intent intent,
             String resolvedType, int flags) {
         ComponentName comp = intent.getComponent();
+        if (comp == null) {
+            if (intent.getSelector() != null) {
+                intent = intent.getSelector(); 
+                comp = intent.getComponent();
+            }
+        }
         if (comp != null) {
             List<ResolveInfo> list = new ArrayList<ResolveInfo>(1);
             ServiceInfo si = getServiceInfo(comp, flags);
@@ -7011,6 +7032,10 @@ class PackageManagerService extends IPackageManager.Stub {
                     category = Intent.CATEGORY_THEME_PACKAGE_INSTALLED_STATE_CHANGE;
                 }
                 sendPackageBroadcast(Intent.ACTION_PACKAGE_REMOVED, removedPackage, category, extras, null, null);
+                if (fullRemove && !replacing) {
+                    sendPackageBroadcast(Intent.ACTION_PACKAGE_FULLY_REMOVED, removedPackage, category,
+                            extras, null, null);
+                }
             }
             if (removedUid >= 0) {
                 sendPackageBroadcast(Intent.ACTION_UID_REMOVED, null, null, extras, null, null);

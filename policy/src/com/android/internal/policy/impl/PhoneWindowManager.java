@@ -769,9 +769,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 return;
             }
             try {
-                final Intent intent = new Intent(Intent.ACTION_MAIN);
+                final Intent intent = Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_HOME);
                 String defaultHomePackage = "com.android.launcher";
-                intent.addCategory(Intent.CATEGORY_HOME);
                 final ResolveInfo res = mContext.getPackageManager().resolveActivity(intent, 0);
                 if (res.activityInfo != null && !res.activityInfo.packageName.equals("android")) {
                     defaultHomePackage = res.activityInfo.packageName;
@@ -3525,7 +3524,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         int result = ActivityManagerNative.getDefault()
                                 .startActivity(null, dock,
                                         dock.resolveTypeIfNeeded(mContext.getContentResolver()),
-                                        null, 0, null, null, 0, true /* onlyIfNeeded*/, false);
+                                        null, 0, null, null, 0, true /* onlyIfNeeded*/, false,
+                                        null, null, false);
                         if (result == IActivityManager.START_RETURN_INTENT_TO_CALLER) {
                             return false;
                         }
@@ -3534,7 +3534,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 int result = ActivityManagerNative.getDefault()
                         .startActivity(null, mHomeIntent,
                                 mHomeIntent.resolveTypeIfNeeded(mContext.getContentResolver()),
-                                null, 0, null, null, 0, true /* onlyIfNeeded*/, false);
+                                null, 0, null, null, 0, true /* onlyIfNeeded*/, false,
+                                null, null, false);
                 if (result == IActivityManager.START_RETURN_INTENT_TO_CALLER) {
                     return false;
                 }

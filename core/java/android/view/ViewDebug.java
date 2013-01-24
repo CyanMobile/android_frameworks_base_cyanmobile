@@ -24,14 +24,22 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.os.Looper;
+import android.os.Message;
 import android.os.Environment;
 import android.os.Debug;
 import android.os.RemoteException;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.util.Printer;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.FileOutputStream;
 import java.io.DataOutputStream;
@@ -48,10 +56,19 @@ import java.lang.annotation.Target;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.AccessibleObject;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;	
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Various debugging/tracing tools related to {@link View} and the view hierarchy.
@@ -404,6 +421,9 @@ public class ViewDebug {
     private static List<RecyclerTrace> sRecyclerTraces;
     private static String sRecyclerTracePrefix;
 
+    private static final ThreadLocal<LooperProfiler> sLooperProfilerStorage =
+            new ThreadLocal<LooperProfiler>();
+
     /**
      * Defines the type of motion events trace to output to the motion events traces file.
      * 
@@ -439,6 +459,116 @@ public class ViewDebug {
      */
     public static long getViewRootInstanceCount() {
         return ViewRoot.getInstanceCount();
+    }
+
+    /**
+     * Starts profiling the looper associated with the current thread.
+     * You must call {@link #stopLooperProfiling} to end profiling
+     * and obtain the traces. Both methods must be invoked on the
+     * same thread.
+     * 
+     * @hide
+     */
+    public static void startLooperProfiling(String path, FileDescriptor fileDescriptor) {
+        if (sLooperProfilerStorage.get() == null) {
+            LooperProfiler profiler = new LooperProfiler(path, fileDescriptor);
+            sLooperProfilerStorage.set(profiler);
+            Looper.myLooper().setMessageLogging(profiler);
+        }
+    }
+
+    /**
+     * @hide
+     */
+    public static void stopLooperProfiling() {
+        LooperProfiler profiler = sLooperProfilerStorage.get();
+        if (profiler != null) {
+            sLooperProfilerStorage.remove();
+            Looper.myLooper().setMessageLogging(null);
+            profiler.save();
+        }
+    }
+
+    private static class LooperProfiler implements Looper.Profiler, Printer {
+        private static final int LOOPER_PROFILER_VERSION = 1;
+
+        private static final String LOG_TAG = "LooperProfiler";
+
+        private final ArrayList<Entry> mTraces = new ArrayList<Entry>(512);
+
+        private final String mPath;
+        private final FileDescriptor mFileDescriptor;
+	
+        public LooperProfiler(String path, FileDescriptor fileDescriptor) {
+            mPath = path;
+            mFileDescriptor = fileDescriptor;
+        }
+
+        @Override
+        public void println(String x) {
+            // Ignore messages
+        }
+
+        @Override
+        public void profile(Message message, long wallStart, long wallTime, long threadTime) {
+            Entry entry = new Entry();
+            entry.messageId = message.what;
+            entry.name = message.getTarget().getMessageName(message);
+            entry.wallStart = wallStart;
+            entry.wallTime = wallTime;
+            entry.threadTime = threadTime;
+
+            mTraces.add(entry);
+        }
+
+        void save() {
+            // Don't block the UI thread
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    saveTraces();
+                }
+            }, "LooperProfiler[" + mPath + "]").start();
+        }
+
+        private void saveTraces() {
+            FileOutputStream fos = new FileOutputStream(mFileDescriptor);
+            DataOutputStream out = new DataOutputStream(new BufferedOutputStream(fos));
+
+            try {
+                out.writeInt(LOOPER_PROFILER_VERSION);
+                out.writeInt(mTraces.size());
+                for (Entry entry : mTraces) {
+                    saveTrace(entry, out);
+                }
+
+                Log.d(LOG_TAG, "Looper traces ready: " + mPath);
+            } catch (IOException e) {
+                Log.e(LOG_TAG, "Could not write trace file: ", e);
+            } finally {
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    // Ignore
+                }
+            }
+        }
+
+        private void saveTrace(Entry entry, DataOutputStream out) throws IOException {
+            out.writeInt(entry.messageId);
+            out.writeUTF(entry.name);
+            out.writeLong(entry.wallStart);
+            out.writeLong(entry.wallTime);
+            out.writeLong(entry.threadTime);
+        }
+
+        static class Entry {
+            int messageId;
+            String name;
+            long wallStart;
+            long wallTime;
+            long threadTime;
+        }
     }
 
     /**

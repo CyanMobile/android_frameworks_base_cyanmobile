@@ -53,7 +53,8 @@ public interface IApplicationThread extends IInterface {
     void scheduleSendResult(IBinder token, List<ResultInfo> results) throws RemoteException;
     void scheduleLaunchActivity(Intent intent, IBinder token, int ident,
             ActivityInfo info, Bundle state, List<ResultInfo> pendingResults,
-    		List<Intent> pendingNewIntents, boolean notResumed, boolean isForward)
+    	    List<Intent> pendingNewIntents, boolean notResumed, boolean isForward,
+                String profileName, ParcelFileDescriptor profileFd, boolean autoStopProfiler)
     		throws RemoteException;
     void scheduleRelaunchActivity(IBinder token, List<ResultInfo> pendingResults,
             List<Intent> pendingNewIntents, int configChanges,
@@ -80,7 +81,8 @@ public interface IApplicationThread extends IInterface {
     static final int DEBUG_ON = 1;
     static final int DEBUG_WAIT = 2;
     void bindApplication(String packageName, ApplicationInfo info, List<ProviderInfo> providers,
-            ComponentName testName, String profileName, Bundle testArguments, 
+            ComponentName testName, String profileName, ParcelFileDescriptor profileFd,
+            boolean autoStopProfiler, Bundle testArguments,
             IInstrumentationWatcher testWatcher, int debugMode, boolean restrictedBackupMode,
             boolean persistent, Configuration config, Map<String, IBinder> services,
             Bundle coreSettings) throws RemoteException;
@@ -97,7 +99,7 @@ public interface IApplicationThread extends IInterface {
             throws RemoteException;
     void scheduleLowMemory() throws RemoteException;
     void scheduleActivityConfigurationChanged(IBinder token) throws RemoteException;
-    void profilerControl(boolean start, String path, ParcelFileDescriptor fd)
+    void profilerControl(boolean start, String path, ParcelFileDescriptor fd, int profileType)
             throws RemoteException;
     void setSchedulingGroup(int group) throws RemoteException;
     void getMemoryInfo(Debug.MemoryInfo outInfo) throws RemoteException;

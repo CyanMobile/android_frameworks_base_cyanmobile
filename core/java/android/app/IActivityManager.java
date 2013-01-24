@@ -84,11 +84,13 @@ public interface IActivityManager extends IInterface {
     public int startActivity(IApplicationThread caller,
             Intent intent, String resolvedType, Uri[] grantedUriPermissions,
             int grantedMode, IBinder resultTo, String resultWho, int requestCode,
-            boolean onlyIfNeeded, boolean debug) throws RemoteException;
+            boolean onlyIfNeeded, boolean debug, String profileFile,
+            ParcelFileDescriptor profileFd, boolean autoStopProfiler) throws RemoteException;
     public WaitResult startActivityAndWait(IApplicationThread caller,
             Intent intent, String resolvedType, Uri[] grantedUriPermissions,
             int grantedMode, IBinder resultTo, String resultWho, int requestCode,
-            boolean onlyIfNeeded, boolean debug) throws RemoteException;
+            boolean onlyIfNeeded, boolean debug, String profileFile,
+            ParcelFileDescriptor profileFd, boolean autoStopProfiler) throws RemoteException;
     public int startActivityWithConfig(IApplicationThread caller,
             Intent intent, String resolvedType, Uri[] grantedUriPermissions,
             int grantedMode, IBinder resultTo, String resultWho, int requestCode,
@@ -118,7 +120,8 @@ public interface IActivityManager extends IInterface {
     public void finishReceiver(IBinder who, int resultCode, String resultData, Bundle map, boolean abortBroadcast) throws RemoteException;
     public void attachApplication(IApplicationThread app) throws RemoteException;
     /* oneway */
-    public void activityIdle(IBinder token, Configuration config) throws RemoteException;
+    public void activityIdle(IBinder token, Configuration config,
+            boolean stopProfiling) throws RemoteException;
     public void activityPaused(IBinder token) throws RemoteException;
     /* oneway */
     public void activityStopped(IBinder token, Bundle state,
@@ -229,6 +232,7 @@ public interface IActivityManager extends IInterface {
     public void getMemoryInfo(ActivityManager.MemoryInfo outInfo) throws RemoteException;
     
     public void killBackgroundProcesses(final String packageName) throws RemoteException;
+    public void killAllBackgroundProcesses() throws RemoteException;
     public void forceStopPackage(final String packageName) throws RemoteException;
     
     // Note: probably don't want to allow applications access to these.
@@ -285,7 +289,7 @@ public interface IActivityManager extends IInterface {
     
     // Turn on/off profiling in a particular process.
     public boolean profileControl(String process, boolean start,
-            String path, ParcelFileDescriptor fd) throws RemoteException;
+            String path, ParcelFileDescriptor fd, int profileType) throws RemoteException;
     
     public boolean shutdown(int timeout) throws RemoteException;
     
@@ -560,4 +564,5 @@ public interface IActivityManager extends IInterface {
     int IS_INTENT_SENDER_TARGETED_TO_PACKAGE_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+127;
     int UPDATE_PERSISTENT_CONFIGURATION_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+128;
     int GET_PROCESS_PSS_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+129;
+    int KILL_ALL_BACKGROUND_PROCESSES_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+130;
 }

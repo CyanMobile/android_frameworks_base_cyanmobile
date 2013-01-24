@@ -1885,6 +1885,43 @@ public final class ViewRoot extends Handler implements ViewParent, ViewOpacityMa
     public final static int CLOSE_SYSTEM_DIALOGS = 1014;
 
     @Override
+    public String getMessageName(Message message) {
+        switch (message.what) {
+            case DO_TRAVERSAL:
+                return "DO_TRAVERSAL";
+            case DIE:
+                return "DIE";
+            case RESIZED:
+                return "RESIZED";
+            case RESIZED_REPORT:
+                return "RESIZED_REPORT";
+            case WINDOW_FOCUS_CHANGED:
+                return "WINDOW_FOCUS_CHANGED";
+            case DISPATCH_KEY:
+                return "DISPATCH_KEY";
+            case DISPATCH_POINTER:
+                return "DISPATCH_POINTER";
+            case DISPATCH_TRACKBALL:
+                return "DISPATCH_TRACKBALL";
+            case DISPATCH_APP_VISIBILITY:
+                return "DISPATCH_APP_VISIBILITY";
+            case DISPATCH_GET_NEW_SURFACE:
+                return "DISPATCH_GET_NEW_SURFACE";
+            case FINISHED_EVENT:
+                return "FINISHED_EVENT";
+            case DISPATCH_KEY_FROM_IME:
+                return "DISPATCH_KEY_FROM_IME";
+            case FINISH_INPUT_CONNECTION:
+                return "FINISH_INPUT_CONNECTION";
+            case CHECK_FOCUS:
+                return "CHECK_FOCUS";
+            case CLOSE_SYSTEM_DIALOGS:
+                return "CLOSE_SYSTEM_DIALOGS";
+        }
+        return super.getMessageName(message);
+    }
+
+    @Override
     public void handleMessage(Message msg) {
         switch (msg.what) {
         case View.AttachInfo.INVALIDATE_MSG:

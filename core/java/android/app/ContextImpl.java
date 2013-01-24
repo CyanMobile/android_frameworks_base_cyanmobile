@@ -1822,8 +1822,6 @@ class ContextImpl extends Context {
                 return null;
             }
             Intent intent = new Intent(intentToResolve);
-            intent.setClassName(resolveInfo.activityInfo.applicationInfo.packageName,
-                                resolveInfo.activityInfo.name);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             return intent;
         }

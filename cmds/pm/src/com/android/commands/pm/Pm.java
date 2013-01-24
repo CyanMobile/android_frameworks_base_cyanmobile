@@ -118,12 +118,12 @@ public final class Pm {
             return;
         }
 
-        if ("setInstallLocation".equals(op)) {
+        if ("set-install-location".equals(op)) {
             runSetInstallLocation();
             return;
         }
 
-        if ("getInstallLocation".equals(op)) {
+        if ("get-install-location".equals(op)) {
             runGetInstallLocation();
             return;
         }

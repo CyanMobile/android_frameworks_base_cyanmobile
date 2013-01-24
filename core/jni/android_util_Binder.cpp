@@ -1413,7 +1413,32 @@ static jobject android_os_Parcel_openFileDescriptor(JNIEnv* env, jobject clazz,
 
     int fd = open(name8.string(), flags, realMode);
     if (fd < 0) {
-        jniThrowException(env, "java/io/FileNotFoundException", NULL);
+        jniThrowException(env, "java/io/FileNotFoundException", strerror(errno));
+        return NULL;
+    }
+    jobject object = newFileDescriptor(env, fd);
+    if (object == NULL) {
+        close(fd);
+    }
+    return object;
+}
+
+static jobject android_os_Parcel_dupFileDescriptor(JNIEnv* env, jobject clazz, jobject orig)
+{
+    if (orig == NULL) {
+        jniThrowException(env, "java/lang/NullPointerException", NULL);
+        return NULL;
+    }
+
+    int origfd = env->GetIntField(orig, gFileDescriptorOffsets.mDescriptor);
+    if (origfd < 0) {
+        jniThrowException(env, "java/lang/IllegalArgumentException", "bad FileDescriptor");
+        return NULL;
+    }
+
+    int fd = dup(origfd);
+    if (fd < 0) {
+        jniThrowException(env, "java/io/IOException", strerror(errno));
         return NULL;
     }
     jobject object = newFileDescriptor(env, fd);
@@ -1425,6 +1450,10 @@ static jobject android_os_Parcel_openFileDescriptor(JNIEnv* env, jobject clazz,
 
 static void android_os_Parcel_closeFileDescriptor(JNIEnv* env, jobject clazz, jobject object)
 {
+    if (object == NULL) {	
+        jniThrowException(env, "java/lang/NullPointerException", NULL);	
+        return;
+    }
     int fd = env->GetIntField(object, gFileDescriptorOffsets.mDescriptor);
     if (fd >= 0) {
         env->SetIntField(object, gFileDescriptorOffsets.mDescriptor, -1);
@@ -1631,6 +1660,7 @@ static const JNINativeMethod gParcelMethods[] = {
     {"readStrongBinder",    "()Landroid/os/IBinder;", (void*)android_os_Parcel_readStrongBinder},
     {"internalReadFileDescriptor",  "()Ljava/io/FileDescriptor;", (void*)android_os_Parcel_readFileDescriptor},
     {"openFileDescriptor",  "(Ljava/lang/String;I)Ljava/io/FileDescriptor;", (void*)android_os_Parcel_openFileDescriptor},
+    {"dupFileDescriptor",   "(Ljava/io/FileDescriptor;)Ljava/io/FileDescriptor;", (void*)android_os_Parcel_dupFileDescriptor},
     {"closeFileDescriptor", "(Ljava/io/FileDescriptor;)V", (void*)android_os_Parcel_closeFileDescriptor},
     {"freeBuffer",          "()V", (void*)android_os_Parcel_freeBuffer},
     {"init",                "(I)V", (void*)android_os_Parcel_init},
