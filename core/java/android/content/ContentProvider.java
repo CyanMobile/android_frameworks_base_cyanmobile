@@ -75,7 +75,7 @@ import java.util.ArrayList;
  * ContentProvider instance, so subclasses don't have to worry about the details of
  * cross-process calls.</p>
  */
-public abstract class ContentProvider implements ComponentCallbacks {
+public abstract class ContentProvider implements ComponentCallbacks2 {
     /*
      * Note: if you add methods to ContentProvider, you must add similar methods to
      *       MockContentProvider.
@@ -475,6 +475,9 @@ public abstract class ContentProvider implements ComponentCallbacks {
      * Subclasses may override this method to take appropriate action.
      */
     public void onLowMemory() {
+    }
+
+    public void onTrimMemory(int level) {
     }
 
     /**

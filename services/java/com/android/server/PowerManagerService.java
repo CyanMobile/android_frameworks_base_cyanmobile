@@ -591,7 +591,7 @@ class PowerManagerService extends IPowerManager.Stub
                                 mContext.getResources().getBoolean(
                                         com.android.internal.R.bool.config_enableScreenOnAnimation);
                     mElectronBeamAnimationOff = (Settings.System.getInt(mContext.getContentResolver(),
-                                ELECTRON_BEAM_ANIMATION_OFF, 1) != 0) &&
+                                ELECTRON_BEAM_ANIMATION_OFF, 0) != 0) &&
                                 mContext.getResources().getBoolean(
                                         com.android.internal.R.bool.config_enableScreenOffAnimation);
                 }

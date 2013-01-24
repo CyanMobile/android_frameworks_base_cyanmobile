@@ -106,6 +106,7 @@ public interface IApplicationThread extends IInterface {
     void dispatchPackageBroadcast(int cmd, String[] packages) throws RemoteException;
     void scheduleCrash(String msg) throws RemoteException;
     void setCoreSettings(Bundle coreSettings) throws RemoteException;
+    void scheduleTrimMemory(int level) throws RemoteException;
 
     String descriptor = "android.app.IApplicationThread";
 
@@ -144,4 +145,5 @@ public interface IApplicationThread extends IInterface {
     int DISPATCH_PACKAGE_BROADCAST_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+33;
     int SCHEDULE_CRASH_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+34;
     int SET_CORE_SETTINGS = IBinder.FIRST_CALL_TRANSACTION+35;
+    int SCHEDULE_TRIM_MEMORY_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+36;
 }

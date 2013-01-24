@@ -23,6 +23,7 @@ import android.app.Dialog;
 import android.app.IApplicationThread;
 import android.app.IInstrumentationWatcher;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -60,15 +61,22 @@ class ProcessRecord {
     int setAdj;                 // Last set OOM adjustment for this process
     int curSchedGroup;          // Currently desired scheduling class
     int setSchedGroup;          // Last set to background scheduling class
+    int trimMemoryLevel;        // Last selected memory trimming level
     boolean keeping;            // Actively running code so don't kill due to that?
     boolean setIsForeground;    // Running foreground UI when last set?
     boolean foregroundServices; // Running any services that are foreground?
+    boolean foregroundActivities; // Running any services that are foreground?
+    boolean systemNoUi;         // This is a system process, but not currently showing UI.
+    boolean hasShownUi;         // Has UI been shown in this process since it was started?
+    boolean pendingUiClean;     // Want to clean up resources from showing UI?
+    boolean hasAboveClient;     // Bound using BIND_ABOVE_CLIENT, so want to be lower
     boolean bad;                // True if disabled in the bad process list
     boolean killedBackground;   // True when proc has been killed due to too many bg
     String waitingToKill;       // Process is waiting to be killed when in the bg; reason
     IBinder forcingToForeground;// Token that is forcing this process to be foreground
     int adjSeq;                 // Sequence id for identifying oom_adj assignment cycles
     int lruSeq;                 // Sequence id for identifying LRU update cycles
+    IBinder.DeathRecipient deathRecipient; // Who is watching for the death.
     ComponentName instrumentationClass;// class installed to instrument app
     ApplicationInfo instrumentationInfo; // the application being instrumented
     String instrumentationProfileFile; // where to save profiling
@@ -177,7 +185,12 @@ class ProcessRecord {
                 pw.print(" cur="); pw.print(curAdj);
                 pw.print(" set="); pw.println(setAdj);
         pw.print(prefix); pw.print("curSchedGroup="); pw.print(curSchedGroup);
-                pw.print(" setSchedGroup="); pw.println(setSchedGroup);
+                pw.print(" setSchedGroup="); pw.print(setSchedGroup);
+                pw.print(" systemNoUi="); pw.print(systemNoUi);
+                pw.print(" trimMemoryLevel="); pw.println(trimMemoryLevel);
+        pw.print(prefix); pw.print("hasShownUi="); pw.print(hasShownUi);
+                pw.print(" pendingUiClean="); pw.print(pendingUiClean);
+                pw.print(" hasAboveClient="); pw.println(hasAboveClient);
         pw.print(prefix); pw.print("setIsForeground="); pw.print(setIsForeground);
                 pw.print(" foregroundServices="); pw.print(foregroundServices);
                 pw.print(" forcingToForeground="); pw.println(forcingToForeground);
@@ -290,7 +303,26 @@ class ProcessRecord {
             activities.get(i).stopFreezingScreenLocked(true);
         }
     }
-    
+
+    public void unlinkDeathRecipient() {
+        if (deathRecipient != null && thread != null) {
+            thread.asBinder().unlinkToDeath(deathRecipient, 0);
+        }
+        deathRecipient = null;
+    }
+
+    void updateHasAboveClientLocked() {
+        hasAboveClient = false;
+        if (connections.size() > 0) {
+            for (ConnectionRecord cr : connections) {
+                if ((cr.flags&Context.BIND_ABOVE_CLIENT) != 0) {
+                    hasAboveClient = true;
+                    break;
+                }
+            }
+        }	
+    }
+
     public String toShortString() {
         if (shortStringName != null) {
             return shortStringName;
@@ -301,8 +333,6 @@ class ProcessRecord {
     }
     
     void toShortString(StringBuilder sb) {
-        sb.append(Integer.toHexString(System.identityHashCode(this)));
-        sb.append(' ');
         sb.append(pid);
         sb.append(':');
         sb.append(processName);
@@ -316,6 +346,8 @@ class ProcessRecord {
         }
         StringBuilder sb = new StringBuilder(128);
         sb.append("ProcessRecord{");
+        sb.append(Integer.toHexString(System.identityHashCode(this)));
+        sb.append(' ');
         toShortString(sb);
         sb.append('}');
         return stringName = sb.toString();

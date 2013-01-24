@@ -18,6 +18,8 @@
 package android.app;
 
 import com.android.internal.util.MemInfoReader;
+import com.android.internal.app.IUsageStats;
+import com.android.internal.os.PkgUsageStats;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -31,6 +33,7 @@ import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.os.Debug;
 import android.os.RemoteException;
+import android.os.ServiceManager;
 import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -40,6 +43,12 @@ import android.text.TextUtils;
 import android.util.Slog;
 import android.view.Display;
 import java.util.List;
+import android.util.Log;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Interact with the overall activities running in the system.
@@ -1282,5 +1291,23 @@ public class ActivityManager {
             ActivityManagerNative.getDefault().updateConfiguration(values);
         } catch (RemoteException e) {
         }
+    }
+
+    /**
+     * Returns the usage statistics of each installed package.
+     *
+     * @hide
+     */
+    public PkgUsageStats[] getAllPackageUsageStats() {
+        try {
+            IUsageStats usageStatsService = IUsageStats.Stub.asInterface(
+                    ServiceManager.getService("usagestats"));
+            if (usageStatsService != null) {
+                return usageStatsService.getAllPkgUsageStats();
+            }
+        } catch (RemoteException e) {
+            Log.w(TAG, "Could not query usage stats", e);	
+        }
+        return new PkgUsageStats[0];
     }
 }

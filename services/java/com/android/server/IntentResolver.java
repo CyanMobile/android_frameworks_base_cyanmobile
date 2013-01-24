@@ -41,7 +41,7 @@ import android.content.IntentFilter;
 /**
  * {@hide}
  */
-public class IntentResolver<F extends IntentFilter, R extends Object> {
+public abstract class IntentResolver<F extends IntentFilter, R extends Object> {
     final private static String TAG = "IntentResolver";
     final private static boolean DEBUG = false;
     final private static boolean localLOGV = DEBUG || Config.LOGV;
@@ -331,14 +331,19 @@ public class IntentResolver<F extends IntentFilter, R extends Object> {
         return false;
     }
 
-    protected String packageForFilter(F filter) {
-        return null;
-    }
-    
+    /**
+     * Return the package that owns this filter.  This must be implemented to
+     * provide correct filtering of Intents that have specified a package name
+     * they are to be delivered to.
+     */
+    protected abstract String packageForFilter(F filter);
+
+    @SuppressWarnings("unchecked")
     protected R newResult(F filter, int match) {
         return (R)filter;
     }
 
+    @SuppressWarnings("unchecked")
     protected void sortResults(List<R> results) {
         Collections.sort(results, mResolvePrioritySorter);
     }
@@ -490,6 +495,7 @@ public class IntentResolver<F extends IntentFilter, R extends Object> {
     private void buildResolveList(Intent intent, boolean debug, boolean defaultOnly,
             String resolvedType, String scheme, List<F> src, List<R> dest) {
         Set<String> categories = intent.getCategories();
+        final String packageName = intent.getPackage();
 
         final boolean excludingStopped = intent.isExcludingStopped();
 
@@ -504,6 +510,14 @@ public class IntentResolver<F extends IntentFilter, R extends Object> {
             if (excludingStopped && isFilterStopped(filter)) {
                 if (debug) {
                     Slog.v(TAG, "  Filter's target is stopped; skipping");
+                }
+                continue;
+            }
+
+            // Is delivery being limited to filters owned by a particular package?
+            if (packageName != null && !packageName.equals(packageForFilter(filter))) {
+                if (debug) {
+                    Slog.v(TAG, "  Filter is not from package " + packageName + "; skipping");
                 }
                 continue;
             }
@@ -550,6 +564,7 @@ public class IntentResolver<F extends IntentFilter, R extends Object> {
     }
 
     // Sorts a List of IntentFilter objects into descending priority order.
+    @SuppressWarnings("rawtypes")
     private static final Comparator mResolvePrioritySorter = new Comparator() {
         public int compare(Object o1, Object o2) {
             final int q1 = ((IntentFilter) o1).getPriority();

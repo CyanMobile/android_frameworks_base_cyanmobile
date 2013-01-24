@@ -138,7 +138,7 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
     private final static String WAKELOCK_KEY = "LocationManagerService";
     private PowerManager.WakeLock mWakeLock = null;
     private int mPendingBroadcasts;
-    
+
     /**
      * List of all receivers.
      */
@@ -197,6 +197,7 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
         final Object mKey;
         final HashMap<String,UpdateRecord> mUpdateRecords = new HashMap<String,UpdateRecord>();
         int mPendingBroadcasts;
+        String requiredPermissions;
 
         Receiver(ILocationListener listener) {
             mListener = listener;
@@ -286,7 +287,8 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
                     synchronized (this) {
                         // synchronize to ensure incrementPendingBroadcastsLocked()
                         // is called before decrementPendingBroadcasts()
-                        mPendingIntent.send(mContext, 0, statusChanged, this, mLocationHandler);
+                        mPendingIntent.send(mContext, 0, statusChanged, this, mLocationHandler,
+                                requiredPermissions);
                         // call this after broadcasting so we do not increment
                         // if we throw an exeption.
                         incrementPendingBroadcastsLocked();
@@ -321,7 +323,8 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
                     synchronized (this) {
                         // synchronize to ensure incrementPendingBroadcastsLocked()
                         // is called before decrementPendingBroadcasts()
-                        mPendingIntent.send(mContext, 0, locationChanged, this, mLocationHandler);
+                        mPendingIntent.send(mContext, 0, locationChanged, this, mLocationHandler,
+                                requiredPermissions);
                         // call this after broadcasting so we do not increment
                         // if we throw an exeption.
                         incrementPendingBroadcastsLocked();
@@ -360,7 +363,8 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
                     synchronized (this) {
                         // synchronize to ensure incrementPendingBroadcastsLocked()
                         // is called before decrementPendingBroadcasts()
-                        mPendingIntent.send(mContext, 0, providerIntent, this, mLocationHandler);
+                        mPendingIntent.send(mContext, 0, providerIntent, this, mLocationHandler,
+                                requiredPermissions);
                         // call this after broadcasting so we do not increment
                         // if we throw an exeption.
                         incrementPendingBroadcastsLocked();
@@ -603,22 +607,29 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
         return Settings.Secure.isLocationProviderEnabled(resolver, provider);
     }
 
-    private void checkPermissionsSafe(String provider) {
-        if ((LocationManager.GPS_PROVIDER.equals(provider)
-                 || LocationManager.PASSIVE_PROVIDER.equals(provider))
-            && (mContext.checkCallingOrSelfPermission(ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED)) {
-            throw new SecurityException("Provider " + provider
-                    + " requires ACCESS_FINE_LOCATION permission");
+    private String checkPermissionsSafe(String provider, String lastPermission) {
+        if (LocationManager.GPS_PROVIDER.equals(provider)
+                 || LocationManager.PASSIVE_PROVIDER.equals(provider)) {
+            if (mContext.checkCallingOrSelfPermission(ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+                throw new SecurityException("Provider " + provider
+                        + " requires ACCESS_FINE_LOCATION permission");
+            }
+            return ACCESS_FINE_LOCATION;
         }
-        if (LocationManager.NETWORK_PROVIDER.equals(provider)
-            && (mContext.checkCallingOrSelfPermission(ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED)
-            && (mContext.checkCallingOrSelfPermission(ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED)) {
-            throw new SecurityException("Provider " + provider
-                    + " requires ACCESS_FINE_LOCATION or ACCESS_COARSE_LOCATION permission");
+        // Assume any other provider requires the coarse or fine permission.
+        if (mContext.checkCallingOrSelfPermission(ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            return ACCESS_FINE_LOCATION.equals(lastPermission)
+                    ? lastPermission : ACCESS_COARSE_LOCATION;
         }
+        if (mContext.checkCallingOrSelfPermission(ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            return ACCESS_FINE_LOCATION;
+        }
+
+        throw new SecurityException("Provider " + provider
+                + " requires ACCESS_FINE_LOCATION or ACCESS_COARSE_LOCATION permission");
     }
 
     private boolean isAllowedProviderSafe(String provider) {
@@ -1130,8 +1141,21 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
         }
     }
 
+    void validatePendingIntent(PendingIntent intent) {
+        if (intent.isTargetedToPackage()) {
+            return;
+        }
+        Slog.i(TAG, "Given Intent does not require a specific package: "
+                + intent);
+        // XXX we should really throw a security exception, if the caller's
+        // targetSdkVersion is high enough.
+        //throw new SecurityException("Given Intent does not require a specific package: "
+        //        + intent);
+    }
+
     public void requestLocationUpdatesPI(String provider, Criteria criteria,
             long minTime, float minDistance, boolean singleShot, PendingIntent intent) {
+        validatePendingIntent(intent);
         if (criteria != null) {
             // FIXME - should we consider using multiple providers simultaneously
             // rather than only the best one?
@@ -1163,7 +1187,8 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
             throw new IllegalArgumentException("provider=" + provider);
         }
 
-        checkPermissionsSafe(provider);
+        receiver.requiredPermissions = checkPermissionsSafe(provider,
+                receiver.requiredPermissions);
 
         // so wakelock calls will succeed
         final int callingUid = Binder.getCallingUid();
@@ -1331,7 +1356,7 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
         }
 
         // first check for permission to the provider
-        checkPermissionsSafe(provider);
+        checkPermissionsSafe(provider, null);
         // and check for ACCESS_LOCATION_EXTRA_COMMANDS
         if ((mContext.checkCallingOrSelfPermission(ACCESS_LOCATION_EXTRA_COMMANDS)
                 != PackageManager.PERMISSION_GRANTED)) {
@@ -1463,7 +1488,8 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
                             synchronized (this) {
                                 // synchronize to ensure incrementPendingBroadcasts()
                                 // is called before decrementPendingBroadcasts()
-                                intent.send(mContext, 0, enteredIntent, this, mLocationHandler);
+                                intent.send(mContext, 0, enteredIntent, this, mLocationHandler,
+                                        ACCESS_FINE_LOCATION);
                                 // call this after broadcasting so we do not increment
                                 // if we throw an exeption.
                                 incrementPendingBroadcasts();
@@ -1488,7 +1514,8 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
                             synchronized (this) {
                                 // synchronize to ensure incrementPendingBroadcasts()
                                 // is called before decrementPendingBroadcasts()
-                                intent.send(mContext, 0, exitedIntent, this, mLocationHandler);
+                                intent.send(mContext, 0, exitedIntent, this, mLocationHandler,
+                                        ACCESS_FINE_LOCATION);
                                 // call this after broadcasting so we do not increment
                                 // if we throw an exeption.
                                 incrementPendingBroadcasts();
@@ -1557,6 +1584,7 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
 
     public void addProximityAlert(double latitude, double longitude,
         float radius, long expiration, PendingIntent intent) {
+        validatePendingIntent(intent);
         try {
             synchronized (mLock) {
                 addProximityAlertLocked(latitude, longitude, radius, expiration, intent);
@@ -1657,7 +1685,7 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
             return null;
         }
 
-        checkPermissionsSafe(provider);
+        checkPermissionsSafe(provider, null);
 
         Bundle b = new Bundle();
         b.putBoolean("network", p.requiresNetwork());
@@ -1699,7 +1727,7 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
     }
 
     private boolean _isProviderEnabledLocked(String provider) {
-        checkPermissionsSafe(provider);
+        checkPermissionsSafe(provider, null);
 
         LocationProviderInterface p = mProvidersByName.get(provider);
         if (p == null) {
@@ -1725,7 +1753,7 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
     }
 
     private Location _getLastKnownLocationLocked(String provider) {
-        checkPermissionsSafe(provider);
+        checkPermissionsSafe(provider, null);
 
         LocationProviderInterface p = mProvidersByName.get(provider);
         if (p == null) {

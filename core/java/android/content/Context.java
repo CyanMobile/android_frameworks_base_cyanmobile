@@ -117,6 +117,50 @@ public abstract class Context {
      */
     public static final int BIND_NOT_FOREGROUND = 0x0004;
 
+    /**
+     * Flag for {@link #bindService}: indicates that the client application
+     * binding to this service considers the service to be more important than
+     * the app itself.  When set, the platform will try to have the out of
+     * memory kill the app before it kills the service it is bound to, though
+     * this is not guaranteed to be the case.	
+     */	
+    public static final int BIND_ABOVE_CLIENT = 0x0008;
+
+    /**
+     * Flag for {@link #bindService}: allow the process hosting the bound
+     * service to go through its normal memory management.  It will be
+     * treated more like a running service, allowing the system to
+     * (temporarily) expunge the process if low on memory or for some other
+     * whim it may have.
+     * @hide
+     */
+    public static final int BIND_ALLOW_OOM_MANAGEMENT = 0x0010;
+
+    /**
+     * Flag for {@link #bindService}: don't impact the scheduling or
+     * memory management priority of the target service's hosting process.
+     * Allows the service's process to be managed on the background LRU list
+     * just like a regular application process in the background.
+     */
+    public static final int BIND_WAIVE_PRIORITY = 0x0020;
+
+    /**
+     * Flag for {@link #bindService}: this service is very important to
+     * the client, so should be brought to the foreground process level
+     * when the client is.  Normally a process can only be raised to the
+     * visibility level by a client, even if that client is in the foreground.
+     */
+    public static final int BIND_IMPORTANT = 0x0040;
+
+    /**
+     * Flag for {@link #bindService}: If binding from an activity, allow the
+     * target service's process importance to be raised based on whether the
+     * activity is visible to the user, regardless whether another flag is
+     * used to reduce the amount that the client process's overall importance
+     * is used to impact it.
+     */	
+    public static final int BIND_ADJUST_WITH_ACTIVITY = 0x0040;
+
     /** Return an AssetManager instance for your application's package. */
     public abstract AssetManager getAssets();
 
@@ -162,6 +206,25 @@ public abstract class Context {
      * </ul>
      */
     public abstract Context getApplicationContext();
+
+    /**
+     * Add a new {@link ComponentCallbacks} to the base application of the
+     * Context, which will be called at the same times as the ComponentCallbacks
+     * methods of activities and other components are called.  Note that you
+     * <em>must</em> be sure to use {@link #unregisterComponentCallbacks} when
+     * appropriate in the future; this will not be removed for you.
+     */
+    public void registerComponentCallbacks(ComponentCallbacks callback) {
+        getApplicationContext().registerComponentCallbacks(callback);
+    }
+
+    /**
+     * Remove a {@link ComponentCallbacks} objec that was previously registered
+     * with {@link #registerComponentCallbacks(ComponentCallbacks)}.
+     */
+    public void unregisterComponentCallbacks(ComponentCallbacks callback) {
+        getApplicationContext().unregisterComponentCallbacks(callback);
+    }
 
     /**
      * Return a localized, styled CharSequence from the application's package's
@@ -1139,8 +1202,10 @@ public abstract class Context {
      *      {@link IntentFilter} published by a service.
      * @param conn Receives information as the service is started and stopped.
      * @param flags Operation options for the binding.  May be 0,
-     *          {@link #BIND_AUTO_CREATE}, {@link #BIND_DEBUG_UNBIND}, or
-     *          {@link #BIND_NOT_FOREGROUND}.
+     *          {@link #BIND_AUTO_CREATE}, {@link #BIND_DEBUG_UNBIND},
+     *          {@link #BIND_NOT_FOREGROUND}, {@link #BIND_ABOVE_CLIENT},
+     *          {@link #BIND_ALLOW_OOM_MANAGEMENT}, or
+     *          {@link #BIND_WAIVE_PRIORITY}.
      * @return If you have successfully bound to the service, true is returned;
      *         false is returned if the connection is not made so you will not
      *         receive the service object.

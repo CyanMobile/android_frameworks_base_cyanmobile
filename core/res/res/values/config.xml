@@ -181,7 +181,7 @@
     <bool name="config_unplugTurnsOnScreen">true</bool>
     
     <!-- If this is true, the screen will fade off. -->
-    <bool name="config_animateScreenLights">true</bool>
+    <bool name="config_animateScreenLights">false</bool>
     
     <!-- XXXXXX END OF RESOURCES USING WRONG NAMING CONVENTION -->
 

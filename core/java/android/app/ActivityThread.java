@@ -26,7 +26,7 @@ import org.apache.harmony.xnet.provider.jsse.OpenSSLSocketImpl;
 
 import android.app.backup.BackupAgent;
 import android.content.BroadcastReceiver;
-import android.content.ComponentCallbacks;
+import android.content.ComponentCallbacks2;
 import android.content.ComponentName;
 import android.content.ContentProvider;
 import android.content.Context;
@@ -871,6 +871,10 @@ public final class ActivityThread {
         public void setCoreSettings(Bundle settings) {
             queueOrSendMessage(H.SET_CORE_SETTINGS, settings);
         }
+
+        public void scheduleTrimMemory(int level) {
+            queueOrSendMessage(H.TRIM_MEMORY, null, level);
+        }
     }
 
     private final class H extends Handler {
@@ -911,6 +915,7 @@ public final class ActivityThread {
         public static final int SCHEDULE_CRASH          = 134;
         public static final int SLEEPING                = 135;
         public static final int SET_CORE_SETTINGS       = 136;
+        public static final int TRIM_MEMORY             = 137;
         String codeToString(int code) {
             if (DEBUG_MESSAGES) {
                 switch (code) {
@@ -951,6 +956,7 @@ public final class ActivityThread {
                     case SCHEDULE_CRASH: return "SCHEDULE_CRASH";
                     case SLEEPING: return "SLEEPING";
                     case SET_CORE_SETTINGS: return "SET_CORE_SETTINGS";
+                    case TRIM_MEMORY: return "TRIM_MEMORY";
                 }
             }
             return "(unknown)";
@@ -1082,6 +1088,9 @@ public final class ActivityThread {
                     break;
                 case SET_CORE_SETTINGS:
                     handleSetCoreSettings((Bundle) msg.obj);
+                    break;
+                case TRIM_MEMORY:
+                    handleTrimMemory(msg.arg1);
                     break;
             }
             if (DEBUG_MESSAGES) Slog.v(TAG, "<<< done: " + msg.what);
@@ -3143,10 +3152,10 @@ public final class ActivityThread {
         }
     }
 
-    ArrayList<ComponentCallbacks> collectComponentCallbacksLocked(
+    ArrayList<ComponentCallbacks2> collectComponentCallbacksLocked(
             boolean allActivities, Configuration newConfig) {
-        ArrayList<ComponentCallbacks> callbacks
-                = new ArrayList<ComponentCallbacks>();
+        ArrayList<ComponentCallbacks2> callbacks
+                = new ArrayList<ComponentCallbacks2>();
 
         if (mActivities.size() > 0) {
             Iterator<ActivityClientRecord> it = mActivities.values().iterator();
@@ -3195,9 +3204,9 @@ public final class ActivityThread {
     }
 
     private final void performConfigurationChanged(
-            ComponentCallbacks cb, Configuration config) {
+            ComponentCallbacks2 cb, Configuration config) {
         // Only for Activity objects, check that they actually call up to their
-        // superclass implementation.  ComponentCallbacks is an interface, so
+        // superclass implementation.  ComponentCallbacks2 is an interface, so
         // we check the runtime type and act accordingly.
         Activity activity = (cb instanceof Activity) ? (Activity) cb : null;
         if (activity != null) {
@@ -3310,7 +3319,7 @@ public final class ActivityThread {
     
     final void handleConfigurationChanged(Configuration config) {
 
-        ArrayList<ComponentCallbacks> callbacks = null;
+        ArrayList<ComponentCallbacks2> callbacks = null;
 
         int diff = 0;
 
@@ -3342,7 +3351,7 @@ public final class ActivityThread {
         if (callbacks != null) {
             final int N = callbacks.size();
             for (int i=0; i<N; i++) {
-                ComponentCallbacks cb = callbacks.get(i);
+                ComponentCallbacks2 cb = callbacks.get(i);
 
                 // We removed the old resources object from the mActiveResources
                 // cache, now we need to trigger an update for each application.
@@ -3418,8 +3427,8 @@ public final class ActivityThread {
     }
         
     final void handleLowMemory() {
-        ArrayList<ComponentCallbacks> callbacks
-                = new ArrayList<ComponentCallbacks>();
+        ArrayList<ComponentCallbacks2> callbacks
+                = new ArrayList<ComponentCallbacks2>();
 
         synchronized (mPackages) {
             callbacks = collectComponentCallbacksLocked(true, null);
@@ -3440,6 +3449,19 @@ public final class ActivityThread {
         Canvas.freeCaches();
 
         BinderInternal.forceGc("mem");
+    }
+
+    final void handleTrimMemory(int level) {
+        ArrayList<ComponentCallbacks2> callbacks;
+
+        synchronized (mPackages) {
+            callbacks = collectComponentCallbacksLocked(true, null);
+        }
+
+        final int N = callbacks.size();
+        for (int i=0; i<N; i++) {
+            callbacks.get(i).onTrimMemory(level);
+        }
     }
 
     private final void handleBindApplication(AppBindData data) {
@@ -3954,7 +3976,7 @@ public final class ActivityThread {
             }
         }
         
-        ViewRoot.addConfigCallback(new ComponentCallbacks() {
+        ViewRoot.addConfigCallback(new ComponentCallbacks2() {
             public void onConfigurationChanged(Configuration newConfig) {
                 synchronized (mPackages) {
                     // We need to apply this change to the resources
@@ -3973,6 +3995,8 @@ public final class ActivityThread {
                 }
             }
             public void onLowMemory() {
+            }
+            public void onTrimMemory(int level) {
             }
         });
     }

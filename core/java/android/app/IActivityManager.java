@@ -103,7 +103,7 @@ public interface IActivityManager extends IInterface {
             throws RemoteException;
     public void finishSubActivity(IBinder token, String resultWho, int requestCode) throws RemoteException;
     public boolean willActivityBeVisible(IBinder token) throws RemoteException;
-    public Intent registerReceiver(IApplicationThread caller,
+    public Intent registerReceiver(IApplicationThread caller, String callerPackage,
             IIntentReceiver receiver, IntentFilter filter,
             String requiredPermission) throws RemoteException;
     public void unregisterReceiver(IIntentReceiver receiver) throws RemoteException;
@@ -334,6 +334,9 @@ public interface IActivityManager extends IInterface {
             Intent[] intents, String[] resolvedTypes, IBinder resultTo) throws RemoteException;
     public int startActivitiesInPackage(int uid,
             Intent[] intents, String[] resolvedTypes, IBinder resultTo) throws RemoteException;
+    public boolean isIntentSenderTargetedToPackage(IIntentSender sender) throws RemoteException;
+    public void updatePersistentConfiguration(Configuration values) throws RemoteException;
+    public long[] getProcessPss(int[] pids) throws RemoteException;
 
     /*
      * Private non-Binder interfaces
@@ -554,4 +557,7 @@ public interface IActivityManager extends IInterface {
     int REMOVE_TASK_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+124;
     int START_ACTIVITIES_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+125;
     int START_ACTIVITIES_IN_PACKAGE_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+126;
+    int IS_INTENT_SENDER_TARGETED_TO_PACKAGE_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+127;
+    int UPDATE_PERSISTENT_CONFIGURATION_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+128;
+    int GET_PROCESS_PSS_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+129;
 }

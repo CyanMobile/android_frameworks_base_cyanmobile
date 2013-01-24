@@ -666,6 +666,18 @@ href="{@docRoot}guide/developing/tools/traceview.html">Traceview: A Graphical Lo
     public static native void getMemoryInfo(int pid, MemoryInfo memoryInfo);
 
     /**
+     * Retrieves the PSS memory used by the process as given by the
+     * smaps.
+     */
+    public static native long getPss();
+
+    /**
+     * Retrieves the PSS memory used by the process as given by the
+     * smaps. @hide
+     */
+    public static native long getPss(int pid);
+
+    /**
      * Establish an object allocation limit in the current thread.  Useful
      * for catching regressions in code that is expected to operate
      * without causing any allocations.
