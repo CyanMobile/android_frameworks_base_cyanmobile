@@ -21,18 +21,25 @@
 
     <LinearLayout
         android:id="@+id/bigphoto"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/contactphoto_heightsize"
+        android:layout_height="@dimen/contact_header_heightsize"
         android:visibility="gone"
         android:gravity="top|center_horizontal"
         android:layout_alignParentTop="true">
+
+        <ImageView
+            android:id="@+id/photospace"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/contactlist_header_heightsize"
+            android:src="@drawable/status_bar_latest_event_panel"
+            android:scaleType="center" />
 
         <android.widget.QuickContactBadge
             android:id="@+id/photo"
             android:layout_gravity="center_horizontal"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="@dimen/contactphoto_heightsize"
             android:scaleType="centerCrop" />
     </LinearLayout>
 

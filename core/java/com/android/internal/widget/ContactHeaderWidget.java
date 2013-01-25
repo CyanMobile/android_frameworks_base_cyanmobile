@@ -71,6 +71,7 @@ public class ContactHeaderWidget extends FrameLayout implements View.OnClickList
     private View mBigPhoto;
     private QuickContactBadge mPhotoView;
     private QuickContactBadge mPhotoInsetView;
+    private ImageView mSpaceView;
     private ImageView mPresenceView;
     private TextView mStatusView;
     private TextView mStatusAttributionView;
@@ -190,6 +191,8 @@ public class ContactHeaderWidget extends FrameLayout implements View.OnClickList
 
         mPhotoView = (QuickContactBadge) findViewById(R.id.photo);
         mPhotoInsetView = (QuickContactBadge) findViewById(R.id.photoInset);
+
+        mSpaceView = (ImageView) findViewById(R.id.photospace);
 
         mPresenceView = (ImageView) findViewById(R.id.presence);
 
