@@ -20,6 +20,23 @@
     android:layout_height="wrap_content">
 
     <LinearLayout
+        android:id="@+id/bigphoto"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/contactphoto_heightsize"
+        android:visibility="gone"
+        android:gravity="top|center_horizontal"
+        android:layout_alignParentTop="true">
+
+        <android.widget.QuickContactBadge
+            android:id="@+id/photo"
+            android:layout_gravity="center_horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop" />
+    </LinearLayout>
+
+    <LinearLayout
         android:orientation="horizontal"
         android:background="@drawable/title_bar_medium"
         android:paddingLeft="5dip"
@@ -119,22 +136,6 @@
             android:visibility="gone"
             android:contentDescription="@string/description_star"
             style="?android:attr/starStyle" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/bigphoto"
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:layout_alignParentBottom="true">
-
-        <android.widget.QuickContactBadge
-            android:id="@+id/photo"
-            android:layout_gravity="center_horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/contactphoto_heightsize"
-            android:scaleType="centerCrop" />
     </LinearLayout>
 
 </RelativeLayout>
