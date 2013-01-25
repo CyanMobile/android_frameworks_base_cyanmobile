@@ -28,5 +28,18 @@
     <dimen name="quick_settings_cell_gap">4dp</dimen>
     <dimen name="quicktile_cell_gap">4dp</dimen>
     <dimen name="qwik_widgets_label_width">96dip</dimen>
+    <dimen name="glowpadview_target_placement_radius">135dip</dimen>
+    <dimen name="glowpadview_glow_radius">75dip</dimen>
+    <dimen name="glowpadview_snap_margin">40dip</dimen>
+    <dimen name="glowpadview_hit_radius">60dip</dimen>
+    <dimen name="glowpadview_inner_radius">15dip</dimen>
+    <dimen name="keyguard_lockscreen_outerring_diameter">270dp</dimen>
+    <dimen name="lockscreen_target_inset">25dp</dimen>
+    <dimen name="navbar_search_target_placement_radius">135dip</dimen>
+    <dimen name="navbar_search_snap_margin">40dip</dimen>
+    <dimen name="navbar_search_hit_radius">60dip</dimen>
+    <dimen name="navbar_search_outerring_diameter">270dp</dimen>
+    <dimen name="navbar_search_outerring_radius">135dp</dimen>
+    <dimen name="navbar_search_panel_height">140dip</dimen>
 </resources>
 

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.android.systemui.statusbar.RingPanelView
+    xmlns:prvandroid="http://schemas.android.com/apk/prv/res/android"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/search_panel_container"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:paddingBottom="0dip">
+
+    <RelativeLayout
+        android:id="@+id/search_bg_protect"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="0dip">
+
+        <RelativeLayout
+            android:id="@+id/search_panel_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true">
+
+        <com.android.internal.widget.multiwaveview.GlowPadView
+            android:id="@+id/ringswidget"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/navbar_search_panel_height"
+            android:layout_alignParentBottom="true"
+            android:gravity="top"
+
+            prvandroid:targetDrawables="@array/lockscreen_targets_without_lock"
+            prvandroid:handleDrawable="@drawable/navbar_search_handle"
+            prvandroid:outerRingDrawable="@drawable/navbar_search_outerring"
+            prvandroid:outerRadius="@dimen/navbar_search_outerring_radius"
+            prvandroid:innerRadius="@dimen/glowpadview_inner_radius"
+            prvandroid:snapMargin="@dimen/navbar_search_snap_margin"
+            prvandroid:feedbackCount="1"
+            prvandroid:vibrationDuration="20"
+            prvandroid:alwaysTrackFinger="true"
+            prvandroid:glowRadius="@dimen/glowpadview_glow_radius"
+            prvandroid:pointDrawable="@*android:drawable/ic_lockscreen_glowdot"
+            />
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+</com.android.systemui.statusbar.RingPanelView>
+

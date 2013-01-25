@@ -160,6 +160,17 @@ public class StatusBarManagerService extends IStatusBarService.Stub
         }
     }
 
+    public void toggleRingPanel() {
+        enforceStatusBar();
+
+        if (mBar != null) {
+            try {
+                mBar.toggleRingPanel();
+            } catch (RemoteException ex) {
+            }
+        }
+    }
+
     public void disable(int what, IBinder token, String pkg) {
         enforceStatusBar();
 

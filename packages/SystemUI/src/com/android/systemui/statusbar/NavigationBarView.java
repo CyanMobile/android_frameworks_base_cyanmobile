@@ -98,7 +98,9 @@ public class NavigationBarView extends LinearLayout {
     private static final int ID_SCREENSHOT = 29;
     private static final int ID_POWERMENU = 30;
 
-    private static final int MAJOR_MOVE = 60;
+    private static final int SWIPE_MIN_DISTANCE = 150;
+    private static final int SWIPE_MAX_OFF_PATH = 100;
+    private static final int SWIPE_THRESHOLD_VELOCITY = 100;
     private GestureDetector mGestureDetector;
 
     View mNaviBackground;
@@ -232,12 +234,16 @@ public class NavigationBarView extends LinearLayout {
         mGestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
                 public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
                                        float velocityY) {
-                    int dx = (int) (e2.getX() - e1.getX());
 
-                    // don't accept the fling if it's too short
-                    // as it may conflict with tracking move
-                    if (Math.abs(dx) > MAJOR_MOVE && Math.abs(velocityX) > Math.abs(velocityY)) {
-                        if (velocityX > 0) {
+                    if (e1==null || e2==null)
+                         return false;
+
+                    float dX = e2.getX()-e1.getX();
+                    float dY = e1.getY()-e2.getY();
+                    if (Math.abs(dY)<SWIPE_MAX_OFF_PATH &&
+                        Math.abs(velocityX)>=SWIPE_THRESHOLD_VELOCITY &&
+                        Math.abs(dX)>=SWIPE_MIN_DISTANCE ) {
+                        if (dX>0) {
                             mHandler.post(new Runnable() {
                                 @Override
                                 public void run() {
@@ -253,9 +259,37 @@ public class NavigationBarView extends LinearLayout {
                             });
                         }
                         return true;
-                    } else {
-                        return false;
+                    } else if (Math.abs(dX)<SWIPE_MAX_OFF_PATH &&
+                        Math.abs(velocityY)>=SWIPE_THRESHOLD_VELOCITY &&
+                        Math.abs(dY)>=SWIPE_MIN_DISTANCE ) {
+                        if (dY>0) {
+                            mHandler.post(new Runnable() { public void run() {
+                                 try {
+                                     IStatusBarService statusbar = getStatusBarService();
+                                     if (statusbar != null) {
+                                         statusbar.toggleRingPanel();
+                                     }
+                                     } catch (RemoteException ex) {
+                                         // re-acquire status bar service next time it is needed.
+                                         mStatusBarService = null;
+                                     }
+                            }});
+                        } else {
+                            mHandler.post(new Runnable() { public void run() {
+                                 try {
+                                     IStatusBarService statusbar = getStatusBarService();
+                                     if (statusbar != null) {
+                                         statusbar.toggleRingPanel();
+                                     }
+                                     } catch (RemoteException ex) {
+                                         // re-acquire status bar service next time it is needed.
+                                         mStatusBarService = null;
+                                     }
+                            }});
+                        }
+                        return true;
                     }
+                    return false;
                 }
             });
     }

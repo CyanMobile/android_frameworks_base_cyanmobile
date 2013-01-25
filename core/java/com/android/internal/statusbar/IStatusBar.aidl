@@ -33,5 +33,6 @@ oneway interface IStatusBar
     void setIMEVisible(boolean visible);
     void showNaviBar(boolean visible);
     void toggleQwikWidgets();
+    void toggleRingPanel();
 }
 

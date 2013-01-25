@@ -171,6 +171,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private static final int MSG_SHOW_WIDGETS_PANEL = 1004;
     private static final int MSG_HIDE_WIDGETS_PANEL = 1005;
 
+    private static final int MSG_SHOW_RING_PANEL = 1006;
+    private static final int MSG_HIDE_RING_PANEL = 1007;
+
     // will likely move to a resource or other tunable param at some point
     private static final int INTRUDER_ALERT_DECAY_MS = 3000;
 
@@ -267,6 +270,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     PowerWidgetThree mPowerWidgetThree;
     PowerWidgetFour mPowerWidgetFour;
     QwikWidgetsPanelView mWidgetsPanel;
+    RingPanelView mRingPanel;
 
     MusicControls mMusicControls;
 
@@ -625,6 +629,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         addNavigationBar();
         addIntruderView();
         updateWidgetsPanel();
+        updateRingsPanel();
 
         // Lastly, call to the icon policy to install/update all the icons.
         mIconPolicy = new StatusBarPolicy(this);
@@ -725,6 +730,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mWidgetsPanel = (QwikWidgetsPanelView) View.inflate(context, R.layout.qwik_widgets_panel, null);
         mWidgetsPanel.setVisibility(View.GONE);
+
+        mRingPanel = (RingPanelView) View.inflate(context, R.layout.ring_widget_panel, null);
+        mRingPanel.setOnTouchListener(mRingPanelListener);
+        mRingPanel.setVisibility(View.GONE);
 
         mBackLogoLayout = (BackLogo) mStatusBarView.findViewById(R.id.backlogo);
 
@@ -1452,6 +1461,21 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         WindowManagerImpl.getDefault().addView(mWidgetsPanel, lp);
     }
 
+    private void updateRingsPanel() {
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL,
+                    0
+                    | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                    | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
+                PixelFormat.TRANSLUCENT);
+        lp.gravity = Gravity.BOTTOM | Gravity.LEFT;
+        lp.setTitle("RingPanel");
+        lp.windowAnimations = R.style.Animations_PopDownMenu_Center;
+        WindowManagerImpl.getDefault().addView(mRingPanel, lp);
+    }
+
     protected void addStatusBarView() {
         final int height = getStatBarSize();
 
@@ -1934,6 +1958,15 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     if (mWidgetsPanel != null && mWidgetsPanel.isShowing()) {
                         mWidgetsPanel.show(false, false);
                     }
+                case MSG_SHOW_RING_PANEL:
+                    if (mRingPanel != null) {
+                        mRingPanel.show(true);
+                    }
+                    break;
+                case MSG_HIDE_RING_PANEL:
+                    if (mRingPanel != null && mRingPanel.isShowing()) {
+                        mRingPanel.show(false);
+                    }
                     break;
             }
         }
@@ -1981,6 +2014,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     public void animateExpand() {
+        toggleHideQwikWidgets();
+        toggleHideRingPanel();
         if (SPEW) Slog.d(TAG, "Animate expand: expanded=" + mExpanded);
         if ((mDisabled & StatusBarManager.DISABLE_EXPAND) != 0) {
             return ;
@@ -1995,6 +2030,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     public void animateCollapse() {
         toggleHideQwikWidgets();
+        toggleHideRingPanel();
         if (SPEW) {
             Slog.d(TAG, "animateCollapse(): mExpanded=" + mExpanded
                     + " mExpandedVisible=" + mExpandedVisible
@@ -2975,6 +3011,19 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     };
 
+    private View.OnTouchListener mRingPanelListener = new View.OnTouchListener() {
+        public boolean onTouch(View v, MotionEvent ev) {
+            final int action = ev.getAction();
+            if ((action == MotionEvent.ACTION_DOWN
+                    && !mRingPanel.isInContentArea((int)ev.getX(), (int)ev.getY()))) {
+                mHandler.removeMessages(MSG_HIDE_RING_PANEL);
+                mHandler.sendEmptyMessage(MSG_HIDE_RING_PANEL);
+                return true;
+            }
+            return false;
+        }
+    };
+
     private View.OnClickListener mSettingsIconButtonListener = new View.OnClickListener() {
         public void onClick(View v) {
               mSettingsIconButton.clearColorFilter();
@@ -3111,9 +3160,21 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mHandler.sendEmptyMessage(msg);
     }
 
+    public void toggleRingPanel() {
+        int msg = (mRingPanel.getVisibility() == View.VISIBLE)
+            ? MSG_HIDE_RING_PANEL : MSG_SHOW_RING_PANEL;
+        mHandler.removeMessages(msg);
+        mHandler.sendEmptyMessage(msg);
+    }
+
     private void toggleHideQwikWidgets() {
         mHandler.removeMessages(MSG_HIDE_WIDGETS_PANEL);
         mHandler.sendEmptyMessage(MSG_HIDE_WIDGETS_PANEL);
+    }
+
+    private void toggleHideRingPanel() {
+        mHandler.removeMessages(MSG_HIDE_RING_PANEL);
+        mHandler.sendEmptyMessage(MSG_HIDE_RING_PANEL);
     }
 
     private View.OnClickListener mIconButtonListener = new View.OnClickListener() {

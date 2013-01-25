@@ -52,6 +52,7 @@ class CommandQueue extends IStatusBar.Stub {
     private static final int MSG_SHOW_IME = 0x00070000;
     private static final int MSG_SHOW_NAVBAR = 0x00080000;
     private static final int MSG_TOGGLE_QWIK_WIDGETS = 0x00090000;
+    private static final int MSG_TOGGLE_RING_PANEL = 0x00100000;
 
     private static final int OP_EXPAND = 1;
     private static final int OP_COLLAPSE = 2;
@@ -82,6 +83,7 @@ class CommandQueue extends IStatusBar.Stub {
         public void setIMEVisible(boolean visible);
         public void showNaviBar(boolean visible);
         public void toggleQwikWidgets();
+        public void toggleRingPanel();
     }
 
     public CommandQueue(Callbacks callbacks, StatusBarIconList list) {
@@ -171,6 +173,13 @@ class CommandQueue extends IStatusBar.Stub {
         }
     }
 
+    public void toggleRingPanel() {
+        synchronized (mList) {
+            mHandler.removeMessages(MSG_TOGGLE_RING_PANEL);
+            mHandler.obtainMessage(MSG_TOGGLE_RING_PANEL, 0, 0, null).sendToTarget();
+        }
+    }
+
     private final class H extends Handler {
         public void handleMessage(Message msg) {
             final int what = msg.what & MSG_MASK;
@@ -226,6 +235,9 @@ class CommandQueue extends IStatusBar.Stub {
                     break;
                 case MSG_TOGGLE_QWIK_WIDGETS:
                     mCallbacks.toggleQwikWidgets();
+                    break;
+                case MSG_TOGGLE_RING_PANEL:
+                    mCallbacks.toggleRingPanel();
                     break;
                 case MSG_SET_VISIBILITY:
                     if (msg.arg1 == OP_EXPAND) {
