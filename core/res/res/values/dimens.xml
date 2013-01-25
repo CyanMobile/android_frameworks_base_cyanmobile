@@ -66,4 +66,7 @@
     <!-- Size of lockscreen outerring on unsecure unlock LockScreen -->
     <dimen name="keyguard_lockscreen_outerring_diameter">270dp</dimen>
     <dimen name="lockscreen_target_inset">25dp</dimen>
+    <dimen name="contact_header_heightsize">210dip</dimen>
+    <dimen name="contactlist_header_heightsize">50dip</dimen>
+    <dimen name="contactphoto_heightsize">160dip</dimen>
 </resources>

@@ -85,10 +85,12 @@ public class RingPanelView extends FrameLayout {
                 case com.android.internal.R.drawable.ic_lockscreen_sms:
                     launchSms();
                     vibrate();
+                    mHandler.postDelayed(mResetRing, 100);
                     break;
                 case com.android.internal.R.drawable.ic_lockscreen_phone:
                     launchPhone();
                     vibrate();
+                    mHandler.postDelayed(mResetRing, 100);
                     break;
            }
         }
@@ -105,7 +107,6 @@ public class RingPanelView extends FrameLayout {
                 mContext.startActivity(iophone);
             } catch (ActivityNotFoundException e) {
             }
-            hide();
         }
 
         private void launchSms() {
@@ -119,7 +120,6 @@ public class RingPanelView extends FrameLayout {
                 mContext.startActivity(ioinbox);
             } catch (ActivityNotFoundException e) {
             }
-            hide();
         }
 
         public void onGrabbedStateChange(View v, int handle) {
@@ -191,6 +191,12 @@ public class RingPanelView extends FrameLayout {
             return false;
         }
     }
+
+    Runnable mResetRing = new Runnable() {
+        public void run() {
+           hide();
+        }
+    };
 
     private OnPreDrawListener mPreDrawListener = new ViewTreeObserver.OnPreDrawListener() {
         public boolean onPreDraw() {

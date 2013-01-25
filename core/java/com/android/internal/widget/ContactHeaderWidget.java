@@ -68,13 +68,15 @@ public class ContactHeaderWidget extends FrameLayout implements View.OnClickList
     private View mAggregateBadge;
     private TextView mPhoneticNameView;
     private CheckBox mStarredView;
+    private View mBigPhoto;
     private QuickContactBadge mPhotoView;
+    private QuickContactBadge mPhotoInsetView;
     private ImageView mPresenceView;
     private TextView mStatusView;
     private TextView mStatusAttributionView;
     private int mNoPhotoResource;
     private QueryHandler mQueryHandler;
-
+    private boolean mIsLoResol;
     protected Uri mContactUri;
 
     protected String[] mExcludeMimes = null;
@@ -181,7 +183,13 @@ public class ContactHeaderWidget extends FrameLayout implements View.OnClickList
         mStarredView = (CheckBox)findViewById(R.id.star);
         mStarredView.setOnClickListener(this);
 
+        mIsLoResol = false; //should we do this?
+
+        mBigPhoto = findViewById(R.id.bigphoto);
+        mBigPhoto.setVisibility(View.GONE);
+
         mPhotoView = (QuickContactBadge) findViewById(R.id.photo);
+        mPhotoInsetView = (QuickContactBadge) findViewById(R.id.photoInset);
 
         mPresenceView = (ImageView) findViewById(R.id.presence);
 
@@ -208,6 +216,7 @@ public class ContactHeaderWidget extends FrameLayout implements View.OnClickList
     public void enableClickListeners() {
         mDisplayNameView.setOnClickListener(this);
         mPhotoView.setOnClickListener(this);
+        mPhotoInsetView.setOnClickListener(this);
     }
 
     /**
@@ -219,7 +228,11 @@ public class ContactHeaderWidget extends FrameLayout implements View.OnClickList
 
     private void performPhotoClick() {
         if (mListener != null) {
-            mListener.onPhotoClick(mPhotoView);
+            if (mIsLoResol) {
+                mListener.onPhotoClick(mPhotoInsetView);
+            } else {
+                mListener.onPhotoClick(mPhotoView);
+            }
         }
     }
 
@@ -257,9 +270,23 @@ public class ContactHeaderWidget extends FrameLayout implements View.OnClickList
                         if (photoBitmap == null) {
                             photoBitmap = loadPlaceholderPhoto(null);
                         }
-                        mPhotoView.setImageBitmap(photoBitmap);
+                        if (isLoRes(photoBitmap)) {
+                            mIsLoResol = true;
+                            mBigPhoto.setVisibility(View.GONE);
+                            mPhotoInsetView.setVisibility(View.VISIBLE);
+                            mPhotoInsetView.setImageBitmap(photoBitmap);
+                        } else {
+                            mIsLoResol = false;
+                            mBigPhoto.setVisibility(View.VISIBLE);
+                            mPhotoView.setImageBitmap(photoBitmap);
+                            mPhotoInsetView.setVisibility(View.GONE);
+                        }
                         if (cookie != null && cookie instanceof Uri) {
-                            mPhotoView.assignContactUri((Uri) cookie);
+                            if (mIsLoResol) {
+                                mPhotoInsetView.assignContactUri((Uri) cookie);
+                            } else {
+                                mPhotoView.assignContactUri((Uri) cookie);
+                            }
                         }
                         invalidate();
                         break;
@@ -273,9 +300,21 @@ public class ContactHeaderWidget extends FrameLayout implements View.OnClickList
                             final long photoId = cursor.getLong(ContactQuery.PHOTO_ID);
 
                             if (photoId == 0) {
-                                mPhotoView.setImageBitmap(loadPlaceholderPhoto(null));
+                                if (mIsLoResol) {
+                                    mBigPhoto.setVisibility(View.GONE);
+                                    mPhotoInsetView.setVisibility(View.VISIBLE);
+                                    mPhotoInsetView.setImageBitmap(loadPlaceholderPhoto(null));
+                                } else {
+                                    mBigPhoto.setVisibility(View.VISIBLE);
+                                    mPhotoView.setImageBitmap(loadPlaceholderPhoto(null));
+                                    mPhotoInsetView.setVisibility(View.GONE);
+                                }
                                 if (cookie != null && cookie instanceof Uri) {
-                                    mPhotoView.assignContactUri((Uri) cookie);
+                                    if (mIsLoResol) {
+                                        mPhotoInsetView.assignContactUri((Uri) cookie);
+                                    } else {
+                                        mPhotoView.assignContactUri((Uri) cookie);
+                                    }
                                 }
                                 invalidate();
                             } else {
@@ -302,7 +341,11 @@ public class ContactHeaderWidget extends FrameLayout implements View.OnClickList
                             setDisplayName(phoneNumber, null);
                             setSocialSnippet(null);
                             setPhoto(loadPlaceholderPhoto(null));
-                            mPhotoView.assignContactFromPhone(phoneNumber, true);
+                            if (mIsLoResol) {
+                                mPhotoInsetView.assignContactFromPhone(phoneNumber, true);
+                            } else {
+                                mPhotoView.assignContactFromPhone(phoneNumber, true);
+                            }
                         }
                         break;
                     }
@@ -318,7 +361,11 @@ public class ContactHeaderWidget extends FrameLayout implements View.OnClickList
                             setDisplayName(emailAddress, null);
                             setSocialSnippet(null);
                             setPhoto(loadPlaceholderPhoto(null));
-                            mPhotoView.assignContactFromEmail(emailAddress, true);
+                            if (mIsLoResol) {
+                                mPhotoInsetView.assignContactFromEmail(emailAddress, true);
+                            } else {
+                                mPhotoView.assignContactFromEmail(emailAddress, true);
+                            }
                         }
                         break;
                     }
@@ -335,7 +382,29 @@ public class ContactHeaderWidget extends FrameLayout implements View.OnClickList
      * @hide
      */
     public void setSelectedContactsAppTabIndex(int value) {
-        mPhotoView.setSelectedContactsAppTabIndex(value);
+        if (mIsLoResol) {
+            mPhotoInsetView.setSelectedContactsAppTabIndex(value);
+        } else {
+            mPhotoView.setSelectedContactsAppTabIndex(value);
+        }
+    }
+
+    /**
+     * @return true if the specified bitmap is a lo-res contact photo
+     *         (i.e. if we *should* use the blur+inset effect for this photo
+     *         in the in-call UI.)
+     */
+    private boolean isLoRes(Bitmap bitmap) {
+        // In practice, contact photos will almost always be either 96x96 (for
+        // thumbnails from contacts sync) or 256x256 (if you pick a photo from
+        // the gallery or camera via the contacts app.)
+        //
+        // So enable the blur+inset effect *only* for width = 96 or smaller.
+        // (If the user somehow gets a contact to have a photo that's between
+        // 97 and 255 pixels wide, that's OK, we'll just show it as-is with no
+        // special effects.)
+        final int LO_RES_THRESHOLD_WIDTH = 96;
+        return (bitmap.getWidth() <= LO_RES_THRESHOLD_WIDTH);
     }
 
     /**
@@ -380,7 +449,11 @@ public class ContactHeaderWidget extends FrameLayout implements View.OnClickList
     public void setContactUri(Uri uri, boolean sendToFastrack) {
         mContactUri = uri;
         if (sendToFastrack) {
-            mPhotoView.assignContactUri(uri);
+            if (mIsLoResol) {
+                mPhotoInsetView.assignContactUri(uri);
+            } else {
+                mPhotoView.assignContactUri(uri);
+            }
         }
     }
 
@@ -389,7 +462,17 @@ public class ContactHeaderWidget extends FrameLayout implements View.OnClickList
      * underlying {@link Contacts}, only the UI state.
      */
     public void setPhoto(Bitmap bitmap) {
-        mPhotoView.setImageBitmap(bitmap);
+        if (isLoRes(bitmap)) {
+            mIsLoResol = true;
+            mBigPhoto.setVisibility(View.GONE);
+            mPhotoInsetView.setVisibility(View.VISIBLE);
+            mPhotoInsetView.setImageBitmap(bitmap);
+        } else {
+            mIsLoResol = false;
+            mBigPhoto.setVisibility(View.VISIBLE);
+            mPhotoView.setImageBitmap(bitmap);
+            mPhotoInsetView.setVisibility(View.GONE);
+        }
     }
 
     /**
@@ -426,7 +509,11 @@ public class ContactHeaderWidget extends FrameLayout implements View.OnClickList
      */
     public void setExcludeMimes(String[] excludeMimes) {
         mExcludeMimes = excludeMimes;
-        mPhotoView.setExcludeMimes(excludeMimes);
+        if (mIsLoResol) {
+            mPhotoInsetView.setExcludeMimes(excludeMimes);
+        } else {
+            mPhotoView.setExcludeMimes(excludeMimes);
+        }
     }
 
     /**
