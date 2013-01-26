@@ -194,6 +194,7 @@
     <string name="quick_settings_vibration_off">Vibration off</string>
     <string name="quick_settings_label_enabled">On</string>
     <string name="quick_settings_label_disabled">Off</string>
+    <string name="quick_settings_label_locked">Locked</string>
     <string name="quick_settings_ringer_onn">Ring On</string>
     <string name="quick_settings_vibrate">Vibrate</string>
     <string name="quick_settings_ringer_offf">Ring Off</string>

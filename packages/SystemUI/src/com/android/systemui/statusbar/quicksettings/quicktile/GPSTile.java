@@ -103,7 +103,7 @@ public class GPSTile extends QuickSettingsTile {
               AnimationDrawable gpsAnimation = (AnimationDrawable) iv.getBackground();
               gpsAnimation.start();
            } else if (enabled && mEnabled) {
-              iv.setBackgroundResource(R.drawable.ic_qs_gps_on);
+              iv.setBackgroundResource(R.drawable.ic_qs_gps_neutral);
            } else {
               iv.setBackgroundResource(R.drawable.ic_qs_gps_off);
            }
@@ -115,7 +115,7 @@ public class GPSTile extends QuickSettingsTile {
         // Show OFF next to the GPS label when in OFF state, ON/IN USE is indicated by the color
         String label = mContext.getString(R.string.quick_settings_gps);
         if (enabled) {
-            mLabel = ((!mEnabled && working) ? mContext.getString(R.string.quick_settings_gps_search) : (label + " " + mContext.getString(R.string.quick_settings_label_disabled)));
+            mLabel = ((!mEnabled && working) ? mContext.getString(R.string.quick_settings_gps_search) : (label + " " + mContext.getString(R.string.quick_settings_label_locked)));
         } else {
             mLabel = (label + " " + mContext.getString(R.string.quick_settings_label_disabled));
         }
