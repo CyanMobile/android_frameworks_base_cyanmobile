@@ -17,40 +17,17 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/banner"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content" >
 
     <LinearLayout
-        android:id="@+id/bigphoto"
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/contact_header_heightsize"
-        android:visibility="gone"
-        android:gravity="top|center_horizontal"
-        android:layout_alignParentTop="true">
-
-        <ImageView
-            android:id="@+id/photospace"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/contactlist_header_heightsize"
-            android:src="@drawable/status_bar_latest_event_panel"
-            android:scaleType="center" />
-
-        <android.widget.QuickContactBadge
-            android:id="@+id/photo"
-            android:layout_gravity="center_horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/contactphoto_heightsize"
-            android:scaleType="centerCrop" />
-    </LinearLayout>
-
-    <LinearLayout
+        android:id="@+id/photospace"
         android:orientation="horizontal"
         android:background="@drawable/title_bar_medium"
+        android:layout_alignParentTop="true"
         android:paddingLeft="5dip"
         android:paddingRight="5dip"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true">
+        android:layout_height="wrap_content" >
 
         <android.widget.QuickContactBadge 
            android:id="@+id/photoInset"
@@ -143,6 +120,21 @@
             android:visibility="gone"
             android:contentDescription="@string/description_star"
             style="?android:attr/starStyle" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/bigphoto"
+        android:layout_below="@id/photospace"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone" >
+
+        <android.widget.QuickContactBadge
+            android:id="@+id/photo"
+            android:layout_gravity="center_horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/contactphoto_heightsize"
+            android:scaleType="centerCrop" />
     </LinearLayout>
 
 </RelativeLayout>
