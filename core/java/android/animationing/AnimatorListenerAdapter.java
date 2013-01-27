@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package android.animation;
+package android.animationing;
 
 /**
- * This adapter class provides empty implementations of the methods from {@link android.animation.Animator.AnimatorListener}.
+ * This adapter class provides empty implementations of the methods from {@link android.animationing.Animator.AnimatorListener}.
  * Any custom listener that cares only about a subset of the methods of this listener can
  * simply subclass this adapter class instead of implementing the interface directly.
  */

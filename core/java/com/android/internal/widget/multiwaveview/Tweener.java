@@ -21,13 +21,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import android.animation.Animator.AnimatorListener;
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.ObjectAnimator;
-import android.animation.PropertyValuesHolder;
-import android.animation.TimeInterpolator;
-import android.animation.ValueAnimator.AnimatorUpdateListener;
+import android.animationing.Animator.AnimatorListener;
+import android.animationing.Animator;
+import android.animationing.AnimatorListenerAdapter;
+import android.animationing.ObjectAnimator;
+import android.animationing.PropertyValuesHolder;
+import android.animationing.TimeInterpolator;
+import android.animationing.ValueAnimator.AnimatorUpdateListener;
 import android.util.Log;
 
 class Tweener {

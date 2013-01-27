@@ -16,13 +16,13 @@
 
 package com.android.internal.widget.multiwaveview;
 
-import android.animation.Animator;
-import android.animation.Animator.AnimatorListener;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.ObjectAnimator;
-import android.animation.TimeInterpolator;
-import android.animation.ValueAnimator;
-import android.animation.ValueAnimator.AnimatorUpdateListener;
+import android.animationing.Animator;
+import android.animationing.Animator.AnimatorListener;
+import android.animationing.AnimatorListenerAdapter;
+import android.animationing.ObjectAnimator;
+import android.animationing.TimeInterpolator;
+import android.animationing.ValueAnimator;
+import android.animationing.ValueAnimator.AnimatorUpdateListener;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;

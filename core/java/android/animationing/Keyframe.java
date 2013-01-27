@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.animation;
+package android.animationing;
 
 /**
  * This class holds a time/value pair for an animation. The Keyframe class is used

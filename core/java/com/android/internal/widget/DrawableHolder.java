@@ -18,10 +18,10 @@ package com.android.internal.widget;
 
 import java.util.ArrayList;
 
-import android.animation.Animator;
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
-import android.animation.Animator.AnimatorListener;
+import android.animationing.Animator;
+import android.animationing.ObjectAnimator;
+import android.animationing.ValueAnimator;
+import android.animationing.Animator.AnimatorListener;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.Log;

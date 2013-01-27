@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-package android.animation;
-
-import android.view.animation.Interpolator;
+package android.animationing;
 
 import java.util.ArrayList;
 
 /**
  * This is the superclass for classes which provide basic support for animations which can be
- * started, ended, and have <code>AnimatableListeners</code> added to them.
+ * started, ended, and have <code>AnimatorListeners</code> added to them.
  */
-public abstract class Animatable implements Cloneable {
+public abstract class Animator implements Cloneable {
 
 
     /**
      * The set of listeners to be sent events through the life of an animation.
      */
-    ArrayList<AnimatableListener> mListeners = null;
+    ArrayList<AnimatorListener> mListeners = null;
 
     /**
      * Starts this animation. If the animation has a nonzero startDelay, the animation will start
@@ -38,22 +36,36 @@ public abstract class Animatable implements Cloneable {
      * this call, because all animation events are posted to a central timing loop so that animation
      * times are all synchronized on a single timing pulse on the UI thread. So the animation will
      * start the next time that event handler processes events.
+     *
+     * <p>The animation started by calling this method will be run on the thread that called
+     * this method. This thread should have a Looper on it (a runtime exception will be thrown if
+     * this is not the case). Also, if the animation will animate
+     * properties of objects in the view hierarchy, then the calling thread should be the UI
+     * thread for that view hierarchy.</p>
+     *
      */
     public void start() {
     }
 
     /**
      * Cancels the animation. Unlike {@link #end()}, <code>cancel()</code> causes the animation to
-     * stop in its tracks, sending an {@link AnimatableListener#onAnimationCancel(Animatable)} to
-     * its listeners, followed by an {@link AnimatableListener#onAnimationEnd(Animatable)} message.
+     * stop in its tracks, sending an
+     * {@link android.animationing.Animator.AnimatorListener#onAnimationCancel(Animator)} to
+     * its listeners, followed by an
+     * {@link android.animationing.Animator.AnimatorListener#onAnimationEnd(Animator)} message.
+     *
+     * <p>This method must be called on the thread that is running the animation.</p>
      */
     public void cancel() {
     }
 
     /**
      * Ends the animation. This causes the animation to assign the end value of the property being
-     * animated, then calling the {@link AnimatableListener#onAnimationEnd(Animatable)} method on
+     * animated, then calling the
+     * {@link android.animationing.Animator.AnimatorListener#onAnimationEnd(Animator)} method on
      * its listeners.
+     *
+     * <p>This method must be called on the thread that is running the animation.</p>
      */
     public void end() {
     }
@@ -80,7 +92,7 @@ public abstract class Animatable implements Cloneable {
      *
      * @param duration The length of the animation, in milliseconds.
      */
-    public abstract void setDuration(long duration);
+    public abstract Animator setDuration(long duration);
 
     /**
      * Gets the length of the animation.
@@ -97,13 +109,28 @@ public abstract class Animatable implements Cloneable {
      *
      * @param value the interpolator to be used by this animation
      */
-    public abstract void setInterpolator(Interpolator value);
+    public abstract void setInterpolator(TimeInterpolator value);
 
     /**
-     * Returns whether this Animatable is currently running (having been started and not yet ended).
-     * @return Whether the Animatable is running.
+     * Returns whether this Animator is currently running (having been started and not yet ended).
+     * @return Whether the Animator is running.
      */
     public abstract boolean isRunning();
+
+    /**
+     * Returns whether this Animator has been started and not yet ended. This state is a superset
+     * of the state of {@link #isRunning()}, because an Animator with a nonzero
+     * {@link #getStartDelay() startDelay} will return true for {@link #isStarted()} during the
+     * delay phase, whereas {@link #isRunning()} will return true only after the delay phase
+     * is complete.
+     *
+     * @return Whether the Animator has been started and not yet ended.
+     */
+    public boolean isStarted() {
+        // Default method returns value for isRunning(). Subclasses should override to return a
+        // real value.
+        return isRunning();
+    }
 
     /**
      * Adds a listener to the set of listeners that are sent events through the life of an
@@ -111,9 +138,9 @@ public abstract class Animatable implements Cloneable {
      *
      * @param listener the listener to be added to the current set of listeners for this animation.
      */
-    public void addListener(AnimatableListener listener) {
+    public void addListener(AnimatorListener listener) {
         if (mListeners == null) {
-            mListeners = new ArrayList<AnimatableListener>();
+            mListeners = new ArrayList<AnimatorListener>();
         }
         mListeners.add(listener);
     }
@@ -124,7 +151,7 @@ public abstract class Animatable implements Cloneable {
      * @param listener the listener to be removed from the current set of listeners for this
      *                 animation.
      */
-    public void removeListener(AnimatableListener listener) {
+    public void removeListener(AnimatorListener listener) {
         if (mListeners == null) {
             return;
         }
@@ -135,12 +162,12 @@ public abstract class Animatable implements Cloneable {
     }
 
     /**
-     * Gets the set of {@link AnimatableListener} objects that are currently
-     * listening for events on this <code>Animatable</code> object.
+     * Gets the set of {@link android.animationing.Animator.AnimatorListener} objects that are currently
+     * listening for events on this <code>Animator</code> object.
      *
-     * @return ArrayList<AnimatableListener> The set of listeners.
+     * @return ArrayList<AnimatorListener> The set of listeners.
      */
-    public ArrayList<AnimatableListener> getListeners() {
+    public ArrayList<AnimatorListener> getListeners() {
         return mListeners;
     }
 
@@ -157,12 +184,12 @@ public abstract class Animatable implements Cloneable {
     }
 
     @Override
-    public Animatable clone() {
+    public Animator clone() {
         try {
-            final Animatable anim = (Animatable) super.clone();
+            final Animator anim = (Animator) super.clone();
             if (mListeners != null) {
-                ArrayList<AnimatableListener> oldListeners = mListeners;
-                anim.mListeners = new ArrayList<AnimatableListener>();
+                ArrayList<AnimatorListener> oldListeners = mListeners;
+                anim.mListeners = new ArrayList<AnimatorListener>();
                 int numListeners = oldListeners.size();
                 for (int i = 0; i < numListeners; ++i) {
                     anim.mListeners.add(oldListeners.get(i));
@@ -176,11 +203,11 @@ public abstract class Animatable implements Cloneable {
 
     /**
      * This method tells the object to use appropriate information to extract
-     * starting values for the animation. For example, a Sequencer object will pass
+     * starting values for the animation. For example, a AnimatorSet object will pass
      * this call to its child objects to tell them to set up the values. A
-     * PropertyAnimator object will use the information it has about its target object
+     * ObjectAnimator object will use the information it has about its target object
      * and PropertyValuesHolder objects to get the start values for its properties.
-     * An Animator object will ignore the request since it does not have enough
+     * An ValueAnimator object will ignore the request since it does not have enough
      * information (such as a target object) to gather these values.
      */
     public void setupStartValues() {
@@ -188,11 +215,11 @@ public abstract class Animatable implements Cloneable {
 
     /**
      * This method tells the object to use appropriate information to extract
-     * ending values for the animation. For example, a Sequencer object will pass
+     * ending values for the animation. For example, a AnimatorSet object will pass
      * this call to its child objects to tell them to set up the values. A
-     * PropertyAnimator object will use the information it has about its target object
+     * ObjectAnimator object will use the information it has about its target object
      * and PropertyValuesHolder objects to get the start values for its properties.
-     * An Animator object will ignore the request since it does not have enough
+     * An ValueAnimator object will ignore the request since it does not have enough
      * information (such as a target object) to gather these values.
      */
     public void setupEndValues() {
@@ -200,7 +227,7 @@ public abstract class Animatable implements Cloneable {
 
     /**
      * Sets the target object whose property will be animated by this animation. Not all subclasses
-     * operate on target objects (for example, {@link android.animation.Animator}, but this method
+     * operate on target objects (for example, {@link ValueAnimator}, but this method
      * is on the superclass for the convenience of dealing generically with those subclasses
      * that do handle targets.
      *
@@ -214,13 +241,13 @@ public abstract class Animatable implements Cloneable {
      * Notifications indicate animation related events, such as the end or the
      * repetition of the animation.</p>
      */
-    public static interface AnimatableListener {
+    public static interface AnimatorListener {
         /**
          * <p>Notifies the start of the animation.</p>
          *
          * @param animation The started animation.
          */
-        void onAnimationStart(Animatable animation);
+        void onAnimationStart(Animator animation);
 
         /**
          * <p>Notifies the end of the animation. This callback is not invoked
@@ -228,7 +255,7 @@ public abstract class Animatable implements Cloneable {
          *
          * @param animation The animation which reached its end.
          */
-        void onAnimationEnd(Animatable animation);
+        void onAnimationEnd(Animator animation);
 
         /**
          * <p>Notifies the cancellation of the animation. This callback is not invoked
@@ -236,13 +263,13 @@ public abstract class Animatable implements Cloneable {
          *
          * @param animation The animation which was canceled.
          */
-        void onAnimationCancel(Animatable animation);
+        void onAnimationCancel(Animator animation);
 
         /**
          * <p>Notifies the repetition of the animation.</p>
          *
          * @param animation The animation which was repeated.
          */
-        void onAnimationRepeat(Animatable animation);
+        void onAnimationRepeat(Animator animation);
     }
 }

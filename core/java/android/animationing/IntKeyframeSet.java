@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.animation;
+package android.animationing;
 
-import android.animation.Keyframe.IntKeyframe;
+import android.animationing.Keyframe.IntKeyframe;
 
 import java.util.ArrayList;
 

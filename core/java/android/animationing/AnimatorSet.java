@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.animation;
+package android.animationing;
 
 import java.util.ArrayList;
 import java.util.Collection;

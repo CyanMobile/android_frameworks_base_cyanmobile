@@ -1,4 +1,4 @@
-package android.animation;
+package android.animationing;
 
 /**
  * This class provides a simple callback mechanism to listeners that is synchronized with other

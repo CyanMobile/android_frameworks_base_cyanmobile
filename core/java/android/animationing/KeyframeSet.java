@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package android.animation;
+package android.animationing;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import android.animation.Keyframe.IntKeyframe;
-import android.animation.Keyframe.FloatKeyframe;
-import android.animation.Keyframe.ObjectKeyframe;
+import android.animationing.Keyframe.IntKeyframe;
+import android.animationing.Keyframe.FloatKeyframe;
+import android.animationing.Keyframe.ObjectKeyframe;
 
 /**
  * This class holds a collection of Keyframe objects and is called by ValueAnimator to calculate

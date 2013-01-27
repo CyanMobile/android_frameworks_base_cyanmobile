@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.animation;
+package android.animationing;
 
 /**
  * This evaluator can be used to perform type interpolation between integer

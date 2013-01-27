@@ -16,7 +16,7 @@
 
 package android.view.animation;
 
-import android.animation.TimeInterpolator;
+import android.animationing.TimeInterpolator;
 
 /**
  * An interpolator defines the rate of change of an animation. This allows
@@ -24,7 +24,7 @@ import android.animation.TimeInterpolator;
  * accelerated, decelerated, repeated, etc.
  */
 public interface Interpolator extends TimeInterpolator {
-    // A new interface, TimeInterpolator, was introduced for the new android.animation
+    // A new interface, TimeInterpolator, was introduced for the new android.animationing
     // package. This older Interpolator interface extends TimeInterpolator so that users of
     // the new Animator-based animations can use either the old Interpolator implementations or
     // new classes that implement TimeInterpolator directly.

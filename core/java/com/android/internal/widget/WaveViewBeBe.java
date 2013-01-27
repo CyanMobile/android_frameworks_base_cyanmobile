@@ -18,7 +18,7 @@ package com.android.internal.widget;
 
 import java.util.ArrayList;
 
-import android.animation.ValueAnimator;
+import android.animationing.ValueAnimator;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;

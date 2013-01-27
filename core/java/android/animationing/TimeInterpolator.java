@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.animation;
+package android.animationing;
 
 /**
  * A time interpolator defines the rate of change of an animation. This allows animations

@@ -16,7 +16,7 @@
 
 package com.android.internal.widget.multiwaveview;
 
-import android.animation.TimeInterpolator;
+import android.animationing.TimeInterpolator;
 
 class Ease {
     private static final float DOMAIN = 1.0f;

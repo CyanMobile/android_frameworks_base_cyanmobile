@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.animation;
+package android.animationing;
 
 import android.util.Log;
 import android.util.Property;

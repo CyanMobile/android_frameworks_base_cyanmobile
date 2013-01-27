@@ -178,7 +178,7 @@ extern int register_android_content_res_ObbScanner(JNIEnv* env);
 extern int register_android_content_res_Configuration(JNIEnv* env);
 extern int register_android_content_res_PackageRedirectionMap(JNIEnv* env);
 extern int register_android_font_FontManager(JNIEnv* env);
-extern int register_android_animation_PropertyValuesHolder(JNIEnv *env);
+extern int register_android_animationing_PropertyValuesHolder(JNIEnv *env);
 
 #ifdef QCOM_HARDWARE
 extern int register_com_android_internal_app_ActivityTrigger(JNIEnv *env);
@@ -1316,7 +1316,7 @@ static const RegJNIRec gRegJNI[] = {
     REG_JNI(register_android_content_res_Configuration),
     REG_JNI(register_android_font_FontManager),
     REG_JNI(register_android_content_res_PackageRedirectionMap),
-    REG_JNI(register_android_animation_PropertyValuesHolder),
+    REG_JNI(register_android_animationing_PropertyValuesHolder),
 
 #ifdef QCOM_HARDWARE
     REG_JNI(register_com_android_internal_app_ActivityTrigger),

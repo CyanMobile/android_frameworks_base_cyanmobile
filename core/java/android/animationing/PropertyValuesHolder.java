@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.animation;
+package android.animationing;
 
 import android.util.FloatProperty;
 import android.util.IntProperty;
@@ -229,7 +229,7 @@ public class PropertyValuesHolder implements Cloneable {
     /**
      * Constructs and returns a PropertyValuesHolder object with the specified property name and set
      * of values. These values can be of any type, but the type should be consistent so that
-     * an appropriate {@link android.animation.TypeEvaluator} can be found that matches
+     * an appropriate {@link android.animationing.TypeEvaluator} can be found that matches
      * the common type.
      * <p>If there is only one value, it is assumed to be the end value of an animation,
      * and an initial value will be derived, if possible, by calling a getter function
@@ -263,7 +263,7 @@ public class PropertyValuesHolder implements Cloneable {
     /**
      * Constructs and returns a PropertyValuesHolder object with the specified property and set
      * of values. These values can be of any type, but the type should be consistent so that
-     * an appropriate {@link android.animation.TypeEvaluator} can be found that matches
+     * an appropriate {@link android.animationing.TypeEvaluator} can be found that matches
      * the common type.
      * <p>If there is only one value, it is assumed to be the end value of an animation,
      * and an initial value will be derived, if possible, by calling the property's
