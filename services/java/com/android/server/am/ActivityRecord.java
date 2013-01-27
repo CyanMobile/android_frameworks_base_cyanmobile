@@ -277,7 +277,7 @@ class ActivityRecord {
         try {
             return token != null ? ((Token)token).weakActivity.get() : null;
         } catch (ClassCastException e) {
-            Slog.w(ActivityManagerService.TAG, "Bad activity token: " + token, e);
+            //Slog.w(ActivityManagerService.TAG, "Bad activity token: " + token, e);
             return null;
         }
     }
