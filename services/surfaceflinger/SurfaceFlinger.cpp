@@ -1919,7 +1919,7 @@ status_t SurfaceFlinger::electronBeamOffAnimationImplLocked()
     }
 
     GLfloat vtx[8];
-    const GLfloat texCoords[4][2] = { {0,0}, {0,v}, {u,v}, {u,0} };
+    const GLfloat texCoords[4][2] = { {0,v}, {0,0}, {u,0}, {u,v} };
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, tname);
     glTexEnvx(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
@@ -1979,11 +1979,12 @@ status_t SurfaceFlinger::electronBeamOffAnimationImplLocked()
     };
 
     // the full animation is 2*ELECTRONBEAM_FRAMES frames
+    const int nbValFrames = ELECTRONBEAM_FRAMES;
     char value[PROPERTY_VALUE_MAX];
-    property_get("debug.sf.electron_frames", value, "24");
+    property_get("debug.sf.electron_frames", value, "12");
     int nbFrames = (atoi(value) + 1) >> 1;
-    if (nbFrames <= 0) // just in case
-        nbFrames = 24;
+    if (nbFrames >= nbValFrames) // just in case
+        nbFrames = nbValFrames;
 
     s_curve_interpolator itr(nbFrames, 7.5f);
     s_curve_interpolator itg(nbFrames, 8.0f);
@@ -2065,7 +2066,7 @@ status_t SurfaceFlinger::electronBeamOnAnimationImplLocked()
     const DisplayHardware& hw(graphicPlane(0).displayHardware());
     const uint32_t hw_w = hw.getWidth();
     const uint32_t hw_h = hw.getHeight();
-    const Region screenBounds(hw.bounds());
+    const Region screenBounds(hw.getBounds());
 
     GLfloat u, v;
     GLuint tname;
