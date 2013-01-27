@@ -95,6 +95,12 @@ public final class AnimatorSet extends Animator {
      */
     boolean mTerminated = false;
 
+    /**
+     * Indicates whether an AnimatorSet has been start()'d, whether or
+     * not there is a nonzero startDelay.
+     */
+    private boolean mStarted = false;
+
     // The amount of time in ms to delay starting the animation after start() is called
     private long mStartDelay = 0;
 
@@ -274,7 +280,7 @@ public final class AnimatorSet extends Animator {
     @Override
     public void cancel() {
         mTerminated = true;
-        if (isRunning()) {
+        if (isStarted()) {
             ArrayList<AnimatorListener> tmpListeners = null;
             if (mListeners != null) {
                 tmpListeners = (ArrayList<AnimatorListener>) mListeners.clone();
@@ -296,6 +302,7 @@ public final class AnimatorSet extends Animator {
                     listener.onAnimationEnd(this);
                 }
             }
+            mStarted = false;
         }
     }
 
@@ -308,7 +315,7 @@ public final class AnimatorSet extends Animator {
     @Override
     public void end() {
         mTerminated = true;
-        if (isRunning()) {
+        if (isStarted()) {
             if (mSortedNodes.size() != mNodes.size()) {
                 // hasn't been started yet - sort the nodes now, then end them
                 sortNodes();
@@ -334,6 +341,7 @@ public final class AnimatorSet extends Animator {
                     listener.onAnimationEnd(this);
                 }
             }
+            mStarted = false;
         }
     }
 
@@ -350,6 +358,11 @@ public final class AnimatorSet extends Animator {
             }
         }
         return false;
+    }
+
+    @Override
+    public boolean isStarted() {
+        return mStarted;
     }
 
     /**
@@ -434,6 +447,7 @@ public final class AnimatorSet extends Animator {
     @Override
     public void start() {
         mTerminated = false;
+        mStarted = true;
 
         // First, sort the nodes (if necessary). This will ensure that sortedNodes
         // contains the animation nodes in the correct order.
@@ -484,7 +498,6 @@ public final class AnimatorSet extends Animator {
                 mPlayingSet.add(node.animation);
             }
         } else {
-            // TODO: Need to cancel out of the delay appropriately
             mDelayAnim = ValueAnimator.ofFloat(0f, 1f);
             mDelayAnim.setDuration(mStartDelay);
             mDelayAnim.addListener(new AnimatorListenerAdapter() {
@@ -511,9 +524,17 @@ public final class AnimatorSet extends Animator {
             int numListeners = tmpListeners.size();
             for (int i = 0; i < numListeners; ++i) {
                 tmpListeners.get(i).onAnimationStart(this);
-                if (mNodes.size() == 0) {
-                    // Handle unusual case where empty AnimatorSet is started - should send out
-                    // end event immediately since the event will not be sent out at all otherwise
+            }
+        }
+        if (mNodes.size() == 0 && mStartDelay == 0) {
+            // Handle unusual case where empty AnimatorSet is started - should send out
+            // end event immediately since the event will not be sent out at all otherwise
+            mStarted = false;
+            if (mListeners != null) {
+                ArrayList<AnimatorListener> tmpListeners =
+                        (ArrayList<AnimatorListener>) mListeners.clone();
+                int numListeners = tmpListeners.size();
+                for (int i = 0; i < numListeners; ++i) {
                     tmpListeners.get(i).onAnimationEnd(this);
                 }
             }
@@ -533,6 +554,7 @@ public final class AnimatorSet extends Animator {
          */
         anim.mNeedsSort = true;
         anim.mTerminated = false;
+        anim.mStarted = false;
         anim.mPlayingSet = new ArrayList<Animator>();
         anim.mNodeMap = new HashMap<Animator, Node>();
         anim.mNodes = new ArrayList<Node>();
@@ -729,6 +751,7 @@ public final class AnimatorSet extends Animator {
                             tmpListeners.get(i).onAnimationEnd(mAnimatorSet);
                         }
                     }
+                    mAnimatorSet.mStarted = false;
                 }
             }
         }
