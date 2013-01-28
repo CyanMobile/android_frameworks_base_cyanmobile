@@ -1435,14 +1435,13 @@ void SurfaceFlinger::onScreenAcquired() {
     // this is a temporary work-around, eventually this should be called
     // by the power-manager
     SurfaceFlinger::turnElectronBeamOn(mElectronBeamAnimationMode);
-    mDirtyRegion.set(hw.bounds());
     // from this point on, SF will priocess updates again
+    triggerScreenRepaint();
 }
 
 void SurfaceFlinger::onScreenReleased() {
     const DisplayHardware& hw(graphicPlane(0).displayHardware());
     if (hw.isScreenAcquired()) {
-        mDirtyRegion.set(hw.bounds());
         hw.releaseScreen();
         // from this point on, SF will stop drawing
     }
@@ -1747,8 +1746,7 @@ status_t SurfaceFlinger::renderScreenToTextureLocked(DisplayID dpy,
     // redraw the screen entirely...
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT);
-    glMatrixMode(GL_MODELVIEW);  	
-    glLoadIdentity();
+
     const Vector< sp<LayerBase> >& layers(mVisibleLayersSortedByZ);
     const size_t count = layers.size();
     for (size_t i=0 ; i<count ; ++i) {
@@ -2006,11 +2004,6 @@ status_t SurfaceFlinger::electronBeamOffAnimationImplLocked()
     s_curve_interpolator itb(nbFrames, 8.5f);
 
     v_stretch vverts(hw_w, hw_h);
-
-    glMatrixMode(GL_TEXTURE);	
-    glLoadIdentity();	
-    glMatrixMode(GL_MODELVIEW); 	
-    glLoadIdentity();
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
@@ -2476,7 +2469,6 @@ status_t SurfaceFlinger::captureScreenImplLocked(DisplayID dpy,
         // invert everything, b/c glReadPixel() below will invert the FB
         glViewport(0, 0, sw, sh);
         glScissor(0, 0, sw, sh);
-        glEnable(GL_SCISSOR_TEST);
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
@@ -2495,7 +2487,6 @@ status_t SurfaceFlinger::captureScreenImplLocked(DisplayID dpy,
         }
 
         // XXX: this is needed on tegra
-        glEnable(GL_SCISSOR_TEST);
         glScissor(0, 0, sw, sh);
 
         // check for errors and return screen capture

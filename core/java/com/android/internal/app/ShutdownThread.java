@@ -244,6 +244,7 @@ public final class ShutdownThread extends Thread {
            pd.show();
         } else {
           SystemProperties.set( "persist.sys.shutdownenable","1");
+          SystemProperties.set( "service.bootanim.exit",  "0");
           SystemProperties.set( "ctl.start",  "bootanim");
           Log.i(TAG, "Enable shutdown animation...");
         }

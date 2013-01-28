@@ -67,6 +67,8 @@ private:
         virtual bool threadLoop();
         virtual status_t readyToRun();
         virtual status_t initCheck() const;
+        virtual status_t waitForFbSleep();
+        virtual status_t waitForFbWake();
     };
 
     class ConsoleManagerThread : public DisplayEventThreadBase 
