@@ -87,6 +87,7 @@ SurfaceFlinger::SurfaceFlinger()
         mReadFramebuffer("android.permission.READ_FRAME_BUFFER"),
         mDump("android.permission.DUMP"),
         mVisibleRegionsDirty(false),
+        mDeferReleaseConsole(false),
         mFreezeDisplay(false),
         mElectronBeamAnimationMode(0),
         mFreezeCount(0),
@@ -293,7 +294,7 @@ status_t SurfaceFlinger::readyToRun()
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrthof(0, w, 0, h, 0, 1); // l=0, r=w ; b=0, t=h
+    glOrthof(0, w, h, 0, 0, 1);
 
    LayerDim::initDimmer(this, w, h);
 
@@ -484,9 +485,17 @@ void SurfaceFlinger::handleConsoleEvents()
         SurfaceFlinger::turnElectronBeamOn(mElectronBeamAnimationMode);
     }
 
+    if (mDeferReleaseConsole && hw.isScreenAcquired()) {
+        // We got the release signal before the acquire signal
+        mDeferReleaseConsole = false;
+        hw.releaseScreen();	
+    }
+
     if (what & eConsoleReleased) {
         if (hw.isScreenAcquired()) {
             hw.releaseScreen();
+        } else {
+            mDeferReleaseConsole = true;
         }
     }
 
@@ -1732,8 +1741,6 @@ status_t SurfaceFlinger::renderScreenToTextureLocked(DisplayID dpy,
     // redraw the screen entirely...
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
     const Vector< sp<LayerBase> >& layers(mVisibleLayersSortedByZ);
     const size_t count = layers.size();
     for (size_t i=0 ; i<count ; ++i) {
@@ -1949,8 +1956,8 @@ status_t SurfaceFlinger::electronBeamOffAnimationImplLocked()
         : hw_w(hw_w), hw_h(hw_h) {
         }
         void operator()(GLfloat* vtx, float v) {
-            const GLfloat w = hw_w - (hw_w * v);
-            const GLfloat h = hw_h + (hw_h * v);
+            const GLfloat w = hw_w + (hw_w * v);
+            const GLfloat h = hw_h - (hw_h * v);
             const GLfloat x = (hw_w - w) * 0.5f;
             const GLfloat y = (hw_h - h) * 0.5f;
             vtx[0] = x;         vtx[1] = y;
@@ -1967,8 +1974,8 @@ status_t SurfaceFlinger::electronBeamOffAnimationImplLocked()
         : hw_w(hw_w), hw_h(hw_h) {
         }
         void operator()(GLfloat* vtx, float v) {
-            const GLfloat w = 1.0f;
-            const GLfloat h = hw_h - (hw_h * v);
+            const GLfloat w = hw_w - (hw_w * v);
+            const GLfloat h = 1.0f;
             const GLfloat x = (hw_w - w) * 0.5f;
             const GLfloat y = (hw_h - h) * 0.5f;
             vtx[0] = x;         vtx[1] = y;
@@ -1981,21 +1988,16 @@ status_t SurfaceFlinger::electronBeamOffAnimationImplLocked()
     // the full animation is 2*ELECTRONBEAM_FRAMES frames
     const int nbValFrames = ELECTRONBEAM_FRAMES;
     char value[PROPERTY_VALUE_MAX];
-    property_get("debug.sf.electron_frames", value, "12");
+    property_get("debug.sf.electron_frames", value, "24");
     int nbFrames = (atoi(value) + 1) >> 1;
-    if (nbFrames >= nbValFrames) // just in case
-        nbFrames = nbValFrames;
+    if (nbFrames <= 0) // just in case
+        nbFrames = 24;
 
     s_curve_interpolator itr(nbFrames, 7.5f);
     s_curve_interpolator itg(nbFrames, 8.0f);
     s_curve_interpolator itb(nbFrames, 8.5f);
 
     v_stretch vverts(hw_w, hw_h);
-
-    glMatrixMode(GL_TEXTURE);
-    glLoadIdentity();
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
@@ -2461,11 +2463,10 @@ status_t SurfaceFlinger::captureScreenImplLocked(DisplayID dpy,
         // invert everything, b/c glReadPixel() below will invert the FB
         glViewport(0, 0, sw, sh);
         glScissor(0, 0, sw, sh);
-        glEnable(GL_SCISSOR_TEST);
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
-        glOrthof(0, hw_w, hw_h, 0, 0, 1);
+        glOrthof(0, hw_w, 0, hw_h, 0, 1);
         glMatrixMode(GL_MODELVIEW);
 
         // redraw the screen entirely...
@@ -2480,7 +2481,6 @@ status_t SurfaceFlinger::captureScreenImplLocked(DisplayID dpy,
         }
 
         // XXX: this is needed on tegra
-        glEnable(GL_SCISSOR_TEST);
         glScissor(0, 0, sw, sh);
 
         // check for errors and return screen capture

@@ -622,6 +622,7 @@ public abstract class SMSDispatcher extends Handler {
             }
             // This one isn't in the DB, so add it
             pdus[concatRef.seqNumber - 1] = sms.getPdu();
+
             // Remove the parts from the database
             mResolver.delete(mRawUri, where.toString(), whereArgs);
         } catch (SQLException e) {
