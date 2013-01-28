@@ -5794,6 +5794,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     ActivityManager.RecentTaskInfo rti
                             = new ActivityManager.RecentTaskInfo();
                     rti.id = tr.numActivities > 0 ? tr.taskId : -1;
+                    rti.persistentId = tr.taskId;
                     rti.baseIntent = new Intent(
                             tr.intent != null ? tr.intent : tr.affinityIntent);
                     rti.origActivity = tr.origActivity;
@@ -6006,6 +6007,9 @@ public final class ActivityManagerService extends ActivityManagerNative
             try {
                 TaskRecord tr = taskForIdLocked(task);
                 if (tr != null) {
+                    if ((flags&ActivityManager.MOVE_TASK_NO_USER_ACTION) == 0) {
+                        mMainStack.mUserLeaving = true;
+                    }
                     if ((flags&ActivityManager.MOVE_TASK_WITH_HOME) != 0) {
                         // Caller wants the home activity moved with it.  To accomplish this,
                         // we'll just move the home task to the top first.
@@ -6017,6 +6021,9 @@ public final class ActivityManagerService extends ActivityManagerNative
                 for (int i=mMainStack.mHistory.size()-1; i>=0; i--) {
                     ActivityRecord hr = (ActivityRecord)mMainStack.mHistory.get(i);
                     if (hr.task.taskId == task) {
+                        if ((flags&ActivityManager.MOVE_TASK_NO_USER_ACTION) == 0) {
+                            mMainStack.mUserLeaving = true;
+                        }
                         if ((flags&ActivityManager.MOVE_TASK_WITH_HOME) != 0) {
                             // Caller wants the home activity moved with it.  To accomplish this,
                             // we'll just move the home task to the top first.

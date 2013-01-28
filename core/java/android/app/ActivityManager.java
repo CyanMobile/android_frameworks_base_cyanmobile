@@ -169,6 +169,11 @@ public class ActivityManager {
         public int id;
 
         /**
+         * The true identifier of this task, valid even if it is not running.
+         */
+        public int persistentId;
+
+        /**
          * The original Intent used to launch the task.  You can use this
          * Intent to re-launch the task (if it is no longer running) or bring
          * the current task to the front.
@@ -192,6 +197,7 @@ public class ActivityManager {
 
         public void writeToParcel(Parcel dest, int flags) {
             dest.writeInt(id);
+            dest.writeInt(persistentId);
             if (baseIntent != null) {
                 dest.writeInt(1);
                 baseIntent.writeToParcel(dest, 0);
@@ -203,6 +209,7 @@ public class ActivityManager {
 
         public void readFromParcel(Parcel source) {
             id = source.readInt();
+            persistentId = source.readInt();
             if (source.readInt() != 0) {
                 baseIntent = Intent.CREATOR.createFromParcel(source);
             } else {
@@ -477,6 +484,13 @@ public class ActivityManager {
      * the task.
      */
     public static final int MOVE_TASK_WITH_HOME = 0x00000001;
+
+    /**
+     * Flag for {@link #moveTaskToFront(int, int)}: don't count this as a
+     * user-instigated action, so the current activity will not receive a
+     * hint that the user is leaving.
+     */
+    public static final int MOVE_TASK_NO_USER_ACTION = 0x00000002;
 
     /**
      * Ask that the task associated with a given task ID be moved to the
