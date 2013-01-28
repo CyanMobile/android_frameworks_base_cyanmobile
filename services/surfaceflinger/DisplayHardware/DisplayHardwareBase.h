@@ -43,7 +43,6 @@ public:
     bool isScreenAcquired() const;
 
     bool canDraw() const;
-    void setCanDraw(bool canDraw);
 
 private:
     class DisplayEventThreadBase : public Thread {
@@ -62,13 +61,11 @@ private:
 
     class DisplayEventThread : public DisplayEventThreadBase 
     {
-        mutable Barrier mBarrier;
     public:
                 DisplayEventThread(const sp<SurfaceFlinger>& flinger);
         virtual ~DisplayEventThread();
         virtual bool threadLoop();
         virtual status_t readyToRun();
-        virtual status_t releaseScreen() const;
         virtual status_t initCheck() const;
     };
 
@@ -91,7 +88,6 @@ private:
     };
 
     sp<DisplayEventThreadBase>  mDisplayEventThread;
-    mutable int                 mCanDraw;
     mutable int                 mScreenAcquired;
 };
 

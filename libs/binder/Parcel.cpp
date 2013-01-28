@@ -691,24 +691,27 @@ status_t Parcel::writeNativeHandle(const native_handle* handle)
     return err;
 }
 
-status_t Parcel::writeFileDescriptor(int fd)
+status_t Parcel::writeFileDescriptor(int fd, bool takeOwnership)
 {
     flat_binder_object obj;
     obj.type = BINDER_TYPE_FD;
     obj.flags = 0x7f | FLAT_BINDER_FLAG_ACCEPTS_FDS;
     obj.handle = fd;
-    obj.cookie = (void*)0;
+    obj.cookie = (void*) (takeOwnership ? 1 : 0);
     return writeObject(obj, true);
 }
 
 status_t Parcel::writeDupFileDescriptor(int fd)
 {
-    flat_binder_object obj;
-    obj.type = BINDER_TYPE_FD;
-    obj.flags = 0x7f | FLAT_BINDER_FLAG_ACCEPTS_FDS;
-    obj.handle = dup(fd);
-    obj.cookie = (void*)1;
-    return writeObject(obj, true);
+    int dupFd = dup(fd);	
+    if (dupFd < 0) {
+        return -errno;
+    }
+    status_t err = writeFileDescriptor(dupFd, true /*takeOwnership*/);
+    if (err) {
+        close(dupFd);
+    }
+    return err;
 }
 
 status_t Parcel::write(const Flattenable& val)

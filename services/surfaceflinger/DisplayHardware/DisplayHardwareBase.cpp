@@ -94,9 +94,7 @@ bool DisplayHardwareBase::DisplayEventThread::threadLoop()
         sp<SurfaceFlinger> flinger = mFlinger.promote();
         LOGD("About to give-up screen, flinger = %p", flinger.get());
         if (flinger != 0) {
-            mBarrier.close();
-            flinger->screenReleased(0);
-            mBarrier.wait();
+            flinger->screenReleased();
         }
     }
     fd = open(kWakeFileName, O_RDONLY, 0);
@@ -109,15 +107,9 @@ bool DisplayHardwareBase::DisplayEventThread::threadLoop()
         sp<SurfaceFlinger> flinger = mFlinger.promote();
         LOGD("Screen about to return, flinger = %p", flinger.get());
         if (flinger != 0)
-            flinger->screenAcquired(0);
+            flinger->screenAcquired();
     }
     return true;
-}
-
-status_t DisplayHardwareBase::DisplayEventThread::releaseScreen() const
-{
-    mBarrier.open();
-    return NO_ERROR;
 }
 
 status_t DisplayHardwareBase::DisplayEventThread::readyToRun()
@@ -339,12 +331,12 @@ bool DisplayHardwareBase::ConsoleManagerThread::threadLoop()
         sp<SurfaceFlinger> flinger = mFlinger.promote();
         //LOGD("About to give-up screen, flinger = %p", flinger.get());
         if (flinger != 0)
-            flinger->screenReleased(0);
+            flinger->screenReleased();
     } else if (sig == vm.acqsig) {
         sp<SurfaceFlinger> flinger = mFlinger.promote();
         //LOGD("Screen about to return, flinger = %p", flinger.get());
         if (flinger != 0) 
-            flinger->screenAcquired(0);
+            flinger->screenAcquired();
     }
     
     return true;
@@ -359,8 +351,8 @@ status_t DisplayHardwareBase::ConsoleManagerThread::initCheck() const
 
 DisplayHardwareBase::DisplayHardwareBase(const sp<SurfaceFlinger>& flinger,
         uint32_t displayIndex) 
-    : mCanDraw(true), mScreenAcquired(true)
 {
+    mScreenAcquired = true;
     mDisplayEventThread = new DisplayEventThread(flinger);
     if (mDisplayEventThread->initCheck() != NO_ERROR) {
         // fall-back on the console
@@ -374,22 +366,14 @@ DisplayHardwareBase::~DisplayHardwareBase()
     mDisplayEventThread->requestExitAndWait();
 }
 
-void DisplayHardwareBase::setCanDraw(bool canDraw)  	
-{  	
-    mCanDraw = canDraw;  	
-}
-
 bool DisplayHardwareBase::canDraw() const
 {
-    return mCanDraw && mScreenAcquired;
+    return mScreenAcquired;
 }
 
 void DisplayHardwareBase::releaseScreen() const
 {
-    status_t err = mDisplayEventThread->releaseScreen();
-    if (err >= 0) {
-        mScreenAcquired = false;
-    }
+    mScreenAcquired = false;
 }
 
 void DisplayHardwareBase::acquireScreen() const

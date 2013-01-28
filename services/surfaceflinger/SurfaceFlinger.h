@@ -210,8 +210,15 @@ public:
     virtual status_t                    turnElectronBeamOff(int32_t mode);
     virtual status_t                    turnElectronBeamOn(int32_t mode);
 
-            void                        screenReleased(DisplayID dpy);
-            void                        screenAcquired(DisplayID dpy);
+            // called when screen needs to turn off
+            void screenReleased();
+            // called when screen is turning back on
+            void screenAcquired();
+
+            // called on the main thread in response to screenReleased()
+            void onScreenReleased();
+            // called on the main thread in response to screenAcquired()
+            void onScreenAcquired();
 
             overlay_control_device_t* getOverlayEngine() const;
 
@@ -308,7 +315,6 @@ private:
 public:     // hack to work around gcc 4.0.3 bug
             void        signalEvent();
 private:
-            void        handleConsoleEvents();
             void        handleTransaction(uint32_t transactionFlags);
             void        handleTransactionLocked(uint32_t transactionFlags);
             void        handleDestroyLayers();
@@ -359,6 +365,8 @@ private:
             status_t electronBeamOnAnimationImplLocked();
             status_t renderScreenToTextureLocked(DisplayID dpy,
                     GLuint* textureName, GLfloat* uOut, GLfloat* vOut);
+            sp<GraphicBuffer> createGraphicBuffer(uint32_t w, uint32_t h,
+                    PixelFormat format, uint32_t usage) const;
 
             friend class FreezeLock;
             sp<FreezeLock> getFreezeLock() const;
@@ -376,6 +384,9 @@ private:
             void        debugFlashRegions();
             void        debugShowFPS() const;
             void        drawWormhole() const;
+
+            void        startBootAnim();
+
             void        triggerScreenRepaint();
             void        initRenderColors();
 
@@ -418,7 +429,6 @@ private:
                 Region                      mInvalidRegion;
                 Region                      mWormholeRegion;
                 bool                        mVisibleRegionsDirty;
-                bool                        mDeferReleaseConsole;
                 bool                        mFreezeDisplay;
                 int32_t                     mElectronBeamAnimationMode;
                 int32_t                     mFreezeCount;
@@ -447,13 +457,6 @@ private:
                 // protected by mDestroyedLayerLock;
     mutable     Mutex                       mDestroyedLayerLock;
                 Vector<LayerBase const *>   mDestroyedLayers;
-
-                // atomic variables
-                enum {
-                    eConsoleReleased = 1,
-                    eConsoleAcquired = 2
-                };
-   volatile     int32_t                     mConsoleSignals;
 
    // only written in the main thread, only read in other threads
    volatile     int32_t                     mSecureFrameBuffer;
