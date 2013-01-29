@@ -23,6 +23,8 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.text.format.DateFormat;
 import android.net.ConnectivityManager;
+import android.telephony.PhoneStateListener;
+import android.telephony.SignalStrength;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
@@ -43,6 +45,9 @@ public class PiePolicy {
     private static Context mContext;
     private static int mBatteryLevel = 0;
     private static boolean mTelephony;
+    private static int dBm = 0;
+    private static int ASU = 0;
+    private static int mPhoneState;
 
     private OnClockChangedListener mClockChangedListener;
 
@@ -50,6 +55,17 @@ public class PiePolicy {
         @Override
         public void onReceive(Context arg0, Intent intent) {
             mBatteryLevel = intent.getIntExtra("level", 0);
+        }
+    };
+
+    private final BroadcastReceiver mSignalReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(Intent.ACTION_SIGNAL_DBM_CHANGED)) {
+                dBm = intent.getIntExtra("dbm", 0);
+                mPhoneState = intent.getIntExtra("signal_status", StatusBarPolicy.PHONE_SIGNAL_IS_NORMAL);
+            }
         }
     };
 
@@ -72,11 +88,14 @@ public class PiePolicy {
 
     public PiePolicy(Context context) {
         mContext = context;
+        mContext.registerReceiver(mSignalReceiver, 
+                new IntentFilter(Intent.ACTION_SIGNAL_DBM_CHANGED));
         mContext.registerReceiver(mBatteryReceiver, 
                 new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_TIME_TICK);
         filter.addAction(Intent.ACTION_TIME_CHANGED);
+        filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
         mContext.registerReceiver(mClockReceiver, filter);
         LOW_BATTERY_LEVEL = mContext.getResources().getInteger(
                 com.android.internal.R.integer.config_lowBatteryCloseWarningLevel);
@@ -107,6 +126,14 @@ public class PiePolicy {
         return ssid.toUpperCase();
     }
 
+    public static String getSignalText() {
+        String result = getSignalLevelString(dBm) + " dBm";
+        if (mPhoneState == StatusBarPolicy.PHONE_SIGNAL_IS_AIRPLANE_MODE) {
+             return "Airplane Mode";
+        }
+        return result;
+    }
+
     private static String huntForSsid(WifiManager wifiManager, WifiInfo info) {
         String ssid = info.getSSID();
         if (ssid != null) {
@@ -121,6 +148,31 @@ public class PiePolicy {
         }
         return null;
     }
+
+    private static String getSignalLevelString(int dBm) {
+        if (mPhoneState == StatusBarPolicy.PHONE_SIGNAL_IS_NULL || dBm == 0) {
+            return "-\u221e"; // -oo ('minus infinity')
+        }
+        return Integer.toString(dBm);
+    }
+
+    /*
+     * Phone listener to update signal information
+     */
+    private PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
+        @Override
+        public void onSignalStrengthsChanged(SignalStrength signalStrength) {
+            if (signalStrength != null) {
+                ASU = signalStrength.getGsmSignalStrength();
+                dBm = -113 + (2 * ASU);
+            } else {
+                // When signal strenth is null, let's set the values below to zero,
+                // this showns then -oo in the status bar display
+                ASU = 0;
+                dBm = 0;
+            }
+        }
+    };
 
     public static String getNetworkProvider() {
         String operatorName = mContext.getString(R.string.quick_settings_wifi_no_network);
