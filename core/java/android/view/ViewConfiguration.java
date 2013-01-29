@@ -303,8 +303,7 @@ public class ViewConfiguration {
      * a long press
      */
     public static int getLongPressTimeout() {
-        return AppGlobals.getIntCoreSetting(Settings.Secure.LONG_PRESS_TIMEOUT,
-                DEFAULTLONG_PRESS_TIMEOUT);
+         return DEFAULTLONG_PRESS_TIMEOUT;
     }
     
     /**

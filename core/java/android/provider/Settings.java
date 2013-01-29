@@ -2260,6 +2260,12 @@ public final class Settings {
         public static final String USE_CUSTOM_NAVISEARCH_APP_TOGGLE = "use_custom_navisearch_app_toggle";
 
         /**
+         * Specifies pie gravity
+         * @hide
+         */
+        public static final String PIE_GRAVITY = "pie_gravity";
+
+        /**
          * Specifies whether or not to use a custom app on quick key press
          * @hide
          */
@@ -4355,6 +4361,7 @@ public final class Settings {
             USE_CUSTOM_LONG_SEARCH_APP_TOGGLE,
             USE_CUSTOM_LONG_SEARCH_APP_ACTIVITY,
             USE_CUSTOM_NAVISEARCH_APP_TOGGLE,
+            PIE_GRAVITY,
             USE_CUSTOM_QUICK_APP_TOGGLE,
             USE_CUSTOM_HOME_APP_TOGGLE,
             USE_CUSTOM_BACK_APP_TOGGLE,

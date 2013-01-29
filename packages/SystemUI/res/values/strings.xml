@@ -229,4 +229,9 @@
     <string name="widget_auto_rotate_title">Auto Rotate</string>
     <string name="widget_airplane_title">Airplane Mode</string>
     <string name="default_qwik_widgets">toggleMobileData|toggleAirplaneMode|toggleWifi|toggleBluetooth|toggleAutoRotate|toggleSync|toggleWifiAp|toggleGps</string>
+
+    <string name="pie_date_format">ccc, dd MMM yyyy</string>
+    <string name="pie_hour_format_12">hh:mm</string>
+    <string name="pie_hour_format_24">HH:mm</string>
+    <string name="pie_am_pm">a</string>
 </resources>
