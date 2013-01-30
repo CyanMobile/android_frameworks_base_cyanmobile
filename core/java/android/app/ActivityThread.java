@@ -1062,7 +1062,7 @@ public final class ActivityThread {
                     break;
                 case RESUME_ACTIVITY:
                     handleResumeActivity((IBinder)msg.obj, true,
-                            msg.arg1 != 0);
+                            msg.arg1 != 0, true);
                     break;
                 case SEND_RESULT:
                     handleSendResult((ResultData)msg.obj);
@@ -1957,7 +1957,8 @@ public final class ActivityThread {
         if (a != null) {
             r.createdConfig = new Configuration(mConfiguration);
             Bundle oldState = r.state;
-            handleResumeActivity(r.token, false, r.isForward);
+            handleResumeActivity(r.token, false, r.isForward,
+                    !r.activity.mFinished && !r.startsNotResumed);
 
             if (!r.activity.mFinished && r.startsNotResumed) {
                 // The activity manager actually wants this one to start out
@@ -2425,7 +2426,8 @@ public final class ActivityThread {
         return r;
     }
 
-    final void handleResumeActivity(IBinder token, boolean clearHide, boolean isForward) {
+    final void handleResumeActivity(IBinder token, boolean clearHide, boolean isForward,
+            boolean reallyResume) {
         // If we are getting ready to gc after going to the background, well
         // we are back active so skip it.
         unscheduleGcIdler();
@@ -2515,6 +2517,13 @@ public final class ActivityThread {
                 TAG, "Scheduling idle handler for " + r);
             Looper.myQueue().addIdleHandler(new Idler());
 
+            // Tell the activity manager we have resumed.
+            if (reallyResume) {
+                try {
+                    ActivityManagerNative.getDefault().activityResumed(token);
+                } catch (RemoteException ex) {
+                }
+            }
         } else {
             // If an exception was thrown when trying to resume, then
             // just end this activity.
@@ -2677,9 +2686,20 @@ public final class ActivityThread {
         performStopActivityInner(r, null, false, saveState);
     }
 
-    private static class StopInfo {
+    private static class StopInfo implements Runnable {
+        ActivityClientRecord activity;
+        Bundle state;
         Bitmap thumbnail;
         CharSequence description;
+
+        @Override public void run() {
+            // Tell activity manager we have been stopped.
+            try {
+                ActivityManagerNative.getDefault().activityStopped(
+                    activity.token, state, thumbnail, description);
+            } catch (RemoteException ex) {
+            }
+        }
     }
 
     private final class ProviderRefCount {
@@ -2815,12 +2835,14 @@ public final class ActivityThread {
 
         updateVisibility(r, show);
 
-        // Tell activity manager we have been stopped.
-        try {
-            ActivityManagerNative.getDefault().activityStopped(
-                r.token, r.state, info.thumbnail, info.description);
-        } catch (RemoteException ex) {
-        }
+        // Schedule the call to tell the activity manager we have
+        // stopped.  We don't do this immediately, because we want to	
+        // have a chance for any other pending work (in particular memory
+        // trim requests) to complete before you tell the activity
+        // manager to proceed and allow us to go fully into the background.
+        info.activity = r;
+        info.state = r.state;
+        mH.post(info);
     }
 
     final void performRestartActivity(IBinder token) {

@@ -55,8 +55,10 @@ class ProcessRecord {
     long lruWeight;             // Weight for ordering in LRU list
     int maxAdj;                 // Maximum OOM adjustment for this process
     int hiddenAdj;              // If hidden, this is the adjustment to use
+    int emptyAdj;               // If empty, this is the adjustment to use
     int curRawAdj;              // Current OOM unlimited adjustment for this process
     int setRawAdj;              // Last set OOM unlimited adjustment for this process
+    int nonStoppingAdj;         // Adjustment not counting any stopping activities
     int curAdj;                 // Current OOM adjustment for this process
     int setAdj;                 // Last set OOM adjustment for this process
     int curSchedGroup;          // Currently desired scheduling class
@@ -65,6 +67,7 @@ class ProcessRecord {
     boolean serviceb;           // Process currently is on the service B list
     boolean keeping;            // Actively running code so don't kill due to that?
     boolean setIsForeground;    // Running foreground UI when last set?
+    boolean hasActivities;      // Are there any activities running in this process?
     boolean foregroundServices; // Running any services that are foreground?
     boolean foregroundActivities; // Running any services that are foreground?
     boolean systemNoUi;         // This is a system process, but not currently showing UI.
@@ -182,8 +185,10 @@ class ProcessRecord {
                 pw.print(" empty="); pw.println(empty);
         pw.print(prefix); pw.print("oom: max="); pw.print(maxAdj);
                 pw.print(" hidden="); pw.print(hiddenAdj);
+                pw.print(" empty="); pw.print(emptyAdj);
                 pw.print(" curRaw="); pw.print(curRawAdj);
                 pw.print(" setRaw="); pw.print(setRawAdj);
+                pw.print(" nonStopping="); pw.print(nonStoppingAdj);
                 pw.print(" cur="); pw.print(curAdj);
                 pw.print(" set="); pw.println(setAdj);
         pw.print(prefix); pw.print("curSchedGroup="); pw.print(curSchedGroup);
@@ -197,7 +202,9 @@ class ProcessRecord {
                 pw.print(" foregroundServices="); pw.print(foregroundServices);
                 pw.print(" forcingToForeground="); pw.println(forcingToForeground);
         pw.print(prefix); pw.print("persistent="); pw.print(persistent);
-                pw.print(" removed="); pw.println(removed);
+                pw.print(" removed="); pw.print(removed);
+                pw.print(" hasActivities="); pw.print(hasActivities);
+                pw.print(" foregroundActivities="); pw.println(foregroundActivities);
         pw.print(prefix); pw.print("adjSeq="); pw.print(adjSeq);
                 pw.print(" lruSeq="); pw.println(lruSeq);
         if (!keeping) {
@@ -270,7 +277,7 @@ class ProcessRecord {
         pkgList.add(_info.packageName);
         thread = _thread;
         maxAdj = ProcessList.HIDDEN_APP_MAX_ADJ;
-        hiddenAdj = ProcessList.HIDDEN_APP_MIN_ADJ;
+        hiddenAdj = emptyAdj = ProcessList.HIDDEN_APP_MIN_ADJ;
         curRawAdj = setRawAdj = -100;
         curAdj = setAdj = -100;
         persistent = false;
