@@ -1438,8 +1438,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     private boolean showPie() {
-        return true;
-        /*return !mNaviShow;*/
+        return !mNaviShow;
     }
 
     private void attachPies() {

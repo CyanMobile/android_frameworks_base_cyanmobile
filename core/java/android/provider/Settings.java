@@ -2260,10 +2260,72 @@ public final class Settings {
         public static final String USE_CUSTOM_NAVISEARCH_APP_TOGGLE = "use_custom_navisearch_app_toggle";
 
         /**
-         * Specifies pie gravity
+         * Location of the pie in the screen
+         * 0 = Gravity.TOP
+         * 1 = Gravity.BOTTOM
+         * 2 = Gravity.RIGHT
+         * 3 = Gravity.LEFT
          * @hide
          */
         public static final String PIE_GRAVITY = "pie_gravity";
+
+        /**
+         * Pie status report
+         * 0 = Bare
+         * 1 = Quick
+         * 2 = Default
+         * 3 = Slow
+         * @hide
+         */
+        public static final String PIE_MODE = "pie_mode";
+
+        /**
+         * Pie size fraction
+         * @hide
+         */
+        public static final String PIE_SIZE = "pie_size";
+
+        /**
+         * Pie color
+         * @hide
+         */
+        public static final String PIE_BUTTON_COLOR = "pie_button_color";
+
+        /**
+         * Pie color
+         * @hide
+         */
+        public static final String PIE_BACKGROUND_BUTTON_COLOR = "pie_background_button_color";
+
+        /**
+         * Pie color
+         * @hide
+         */
+        public static final String PIE_CHOICE_BUTTON_COLOR = "pie_choice_button_color";
+
+        /**
+         * Pie color
+         * @hide
+         */
+        public static final String PIE_BATTERY_COLOR = "pie_battery_color";
+
+        /**
+         * Pie color
+         * @hide
+         */
+        public static final String PIE_CHEVRON_COLOR = "pie_chevron_color";
+
+        /**
+         * Pie color
+         * @hide
+         */
+        public static final String PIE_CLOCK_COLOR = "pie_clock_color";
+
+        /**
+         * Pie color
+         * @hide
+         */
+        public static final String PIE_ENABLE_COLOR = "pie_enable_color";
 
         /**
          * Specifies whether or not to use a custom app on quick key press
@@ -4362,6 +4424,15 @@ public final class Settings {
             USE_CUSTOM_LONG_SEARCH_APP_ACTIVITY,
             USE_CUSTOM_NAVISEARCH_APP_TOGGLE,
             PIE_GRAVITY,
+            PIE_MODE,
+            PIE_SIZE,
+            PIE_BUTTON_COLOR,
+            PIE_BACKGROUND_BUTTON_COLOR,
+            PIE_CHOICE_BUTTON_COLOR,
+            PIE_BATTERY_COLOR,
+            PIE_CHEVRON_COLOR,
+            PIE_CLOCK_COLOR,
+            PIE_ENABLE_COLOR,
             USE_CUSTOM_QUICK_APP_TOGGLE,
             USE_CUSTOM_HOME_APP_TOGGLE,
             USE_CUSTOM_BACK_APP_TOGGLE,
