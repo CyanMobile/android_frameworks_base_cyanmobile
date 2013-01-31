@@ -18,8 +18,9 @@
 */
 -->
 
-<com.android.systemui.statusbar.NavigationBarView
+<com.android.systemui.statusbar.navbar.NavigationBarView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:systemui="http://schemas.android.com/apk/res/com.android.systemui"
     android:id="@+id/navibarAdd"
     android:layout_height="match_parent"
     android:layout_width="match_parent"
@@ -52,54 +53,61 @@
 	  android:orientation="horizontal">
 
         <!-- navigation controls -->
-        <ImageButton android:id="@+id/menu"
+        <com.android.systemui.statusbar.navbar.KeyButtonView android:id="@+id/menu"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitXY"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
+            systemui:glowBackground="@drawable/ic_sysbar_highlight"
             />
-        <ImageButton android:id="@+id/home"
+        <com.android.systemui.statusbar.navbar.KeyButtonView android:id="@+id/home"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitXY"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
+            systemui:glowBackground="@drawable/ic_sysbar_highlight"
             />
-        <ImageButton android:id="@+id/volup"
+        <com.android.systemui.statusbar.navbar.KeyButtonView android:id="@+id/volup"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitXY"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
+            systemui:glowBackground="@drawable/ic_sysbar_highlight"
             />
-        <ImageButton android:id="@+id/quicker"
+        <com.android.systemui.statusbar.navbar.KeyButtonView android:id="@+id/quicker"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitXY"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
+            systemui:glowBackground="@drawable/ic_sysbar_highlight"
             />
-        <ImageButton android:id="@+id/voldown"
+        <com.android.systemui.statusbar.navbar.KeyButtonView android:id="@+id/voldown"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitXY"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
+            systemui:glowBackground="@drawable/ic_sysbar_highlight"
             />
-        <ImageButton android:id="@+id/search"
+        <com.android.systemui.statusbar.navbar.KeyButtonView android:id="@+id/search"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitXY"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
+            systemui:glowBackground="@drawable/ic_sysbar_highlight"
             />
-        <ImageButton android:id="@+id/back"
+        <com.android.systemui.statusbar.navbar.KeyButtonView android:id="@+id/back"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitXY"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
+            systemui:glowBackground="@drawable/ic_sysbar_highlight"
             />
     </LinearLayout>
 
@@ -116,4 +124,4 @@
         />
     </RelativeLayout>
   </FrameLayout>
-</com.android.systemui.statusbar.NavigationBarView>
+</com.android.systemui.statusbar.navbar.NavigationBarView>

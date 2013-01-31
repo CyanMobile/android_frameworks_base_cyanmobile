@@ -41,6 +41,7 @@ import com.android.systemui.statusbar.clocks.ClockExpand;
 import com.android.systemui.statusbar.cmcustom.BackLogo;
 import com.android.systemui.statusbar.dates.DateView;
 import com.android.systemui.statusbar.dates.ExDateView;
+import com.android.systemui.statusbar.navbar.NavigationBarView;
 import com.android.systemui.statusbar.popups.BrightnessPanel;
 import com.android.systemui.statusbar.popups.QuickSettingsPopupWindow;
 import com.android.systemui.statusbar.popups.ShortcutPopupWindow;
