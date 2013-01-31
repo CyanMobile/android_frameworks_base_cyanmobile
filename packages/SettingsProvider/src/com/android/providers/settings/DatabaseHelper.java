@@ -64,7 +64,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // database gets upgraded properly. At a minimum, please confirm that 'upgradeVersion'
     // is properly propagated through your change.  Not doing so will result in a loss of user
     // settings.
-    private static final int DATABASE_VERSION = 57;
+    private static final int DATABASE_VERSION = 59;
 
     private Context mContext;
 
@@ -751,6 +751,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 if (stmt != null) stmt.close();
             }
             upgradeVersion = 58;
+        }
+
+        if (upgradeVersion == 58) {
+            // Update all built-in bookmarks.  Some of the package names have changed.
+            loadBookmarks(db);
+            upgradeVersion = 59;
         }
 
         // *** Remember to update DATABASE_VERSION above!
