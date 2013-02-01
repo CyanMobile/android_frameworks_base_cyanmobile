@@ -1686,6 +1686,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             }
             oldList = mLatest;
         }
+        setNotifNew(true);
         mNotifData = getNotifications(oldList);
         final NotificationData.Entry oldEntry = oldList.getEntryAt(oldIndex);
         final StatusBarNotification oldNotification = oldEntry.notification;
@@ -1883,6 +1884,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         // Add the icon.
         final int iconIndex = chooseIconIndex(isOngoing, viewIndex);
         mNotificationIcons.addView(iconView, iconIndex);
+        setNotifNew(true);
         mNotifData = getNotifications(list);
         return iconView;
     }
@@ -1915,6 +1917,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mPieControlPanel.setNotifications(list);
         }
         return list;
+    }
+
+    public void setNotifNew(boolean notifnew) {
+        if (mPieControlPanel != null) {
+            mPieControlPanel.setNotifNew(notifnew);
+        }
     }
 
     private void setAreThereNotifications() {
@@ -3104,6 +3112,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mClearButton.clearColorFilter();
             try {
                 mBarService.onClearAllNotifications();
+                setNotifNew(false);
             } catch (RemoteException ex) {
                 // system process is dead if we're here.
             }

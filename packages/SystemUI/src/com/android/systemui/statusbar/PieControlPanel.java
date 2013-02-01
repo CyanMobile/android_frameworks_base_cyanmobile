@@ -133,6 +133,12 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
         return list;
     }
 
+    public void setNotifNew(boolean notifnew) {
+        if (mPieControl != null) {
+            mPieControl.setNotifNew(notifnew);
+        }
+    }
+
     public void reorient(int orientation) {
         mOrientation = orientation;
         WindowManagerImpl.getDefault().removeView(mTrigger);

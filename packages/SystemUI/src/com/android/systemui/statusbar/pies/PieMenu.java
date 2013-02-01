@@ -182,6 +182,7 @@ public class PieMenu extends FrameLayout {
     private float mStartBattery;
     private float mEndBattery;
     private int mBatteryLevel;
+    private boolean mNotifNew = false;
 
     private class SnapPoint {
         public SnapPoint(int snapX, int snapY, int snapRadius, int snapAlpha, int snapGravity) {
@@ -311,7 +312,6 @@ public class PieMenu extends FrameLayout {
         mBatteryPathJuice = makeSlice(mStartBattery, mStartBattery + mBatteryLevel * (mEndBattery-mStartBattery) /
                 100, mInnerBatteryRadius, mOuterBatteryRadius, mCenter);
 
-        mNotificationPaint.setColor(COLOR_STATUS);
         mSnapBackground.setColor(COLOR_SNAP_BACKGROUND);
         mStatusPaint.setColor(COLOR_STATUS);
         mAmPmPaint.setColor(COLOR_STATUS);
@@ -328,8 +328,10 @@ public class PieMenu extends FrameLayout {
                               Settings.System.PIE_CLOCK_COLOR, COLOR_STATUS));
             mChevronBackgroundLeft.setColor(extractRGB(Settings.System.getInt(mContext.getContentResolver(), 
                               Settings.System.PIE_CHEVRON_COLOR, COLOR_CHEVRON_LEFT)) | COLOR_OPAQUE_MASK);
-            mChevronBackgroundRight.setColor(extractRGB(Settings.System.getInt(mContext.getContentResolver(), 
-                              Settings.System.PIE_CHEVRON_COLOR, COLOR_CHEVRON_RIGHT)) | COLOR_OPAQUE_MASK);
+            mChevronBackgroundRight.setColor(mNotifNew ? COLOR_STATUS : (extractRGB(Settings.System.getInt(mContext.getContentResolver(), 
+                              Settings.System.PIE_CHEVRON_COLOR, COLOR_CHEVRON_RIGHT)) | COLOR_OPAQUE_MASK));
+            mNotificationPaint.setColor(mNotifNew ? (extractRGB(Settings.System.getInt(mContext.getContentResolver(), 
+                              Settings.System.PIE_CHEVRON_COLOR, COLOR_CHEVRON_RIGHT)) | COLOR_OPAQUE_MASK) : COLOR_STATUS);
             mBatteryJuice.setColorFilter(new PorterDuffColorFilter(extractRGB(Settings.System.getInt(mContext.getContentResolver(), 
                               Settings.System.PIE_BATTERY_COLOR, COLOR_BATTERY_JUICE)) | COLOR_OPAQUE_MASK, Mode.SRC_ATOP));
             for (PieItem item : mItems) {
@@ -341,7 +343,8 @@ public class PieMenu extends FrameLayout {
             mPieSelected.setColor(COLOR_PIE_SELECT);
             mClockPaint.setColor(COLOR_STATUS);
             mChevronBackgroundLeft.setColor(COLOR_CHEVRON_LEFT);
-            mChevronBackgroundRight.setColor(COLOR_CHEVRON_RIGHT);
+            mChevronBackgroundRight.setColor(mNotifNew ? COLOR_STATUS : COLOR_CHEVRON_RIGHT);
+            mNotificationPaint.setColor(mNotifNew ? COLOR_CHEVRON_RIGHT : COLOR_STATUS);
             mBatteryJuice.setColorFilter(null);
             for (PieItem item : mItems) {
                 item.setColor(COLOR_PIE_BUTTON);
@@ -428,6 +431,10 @@ public class PieMenu extends FrameLayout {
     public NotificationData setNotifications(NotificationData list) {
         mTotalData = list;
         return list;
+    }
+
+    public void setNotifNew(boolean notifnew) {
+        mNotifNew = notifnew;
     }
 
     private void getNotifications() {
