@@ -489,6 +489,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.getUriFor(Settings.System.QUICK_SETTINGS_TILES), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.PIE_GRAVITY), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_TRIGGER), false, this);
             onChange(true);
         }
 
@@ -1502,11 +1504,13 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     public static WindowManager.LayoutParams getPieTriggerLayoutParams(Context context, int gravity) {
         final Resources res = context.getResources();
+        final float mPieSize = Settings.System.getFloat(context.getContentResolver(),
+                Settings.System.PIE_TRIGGER, 1f);
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
               (gravity == Gravity.TOP || gravity == Gravity.BOTTOM ?
-                    ViewGroup.LayoutParams.MATCH_PARENT : res.getDimensionPixelSize(R.dimen.pie_trigger_height)),
+                    ViewGroup.LayoutParams.MATCH_PARENT : (int)(res.getDimensionPixelSize(R.dimen.pie_trigger_height)*mPieSize)),
               (gravity == Gravity.LEFT || gravity == Gravity.RIGHT ?
-                    ViewGroup.LayoutParams.MATCH_PARENT : res.getDimensionPixelSize(R.dimen.pie_trigger_height)),
+                    ViewGroup.LayoutParams.MATCH_PARENT : (int)(res.getDimensionPixelSize(R.dimen.pie_trigger_height)*mPieSize)),
               WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL,
                     0
                     | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
@@ -1905,6 +1909,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         if (entry.cancelled) {
             if (!mOngoing.hasClearableItems() && !mLatest.hasClearableItems()) {
+                setNotifNew(false);
                 animateCollapse();
             }
         }
@@ -1943,10 +1948,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     mClearOldButton.setVisibility(View.VISIBLE);
                 }
             }
+            setNotifNew(true);
         } else {
             mCompactClearButton.setVisibility(View.GONE);
             mClearButton.setVisibility(View.INVISIBLE);
             mClearOldButton.setVisibility(View.GONE);
+            setNotifNew(false);
         }
 
         mOngoingTitle.setVisibility(ongoing ? View.VISIBLE : View.GONE);

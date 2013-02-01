@@ -2261,10 +2261,10 @@ public final class Settings {
 
         /**
          * Location of the pie in the screen
-         * 0 = Gravity.TOP
-         * 1 = Gravity.BOTTOM
+         * 0 = Gravity.LEFT
+         * 1 = Gravity.TOP
          * 2 = Gravity.RIGHT
-         * 3 = Gravity.LEFT
+         * 3 = Gravity.BOTTOM (default)
          * @hide
          */
         public static final String PIE_GRAVITY = "pie_gravity";
@@ -2332,6 +2332,18 @@ public final class Settings {
          * @hide
          */
         public static final String PIE_OUTLINE_COLOR = "pie_outline_color";
+
+        /**
+         * Pie trigger
+         * @hide
+         */
+        public static final String PIE_TRIGGER = "pie_trigger";
+
+        /**
+         * Pie gap angle, should default to 1
+         * @hide
+         */
+        public static final String PIE_GAP = "pie_gap";
 
         /**
          * navbar glowing color
@@ -4445,6 +4457,10 @@ public final class Settings {
             PIE_CHEVRON_COLOR,
             PIE_CLOCK_COLOR,
             PIE_ENABLE_COLOR,
+            PIE_OUTLINE_COLOR,
+            PIE_TRIGGER,
+            PIE_GAP,
+            NAVBAR_GLOWING_COLOR,
             USE_CUSTOM_QUICK_APP_TOGGLE,
             USE_CUSTOM_HOME_APP_TOGGLE,
             USE_CUSTOM_BACK_APP_TOGGLE,
