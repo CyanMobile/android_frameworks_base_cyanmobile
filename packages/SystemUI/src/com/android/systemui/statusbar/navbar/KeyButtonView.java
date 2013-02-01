@@ -58,10 +58,12 @@ public class KeyButtonView extends ImageView {
     private int mOverColor;
     private int mGlowingColor;
     private boolean mOverColorEnable;
+    private boolean mPressed;
 
     Runnable mCheckLongPress = new Runnable() {
         public void run() {
             if (isPressed()) {
+                mPressed = false;
                 performLongClick();
             }
         }
@@ -117,6 +119,7 @@ public class KeyButtonView extends ImageView {
 
         setFocusable(true);
         setClickable(true);
+        setLongClickable(true);
 
         a.recycle();
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
@@ -294,7 +297,7 @@ public class KeyButtonView extends ImageView {
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 setPressed(true);
-                performClick();
+                mPressed = true;
                 removeCallbacks(mCheckLongPress);
                 postDelayed(mCheckLongPress, ViewConfiguration.getLongPressTimeout());
                 break;
@@ -313,6 +316,10 @@ public class KeyButtonView extends ImageView {
             case MotionEvent.ACTION_UP:
                 setPressed(false);
                 removeCallbacks(mCheckLongPress);
+                if (mPressed) {
+                    performClick();
+                    mPressed = false;
+                }
                 break;
         }
 
