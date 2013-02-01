@@ -2328,6 +2328,18 @@ public final class Settings {
         public static final String PIE_ENABLE_COLOR = "pie_enable_color";
 
         /**
+         * Pie color
+         * @hide
+         */
+        public static final String PIE_OUTLINE_COLOR = "pie_outline_color";
+
+        /**
+         * navbar glowing color
+         * @hide
+         */
+        public static final String NAVBAR_GLOWING_COLOR = "navbar_glowing_color";
+
+        /**
          * Specifies whether or not to use a custom app on quick key press
          * @hide
          */

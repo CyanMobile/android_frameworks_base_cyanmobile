@@ -2626,6 +2626,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             performHapticFeedbackLw(null, HapticFeedbackConstants.VIRTUAL_RELEASED, false);
         }
 
+        if (keyCode == KeyEvent.KEYCODE_POWER) {
+            policyFlags |= WindowManagerPolicy.FLAG_WAKE;
+        }
+        final boolean isWakeKey = (policyFlags
+                    & (WindowManagerPolicy.FLAG_WAKE | WindowManagerPolicy.FLAG_WAKE_DROPPED)) != 0
+                    || ((keyCode == BTN_MOUSE) && mTrackballWakeScreen);
+
         // Basic policy based on screen state and keyguard.
         // FIXME: This policy isn't quite correct.  We shouldn't care whether the screen
         //        is on or off, really.  We should care about whether the device is in an
@@ -2635,17 +2642,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         //        the device some other way (which is why we have an exemption here for injected
         //        events).
         int result;
-        if (isScreenOn || isInjected) {
+        if (isScreenOn || (isInjected && !isWakeKey)) {
             // When the screen is on or if the key is injected pass the key to the application.
             result = ACTION_PASS_TO_USER;
         } else {
             // When the screen is off and the key is not injected, determine whether
             // to wake the device but don't pass the key to the application.
             result = 0;
-
-            boolean isWakeKey = (policyFlags
-                    & (WindowManagerPolicy.FLAG_WAKE | WindowManagerPolicy.FLAG_WAKE_DROPPED)) != 0
-                    || ((keyCode == BTN_MOUSE) && mTrackballWakeScreen);
 
             if (down && isWakeKey) {
                 if (keyguardActive) {

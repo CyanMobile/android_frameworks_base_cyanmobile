@@ -282,6 +282,18 @@ final class ActivityStack {
     static final int DESTROY_TIMEOUT_MSG = 17;
     static final int RESUME_TOP_ACTIVITY_MSG = 19;
     static final int STOP_TIMEOUT_MSG = 20;
+    static final int DESTROY_ACTIVITIES_MSG = 21;
+
+    static class ScheduleDestroyArgs {	
+        final ProcessRecord mOwner;	
+        final boolean mOomAdj;
+        final String mReason;
+        ScheduleDestroyArgs(ProcessRecord owner, boolean oomAdj, String reason) {
+            mOwner = owner;
+            mOomAdj = oomAdj;
+            mReason = reason;
+        }
+    }
 
     private static final ActivityTrigger mActivityTrigger;
 
@@ -371,6 +383,12 @@ final class ActivityStack {
                         }
                     }
                 } break;
+                case DESTROY_ACTIVITIES_MSG: {
+                    ScheduleDestroyArgs args = (ScheduleDestroyArgs)msg.obj;
+                    synchronized (mService) {
+                        destroyActivitiesLocked(args.mOwner, args.mOomAdj, args.mReason);
+                    }
+                }
             }
         }
     };
@@ -2161,6 +2179,9 @@ final class ActivityStack {
         while (i > 0) {
             i--;
             ActivityRecord candidate = mHistory.get(i);
+            if (candidate.finishing) {
+                continue;
+            }
             if (candidate.task.taskId != task) {
                 break;
             }
@@ -2561,7 +2582,8 @@ final class ActivityStack {
                         // If the top activity in the task is the root
                         // activity, deliver this new intent to it if it
                         // desires.
-                        if ((launchFlags&Intent.FLAG_ACTIVITY_SINGLE_TOP) != 0
+                        if (((launchFlags&Intent.FLAG_ACTIVITY_SINGLE_TOP) != 0
+                                || r.launchMode == ActivityInfo.LAUNCH_SINGLE_TOP)
                                 && taskTop.realActivity.equals(r.realActivity)) {
                             logStartActivity(EventLogTags.AM_NEW_INTENT, r, taskTop.task);
                             if (taskTop.frontOfTask) {
@@ -3613,18 +3635,35 @@ final class ActivityStack {
         }
     }
 
+    final void scheduleDestroyActivities(ProcessRecord owner, boolean oomAdj, String reason) {
+        Message msg = mHandler.obtainMessage(DESTROY_ACTIVITIES_MSG);
+        msg.obj = new ScheduleDestroyArgs(owner, oomAdj, reason);
+        mHandler.sendMessage(msg);
+    }
+
     final void destroyActivitiesLocked(ProcessRecord owner, boolean oomAdj, String reason) {
+        boolean lastIsOpaque = false;
         for (int i=mHistory.size()-1; i>=0; i--) {
             ActivityRecord r = mHistory.get(i);
+            if (r.finishing) {
+                continue;
+            }
+            if (r.fullscreen) {
+                lastIsOpaque = true;
+            }
             if (owner != null && r.app != owner) {
+                continue;
+            }
+            if (!lastIsOpaque) {
                 continue;
             }
             // We can destroy this one if we have its icicle saved and
             // it is not in the process of pausing/stopping/finishing.
-            if (r.app != null && r.haveState && !r.visible && r.stopped && !r.finishing
+            if (r.app != null && r != mResumedActivity && r != mPausingActivity
+                    && r.haveState && !r.visible && r.stopped
                     && r.state != ActivityState.DESTROYING
                     && r.state != ActivityState.DESTROYED) {
-                destroyActivityLocked(r, true, oomAdj, "trim");
+                destroyActivityLocked(r, true, oomAdj, reason);
             }
         }	
     }

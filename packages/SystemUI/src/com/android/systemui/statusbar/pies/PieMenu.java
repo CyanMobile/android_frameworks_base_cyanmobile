@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.systemui.statusbar.view;
+package com.android.systemui.statusbar.pies;
 
 import android.app.Notification;
 import android.animationing.Animator;
@@ -314,11 +314,12 @@ public class PieMenu extends FrameLayout {
         mNotificationPaint.setColor(COLOR_STATUS);
         mSnapBackground.setColor(COLOR_SNAP_BACKGROUND);
         mStatusPaint.setColor(COLOR_STATUS);
-        mPieOutlines.setColor(COLOR_PIE_OUTLINES);
         mAmPmPaint.setColor(COLOR_STATUS);
 
         if (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.PIE_ENABLE_COLOR, 0) == 1) {
+            mPieOutlines.setColor(extractRGB(Settings.System.getInt(mContext.getContentResolver(), 
+                              Settings.System.PIE_OUTLINE_COLOR, COLOR_PIE_OUTLINES)) | COLOR_ALPHA_MASK);
             mPieBackground.setColor(extractRGB(Settings.System.getInt(mContext.getContentResolver(), 
                               Settings.System.PIE_BACKGROUND_BUTTON_COLOR, COLOR_PIE_BACKGROUND)) | COLOR_ALPHA_MASK);
             mPieSelected.setColor(extractRGB(Settings.System.getInt(mContext.getContentResolver(), 
@@ -335,6 +336,7 @@ public class PieMenu extends FrameLayout {
                 item.setColor(Settings.System.getInt(mContext.getContentResolver(), Settings.System.PIE_BUTTON_COLOR, COLOR_PIE_BUTTON));
             }
         } else {
+            mPieOutlines.setColor(COLOR_PIE_OUTLINES);
             mPieBackground.setColor(COLOR_PIE_BACKGROUND);
             mPieSelected.setColor(COLOR_PIE_SELECT);
             mClockPaint.setColor(COLOR_STATUS);

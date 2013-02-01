@@ -56,6 +56,7 @@ public class KeyButtonView extends ImageView {
     Handler mHandler;
 
     private int mOverColor;
+    private int mGlowingColor;
     private boolean mOverColorEnable;
 
     Runnable mCheckLongPress = new Runnable() {
@@ -77,6 +78,8 @@ public class KeyButtonView extends ImageView {
                     Settings.System.getUriFor(Settings.System.ENABLE_OVERICON_COLOR), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.OVERICON_COLOR), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.NAVBAR_GLOWING_COLOR), false, this);
             onChange(true);
         }
 
@@ -86,6 +89,7 @@ public class KeyButtonView extends ImageView {
             int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
             mOverColorEnable = (Settings.System.getInt(resolver, Settings.System.ENABLE_OVERICON_COLOR, 1) == 1);
             mOverColor = Settings.System.getInt(resolver, Settings.System.OVERICON_COLOR, defValuesColor);
+            mGlowingColor = Settings.System.getInt(resolver, Settings.System.NAVBAR_GLOWING_COLOR, defValuesColor);
             updateButtonColor();
             updateGlowColor();
         }
@@ -125,6 +129,7 @@ public class KeyButtonView extends ImageView {
         settingsObserver.observe();
 
         updateButtonColor();
+        updateGlowColor();
     }
 
     private void updateButtonColor() {
@@ -143,7 +148,7 @@ public class KeyButtonView extends ImageView {
         if (!mOverColorEnable) {
             mGlowBG.clearColorFilter();
         } else {
-            mGlowBG.setColorFilter(mOverColor, PorterDuff.Mode.SRC_ATOP);
+            mGlowBG.setColorFilter(mGlowingColor, PorterDuff.Mode.SRC_ATOP);
         }
      }
 

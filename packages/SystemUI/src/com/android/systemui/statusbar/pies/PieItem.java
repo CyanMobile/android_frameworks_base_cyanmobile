@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.android.systemui.statusbar.view;
+package com.android.systemui.statusbar.pies;
 
 import android.database.ContentObserver;
 import android.content.Context;

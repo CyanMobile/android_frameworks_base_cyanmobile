@@ -33,8 +33,8 @@ import android.widget.ImageView.ScaleType;
 import android.widget.TextView;
 
 import com.android.systemui.statusbar.PieControlPanel;
-import com.android.systemui.statusbar.view.PieItem;
-import com.android.systemui.statusbar.view.PieMenu;
+import com.android.systemui.statusbar.pies.PieItem;
+import com.android.systemui.statusbar.pies.PieMenu;
 
 import com.android.systemui.R;
 import com.android.systemui.statusbar.NotificationData;

@@ -333,7 +333,7 @@ public class VibratorService extends IVibratorService.Stub {
         private void delay(long duration) {
             if (duration > 0) {
                 do {
-                    long bedtime = SystemClock.uptimeMillis();
+                    long bedtime = duration + SystemClock.uptimeMillis();
                     try {
                         this.wait(duration);
                     }
@@ -342,8 +342,7 @@ public class VibratorService extends IVibratorService.Stub {
                     if (mDone) {
                         break;
                     }
-                    duration = duration
-                            - (SystemClock.uptimeMillis() - bedtime);
+                    duration = bedtime - SystemClock.uptimeMillis();
                 } while (duration > 0);
             }
         }
@@ -407,6 +406,12 @@ public class VibratorService extends IVibratorService.Stub {
             if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
                 synchronized (mVibrations) {
                     doCancelVibrateLocked();
+
+                    int size = mVibrations.size();
+                    for(int i = 0; i < size; i++) {
+                        unlinkVibration(mVibrations.get(i));
+                    }
+
                     mVibrations.clear();
                 }
             }
