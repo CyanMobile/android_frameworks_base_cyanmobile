@@ -69,6 +69,8 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
     Display mDisplay;
     DisplayMetrics mDisplayMetrics = new DisplayMetrics();
 
+    private StatusBarService mService;
+
     ViewGroup mContentFrame;
     Rect mContentArea = new Rect();
 
@@ -118,12 +120,17 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
         show(false);
     }
 
-    public void init(Handler h, View trigger, int orientation) {
+    public void init(Handler h, StatusBarService mServices, View trigger, int orientation) {
         mHandler = h;
+        mService = (StatusBarService) mServices;
         mTrigger = trigger;
         mOrientation = orientation;
         setCenter();
         mPieControl.init();
+    }
+
+    public StatusBarService getBar() {
+        return mService;
     }
 
     public NotificationData setNotifications(NotificationData list) {

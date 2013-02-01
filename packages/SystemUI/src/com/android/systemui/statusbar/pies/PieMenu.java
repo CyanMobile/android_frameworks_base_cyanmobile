@@ -70,6 +70,7 @@ import com.android.internal.statusbar.StatusBarIcon;
 import com.android.systemui.R;
 import com.android.systemui.statusbar.NotificationData;
 import com.android.systemui.statusbar.PieControl;
+import com.android.systemui.statusbar.PieStatusPanel;
 import com.android.systemui.statusbar.PieControlPanel;
 import com.android.systemui.statusbar.StatusBarIconView;
 import com.android.systemui.statusbar.clocks.Clock;
@@ -119,6 +120,7 @@ public class PieMenu extends FrameLayout {
     private Resources mResources;
     private PiePolicy mPolicy;
     private Vibrator mVibrator;
+    private PieStatusPanel mStatusPanel;
 
     // Pie handlers
     private PieItem mCurrentItem;
@@ -183,7 +185,7 @@ public class PieMenu extends FrameLayout {
     private float mStartBattery;
     private float mEndBattery;
     private int mBatteryLevel;
-    private boolean mNotifNew = false;
+    private boolean mNotifNew;
 
     private class SnapPoint {
         public SnapPoint(int snapX, int snapY, int snapRadius, int snapAlpha, int snapGravity) {
@@ -546,7 +548,12 @@ public class PieMenu extends FrameLayout {
     }
 
     public void init() {
+        mStatusPanel = new PieStatusPanel(mContext, mPanel);
         getNotifications();
+    }
+
+    public PieStatusPanel getStatusPanel() {
+        return mStatusPanel;
     }
 
     public void addItem(PieItem item) {
@@ -723,14 +730,14 @@ public class PieMenu extends FrameLayout {
                 mChevronBackgroundLeft.setAlpha((int)(mAnimators[ANIMATOR_DEC_SPEED30].fraction * mGlowOffsetLeft * (mPanelOrientation == Gravity.TOP ? 0.2 : 1)));
                 mChevronBackgroundRight.setAlpha((int)(mAnimators[ANIMATOR_DEC_SPEED30].fraction * mGlowOffsetRight * (mPanelOrientation == Gravity.TOP ? 0.2 : 1)));
 
-                if (mChevronPathLeft != null) {
+                if (mStatusPanel.getCurrentViewState() != PieStatusPanel.QUICK_SETTINGS_PANEL && mChevronPathLeft != null) {
                     state = canvas.save();
                     canvas.rotate(90, mCenter.x, mCenter.y);
                     canvas.drawPath(mChevronPathLeft, mChevronBackgroundLeft);
                     canvas.restoreToCount(state);
                 }
 
-                if (mChevronPathRight != null) {
+                if (mStatusPanel.getCurrentViewState() != PieStatusPanel.NOTIFICATIONS_PANEL && mChevronPathRight != null) {
                     state = canvas.save();
                     canvas.rotate(180, mCenter.x, mCenter.y);
                     canvas.drawPath(mChevronPathRight, mChevronBackgroundRight);
@@ -783,6 +790,7 @@ public class PieMenu extends FrameLayout {
                     canvas.drawTextOnPath(mPolicy.getWifiSsid(), mStatusPath, 0, mStatusOffset * 0, mStatusPaint);
 
                     // Notifications
+                    if (mStatusPanel.getCurrentViewState() != PieStatusPanel.NOTIFICATIONS_PANEL) {
                         mNotificationPaint.setAlpha((int)(mAnimators[ANIMATOR_ACC_SPEED30].fraction * mGlowOffsetRight));
 
                         for (int i = 0; i < mNotificationCount && i < 10; i++) {
@@ -800,6 +808,7 @@ public class PieMenu extends FrameLayout {
                                     mNotificationIconSize,posY + mNotificationIconSize), mNotificationPaint);
                             canvas.restoreToCount(IconState);
                         }
+                    }
                     canvas.restoreToCount(state);
                 }
             }
@@ -873,6 +882,20 @@ public class PieMenu extends FrameLayout {
                     }
                 }
 
+                mStatusPanel.hidePanels(true);
+                if (mStatusPanel.getFlipViewState() != -1) {
+                    switch(mStatusPanel.getFlipViewState()) {
+                        case PieStatusPanel.NOTIFICATIONS_PANEL:
+                            mStatusPanel.setCurrentViewState(PieStatusPanel.NOTIFICATIONS_PANEL);
+                            mStatusPanel.showNotificationsPanel();
+                            break;
+                        case PieStatusPanel.QUICK_SETTINGS_PANEL:
+                            mStatusPanel.setCurrentViewState(PieStatusPanel.QUICK_SETTINGS_PANEL);
+                            mStatusPanel.showTilesPanel();
+                            break;
+                    }
+                }
+
                 // Check for click actions
                 if (item != null && item.getView() != null && mCenterDistance < shadeTreshold) {
                     if(hapticFeedback) mVibrator.vibrate(2);
@@ -906,6 +929,7 @@ public class PieMenu extends FrameLayout {
                     }
                     snap.active = true;
                     snapActive = true;
+                    mStatusPanel.setFlipViewState(-1);
                     mGlowOffsetLeft = 150;
                     mGlowOffsetRight = 150;
                 } else {
@@ -917,8 +941,47 @@ public class PieMenu extends FrameLayout {
                 }
             }
 
+            // Trigger the shades?
+            if (!snapActive && mCenterDistance > shadeTreshold) {
+                int state = -1;
+                switch (mPanelOrientation) {
+                    case Gravity.BOTTOM:
+                        state = distanceX > 0 ? PieStatusPanel.QUICK_SETTINGS_PANEL : PieStatusPanel.NOTIFICATIONS_PANEL;
+                        break;
+                    case Gravity.TOP:
+                        state = distanceX > 0 ? PieStatusPanel.QUICK_SETTINGS_PANEL : PieStatusPanel.NOTIFICATIONS_PANEL;
+                        break;
+                    case Gravity.LEFT:
+                        state = distanceY > 0 ? PieStatusPanel.QUICK_SETTINGS_PANEL : PieStatusPanel.NOTIFICATIONS_PANEL;
+                        break;
+                    case Gravity.RIGHT:
+                        state = distanceY < 0 ? PieStatusPanel.QUICK_SETTINGS_PANEL : PieStatusPanel.NOTIFICATIONS_PANEL;
+                        break;
+                }
+
+                if (!mNavbarZero) {
+                    if (state == PieStatusPanel.QUICK_SETTINGS_PANEL && 
+                            mStatusPanel.getFlipViewState() != PieStatusPanel.QUICK_SETTINGS_PANEL
+                            && mStatusPanel.getCurrentViewState() != PieStatusPanel.QUICK_SETTINGS_PANEL) {
+                        mGlowOffsetRight = mPanelOrientation != Gravity.TOP ? 150 : 255;;
+                        mGlowOffsetLeft = mPanelOrientation != Gravity.TOP ? 255 : 150;
+                        mStatusPanel.setFlipViewState(PieStatusPanel.QUICK_SETTINGS_PANEL);
+                        if(hapticFeedback) mVibrator.vibrate(2);
+                    } else if (state == PieStatusPanel.NOTIFICATIONS_PANEL && 
+                            mStatusPanel.getFlipViewState() != PieStatusPanel.NOTIFICATIONS_PANEL
+                            && mStatusPanel.getCurrentViewState() != PieStatusPanel.NOTIFICATIONS_PANEL) {
+                        mGlowOffsetRight = mPanelOrientation != Gravity.TOP ? 255 : 150;
+                        mGlowOffsetLeft = mPanelOrientation != Gravity.TOP ? 150 : 255;
+                        mStatusPanel.setFlipViewState(PieStatusPanel.NOTIFICATIONS_PANEL);
+                        if(hapticFeedback) mVibrator.vibrate(2);
+                    }
+                }
+                deselect();
+            }
+
             // Take back shade trigger if user decides to abandon his gesture
             if (mCenterDistance < shadeTreshold) {
+                mStatusPanel.setFlipViewState(-1);
                 mGlowOffsetLeft = 150;
                 mGlowOffsetRight = 150;
 

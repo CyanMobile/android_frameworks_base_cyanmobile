@@ -743,6 +743,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mIntruderAlertView.setClickable(true);
 
         mNavigationBarView = (NavigationBarView)View.inflate(context, R.layout.navigation_bar, null);
+        mNavigationBarView.mServices = this;
         mNaviBarContainer = (FrameLayout) mNavigationBarView.findViewById(R.id.navibarBackground);
 
         mWidgetsPanel = (QwikWidgetsPanelView) View.inflate(context, R.layout.qwik_widgets_panel, null);
@@ -922,7 +923,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         if (mStatusBarTab) {
             mQuickContainer = (QuickSettingsContainerView) mExpandedView.findViewById(R.id.quick_settings_container);
             if (mQuickContainer != null) {
-                mQS = new QuickSettingsController(context, mQuickContainer);
+                mQS = new QuickSettingsController(context, mQuickContainer, this);
             }
         }
 
@@ -1485,7 +1486,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         pieControlsTrigger.setOnTouchListener(new PieControlsTouchListener());
         WindowManagerImpl.getDefault().addView(pieControlsTrigger, getPieTriggerLayoutParams(mContext, gravity));
 
-        panel.init(mHandler, pieControlsTrigger, gravity);
+        panel.init(mHandler, this, pieControlsTrigger, gravity);
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT,

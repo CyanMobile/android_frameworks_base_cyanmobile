@@ -1,6 +1,5 @@
 package com.android.systemui.statusbar.quicksettings.quicktile;
 
-import com.android.internal.statusbar.IStatusBarService;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -21,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.android.systemui.R;
+import com.android.systemui.statusbar.StatusBarService;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsTileView;
@@ -39,12 +39,12 @@ public class QuickSettingsTile implements OnClickListener {
     protected int mDrawable;
     protected String mLabel;
     protected QuickSettingsController mQsc;
-    IStatusBarService mStatusBarService;
     Handler mHandler;
     protected boolean mHapticFeedback;
     protected Vibrator mVibrator;
     private long[] mClickPattern;
     private long[] mLongClickPattern;
+    private StatusBarService mService;
 
     public QuickSettingsTile(Context context, LayoutInflater inflater, QuickSettingsContainerView container, QuickSettingsController qsc) {
         mContext = context;
@@ -52,6 +52,7 @@ public class QuickSettingsTile implements OnClickListener {
         mInflater = inflater;
         mDrawable = R.drawable.stat_sys_roaming_cdma_0;
         mLabel = mContext.getString(R.string.quick_settings_label_enabled);
+        mService = qsc.mServices;
         mQsc = qsc;
         mTileLayout = R.layout.quick_settings_tile_generic;
         mHandler = new Handler();
@@ -99,25 +100,7 @@ public class QuickSettingsTile implements OnClickListener {
     }
 
     void startCollapseActivity() {
-        mHandler.post(new Runnable() { public void run() {
-            try {
-                 IStatusBarService statusbar = getStatusBarService();
-                 if (statusbar != null) {
-                     statusbar.collapse();
-                 }
-            } catch (RemoteException ex) {
-                 // re-acquire status bar service next time it is needed.
-                 mStatusBarService = null;
-            }
-        }});
-    }
-
-    IStatusBarService getStatusBarService() {
-        if (mStatusBarService == null) {
-            mStatusBarService = IStatusBarService.Stub.asInterface(
-                    ServiceManager.getService("statusbar"));
-        }
-        return mStatusBarService;
+        mService.animateCollapse();
     }
 
     private void updateHapticFeedbackSetting() {

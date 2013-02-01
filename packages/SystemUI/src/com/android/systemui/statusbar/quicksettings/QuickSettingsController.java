@@ -34,6 +34,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
+import com.android.systemui.statusbar.StatusBarService;
 import com.android.systemui.statusbar.quicksettings.quicktile.AlarmTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.AirplaneModeTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.AutoRotateTile;
@@ -64,6 +65,8 @@ import com.android.systemui.statusbar.quicksettings.quicktile.WifiAPTile;
 
 public class QuickSettingsController {
     private static String TAG = "QuickSettingsController";
+
+    public StatusBarService mServices;
 
     // Stores the broadcast receivers and content observers
     // quick tiles register for.
@@ -169,9 +172,10 @@ public class QuickSettingsController {
 
     public static final int USER_TILE = 99;
 
-    public QuickSettingsController(Context context, QuickSettingsContainerView container) {
+    public QuickSettingsController(Context context, QuickSettingsContainerView container, StatusBarService mService) {
         mContext = context;
         mContainerView = container;
+        mServices = (StatusBarService) mService;
         mHandler = new Handler();
         mQuickSettings = new ArrayList<Integer>();
     }
