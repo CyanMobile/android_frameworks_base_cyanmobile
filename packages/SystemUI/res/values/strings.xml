@@ -234,4 +234,8 @@
     <string name="pie_hour_format_12">hh:mm</string>
     <string name="pie_hour_format_24">HH:mm</string>
     <string name="pie_am_pm">a</string>
+
+    <string name="battery_fulls_percent_format"><xliff:g id="number">%d%%</xliff:g> fully charged.</string>
+
+    <string name="battery_charging_format">Charging, <xliff:g id="number">%d%%</xliff:g></string>
 </resources>
