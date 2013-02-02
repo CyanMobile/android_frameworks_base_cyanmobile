@@ -51,6 +51,10 @@ public class PieControl implements OnClickListener {
     public static final String MENU_BUTTON = "##menu##";
     public static final String SEARCH_BUTTON = "##search##";
     public static final String RECENT_BUTTON = "##recent##";
+    public static final String SCREEN_BUTTON = "##screens##";
+    public static final String POWER_BUTTON = "##power##";
+    public static final String LASTAPP_BUTTON = "##lastapp##";
+    public static final String FAKE_BUTTON = "##fake##";
 
     protected Context mContext;
     protected PieMenu mPie;
@@ -61,6 +65,9 @@ public class PieControl implements OnClickListener {
     private PieItem mMenu;
     private PieItem mRecent;
     private PieItem mSearch;
+    private PieItem mScreenshot;
+    private PieItem mPower;
+    private PieItem mLastapp;
     private OnNavButtonPressedListener mListener;
     private PieControlPanel mPanel;
 
@@ -123,11 +130,33 @@ public class PieControl implements OnClickListener {
         mRecent = makeItem(R.drawable.ic_sysbar_recent, 1, RECENT_BUTTON, false);
         mMenu = makeItem(R.drawable.ic_sysbar_menu, 1, MENU_BUTTON, false);
         mSearch = makeItem(R.drawable.ic_sysbar_search_side, 1, SEARCH_BUTTON, true);
+        mScreenshot = makeItem(R.drawable.ic_sysbar_screenshot, 1, SCREEN_BUTTON, false);
+        mPower = makeItem(R.drawable.ic_sysbar_power, 1, POWER_BUTTON, false);
+        mLastapp = makeItem(R.drawable.ic_sysbar_lastapp, 1, LASTAPP_BUTTON, false);
+
         mPie.addItem(mMenu);
         mPie.addItem(mSearch);
+        mSearch.addItem(makeFiller());
+        mSearch.addItem(makeFiller());
+        mSearch.addItem(mScreenshot);
+        mSearch.addItem(mPower);
+
         mPie.addItem(mRecent);
+        mRecent.addItem(makeFiller());
+        mRecent.addItem(makeTidFiller());
+        mRecent.addItem(makeFiller());
+        mRecent.addItem(mLastapp);
+
         mPie.addItem(mHome);
         mPie.addItem(mBack);
+    }
+
+    protected PieItem makeFiller() {
+        return makeItem(R.drawable.ic_sysbar_nihil, 1, FAKE_BUTTON, false);
+    }
+
+    protected PieItem makeTidFiller() {
+        return makeItem(R.drawable.ic_sysbar_nihil, 1, FAKE_BUTTON, true);
     }
 
     @Override

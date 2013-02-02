@@ -17,9 +17,11 @@
 package com.android.systemui.statusbar;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Point;
@@ -50,6 +52,8 @@ import android.os.ServiceManager;
 import com.android.systemui.R;
 import com.android.systemui.statusbar.NotificationData;
 import com.android.systemui.statusbar.PieControl.OnNavButtonPressedListener;
+
+import java.util.List;
 
 public class PieControlPanel extends FrameLayout implements OnNavButtonPressedListener{
 
@@ -237,6 +241,12 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
             toggleRecentApps();
         } else if (buttonName.equals(PieControl.SEARCH_BUTTON)) {
             simulateKeypress(KeyEvent.KEYCODE_SEARCH);
+        } else if (buttonName.equals(PieControl.SCREEN_BUTTON)) {
+            toggleScreenshot();
+        } else if (buttonName.equals(PieControl.POWER_BUTTON)) {
+            togglePowerMenu();
+        } else if (buttonName.equals(PieControl.LASTAPP_BUTTON)) {
+            toggleLastApp();
         }
     }
 
@@ -245,6 +255,44 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
         intentx.setClassName("com.cyanmobile.TaskSwitcher", "com.cyanmobile.TaskSwitcher.TaskSwitcherMainActivity");
         intentx.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
         mContext.startActivity(intentx);
+    }
+
+    private void togglePowerMenu() {
+        Intent intentw = new Intent(Intent.ACTION_POWERMENU);
+        mContext.sendBroadcast(intentw);
+    }
+
+    private void toggleScreenshot() {
+        Intent intentz = new Intent("android.intent.action.SCREENSHOT");
+        mContext.sendBroadcast(intentz);
+    }
+
+    private void toggleLastApp() {
+        int lastAppId = 0;
+        int looper = 1;
+        String packageName;
+        final Intent intent = new Intent(Intent.ACTION_MAIN);
+        final ActivityManager am = (ActivityManager) mContext
+                .getSystemService(Activity.ACTIVITY_SERVICE);
+        String defaultHomePackage = "com.android.launcher";
+        intent.addCategory(Intent.CATEGORY_HOME);
+        final ResolveInfo res = mContext.getPackageManager().resolveActivity(intent, 0);
+        if (res.activityInfo != null && !res.activityInfo.packageName.equals("android")) {
+            defaultHomePackage = res.activityInfo.packageName;
+        }
+        List <ActivityManager.RunningTaskInfo> tasks = am.getRunningTasks(5);
+        // lets get enough tasks to find something to switch to
+        // Note, we'll only get as many as the system currently has - up to 5
+        while ((lastAppId == 0) && (looper < tasks.size())) {
+            packageName = tasks.get(looper).topActivity.getPackageName();
+            if (!packageName.equals(defaultHomePackage) && !packageName.equals("com.android.systemui")) {
+                lastAppId = tasks.get(looper).id;
+            }
+            looper++;
+        }
+        if (lastAppId != 0) {
+            am.moveTaskToFront(lastAppId, am.MOVE_TASK_NO_USER_ACTION);
+        }
     }
 
     /**
