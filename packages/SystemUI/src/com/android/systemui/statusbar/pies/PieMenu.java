@@ -781,13 +781,14 @@ public class PieMenu extends FrameLayout {
                     
                     state = canvas.save();
                     canvas.rotate(mPanel.getDegree() + 180, mCenter.x, mCenter.y);
-                    if (mPolicy.supportsTelephony()) {
-                        canvas.drawTextOnPath(mPolicy.getNetworkProvider(), mStatusPath, 0, mStatusOffset * 4, mStatusPaint);
-                        canvas.drawTextOnPath(mPolicy.getSignalText(), mStatusPath, 0, mStatusOffset * 3, mStatusPaint);
-                    }
-                    canvas.drawTextOnPath(mPolicy.getSimpleDate(), mStatusPath, 0, mStatusOffset * 2, mStatusPaint);
-                    canvas.drawTextOnPath(mPolicy.getBatteryLevelReadable(), mStatusPath, 0, mStatusOffset * 1, mStatusPaint);
-                    canvas.drawTextOnPath(mPolicy.getWifiSsid(), mStatusPath, 0, mStatusOffset * 0, mStatusPaint);
+
+                    canvas.drawTextOnPath(mPolicy.getSimpleDate(), mStatusPath, 0, mStatusOffset * 4, mStatusPaint);
+                    canvas.drawTextOnPath(mPolicy.getDataType() + " | " + mPolicy.getSignalText(),
+                                 mStatusPath, 0, mStatusOffset * 3, mStatusPaint);
+                    canvas.drawTextOnPath(mPolicy.getNetworkProvider() + " | " + mPolicy.getWifiSsid(),
+                                 mStatusPath, 0, mStatusOffset * 2, mStatusPaint);
+                    canvas.drawTextOnPath(mPolicy.getMemoryInfo(), mStatusPath, 0, mStatusOffset * 1, mStatusPaint);
+                    canvas.drawTextOnPath(mPolicy.getBatteryLevelReadable(), mStatusPath, 0, mStatusOffset * 0, mStatusPaint);
 
                     // Notifications
                     if (mStatusPanel.getCurrentViewState() != PieStatusPanel.NOTIFICATIONS_PANEL) {
