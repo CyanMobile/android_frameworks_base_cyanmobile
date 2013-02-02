@@ -184,7 +184,7 @@ public class DataTraffics extends TextView {
     private final void updateDataTraffics() {
         long txBytes = gMtx - gOldMtx;
         long rxBytes = gMrx - gOldMrx;
-        setText("Rx: "+getDatas(rxBytes)+" Tx: "+getDatas(txBytes));
+        setText("Tx: "+getDatas(rxBytes)+" Rx: "+getDatas(txBytes));
         setTextColor(mCarrierColor);
     }
 

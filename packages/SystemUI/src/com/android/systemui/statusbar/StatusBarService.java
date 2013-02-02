@@ -2125,7 +2125,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mExpandedView.requestFocus(View.FOCUS_FORWARD);
         mTrackingView.setVisibility(View.VISIBLE);
         mExpandedView.setVisibility(View.VISIBLE);
-        mCarrierLabelExpLayout.setVisibility(getDataStates(mContext) ? View.GONE : View.VISIBLE);
+        mCarrierLabelExpLayout.setVisibility(getDataStates(mContext) ? View.VISIBLE : View.GONE);
 
         if (!mTicking) {
             setDateViewVisibility(true, com.android.internal.R.anim.fade_in);
