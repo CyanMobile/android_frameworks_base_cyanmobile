@@ -87,6 +87,7 @@ SurfaceFlinger::SurfaceFlinger()
         mReadFramebuffer("android.permission.READ_FRAME_BUFFER"),
         mDump("android.permission.DUMP"),
         mVisibleRegionsDirty(false),
+        mDeferReleaseConsole(false),
         mFreezeDisplay(false),
         mElectronBeamAnimationMode(0),
         mFreezeCount(0),
@@ -102,6 +103,7 @@ SurfaceFlinger::SurfaceFlinger()
         mDebugInTransaction(0),
         mLastTransactionTime(0),
         mBootFinished(false),
+        mConsoleSignals(0),
         mSecureFrameBuffer(0),
         mUseDithering(0),
         mUse16bppAlpha(false)
@@ -294,9 +296,9 @@ status_t SurfaceFlinger::readyToRun()
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrthof(0, w, 0, h, 0, 1); // l=0, r=w ; b=0, t=h
+    glOrthof(0, w, h, 0, 0, 1);
 
-   LayerDim::initDimmer(this, w, h);
+    LayerDim::initDimmer(this, w, h);
 
     mReadyToRunBarrier.open();
 
@@ -401,6 +403,11 @@ bool SurfaceFlinger::threadLoop()
     // call Layer's destructor
     handleDestroyLayers();
 
+    // check for transactions  	
+    if (UNLIKELY(mConsoleSignals)) {
+        handleConsoleEvents();	
+    }
+
     if (LIKELY(mTransactionCount == 0)) {
         // if we're in a global transaction, don't do anything.
         const uint32_t mask = eTransactionNeeded | eTraversalNeeded;
@@ -471,6 +478,35 @@ void SurfaceFlinger::postFramebuffer()
         mDebugInSwapBuffers = 0;
         mInvalidRegion.clear();
     }
+}
+
+void SurfaceFlinger::handleConsoleEvents()
+{ 	
+    // something to do with the console 	
+    const DisplayHardware& hw = graphicPlane(0).displayHardware();
+  	
+    int what = android_atomic_and(0, &mConsoleSignals);
+    if (what & eConsoleAcquired) {
+        hw.acquireScreen();
+        // this is a temporary work-around, eventually this should be called
+        // by the power-manager
+-        SurfaceFlinger::turnElectronBeamOn(mElectronBeamAnimationMode);
+    }
+ 	
+    if (mDeferReleaseConsole && hw.isScreenAcquired()) {
+        // We got the release signal before the acquire signal
+        mDeferReleaseConsole = false;	
+        hw.releaseScreen();  	
+    }
+  	
+    if (what & eConsoleReleased) {
+        if (hw.isScreenAcquired()) {
+            hw.releaseScreen();
+        } else {
+            mDeferReleaseConsole = true;
+        }	
+    }  	
+    mDirtyRegion.set(hw.bounds()); 	
 }
 
 void SurfaceFlinger::handleTransaction(uint32_t transactionFlags)
@@ -1429,6 +1465,20 @@ status_t SurfaceFlinger::setClientState(
 
 // ---------------------------------------------------------------------------
 
+void SurfaceFlinger::screenReleased(int dpy) 	
+{	
+    // this may be called by a signal handler, we can't do too much in here	
+    android_atomic_or(eConsoleReleased, &mConsoleSignals); 	
+    signalEvent();
+}
+
+void SurfaceFlinger::screenAcquired(int dpy)  	
+{	
+    // this may be called by a signal handler, we can't do too much in here  	
+    android_atomic_or(eConsoleAcquired, &mConsoleSignals);  	
+    signalEvent();
+}
+
 void SurfaceFlinger::onScreenAcquired() {
     const DisplayHardware& hw(graphicPlane(0).displayHardware());
     hw.acquireScreen();
@@ -1746,8 +1796,6 @@ status_t SurfaceFlinger::renderScreenToTextureLocked(DisplayID dpy,
     // redraw the screen entirely...
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT);
-    glMatrixMode(GL_MODELVIEW);	
-    glLoadIdentity();
     const Vector< sp<LayerBase> >& layers(mVisibleLayersSortedByZ);
     const size_t count = layers.size();
     for (size_t i=0 ; i<count ; ++i) {
@@ -2006,11 +2054,6 @@ status_t SurfaceFlinger::electronBeamOffAnimationImplLocked()
 
     v_stretch vverts(hw_w, hw_h);
 
-    glMatrixMode(GL_TEXTURE);    	
-    glLoadIdentity();  	
-    glMatrixMode(GL_MODELVIEW);   	
-    glLoadIdentity();
-
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
     for (int i=0 ; i<nbFrames ; i++) {
@@ -2233,6 +2276,10 @@ status_t SurfaceFlinger::turnElectronBeamOffImplLocked(int32_t mode)
     glEnable(GL_SCISSOR_TEST);
     hw.flip( Region(hw.bounds()) );
 
+#ifndef DO_NOT_SET_CAN_DRAW
+    hw.setCanDraw(false);  	
+#endif
+
     return NO_ERROR;
 }
 
@@ -2283,6 +2330,7 @@ status_t SurfaceFlinger::turnElectronBeamOnImplLocked(int32_t mode)
     if (mode & ISurfaceComposer::eElectronBeamAnimationOn) {
         electronBeamOnAnimationImplLocked();
     }
+    hw.setCanDraw(true);
 
     // make sure to redraw the whole screen when the animation is done
     mDirtyRegion.set(hw.bounds());
@@ -2475,11 +2523,10 @@ status_t SurfaceFlinger::captureScreenImplLocked(DisplayID dpy,
         // invert everything, b/c glReadPixel() below will invert the FB
         glViewport(0, 0, sw, sh);
         glScissor(0, 0, sw, sh);
-        glEnable(GL_SCISSOR_TEST);
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
-        glOrthof(0, hw_w, hw_h, 0, 0, 1);
+        glOrthof(0, hw_w, 0, hw_h, 0, 1);
         glMatrixMode(GL_MODELVIEW);
 
         // redraw the screen entirely...
@@ -2494,7 +2541,6 @@ status_t SurfaceFlinger::captureScreenImplLocked(DisplayID dpy,
         }
 
         // XXX: this is needed on tegra
-        glEnable(GL_SCISSOR_TEST);
         glScissor(0, 0, sw, sh);
 
         // check for errors and return screen capture
@@ -2604,25 +2650,6 @@ sp<Layer> SurfaceFlinger::getLayer(const sp<ISurface>& sur) const
     Mutex::Autolock _l(mStateLock);
     result = mLayerMap.valueFor( sur->asBinder() ).promote();
     return result;
-}
-
-// ---------------------------------------------------------------------------
-
-sp<GraphicBuffer> SurfaceFlinger::createGraphicBuffer(uint32_t w, uint32_t h,
-        PixelFormat format, uint32_t usage) const {
-    // XXX: HACK HACK HACK!!!  This should NOT be static, but it is to fix a
-    // race between SurfaceFlinger unref'ing the buffer and the client ref'ing
-    // it.
-    static sp<GraphicBuffer> graphicBuffer(new GraphicBuffer(w, h, format, usage));
-    status_t err = graphicBuffer->initCheck();
-    if (err != 0) {
-        LOGE("createGraphicBuffer: init check failed: %d", err);
-        return 0;	
-    } else if (graphicBuffer->handle == 0) {
-        LOGE("createGraphicBuffer: unable to create GraphicBuffer");
-        return 0;
-    }
-    return graphicBuffer;
 }
 
 // ---------------------------------------------------------------------------

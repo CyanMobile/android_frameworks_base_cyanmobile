@@ -84,13 +84,15 @@ bool DisplayHardwareBase::DisplayEventThread::threadLoop()
         sp<SurfaceFlinger> flinger = mFlinger.promote();
         LOGD("About to give-up screen, flinger = %p", flinger.get());
         if (flinger != 0) {
-            flinger->screenReleased();
+            mBarrier.close();
+            flinger->screenReleased(0);
+            mBarrier.wait();
         }
         if (waitForFbWake() == NO_ERROR) {
             sp<SurfaceFlinger> flinger = mFlinger.promote();
             LOGD("Screen about to return, flinger = %p", flinger.get());
             if (flinger != 0) {
-                flinger->screenAcquired();
+                flinger->screenAcquired(0);
             }
             return true;
         }
@@ -98,6 +100,12 @@ bool DisplayHardwareBase::DisplayEventThread::threadLoop()
 
     // error, exit the thread
     return false;
+}
+
+status_t DisplayHardwareBase::DisplayEventThread::releaseScreen() const  	
+{  	
+    mBarrier.open();  	
+    return NO_ERROR;  	
 }
 
 status_t DisplayHardwareBase::DisplayEventThread::readyToRun()
@@ -345,12 +353,12 @@ bool DisplayHardwareBase::ConsoleManagerThread::threadLoop()
         sp<SurfaceFlinger> flinger = mFlinger.promote();
         //LOGD("About to give-up screen, flinger = %p", flinger.get());
         if (flinger != 0)
-            flinger->screenReleased();
+            flinger->screenReleased(0);
     } else if (sig == vm.acqsig) {
         sp<SurfaceFlinger> flinger = mFlinger.promote();
         //LOGD("Screen about to return, flinger = %p", flinger.get());
         if (flinger != 0) 
-            flinger->screenAcquired();
+            flinger->screenAcquired(0);
     }
     
     return true;
@@ -364,9 +372,9 @@ status_t DisplayHardwareBase::ConsoleManagerThread::initCheck() const
 // ----------------------------------------------------------------------------
 
 DisplayHardwareBase::DisplayHardwareBase(const sp<SurfaceFlinger>& flinger,
-        uint32_t displayIndex) 
+        uint32_t displayIndex)
+    : mCanDraw(true), mScreenAcquired(true)
 {
-    mScreenAcquired = true;
     mDisplayEventThread = new DisplayEventThread(flinger);
     if (mDisplayEventThread->initCheck() != NO_ERROR) {
         // fall-back on the console
@@ -380,19 +388,30 @@ DisplayHardwareBase::~DisplayHardwareBase()
     mDisplayEventThread->requestExitAndWait();
 }
 
+void DisplayHardwareBase::setCanDraw(bool canDraw)     	
+{      	
+    mCanDraw = canDraw;  	
+}
+
 bool DisplayHardwareBase::canDraw() const
 {
-    return mScreenAcquired;
+    return mCanDraw && mScreenAcquired;
 }
 
 void DisplayHardwareBase::releaseScreen() const
 {
-    mScreenAcquired = false;
+    status_t err = mDisplayEventThread->releaseScreen();  	
+    if (err >= 0) {	
+        mScreenAcquired = false;	
+    }
 }
 
 void DisplayHardwareBase::acquireScreen() const
 {
-    mScreenAcquired = true;
+    status_t err = mDisplayEventThread->acquireScreen();  	
+    if (err >= 0) {	
+        mScreenAcquired = true;	
+    }
 }
 
 bool DisplayHardwareBase::isScreenAcquired() const
