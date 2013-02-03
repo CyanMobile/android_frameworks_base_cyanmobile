@@ -54,6 +54,8 @@ public class PieControl implements OnClickListener {
     public static final String SCREEN_BUTTON = "##screens##";
     public static final String POWER_BUTTON = "##power##";
     public static final String LASTAPP_BUTTON = "##lastapp##";
+    public static final String SETTING_BUTTON = "##settings##";
+    public static final String CLEARALL_BUTTON = "##clearall##";
     public static final String FAKE_BUTTON = "##fake##";
 
     protected Context mContext;
@@ -68,6 +70,8 @@ public class PieControl implements OnClickListener {
     private PieItem mScreenshot;
     private PieItem mPower;
     private PieItem mLastapp;
+    private PieItem mSettings;
+    private PieItem mClears;
     private OnNavButtonPressedListener mListener;
     private PieControlPanel mPanel;
 
@@ -133,20 +137,24 @@ public class PieControl implements OnClickListener {
         mScreenshot = makeItem(R.drawable.ic_sysbar_screenshot, 1, SCREEN_BUTTON, false);
         mPower = makeItem(R.drawable.ic_sysbar_power, 1, POWER_BUTTON, false);
         mLastapp = makeItem(R.drawable.ic_sysbar_lastapp, 1, LASTAPP_BUTTON, false);
+        mSettings = makeItem(R.drawable.ic_sysbar_setts, 1, SETTING_BUTTON, false);
+        mClears = makeItem(R.drawable.ic_sysbar_clearall, 1, CLEARALL_BUTTON, false);
 
+        // base
         mPie.addItem(mMenu);
+        // level 1
         mPie.addItem(mSearch);
         mSearch.addItem(makeFiller());
         mSearch.addItem(makeFiller());
         mSearch.addItem(mScreenshot);
         mSearch.addItem(mPower);
-
+        // level 2
         mPie.addItem(mRecent);
-        mRecent.addItem(makeFiller());
+        mRecent.addItem(mSettings);
         mRecent.addItem(makeTidFiller());
-        mRecent.addItem(makeFiller());
+        mRecent.addItem(mClears);
         mRecent.addItem(mLastapp);
-
+        // base
         mPie.addItem(mHome);
         mPie.addItem(mBack);
     }

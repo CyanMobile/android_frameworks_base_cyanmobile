@@ -247,6 +247,10 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
             togglePowerMenu();
         } else if (buttonName.equals(PieControl.LASTAPP_BUTTON)) {
             toggleLastApp();
+        } else if (buttonName.equals(PieControl.SETTING_BUTTON)) {
+            toggleSettingsApps();
+        } else if (buttonName.equals(PieControl.CLEARALL_BUTTON)) {
+            mService.toggleClearNotif();
         }
     }
 
@@ -255,6 +259,12 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
         intentx.setClassName("com.cyanmobile.TaskSwitcher", "com.cyanmobile.TaskSwitcher.TaskSwitcherMainActivity");
         intentx.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
         mContext.startActivity(intentx);
+    }
+
+    private void toggleSettingsApps() {
+        Intent intenty = new Intent(android.provider.Settings.ACTION_SETTINGS);
+        intenty.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        mContext.startActivity(intenty);
     }
 
     private void togglePowerMenu() {
