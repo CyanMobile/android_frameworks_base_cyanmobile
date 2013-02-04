@@ -256,7 +256,6 @@ public class QuickSettingsController {
                 mQuickSettings.add(ALARM_TILE);
             } else if (tile.equals(TILE_USER)) {
                 mQuickSettings.add(USER_TILE);
-                // Not available yet
             }
         }
     }

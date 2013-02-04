@@ -96,7 +96,6 @@ public class PieItem {
         mItems.add(item);
     }
 
-
     public void setName(String name) {
         mName = name;
         mView.setTag(mName);
