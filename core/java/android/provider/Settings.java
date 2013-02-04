@@ -1103,7 +1103,7 @@ public final class Settings {
          * by the settings.
          */
         public static void clearConfiguration(Configuration inoutConfig) {	
-            inoutConfig.fontScale = 0;
+            //inoutConfig.fontScale = 0;
         }
 
         /**
