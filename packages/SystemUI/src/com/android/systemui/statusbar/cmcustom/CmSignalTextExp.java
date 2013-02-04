@@ -44,9 +44,9 @@ import java.util.TimeZone;
 
 public class CmSignalTextExp extends TextView {
 
-    int dBm = 0;
+    private int dBm = 0;
 
-    int ASU = 0;
+    private int ASU = 0;
 
     private SignalStrength signal;
 
@@ -69,7 +69,7 @@ public class CmSignalTextExp extends TextView {
 
     private int mPhoneState;
 
-    Handler mHandler;
+    private Handler mHandler;
 
     public CmSignalTextExp(Context context) {
         this(context, null);
@@ -135,7 +135,7 @@ public class CmSignalTextExp extends TextView {
         }
     };
 
-    class SettingsObserver extends ContentObserver {
+    private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
         }

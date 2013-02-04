@@ -42,7 +42,7 @@ public class LeftCarrierLogo extends TextView {
 
     private boolean mCarrierLogoLeft;
 
-    Handler mHandler;
+    private Handler mHandler;
 
     private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {

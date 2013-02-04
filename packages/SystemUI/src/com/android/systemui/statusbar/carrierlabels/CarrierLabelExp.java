@@ -53,7 +53,7 @@ public class CarrierLabelExp extends TextView {
 
     private static final int TYPE_DEFAULT = 0;
 
-    Handler mHandler;
+    private Handler mHandler;
 
     private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {

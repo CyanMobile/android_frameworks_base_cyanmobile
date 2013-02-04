@@ -505,12 +505,12 @@ public class StatusBarPolicy {
 
     // Assume it's all good unless we hear otherwise.  We don't always seem
     // to get broadcasts that it *is* there.
-    IccCard.State mSimState = IccCard.State.READY;
-    int mPhoneState = TelephonyManager.CALL_STATE_IDLE;
-    int mDataState = TelephonyManager.DATA_DISCONNECTED;
-    int mDataActivity = TelephonyManager.DATA_ACTIVITY_NONE;
-    ServiceState mServiceState;
-    SignalStrength mSignalStrength;
+    private IccCard.State mSimState = IccCard.State.READY;
+    private int mPhoneState = TelephonyManager.CALL_STATE_IDLE;
+    private int mDataState = TelephonyManager.DATA_DISCONNECTED;
+    private int mDataActivity = TelephonyManager.DATA_ACTIVITY_NONE;
+    private ServiceState mServiceState;
+    private SignalStrength mSignalStrength;
 
     // flag for signal strength behavior
     private boolean mAlwaysUseCdmaRssi;

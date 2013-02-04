@@ -58,47 +58,47 @@ public class CmStatusBarView extends StatusBarView {
     public static final int KEYCODE_VIRTUAL_POWER_LONG=KeyEvent.getMaxKeyCode()+3;
 
     //set up statusbar buttons - quiet a lot for that awesome design!
-    ViewGroup mSoftButtons;
-    ImageButton mHomeButton;
-    ImageButton mMenuButton;
-    ImageButton mBackButton;
-    ImageButton mSearchButton;
-    ImageButton mQuickNaButton;
-    ImageButton mHideButton;
-    ImageButton mEdgeLeft;
-    ImageButton mEdgeRight;
-    ImageButton mSeperator1;
-    ImageButton mSeperator2;
-    ImageButton mSeperator3;
-    ImageButton mSeperator4;
-    ImageButton mSeperator5;
+    private ViewGroup mSoftButtons;
+    private ImageButton mHomeButton;
+    private ImageButton mMenuButton;
+    private ImageButton mBackButton;
+    private ImageButton mSearchButton;
+    private ImageButton mQuickNaButton;
+    private ImageButton mHideButton;
+    private ImageButton mEdgeLeft;
+    private ImageButton mEdgeRight;
+    private ImageButton mSeperator1;
+    private ImageButton mSeperator2;
+    private ImageButton mSeperator3;
+    private ImageButton mSeperator4;
+    private ImageButton mSeperator5;
 
-    boolean mHasSoftButtons;  // toggled by config.xml
-    boolean mIsBottom;   // this and below booleans toggled by system settings from cmparts
-    boolean mIsLeft;
-    int mShowHome;
-    int mShowMenu;
-    int mShowBack;
-    int mShowSearch;
-    boolean mShowQuickNa;
-    ViewGroup mIcons;
+    private boolean mHasSoftButtons;  // toggled by config.xml
+    private boolean mIsBottom;   // this and below booleans toggled by system settings from cmparts
+    private boolean mIsLeft;
+    private int mShowHome;
+    private int mShowMenu;
+    private int mShowBack;
+    private int mShowSearch;
+    private boolean mShowQuickNa;
+    private ViewGroup mIcons;
 
     // used for fullscreen handling and broadcasts
-    ActivityManager mActivityManager;
-    RunningAppProcessInfo mFsCallerProcess;
-    ComponentName mFsCallerActivity;
-    Intent mFsForceIntent;
-    Intent mFsOffIntent;
+    private ActivityManager mActivityManager;
+    private RunningAppProcessInfo mFsCallerProcess;
+    private ComponentName mFsCallerActivity;
+    private Intent mFsForceIntent;
+    private Intent mFsOffIntent;
 
-    Handler mHandler;
+    private Handler mHandler;
 
-    class FullscreenReceiver extends BroadcastReceiver {
+    private class FullscreenReceiver extends BroadcastReceiver {
         public void onReceive(Context context, Intent intent){
             onFullscreenAttempt();
         }
     }
 
-    class SettingsObserver extends ContentObserver {
+    private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
         }
@@ -477,7 +477,7 @@ public class CmStatusBarView extends StatusBarView {
     // checks regularly if an old fs caller is in foreground again.
     // this wont trigger a new fullscreen request, since that window
     // already thinks, its fullscreen. tracking old callers reappearing
-    HideButtonEnabler mHideButtonEnabler = new HideButtonEnabler();
+    private HideButtonEnabler mHideButtonEnabler = new HideButtonEnabler();
     public class HideButtonEnabler implements Runnable {
         public void run(){
             Entry e = null;;
@@ -560,7 +560,7 @@ public class CmStatusBarView extends StatusBarView {
     }
 
     // check regularly if the old activity is still active
-    HideButtonDisabler mHideButtonDisabler = new HideButtonDisabler();
+    private HideButtonDisabler mHideButtonDisabler = new HideButtonDisabler();
     public class HideButtonDisabler implements Runnable {
         // in really really rare cases, getForegroundApp() returns a wrong process, like android.process.media. to prevent this
         // we use this variable to make sure, the active app isnt returned in two consecutive loops before hiding the button
@@ -923,11 +923,11 @@ public class CmStatusBarView extends StatusBarView {
      *
      * This is executed in a separate Thread to avoid blocking
      */
-    private void simulateKeypress(final int keyCode) {
+    public static void simulateKeypress(final int keyCode) {
         new Thread(new KeyEventInjector( keyCode ) ).start();
     }
 
-    private class KeyEventInjector implements Runnable {
+    private static class KeyEventInjector implements Runnable {
         private int keyCode;
 
         KeyEventInjector(final int keyCode) {

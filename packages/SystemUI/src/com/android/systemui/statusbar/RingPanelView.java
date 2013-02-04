@@ -16,7 +16,6 @@
 
 package com.android.systemui.statusbar;
 
-import com.android.internal.statusbar.IStatusBarService;
 import android.app.ActivityManagerNative;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
@@ -56,13 +55,12 @@ public class RingPanelView extends FrameLayout {
     private static final String TAG = "RingPanelView";
     private Context mContext;
     private boolean mShowing;
-    Handler mHandler;
-    IStatusBarService mStatusBarService;
-
+    private Handler mHandler;
+    StatusBarService mService;
     private View mSearchTargetsContainer;
     private GlowPadView mGlowPadView;
 
-    class GlowPadViewMethods implements GlowPadView.OnTriggerListener {
+    private class GlowPadViewMethods implements GlowPadView.OnTriggerListener {
 
         public void updateResources() {
             int resId = R.array.lockscreen_targets_without_lock;
@@ -124,17 +122,7 @@ public class RingPanelView extends FrameLayout {
 
         public void onGrabbedStateChange(View v, int handle) {
             if (handle == OnTriggerListener.NO_HANDLE) {
-                mHandler.post(new Runnable() { public void run() {
-                    try {
-                        IStatusBarService statusbar = getStatusBarService();
-                        if (statusbar != null) {
-                            statusbar.toggleRingPanel();
-                        }
-                        } catch (RemoteException ex) {
-                            // re-acquire status bar service next time it is needed.
-                            mStatusBarService = null;
-                        }
-                }});
+                mService.toggleRingPanel();
             }
         }
 
@@ -146,7 +134,7 @@ public class RingPanelView extends FrameLayout {
         }
     }
 
-    GlowPadViewMethods mGlowPadViewMethods;
+    private GlowPadViewMethods mGlowPadViewMethods;
 
     public RingPanelView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -226,23 +214,6 @@ public class RingPanelView extends FrameLayout {
 
     public void hide() {
         setVisibility(View.GONE);
-    }
-
-    IStatusBarService getStatusBarService() {
-        if (mStatusBarService == null) {
-            mStatusBarService = IStatusBarService.Stub.asInterface(
-                    ServiceManager.getService("statusbar"));
-        }
-        return mStatusBarService;
-    }
-
-    static void sendCloseSystemWindows(Context context, String reason) {
-        if (ActivityManagerNative.isSystemReady()) {
-            try {
-                ActivityManagerNative.getDefault().closeSystemDialogs(reason);
-            } catch (RemoteException e) {
-            }
-        }
     }
 
     /**

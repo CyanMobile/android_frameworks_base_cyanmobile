@@ -48,19 +48,19 @@ public class StatusBarView extends FrameLayout {
     static final int DIM_ANIM_TIME = 400;
     
     StatusBarService mService;
-    boolean mTracking;
-    int mStartX, mStartY;
-    ViewGroup mNotificationIcons;
-    ViewGroup mStatusIcons;
-    ViewGroup mSBBackground;
-    ViewGroup mTickerBackground;
-    View mVNotificationIcons;
-    View mVStatusIcons;
-    View mVSBBackground;
-    View mVTickerBackground;
-    View mDate;
-    FixedSizeDrawable mBackground;
-    FixedSizeDrawable mStatusBackground;
+    private boolean mTracking;
+    private int mStartX, mStartY;
+    private ViewGroup mNotificationIcons;
+    private ViewGroup mStatusIcons;
+    private ViewGroup mSBBackground;
+    private ViewGroup mTickerBackground;
+    private View mVNotificationIcons;
+    private View mVStatusIcons;
+    private View mVSBBackground;
+    private View mVTickerBackground;
+    public View mDate;
+    private FixedSizeDrawable mBackground;
+    private FixedSizeDrawable mStatusBackground;
 
     private int mSBColor;
     private int mSBTrans;

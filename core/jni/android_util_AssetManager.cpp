@@ -1157,7 +1157,7 @@ static jboolean android_content_AssetManager_applyStyle(JNIEnv* env, jobject cla
                     }
                 }
                 if (resid != redirect) {
-                    LOGW("deep redirect failure from 0x%08x => 0x%08x, defStyleAttr=0x%08x, defStyleRes=0x%08x, style=0x%08x\n", resid, redirect, defStyleAttr, defStyleRes, style);
+                    //LOGW("deep redirect failure from 0x%08x => 0x%08x, defStyleAttr=0x%08x, defStyleRes=0x%08x, style=0x%08x\n", resid, redirect, defStyleAttr, defStyleRes, style);
                 }
             }
         }

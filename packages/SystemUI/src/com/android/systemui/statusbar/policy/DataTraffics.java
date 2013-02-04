@@ -49,9 +49,9 @@ public class DataTraffics extends TextView {
     private long gOldMrx;
     private DecimalFormat mDecimalFormater;
 
-    Handler mHandler;
+    private Handler mHandler;
 
-    class SettingsObserver extends ContentObserver {
+    private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
         }

@@ -64,7 +64,7 @@ public class LeftCarrierLabelStatusBar extends TextView {
 
     private static final int TYPE_CUSTOM = 3;
 
-    Handler mHandler;
+    private Handler mHandler;
 
     private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {

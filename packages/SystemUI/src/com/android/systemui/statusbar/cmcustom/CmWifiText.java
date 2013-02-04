@@ -36,7 +36,7 @@ public class CmWifiText extends TextView {
     private static final int STYLE_HIDE = 0;
     private static final int STYLE_SHOW = 1;
     private int style;
-    Handler mHandler;
+    private Handler mHandler;
 
     private WifiManager mWifiManager;
     private int mClockColor;
@@ -99,7 +99,7 @@ public class CmWifiText extends TextView {
         }
     }
 
-    class SettingsObserver extends ContentObserver {
+    private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
         }

@@ -43,17 +43,17 @@ import com.android.systemui.R;
 public class KeyButtonView extends ImageView {
     private static final String TAG = "StatusBar.KeyButtonView";
 
-    final float GLOW_MAX_SCALE_FACTOR = 1.8f;
-    float BUTTON_QUIESCENT_ALPHA = 1.0f;
+    private final float GLOW_MAX_SCALE_FACTOR = 1.8f;
+    private float BUTTON_QUIESCENT_ALPHA = 1.0f;
 
-    int mTouchSlop;
-    Drawable mGlowBG;
-    int mGlowWidth, mGlowHeight;
-    float mGlowAlpha = 0f, mGlowScale = 1f, mDrawingAlpha = 1f, mOldDrawingAlpha = 1f;
-    RectF mRect = new RectF(0f,0f,0f,0f);
-    AnimatorSet mPressedAnim;
-    Context mContext;
-    Handler mHandler;
+    private int mTouchSlop;
+    private Drawable mGlowBG;
+    private int mGlowWidth, mGlowHeight;
+    private float mGlowAlpha = 0f, mGlowScale = 1f, mDrawingAlpha = 1f, mOldDrawingAlpha = 1f;
+    private RectF mRect = new RectF(0f,0f,0f,0f);
+    private AnimatorSet mPressedAnim;
+    private Context mContext;
+    private Handler mHandler;
 
     private int mOverColor;
     private int mGlowingColor;
@@ -69,7 +69,7 @@ public class KeyButtonView extends ImageView {
         }
     };
 
-    class SettingsObserver extends ContentObserver {
+    private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
         }

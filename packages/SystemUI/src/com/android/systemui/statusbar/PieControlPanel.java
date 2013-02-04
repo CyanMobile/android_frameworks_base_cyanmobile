@@ -63,20 +63,18 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
     private Handler mHandler;
     boolean mShowing;
     private PieControl mPieControl;
-    private int mInjectKeycode;
-    private long mDownTime;
     private Context mContext;
     private int mOrientation;
     private int mWidth;
     private int mHeight;
     private View mTrigger;
-    Display mDisplay;
-    DisplayMetrics mDisplayMetrics = new DisplayMetrics();
+    private Display mDisplay;
+    private DisplayMetrics mDisplayMetrics = new DisplayMetrics();
 
     private StatusBarService mService;
 
-    ViewGroup mContentFrame;
-    Rect mContentArea = new Rect();
+    private ViewGroup mContentFrame;
+    private Rect mContentArea = new Rect();
 
     public PieControlPanel(Context context) {
         this(context, null);
@@ -232,15 +230,15 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
     @Override
     public void onNavButtonPressed(String buttonName) {
         if (buttonName.equals(PieControl.BACK_BUTTON)) {
-            simulateKeypress(KeyEvent.KEYCODE_BACK);
+            CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_BACK);
         } else if (buttonName.equals(PieControl.HOME_BUTTON)) {
-            simulateKeypress(KeyEvent.KEYCODE_HOME);
+            CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_HOME);
         } else if (buttonName.equals(PieControl.MENU_BUTTON)) {
-            simulateKeypress(KeyEvent.KEYCODE_MENU);
+            CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_MENU);
         } else if (buttonName.equals(PieControl.RECENT_BUTTON)) {
             toggleRecentApps();
         } else if (buttonName.equals(PieControl.SEARCH_BUTTON)) {
-            simulateKeypress(KeyEvent.KEYCODE_SEARCH);
+            CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_SEARCH);
         } else if (buttonName.equals(PieControl.SCREEN_BUTTON)) {
             toggleScreenshot();
         } else if (buttonName.equals(PieControl.POWER_BUTTON)) {
@@ -305,36 +303,4 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
         }
     }
 
-    /**
-     * Runnable to hold simulate a keypress.
-     *
-     * This is executed in a separate Thread to avoid blocking
-     */
-    private void simulateKeypress(final int keyCode) {
-        new Thread(new KeyEventInjector( keyCode ) ).start();
-    }
-
-    private class KeyEventInjector implements Runnable {
-        private int keyCode;
-
-        KeyEventInjector(final int keyCode) {
-            this.keyCode = keyCode;
-        }
-
-        public void run() {
-            try {
-                if (!(IWindowManager.Stub.asInterface(ServiceManager.getService("window")))
-                         .injectKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, keyCode), true) ) {
-                                   Slog.w(TAG, "Key down event not injected");
-                                   return;
-                              }
-                if (!(IWindowManager.Stub.asInterface(ServiceManager.getService("window")))
-                         .injectKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, keyCode), true) ) {
-                                  Slog.w(TAG, "Key up event not injected");
-                             }
-           } catch (RemoteException ex) {
-               Slog.w(TAG, "Error injecting key event", ex);
-           }
-        }
-    }
 }

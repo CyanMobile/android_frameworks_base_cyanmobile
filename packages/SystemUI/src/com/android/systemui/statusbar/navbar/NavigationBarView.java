@@ -53,6 +53,7 @@ import android.os.RemoteException;
 import android.os.ServiceManager;
 
 import com.android.systemui.statusbar.StatusBarService;
+import com.android.systemui.statusbar.CmStatusBarView;
 import com.android.systemui.statusbar.popups.ActionItem;
 import com.android.systemui.statusbar.popups.QuickAction;
 import com.android.systemui.R;
@@ -61,13 +62,9 @@ public class NavigationBarView extends LinearLayout {
 
     public StatusBarService mServices;
 
-    final Display mDisplay;
+    private final Display mDisplay;
     private static final boolean DEBUG = false;
     private static final String TAG = "NavigationBarView";
-
-    public static final int KEYCODE_VIRTUAL_HOME_LONG=KeyEvent.getMaxKeyCode()+1;
-    public static final int KEYCODE_VIRTUAL_BACK_LONG=KeyEvent.getMaxKeyCode()+2;
-    public static final int KEYCODE_VIRTUAL_POWER_LONG=KeyEvent.getMaxKeyCode()+3;
 
     private static final int ID_APPLICATION = 1;
     private static final int ID_DISPLAY = 2;
@@ -105,16 +102,16 @@ public class NavigationBarView extends LinearLayout {
     private static final int SWIPE_THRESHOLD_VELOCITY = 100;
     private GestureDetector mGestureDetector;
 
-    View mNaviBackground;
-    View mNaviAdd;
-    ViewGroup mSoftButtons;
-    KeyButtonView mHomeButton;
-    KeyButtonView mMenuButton;
-    KeyButtonView mBackButton;
-    KeyButtonView mSearchButton;
-    KeyButtonView mVolUpButton;
-    KeyButtonView mVolDownButton;
-    KeyButtonView mQuickButton;
+    private View mNaviBackground;
+    private View mNaviAdd;
+    private ViewGroup mSoftButtons;
+    private KeyButtonView mHomeButton;
+    private KeyButtonView mMenuButton;
+    private KeyButtonView mBackButton;
+    private KeyButtonView mSearchButton;
+    private KeyButtonView mVolUpButton;
+    private KeyButtonView mVolDownButton;
+    private KeyButtonView mQuickButton;
 
     private int mNVColor;
     private int mNext;
@@ -167,9 +164,9 @@ public class NavigationBarView extends LinearLayout {
     boolean mHidden = false;
     boolean mForceRotate = false;
     private boolean mDisableAnimate = false;
-    Handler mHandler;
+    private Handler mHandler;
 
-    class SettingsObserver extends ContentObserver {
+    private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
         }
@@ -544,7 +541,7 @@ public class NavigationBarView extends LinearLayout {
 				ActionItem actionItem = quickAction.getActionItem(pos);
 				if (actionId == ID_BACKILL) {
                                     if (mLongPressBackKills) {
-                                        simulateKeypress(KEYCODE_VIRTUAL_BACK_LONG);
+                                        CmStatusBarView.simulateKeypress(CmStatusBarView.KEYCODE_VIRTUAL_BACK_LONG);
                                     } else {
                                         Toast toast = Toast.makeText(mContext, "Enable Kill app back button option to use this!",Toast.LENGTH_LONG);
                                         toast.show();
@@ -553,7 +550,7 @@ public class NavigationBarView extends LinearLayout {
                                     Intent intent = new Intent("android.intent.action.SCREENSHOT");
                                     getContext().sendBroadcast(intent);
                                 } else if (actionId == ID_POWERMENU) {
-                                    simulateKeypress(KEYCODE_VIRTUAL_POWER_LONG);
+                                    CmStatusBarView.simulateKeypress(CmStatusBarView.KEYCODE_VIRTUAL_POWER_LONG);
 				}
 			}
 		});
@@ -570,22 +567,22 @@ public class NavigationBarView extends LinearLayout {
                     public void onClick(View v) {
                       if (mShowHome == 1) {
                         if (DEBUG) Slog.i(TAG, "Home clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_HOME);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_HOME);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetHome, 80);
                       } else if (mShowHome == 4) {
                         if (DEBUG) Slog.i(TAG, "Menu clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_MENU);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_MENU);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetHome, 80);
                       } else if (mShowHome == 2) {
                         if (DEBUG) Slog.i(TAG, "Back clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_BACK);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_BACK);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetHome, 80);
                       } else if (mShowHome == 3) {
                         if (DEBUG) Slog.i(TAG, "Search clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_SEARCH);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_SEARCH);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetHome, 80);
                       } else if (mShowHome == 5) {
@@ -609,7 +606,7 @@ public class NavigationBarView extends LinearLayout {
                         mHandler.postDelayed(mResetHome, 80);
                       } else if (mShowHome == 7) {
                         if (DEBUG) Slog.i(TAG, "Power clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_POWER);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_POWER);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetHome, 80);
                       } else if (mShowHome == 8) {
@@ -648,7 +645,7 @@ public class NavigationBarView extends LinearLayout {
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
                           } else if (mShowHome == 7) {
-                             simulateKeypress(KEYCODE_VIRTUAL_POWER_LONG);
+                             CmStatusBarView.simulateKeypress(CmStatusBarView.KEYCODE_VIRTUAL_POWER_LONG);
                              return true;
                           } else {
                              return false;
@@ -662,22 +659,22 @@ public class NavigationBarView extends LinearLayout {
                     public void onClick(View v) {
                       if (mShowMenu == 1) {
                         if (DEBUG) Slog.i(TAG, "Home clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_HOME);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_HOME);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetMenu, 80);
                       } else if (mShowMenu == 4) {
                         if (DEBUG) Slog.i(TAG, "Menu clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_MENU);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_MENU);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetMenu, 80);
                       } else if (mShowMenu == 2) {
                         if (DEBUG) Slog.i(TAG, "Back clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_BACK);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_BACK);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetMenu, 80);
                       } else if (mShowMenu == 3) {
                         if (DEBUG) Slog.i(TAG, "Search clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_SEARCH);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_SEARCH);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetMenu, 80);
                       } else if (mShowMenu == 5) {
@@ -701,7 +698,7 @@ public class NavigationBarView extends LinearLayout {
                         mHandler.postDelayed(mResetMenu, 80);
                       } else if (mShowMenu == 7) {
                         if (DEBUG) Slog.i(TAG, "Power clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_POWER);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_POWER);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetMenu, 80);
                       } else if (mShowMenu == 8) {
@@ -740,7 +737,7 @@ public class NavigationBarView extends LinearLayout {
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
                           } else if (mShowMenu == 7) {
-                             simulateKeypress(KEYCODE_VIRTUAL_POWER_LONG);
+                             CmStatusBarView.simulateKeypress(CmStatusBarView.KEYCODE_VIRTUAL_POWER_LONG);
                              return true;
                           } else {
                              return false;
@@ -754,22 +751,22 @@ public class NavigationBarView extends LinearLayout {
                     public void onClick(View v) {
                       if (mShowBack == 1) {
                         if (DEBUG) Slog.i(TAG, "Home clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_HOME);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_HOME);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetBack, 80);
                       } else if (mShowBack == 4) {
                         if (DEBUG) Slog.i(TAG, "Menu clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_MENU);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_MENU);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetBack, 80);
                       } else if (mShowBack == 2) {
                         if (DEBUG) Slog.i(TAG, "Back clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_BACK);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_BACK);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetBack, 80);
                       } else if (mShowBack == 3) {
                         if (DEBUG) Slog.i(TAG, "Search clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_SEARCH);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_SEARCH);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetBack, 80);
                       } else if (mShowBack == 5) {
@@ -793,7 +790,7 @@ public class NavigationBarView extends LinearLayout {
                         mHandler.postDelayed(mResetBack, 80);
                       } else if (mShowBack == 7) {
                         if (DEBUG) Slog.i(TAG, "Power clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_POWER);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_POWER);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetBack, 80);
                       } else if (mShowBack == 8) {
@@ -832,7 +829,7 @@ public class NavigationBarView extends LinearLayout {
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
                           } else if (mShowBack == 7) {
-                             simulateKeypress(KEYCODE_VIRTUAL_POWER_LONG);
+                             CmStatusBarView.simulateKeypress(CmStatusBarView.KEYCODE_VIRTUAL_POWER_LONG);
                              return true;
                           } else {
                              return false;
@@ -846,22 +843,22 @@ public class NavigationBarView extends LinearLayout {
                     public void onClick(View v) {
                       if (mShowSearch == 1) {
                         if (DEBUG) Slog.i(TAG, "Home clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_HOME);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_HOME);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetSearch, 80);
                       } else if (mShowSearch == 4) {
                         if (DEBUG) Slog.i(TAG, "Menu clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_MENU);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_MENU);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetSearch, 80);
                       } else if (mShowSearch == 2) {
                         if (DEBUG) Slog.i(TAG, "Back clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_BACK);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_BACK);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetSearch, 80);
                       } else if (mShowSearch == 3) {
                         if (DEBUG) Slog.i(TAG, "Search clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_SEARCH);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_SEARCH);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetSearch, 80);
                       } else if (mShowSearch == 5) {
@@ -885,7 +882,7 @@ public class NavigationBarView extends LinearLayout {
                         mHandler.postDelayed(mResetSearch, 80);
                       } else if (mShowSearch == 7) {
                         if (DEBUG) Slog.i(TAG, "Power clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_POWER);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_POWER);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetSearch, 80);
                       } else if (mShowSearch == 8) {
@@ -924,7 +921,7 @@ public class NavigationBarView extends LinearLayout {
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
                           } else if (mShowSearch == 7) {
-                             simulateKeypress(KEYCODE_VIRTUAL_POWER_LONG);
+                             CmStatusBarView.simulateKeypress(CmStatusBarView.KEYCODE_VIRTUAL_POWER_LONG);
                              return true;
                           } else {
                              return false;
@@ -937,7 +934,7 @@ public class NavigationBarView extends LinearLayout {
 	            @Override
                     public void onClick(View v) {
                         if (DEBUG) Slog.i(TAG, "VolUp clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_VOLUME_UP);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_VOLUME_UP);
                         mHandler.postDelayed(mResetVolUp, 80);
                     }
                 }
@@ -947,7 +944,7 @@ public class NavigationBarView extends LinearLayout {
 	            @Override
                     public void onClick(View v) {
                         if (DEBUG) Slog.i(TAG, "VolDown clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_VOLUME_DOWN);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_VOLUME_DOWN);
                         mHandler.postDelayed(mResetVolDown, 80);
                     }
                 }
@@ -958,22 +955,22 @@ public class NavigationBarView extends LinearLayout {
                     public void onClick(View v) {
                       if (mShowQuicker == 0) {
                         if (DEBUG) Slog.i(TAG, "Home clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_HOME);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_HOME);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetQuick, 80);
                       } else if (mShowQuicker == 3) {
                         if (DEBUG) Slog.i(TAG, "Menu clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_MENU);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_MENU);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetQuick, 80);
                       } else if (mShowQuicker == 1) {
                         if (DEBUG) Slog.i(TAG, "Back clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_BACK);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_BACK);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetQuick, 80);
                       } else if (mShowQuicker == 2) {
                         if (DEBUG) Slog.i(TAG, "Search clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_SEARCH);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_SEARCH);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetQuick, 80);
                       } else if (mShowQuicker == 4) {
@@ -997,7 +994,7 @@ public class NavigationBarView extends LinearLayout {
                         mHandler.postDelayed(mResetQuick, 80);
                       } else if (mShowQuicker == 6) {
                         if (DEBUG) Slog.i(TAG, "Power clicked");
-                        simulateKeypress(KeyEvent.KEYCODE_POWER);
+                        CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_POWER);
                         updateNaviButtons();
                         mHandler.postDelayed(mResetQuick, 80);
                       } else if (mShowQuicker == 7) {
@@ -1036,7 +1033,7 @@ public class NavigationBarView extends LinearLayout {
 			     quickAction.setAnimStyle(QuickAction.ANIM_REFLECT);
                              return true;
                           } else if (mShowQuicker == 6) {
-                             simulateKeypress(KEYCODE_VIRTUAL_POWER_LONG);
+                             CmStatusBarView.simulateKeypress(CmStatusBarView.KEYCODE_VIRTUAL_POWER_LONG);
                              return true;
                           } else {
                              return false;
@@ -2045,38 +2042,5 @@ public class NavigationBarView extends LinearLayout {
       } else {
          // nothing
       }
-    }
-
-    /**
-     * Runnable to hold simulate a keypress.
-     *
-     * This is executed in a separate Thread to avoid blocking
-     */
-    private void simulateKeypress(final int keyCode) {
-        new Thread(new KeyEventInjector( keyCode ) ).start();
-    }
-
-    private class KeyEventInjector implements Runnable {
-        private int keyCode;
-
-        KeyEventInjector(final int keyCode) {
-            this.keyCode = keyCode;
-        }
-
-        public void run() {
-            try {
-                if (!(IWindowManager.Stub.asInterface(ServiceManager.getService("window")))
-                         .injectKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, keyCode), true) ) {
-                                   Slog.w(TAG, "Key down event not injected");
-                                   return;
-                              }
-                if (!(IWindowManager.Stub.asInterface(ServiceManager.getService("window")))
-                         .injectKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, keyCode), true) ) {
-                                  Slog.w(TAG, "Key up event not injected");
-                             }
-           } catch (RemoteException ex) {
-               Slog.w(TAG, "Error injecting key event", ex);
-           }
-        }
     }
 }

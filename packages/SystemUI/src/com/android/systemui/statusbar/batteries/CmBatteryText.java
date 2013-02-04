@@ -53,11 +53,11 @@ public class CmBatteryText extends TextView {
 
     private static int style;
 
-    Handler mHandler;
+    private Handler mHandler;
 
     // tracks changes to settings, so status bar is auto updated the moment the
     // setting is toggled
-    class SettingsObserver extends ContentObserver {
+    private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
         }

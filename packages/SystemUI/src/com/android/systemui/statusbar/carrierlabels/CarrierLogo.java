@@ -42,7 +42,7 @@ public class CarrierLogo extends TextView {
 
     private boolean mCarrierLogo;
 
-    Handler mHandler;
+    private Handler mHandler;
 
     private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {

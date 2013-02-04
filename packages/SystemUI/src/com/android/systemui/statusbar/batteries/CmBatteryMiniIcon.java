@@ -45,10 +45,10 @@ import com.android.internal.R;
  */
 public class CmBatteryMiniIcon extends ImageView {
     // the width of the mini bat icon
-    static final int BATTERY_MINI_ICON_WIDTH_DIP = 4;
+    private static final int BATTERY_MINI_ICON_WIDTH_DIP = 4;
 
     // the margin to the right of this widget
-    static final int BATTERY_MINI_ICON_MARGIN_RIGHT_DIP = 6;
+    private static final int BATTERY_MINI_ICON_MARGIN_RIGHT_DIP = 6;
 
     // Duration of each frame during battery charging animation
     private int mAnimDuration = 500;
@@ -88,7 +88,7 @@ public class CmBatteryMiniIcon extends ImageView {
 
     // tracks changes to settings, so status bar is auto updated the moment the
     // setting is toggled
-    class SettingsObserver extends ContentObserver {
+    private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
         }

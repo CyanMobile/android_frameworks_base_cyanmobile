@@ -46,9 +46,9 @@ public final class DateView extends TextView {
     private int mCarrierSize;
     private boolean mAttached;
 
-    Handler mHandler;
+    private Handler mHandler;
 
-    class SettingsObserver extends ContentObserver {
+    private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
         }

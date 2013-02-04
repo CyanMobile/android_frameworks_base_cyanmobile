@@ -28,12 +28,12 @@ import android.view.MotionEvent;
 
 public class TrackingView extends LinearLayout {
     StatusBarService mService;
-    boolean mTracking;
-    int mStartX, mStartY;
+    private boolean mTracking;
+    private int mStartX, mStartY;
     boolean mIsAttachedToWindow;
     private static final int MAJOR_MOVE = 60;
     private GestureDetector mGestureDetector;
-    Handler mHandler = new Handler();
+    private Handler mHandler = new Handler();
 
     public TrackingView(Context context, AttributeSet attrs) {
         super(context, attrs);

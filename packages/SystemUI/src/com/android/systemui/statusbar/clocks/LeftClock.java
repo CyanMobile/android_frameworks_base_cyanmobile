@@ -73,9 +73,9 @@ public class LeftClock extends TextView {
     private int mClockColor;
     private int mCarrierSize;
 
-    Handler mHandler;
+    private Handler mHandler;
 
-    class SettingsObserver extends ContentObserver {
+    private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
         }

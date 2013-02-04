@@ -43,9 +43,9 @@ public final class PowerDateView extends TextView {
     private boolean mAttached;
     private boolean mShowDate;
     private int mClockColor;
-    Handler mHandler;
+    private Handler mHandler;
 
-    class SettingsObserver extends ContentObserver {
+    private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
         }

@@ -42,7 +42,7 @@ public class BackLogo extends TextView {
 
     private boolean mBackLogo;
 
-    Handler mHandler;
+    private Handler mHandler;
 
     private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {

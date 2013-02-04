@@ -112,7 +112,7 @@ public class QwikWidgetsPanelView extends FrameLayout {
         setupQwikWidgets();
     }
 
-    class WidgetLayout extends LinearLayout {
+    private class WidgetLayout extends LinearLayout {
         public WidgetLayout(Context context) {
             super(context);
             setOrientation(LinearLayout.HORIZONTAL);
@@ -122,7 +122,7 @@ public class QwikWidgetsPanelView extends FrameLayout {
     }
 
     /* Used for a dividers in the widget view */
-    class Divider extends LinearLayout {
+    private class Divider extends LinearLayout {
         public Divider(Context context) {
             super(context);
             setOrientation(LinearLayout.HORIZONTAL);
@@ -242,15 +242,6 @@ public class QwikWidgetsPanelView extends FrameLayout {
 
     public void hide(boolean animate) {
         setVisibility(View.GONE);
-    }
-
-    static void sendCloseSystemWindows(Context context, String reason) {
-        if (ActivityManagerNative.isSystemReady()) {
-            try {
-                ActivityManagerNative.getDefault().closeSystemDialogs(reason);
-            } catch (RemoteException e) {
-            }
-        }
     }
 
     /**

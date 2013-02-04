@@ -31,9 +31,9 @@ public class DoNotDisturb {
     private StatusBarManager mStatusBar;
     private boolean mDoNotDisturb;
 
-    Handler mHandler;
+    private Handler mHandler;
 
-    class SettingsObserver extends ContentObserver {
+    private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
         }

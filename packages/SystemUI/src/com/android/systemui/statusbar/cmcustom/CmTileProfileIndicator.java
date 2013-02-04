@@ -43,7 +43,7 @@ public class CmTileProfileIndicator extends ImageView {
     // intent broadcasted by ProfileManagerServer after profile changed
     public static final String INTENT_ACTION_PROFILE_SELECTED = "android.intent.action.PROFILE_SELECTED";
 
-    ProfileManager mProfileManager;
+    private ProfileManager mProfileManager;
 
     // contains name of active profile
     private String mActiveProfileName = "";
