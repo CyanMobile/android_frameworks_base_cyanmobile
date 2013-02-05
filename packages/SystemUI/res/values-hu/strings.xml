@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 
+<!--
 /**
  * Copyright (c) 2009, The Android Open Source Project
  *
@@ -15,10 +15,10 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  */
- -->
+-->
 
-<resources xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+<resources xmlns:android="http://schemas.android.com/apk/res/android" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
     <string name="app_label" msgid="4489004083283879149">"Állapotsor"</string>
     <string name="status_bar_clear_all_button" msgid="7774721344716731603">"Törlés"</string>
     <string name="status_bar_no_notifications_title" msgid="4755261167193833213">"Nincs értesítés"</string>
@@ -34,8 +34,117 @@
     <skip />
     <!-- no translation found for usb_accessory_confirm_prompt (3947430407252730383) -->
     <skip />
+
     <string name="usb_accessory_uri_prompt" msgid="6332150684964235705">"A telepített alkalmazások nem működnek ezzel az USB-kiegészítővel. Bővebben: <xliff:g id="URL">%1$s</xliff:g>"</string>
     <string name="title_usb_accessory" msgid="4966265263465181372">"USB-kellék"</string>
     <string name="label_view" msgid="6304565553218192990">"Megtekintés"</string>
     <string name="always_use_accessory" msgid="1210954576979621596">"Alapértelmezett használat ehhez az USB-kiegészítőhöz"</string>
+    <string name="status_bar_date_formatter">"%1$s
+%2$s"</string>
+    <string name="powerwidget_screen_timeout_toast">Képrnyő időkorlát beállítása: %1$d %2$s</string>
+    <string name="powerwidget_screen_timeout_tile">STout: %1$d %2$s</string>
+    <string name="status_bar_date_formats">%1$s</string>
+    <string name="abbrev_wday_month_day_no_year">E MMM d</string>
+    <string name="title_color_picker">Válasz egy szint</string>
+    <string name="msg_color_picker">"Érintse meg a középső szint.
+Kilépve törörve"</string>
+    <string name="status_bar_notifications">Értesítések</string>
+    <string name="status_bar_powerwidget">Power widget</string>
+    <string name="kosong" />
+    <string name="charter">Táblázat</string>
+    <string name="switch_wifi_text">Wi-Fi</string>
+    <string name="switch_bluetooth_text">Bluetooth</string>
+    <string name="switch_gps_text">GPS</string>
+    <string name="switch_sync_text">Sync</string>
+    <string name="switch_airpl_text">Repülőgép</string>
+    <string name="switch_mbldata_text">Mobil Adat</string>
+    <string name="switch_autorot_text">Auto forgatás</string>
+    <string name="smscall_popup">Üzenet Infó</string>
+    <string name="weather_fetch_failure">Sikertelen lekérés</string>
+    <string name="callings">Hívás kezdeményezése</string>
+    <string name="ethernet_label">Ethernet</string>
+    <string name="status_bar_settings_auto_brightness_label">AUTO</string>
+    <string name="status_bar_network_name_separator">|</string>
+    <string name="status_bar_settings_signal_meter_disconnected">Nincs internet kapcsolat</string>
+    <string name="status_bar_settings_signal_meter_wifi_nossid">Wi-Fi csatlakozva</string>
+    <string name="quick_settings_airplane_on_label">Repülőgép be</string>
+    <string name="quick_settings_airplane_off_label">Repülőgép ki</string>
+    <string name="quick_settings_battery_charging_label">Töltés, %d%%</string>
+    <string name="quick_settings_battery_charged_label">Feltöltve</string>
+    <string name="quick_settings_bluetooth_label">Bluetooth Be</string>
+    <string name="quick_settings_bluetooth_label_connected">Csatlakozva</string>
+    <string name="quick_settings_bluetooth_label_turnon">Bekapcsolás</string>
+    <string name="quick_settings_bluetooth_label_turnoff">Kikapcsolás</string>
+    <string name="quick_settings_bluetooth_label_error">Hiba</string>
+    <string name="quick_settings_bluetooth_multiple_devices_label">Bluetooth (%d Devices)</string>
+    <string name="quick_settings_bluetooth_off_label">Bluetooth Ki</string>
+    <string name="quick_settings_brightness_labellow">Alacsony fényerő</string>
+    <string name="quick_settings_brightness_labelmid">Közepes fényerő</string>
+    <string name="quick_settings_brightness_label">Fényerő</string>
+    <string name="quick_settings_rotation_unlocked_label">Auto Fogatás</string>
+    <string name="quick_settings_rotation_locked_label"> Forgatás Lezárva</string>
+    <string name="quick_settings_ime_label">Beviteli mód</string>
+    <string name="quick_settings_location_label">Hely használata</string>
+    <string name="quick_settings_media_device_label">Média eszköz</string>
+    <string name="quick_settings_rssi_label">RSSI</string>
+    <string name="quick_settings_rssi_emergency_only">Csak segélyhívás</string>
+    <string name="quick_settings_settings_label"> Beállítások</string>
+    <string name="quick_settings_time_label">Idő</string>
+    <string name="quick_settings_user_label">ME</string>
+    <string name="quick_settings_wifiap_label">Wi-Fi Hotspot Be</string>
+    <string name="quick_settings_wifiap_off_label">Wi-Fi Hotspot Ki</string>
+    <string name="quick_settings_wifi_label">Wi-Fi Be</string>
+    <string name="quick_settings_wifi_label_connected">Csatlakozva</string>
+    <string name="quick_settings_wifi_label_turnon">Bekapcsolás</string>
+    <string name="quick_settings_wifi_label_turnoff">Kikapcsolás</string>
+    <string name="quick_settings_wifi_label_error">Hiba</string>
+    <string name="quick_settings_wifi_not_connected">Nincs csatlakozva</string>
+    <string name="quick_settings_wifi_no_network">Nincs hálózat</string>
+    <string name="quick_settings_wifi_off_label">Wi-Fi Ki</string>
+    <string name="quick_settings_wifi_display_label">Wi-Fi Megjelenítése</string>
+    <string name="quick_settings_wifi_display_no_connection_label">Wireless  Megjelenítése</string>
+    <string name="quick_settings_profile_label">Profil</string>
+    <string name="quick_settings_brightness_dialog_title">Fényerő</string>
+    <string name="quick_settings_brightness_dialog_auto_brightness_label">AUTO</string>
+    <string name="quick_settings_sleep">Alvás</string>
+    <string name="quick_settings_lockon">Zár engedélyezése</string>
+    <string name="quick_settings_lockoff">Zár kikapcsolása</string>
+    <string name="quick_settings_screenshot">CMXhots</string>
+    <string name="quick_settings_gps">GPS</string>
+    <string name="quick_settings_gps_search">Keresés</string>
+    <string name="quick_settings_screen_sleep">Alvás indítása</string>
+    <string name="quick_settings_ringer_on">Hang be</string>
+    <string name="quick_settings_ringer_off">Hang ki</string>
+    <string name="quick_settings_vibration_on">Rezgés be</string>
+    <string name="quick_settings_vibration_off">Rezgés ki</string>
+    <string name="quick_settings_label_enabled">Be</string>
+    <string name="quick_settings_label_disabled">Ki</string>
+    <string name="quick_settings_ringer_onn">Csengés be</string>
+    <string name="quick_settings_vibrate">Rezgés ki</string>
+    <string name="quick_settings_ringer_offf">Csengés ki</string>
+    <string name="quick_settings_ringer_silent">Csendes</string>
+    <string name="quick_settings_ringer_vibrate">Csengés és rezgés</string>
+    <string name="quick_settings_lockscreen">Zárképernyő</string>
+    <string name="quick_settings_network_type">Hálózati mód</string>
+    <string name="quick_settings_report_bug">Hiba jejentése</string>
+    <string name="quick_settings_sync">Szinkron</string>
+    <string name="quick_settings_torch">Zseblámpa</string>
+    <string name="quick_settings_nfc">NFC</string>
+    <string name="quick_settings_screen_timeout">Időkorlát</string>
+    <string name="quick_settings_screen_timeout_summary">%1$d %2$s</string>
+    <string name="quick_settings_notif_enable_label">Értesítés Be</string>
+    <string name="quick_settings_notif_disable_label">Értesítés Ki</string>
+    <string name="quick_settings_powermenu_label">Power menü</string>
+    <string name="status_bar_settings_battery_meter_format">%d%%</string>
+    <string name="status_bar_settings_battery_meter_min_format">%d</string>
+    <string name="widget_wifi_title">Wi-Fi</string>
+    <string name="widget_wifiap_title">Hot Spot</string>
+    <string name="widget_gps_title">Gps</string>
+    <string name="widget_sync_title">Sync</string>
+    <string name="widget_bt_title">Bluetooth</string>
+    <string name="widget_mobile_data_title">Mobil adat</string>
+    <string name="widget_auto_rotate_title">Auto forgatás</string>
+    <string name="widget_airplane_title">Repülőgép mód</string>
+    <string name="default_qwik_widgets">váltásMobileData|toggleAirplaneMode|toggleWifi|toggleBluetooth|toggleAutoRotate|toggleSync|toggleWifiAp|toggleGps</string>
+
 </resources>
