@@ -17,11 +17,13 @@
 
 package com.android.systemui.statusbar;
 
+import android.content.BroadcastReceiver;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.database.ContentObserver;
@@ -203,10 +205,10 @@ public class PieControl implements OnClickListener {
         public void onChange(boolean selfChange) {
             ContentResolver resolver = mContext.getContentResolver();
             mMenuVal = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU, 3);
-            mMenuVal1 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU1, 0);
-            mMenuVal2 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU2, 1);
-            mMenuVal3 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU3, 4);
-            mMenuVal4 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU4, 2);
+            mMenuVal1 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU1, 10);
+            mMenuVal2 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU2, 10);
+            mMenuVal3 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU3, 10);
+            mMenuVal4 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU4, 10);
             mMenuAllowLevel = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_MENU_LEVEL, 0) == 1;
             mMenuApp = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_MENU_APP, 0) == 1;
             mMenuString1 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_MENU_APP1);
@@ -253,10 +255,10 @@ public class PieControl implements OnClickListener {
         public void onChange(boolean selfChange) {
             ContentResolver resolver = mContext.getContentResolver();
             mSearchVal = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH, 4);
-            mSearchVal1 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH1, 6);
-            mSearchVal2 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH2, 5);
-            mSearchVal3 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH3, 3);
-            mSearchVal4 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH4, 0);
+            mSearchVal1 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH1, 10);
+            mSearchVal2 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH2, 10);
+            mSearchVal3 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH3, 10);
+            mSearchVal4 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH4, 10);
             mSearchAllowLevel = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_SEARCH_LEVEL, 0) == 1;
             mSearchApp = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_SEARCH_APP, 0) == 1;
             mSearchString1 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_SEARCH_APP1);
@@ -303,10 +305,10 @@ public class PieControl implements OnClickListener {
         public void onChange(boolean selfChange) {
             ContentResolver resolver = mContext.getContentResolver();
             mRecentVal = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT, 2);
-            mRecentVal1 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT1, 7);
-            mRecentVal2 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT2, 9);
-            mRecentVal3 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT3, 4);
-            mRecentVal4 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT4, 8);
+            mRecentVal1 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT1, 10);
+            mRecentVal2 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT2, 10);
+            mRecentVal3 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT3, 10);
+            mRecentVal4 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT4, 10);
             mRecentAllowLevel = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_RECENT_LEVEL, 0) == 1;
             mRecentApp = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_RECENT_APP, 0) == 1;
             mRecentString1 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_RECENT_APP1);
@@ -353,10 +355,10 @@ public class PieControl implements OnClickListener {
         public void onChange(boolean selfChange) {
             ContentResolver resolver = mContext.getContentResolver();
             mHomeVal = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME, 1);
-            mHomeVal1 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME1, 0);
-            mHomeVal2 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME2, 2);
-            mHomeVal3 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME3, 4);
-            mHomeVal4 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME4, 3);
+            mHomeVal1 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME1, 10);
+            mHomeVal2 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME2, 10);
+            mHomeVal3 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME3, 10);
+            mHomeVal4 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME4, 10);
             mHomeAllowLevel = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_HOME_LEVEL, 0) == 1;
             mHomeApp = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_HOME_APP, 0) == 1;
             mHomeString1 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_HOME_APP1);
@@ -403,10 +405,10 @@ public class PieControl implements OnClickListener {
         public void onChange(boolean selfChange) {
             ContentResolver resolver = mContext.getContentResolver();
             mBackVal = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK, 0);
-            mBackVal1 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK1, 3);
-            mBackVal2 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK2, 2);
-            mBackVal3 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK3, 4);
-            mBackVal4 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK4, 1);
+            mBackVal1 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK1, 10);
+            mBackVal2 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK2, 10);
+            mBackVal3 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK3, 10);
+            mBackVal4 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK4, 10);
             mBackAllowLevel = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_BACK_LEVEL, 0) == 1;
             mBackApp = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_BACK_APP, 0) == 1;
             mBackString1 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_BACK_APP1);
@@ -416,6 +418,16 @@ public class PieControl implements OnClickListener {
             populateBack();
         }
     }
+
+    private final BroadcastReceiver mSettingsReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(Intent.ACTION_CONFIGURATION_CHANGED)) {
+                repopulateMenu();
+            }
+        }
+    };
 
     public PieControl(Context context, PieControlPanel panel) {
         mContext = context;
@@ -438,6 +450,9 @@ public class PieControl implements OnClickListener {
 
         BackObserver backObserver = new BackObserver(mHandler);
         backObserver.observe();
+
+        context.registerReceiver(mSettingsReceiver, 
+                new IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED));
     }
 
     public PieMenu getPieMenu() {
@@ -489,22 +504,22 @@ public class PieControl implements OnClickListener {
 
     private void populateMenus() {
         mMenu = makeItem(imaged(mMenuVal), 1, mWhois(mMenuVal), false);
-        if (getAllowApp(mMenuApp, mMenuString1)) {
+        if (getAllowApp(mMenuApp, mMenuString1, mMenuVal1)) {
             mMenu1 = makeItem(getDrawable(mMenuString1), 1, mMenuString1, false);
         } else {
             mMenu1 = makeItem(imaged(mMenuVal1), 1, mWhois(mMenuVal1), false);
         }
-        if (getAllowApp(mMenuApp, mMenuString2)) {
+        if (getAllowApp(mMenuApp, mMenuString2, mMenuVal2)) {
             mMenu2 = makeItem(getDrawable(mMenuString2), 1, mMenuString2, false);
         } else {
             mMenu2 = makeItem(imaged(mMenuVal2), 1, mWhois(mMenuVal2), false);
         }
-        if (getAllowApp(mMenuApp, mMenuString3)) {
+        if (getAllowApp(mMenuApp, mMenuString3, mMenuVal3)) {
             mMenu3 = makeItem(getDrawable(mMenuString3), 1, mMenuString3, false);
         } else {
             mMenu3 = makeItem(imaged(mMenuVal3), 1, mWhois(mMenuVal3), false);
         }
-        if (getAllowApp(mMenuApp, mMenuString4)) {
+        if (getAllowApp(mMenuApp, mMenuString4, mMenuVal4)) {
             mMenu4 = makeItem(getDrawable(mMenuString4), 1, mMenuString4, false);
         } else {
             mMenu4 = makeItem(imaged(mMenuVal4), 1, mWhois(mMenuVal4), false);
@@ -518,26 +533,33 @@ public class PieControl implements OnClickListener {
         } else {
             mMenu.resetItem();
         }
+
+        mMenu1.setAppEnabled(getAllowApp(mMenuApp, mMenuString1, mMenuVal1));
+        mMenu2.setAppEnabled(getAllowApp(mMenuApp, mMenuString2, mMenuVal2));
+        mMenu3.setAppEnabled(getAllowApp(mMenuApp, mMenuString3, mMenuVal3));
+        mMenu4.setAppEnabled(getAllowApp(mMenuApp, mMenuString4, mMenuVal4));
+
+        repopulateMenu();
     }
 
     private void populateSearch() {
         mSearch = makeItem(imaged(mSearchVal), 1, mWhois(mSearchVal), false);
-        if (getAllowApp(mSearchApp, mSearchString1)) {
+        if (getAllowApp(mSearchApp, mSearchString1, mSearchVal1)) {
             mSearch1 = makeItem(getDrawable(mSearchString1), 1, mSearchString1, false);
         } else {
             mSearch1 = makeItem(imaged(mSearchVal1), 1, mWhois(mSearchVal1), false);
         }
-        if (getAllowApp(mSearchApp, mSearchString2)) {
+        if (getAllowApp(mSearchApp, mSearchString2, mSearchVal2)) {
             mSearch2 = makeItem(getDrawable(mSearchString2), 1, mSearchString2, false);
         } else {
             mSearch2 = makeItem(imaged(mSearchVal2), 1, mWhois(mSearchVal2), false);
         }
-        if (getAllowApp(mSearchApp, mSearchString3)) {
+        if (getAllowApp(mSearchApp, mSearchString3, mSearchVal3)) {
             mSearch3 = makeItem(getDrawable(mSearchString3), 1, mSearchString3, false);
         } else {
             mSearch3 = makeItem(imaged(mSearchVal3), 1, mWhois(mSearchVal3), false);
         }
-        if (getAllowApp(mSearchApp, mSearchString4)) {
+        if (getAllowApp(mSearchApp, mSearchString4, mSearchVal4)) {
             mSearch4 = makeItem(getDrawable(mSearchString4), 1, mSearchString4, false);
         } else {
             mSearch4 = makeItem(imaged(mSearchVal4), 1, mWhois(mSearchVal4), false);
@@ -551,26 +573,33 @@ public class PieControl implements OnClickListener {
         } else {
             mSearch.resetItem();
         }
+
+        mSearch1.setAppEnabled(getAllowApp(mSearchApp, mSearchString1, mSearchVal1));
+        mSearch2.setAppEnabled(getAllowApp(mSearchApp, mSearchString2, mSearchVal2));
+        mSearch3.setAppEnabled(getAllowApp(mSearchApp, mSearchString3, mSearchVal3));
+        mSearch4.setAppEnabled(getAllowApp(mSearchApp, mSearchString4, mSearchVal4));
+
+        repopulateMenu();
     }
 
     private void populateRecent() {
         mRecent = makeItem(imaged(mRecentVal), 1, mWhois(mRecentVal), false);
-        if (getAllowApp(mRecentApp, mRecentString1)) {
+        if (getAllowApp(mRecentApp, mRecentString1, mRecentVal1)) {
             mRecent1 = makeItem(getDrawable(mRecentString1), 1, mRecentString1, false);
         } else {
             mRecent1 = makeItem(imaged(mRecentVal1), 1, mWhois(mRecentVal1), false);
         }
-        if (getAllowApp(mRecentApp, mRecentString2)) {
+        if (getAllowApp(mRecentApp, mRecentString2, mRecentVal2)) {
             mRecent2 = makeItem(getDrawable(mRecentString2), 1, mRecentString2, false);
         } else {
             mRecent2 = makeItem(imaged(mRecentVal2), 1, mWhois(mRecentVal2), false);
         }
-        if (getAllowApp(mRecentApp, mRecentString3)) {
+        if (getAllowApp(mRecentApp, mRecentString3, mRecentVal3)) {
             mRecent3 = makeItem(getDrawable(mRecentString3), 1, mRecentString3, false);
         } else {
             mRecent3 = makeItem(imaged(mRecentVal3), 1, mWhois(mRecentVal3), false);
         }
-        if (getAllowApp(mRecentApp, mRecentString4)) {
+        if (getAllowApp(mRecentApp, mRecentString4, mRecentVal4)) {
             mRecent4 = makeItem(getDrawable(mRecentString4), 1, mRecentString4, false);
         } else {
             mRecent4 = makeItem(imaged(mRecentVal4), 1, mWhois(mRecentVal4), false);
@@ -584,26 +613,33 @@ public class PieControl implements OnClickListener {
         } else {
             mRecent.resetItem();
         }
+
+        mRecent1.setAppEnabled(getAllowApp(mRecentApp, mRecentString1, mRecentVal1));
+        mRecent2.setAppEnabled(getAllowApp(mRecentApp, mRecentString2, mRecentVal2));
+        mRecent3.setAppEnabled(getAllowApp(mRecentApp, mRecentString3, mRecentVal3));
+        mRecent4.setAppEnabled(getAllowApp(mRecentApp, mRecentString4, mRecentVal4));
+
+        repopulateMenu();
     }
 
     private void populateHome() {
         mHome = makeItem(imaged(mHomeVal), 1, mWhois(mHomeVal), false);
-        if (getAllowApp(mHomeApp, mHomeString1)) {
+        if (getAllowApp(mHomeApp, mHomeString1, mHomeVal1)) {
             mHome1 = makeItem(getDrawable(mHomeString1), 1, mHomeString1, false);
         } else {
             mHome1 = makeItem(imaged(mHomeVal1), 1, mWhois(mHomeVal1), false);
         }
-        if (getAllowApp(mHomeApp, mHomeString2)) {
+        if (getAllowApp(mHomeApp, mHomeString2, mHomeVal2)) {
             mHome2 = makeItem(getDrawable(mHomeString2), 1, mHomeString2, false);
         } else {
             mHome2 = makeItem(imaged(mHomeVal2), 1, mWhois(mHomeVal2), false);
         }
-        if (getAllowApp(mHomeApp, mHomeString3)) {
+        if (getAllowApp(mHomeApp, mHomeString3, mHomeVal3)) {
             mHome3 = makeItem(getDrawable(mHomeString3), 1, mHomeString3, false);
         } else {
             mHome3 = makeItem(imaged(mHomeVal3), 1, mWhois(mHomeVal3), false);
         }
-        if (getAllowApp(mHomeApp, mHomeString4)) {
+        if (getAllowApp(mHomeApp, mHomeString4, mHomeVal4)) {
             mHome4 = makeItem(getDrawable(mHomeString4), 1, mHomeString4, false);
         } else {
             mHome4 = makeItem(imaged(mHomeVal4), 1, mWhois(mHomeVal4), false);
@@ -617,26 +653,33 @@ public class PieControl implements OnClickListener {
         } else {
             mHome.resetItem();
         }
+
+        mHome1.setAppEnabled(getAllowApp(mHomeApp, mHomeString1, mHomeVal1));
+        mHome2.setAppEnabled(getAllowApp(mHomeApp, mHomeString2, mHomeVal2));
+        mHome3.setAppEnabled(getAllowApp(mHomeApp, mHomeString3, mHomeVal3));
+        mHome4.setAppEnabled(getAllowApp(mHomeApp, mHomeString4, mHomeVal4));
+
+        repopulateMenu();
     }
 
     private void populateBack() {
         mBack = makeItem(imaged(mBackVal), 1, mWhois(mBackVal), false);
-        if (getAllowApp(mBackApp, mBackString1)) {
+        if (getAllowApp(mBackApp, mBackString1, mBackVal1)) {
             mBack1 = makeItem(getDrawable(mBackString1), 1, mBackString1, false);
         } else {
             mBack1 = makeItem(imaged(mBackVal1), 1, mWhois(mBackVal1), false);
         }
-        if (getAllowApp(mBackApp, mBackString2)) {
+        if (getAllowApp(mBackApp, mBackString2, mBackVal2)) {
             mBack2 = makeItem(getDrawable(mBackString2), 1, mBackString2, false);
         } else {
             mBack2 = makeItem(imaged(mBackVal2), 1, mWhois(mBackVal2), false);
         }
-        if (getAllowApp(mBackApp, mBackString3)) {
+        if (getAllowApp(mBackApp, mBackString3, mBackVal3)) {
             mBack3 = makeItem(getDrawable(mBackString3), 1, mBackString3, false);
         } else {
             mBack3 = makeItem(imaged(mBackVal3), 1, mWhois(mBackVal3), false);
         }
-        if (getAllowApp(mBackApp, mBackString4)) {
+        if (getAllowApp(mBackApp, mBackString4, mBackVal4)) {
             mBack4 = makeItem(getDrawable(mBackString4), 1, mBackString4, false);
         } else {
             mBack4 = makeItem(imaged(mBackVal4), 1, mWhois(mBackVal4), false);
@@ -650,10 +693,17 @@ public class PieControl implements OnClickListener {
         } else {
             mBack.resetItem();
         }
+
+        mBack1.setAppEnabled(getAllowApp(mBackApp, mBackString1, mBackVal1));
+        mBack2.setAppEnabled(getAllowApp(mBackApp, mBackString2, mBackVal2));
+        mBack3.setAppEnabled(getAllowApp(mBackApp, mBackString3, mBackVal3));
+        mBack4.setAppEnabled(getAllowApp(mBackApp, mBackString4, mBackVal4));
+
+        repopulateMenu();
     }
 
-    private boolean getAllowApp(boolean allow, String uri) {
-        if (allow && uri != null) {
+    private boolean getAllowApp(boolean allow, String uri, int whats) {
+        if (allow && (uri != null) && (whats == 11)) {
             return true;
         }
         return false;
@@ -670,6 +720,22 @@ public class PieControl implements OnClickListener {
         mPie.addItem(mHome);
         // level 4
         mPie.addItem(mBack);
+    }
+
+    public void repopulateMenu() {
+        if (mPie != null) {
+            mPie.resetItem();
+            // base
+            mPie.addItem(mMenu);
+            // level 1
+            mPie.addItem(mSearch);
+            // level 2
+            mPie.addItem(mRecent);
+            // level 3
+            mPie.addItem(mHome);
+            // level 4
+            mPie.addItem(mBack);
+         }
     }
 
     private int imaged(int whats) {
@@ -731,12 +797,18 @@ public class PieControl implements OnClickListener {
                 PackageManager pm = mContext.getPackageManager();
                 ActivityInfo ai = i.resolveActivityInfo(pm, PackageManager.GET_ACTIVITIES);
                 if (ai != null) {
-                    return ai.loadIcon(pm);
+                    return resize(ai.loadIcon(pm));
                 }
             } catch (URISyntaxException e) {
             }
         }
         return null;
+    }
+
+    private Drawable resize(Drawable image) {
+        Bitmap d = ((BitmapDrawable)image).getBitmap();
+        Bitmap bitmapOrig = Bitmap.createScaledBitmap(d, 50, 50, false);
+        return new BitmapDrawable(bitmapOrig);
     }
 
     @Override
@@ -748,7 +820,6 @@ public class PieControl implements OnClickListener {
 
     public PieItem makeItem(Drawable image, int l, String name, boolean lesser) {
         ImageView view = new ImageView(mContext);
-        view.setImageResource(0);
         view.setImageDrawable(image);
         view.setMinimumWidth(mItemSize);
         view.setMinimumHeight(mItemSize);
@@ -761,7 +832,6 @@ public class PieControl implements OnClickListener {
 
     public PieItem makeItem(int image, int l, String name, boolean lesser) {
         ImageView view = new ImageView(mContext);
-        view.setImageDrawable(null);
         view.setImageResource(image);
         view.setMinimumWidth(mItemSize);
         view.setMinimumHeight(mItemSize);

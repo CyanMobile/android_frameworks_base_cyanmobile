@@ -51,6 +51,7 @@ public class PieItem {
     private String mName;
     private Path mPath;
     private boolean mIsLesser;
+    private boolean mIsAppEnable;
 
     private int mLastButtonColor;
 
@@ -136,6 +137,10 @@ public class PieItem {
         mEnabled = enabled;
     }
 
+    public void setAppEnabled(boolean appEnabled) {
+        mIsAppEnable = appEnabled;
+    }
+
     public void setSelected(boolean s) {
         mSelected = s;
         if (mView != null) {
@@ -187,6 +192,7 @@ public class PieItem {
     }
 
     public void setColor(int color) {
+        if (mIsAppEnable) return;
         ImageView imageView = ((ImageView) mView);
         Drawable drawable = imageView.getDrawable();
         drawable.setColorFilter(color, Mode.SRC_ATOP);

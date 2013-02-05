@@ -576,10 +576,11 @@ public class PieMenu extends FrameLayout {
         }
     }
 
-    public void clearItems() {
-        if (!mItems.isEmpty()) {
-            mItems.clear();
+    public void resetItem() {
+        if (mItems != null) {
+            mItems = null;
         }
+        mItems = new ArrayList<PieItem>();
     }
 
     public void show(boolean show) {
