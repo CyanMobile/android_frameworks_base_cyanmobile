@@ -513,7 +513,7 @@ public class ImageView extends View {
                             mContext.getContentResolver().getResourceId(mUri);
                     d = r.r.getDrawable(r.id);
                 } catch (Exception e) {
-                    Log.w("ImageView", "Unable to open content: " + mUri, e);
+                    //Log.w("ImageView", "Unable to open content: " + mUri, e);
                 }
             } else if (ContentResolver.SCHEME_CONTENT.equals(scheme)
                     || ContentResolver.SCHEME_FILE.equals(scheme)) {
@@ -522,7 +522,7 @@ public class ImageView extends View {
                         mContext.getContentResolver().openInputStream(mUri),
                         null);
                 } catch (Exception e) {
-                    Log.w("ImageView", "Unable to open content: " + mUri, e);
+                    //Log.w("ImageView", "Unable to open content: " + mUri, e);
                 }
             } else {
                 d = Drawable.createFromPath(mUri.toString());

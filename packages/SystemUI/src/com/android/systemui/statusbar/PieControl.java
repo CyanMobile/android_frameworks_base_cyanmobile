@@ -174,45 +174,45 @@ public class PieControl implements OnClickListener {
 
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_MENU), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_MENU1), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_MENU2), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_MENU3), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_MENU4), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_MENU_LEVEL), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_MENU_APP), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_MENU_APP1), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_MENU_APP2), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_MENU_APP3), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_MENU_APP4), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_MENU), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_MENU1), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_MENU2), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_MENU3), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_MENU4), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_MENU_LEVEL), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_MENU_APP), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_MENU_APP1), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_MENU_APP2), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_MENU_APP3), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_MENU_APP4), false, this);
             onChange(true);
         }
 
         @Override
         public void onChange(boolean selfChange) {
             ContentResolver resolver = mContext.getContentResolver();
-            mMenuVal = 3; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU, 2);
-            mMenuVal1 = 0; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU1, 0);
-            mMenuVal2 = 1; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU2, 1);
-            mMenuVal3 = 4; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU3, 4);
-            mMenuVal4 = 2; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU4, 2);
-            mMenuAllowLevel = false; //Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_MENU_LEVEL, 0) == 1;
-            mMenuApp = false; //Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_MENU_APP, 0) == 1;
-            mMenuString1 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_MENU_APP1);
-            mMenuString2 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_MENU_APP2);
-            mMenuString3 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_MENU_APP3);
-            mMenuString4 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_MENU_APP4);
+            mMenuVal = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU, 3);
+            mMenuVal1 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU1, 0);
+            mMenuVal2 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU2, 1);
+            mMenuVal3 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU3, 4);
+            mMenuVal4 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_MENU4, 2);
+            mMenuAllowLevel = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_MENU_LEVEL, 0) == 1;
+            mMenuApp = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_MENU_APP, 0) == 1;
+            mMenuString1 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_MENU_APP1);
+            mMenuString2 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_MENU_APP2);
+            mMenuString3 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_MENU_APP3);
+            mMenuString4 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_MENU_APP4);
             populateMenus();
         }
     }
@@ -224,45 +224,45 @@ public class PieControl implements OnClickListener {
 
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_SEARCH), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_SEARCH1), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_SEARCH2), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_SEARCH3), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_SEARCH4), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_SEARCH_LEVEL), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_SEARCH_APP), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_SEARCH_APP1), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_SEARCH_APP2), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_SEARCH_APP3), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_SEARCH_APP4), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_SEARCH), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_SEARCH1), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_SEARCH2), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_SEARCH3), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_SEARCH4), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_SEARCH_LEVEL), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_SEARCH_APP), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_SEARCH_APP1), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_SEARCH_APP2), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_SEARCH_APP3), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_SEARCH_APP4), false, this);
             onChange(true);
         }
 
         @Override
         public void onChange(boolean selfChange) {
             ContentResolver resolver = mContext.getContentResolver();
-            mSearchVal = 4; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH, 4);
-            mSearchVal1 = 6; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH1, 6);
-            mSearchVal2 = 5; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH2, 5);
-            mSearchVal3 = 3; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH3, 3);
-            mSearchVal4 = 0; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH4, 0);
-            mSearchAllowLevel = false; //Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_SEARCH_LEVEL, 0) == 1;
-            mSearchApp = false; //Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_SEARCH_APP, 0) == 1;
-            mSearchString1 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_SEARCH_APP1);
-            mSearchString2 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_SEARCH_APP2);
-            mSearchString3 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_SEARCH_APP3);
-            mSearchString4 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_SEARCH_APP4);
+            mSearchVal = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH, 4);
+            mSearchVal1 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH1, 6);
+            mSearchVal2 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH2, 5);
+            mSearchVal3 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH3, 3);
+            mSearchVal4 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_SEARCH4, 0);
+            mSearchAllowLevel = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_SEARCH_LEVEL, 0) == 1;
+            mSearchApp = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_SEARCH_APP, 0) == 1;
+            mSearchString1 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_SEARCH_APP1);
+            mSearchString2 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_SEARCH_APP2);
+            mSearchString3 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_SEARCH_APP3);
+            mSearchString4 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_SEARCH_APP4);
             populateSearch();
         }
     }
@@ -274,45 +274,45 @@ public class PieControl implements OnClickListener {
 
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_RECENT), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_RECENT1), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_RECENT2), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_RECENT3), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_RECENT4), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_RECENT_LEVEL), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_RECENT_APP), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_RECENT_APP1), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_RECENT_APP2), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_RECENT_APP3), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_RECENT_APP4), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_RECENT), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_RECENT1), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_RECENT2), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_RECENT3), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_RECENT4), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_RECENT_LEVEL), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_RECENT_APP), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_RECENT_APP1), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_RECENT_APP2), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_RECENT_APP3), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_RECENT_APP4), false, this);
             onChange(true);
         }
 
         @Override
         public void onChange(boolean selfChange) {
             ContentResolver resolver = mContext.getContentResolver();
-            mRecentVal = 2; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT, 3);
-            mRecentVal1 = 7; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT1, 7);
-            mRecentVal2 = 9; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT2, 9);
-            mRecentVal3 = 4; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT3, 4);
-            mRecentVal4 = 8; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT4, 8);
-            mRecentAllowLevel = false; //Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_RECENT_LEVEL, 0) == 1;
-            mRecentApp = false; //Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_RECENT_APP, 0) == 1;
-            mRecentString1 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_RECENT_APP1);
-            mRecentString2 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_RECENT_APP2);
-            mRecentString3 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_RECENT_APP3);
-            mRecentString4 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_RECENT_APP4);
+            mRecentVal = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT, 2);
+            mRecentVal1 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT1, 7);
+            mRecentVal2 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT2, 9);
+            mRecentVal3 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT3, 4);
+            mRecentVal4 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_RECENT4, 8);
+            mRecentAllowLevel = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_RECENT_LEVEL, 0) == 1;
+            mRecentApp = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_RECENT_APP, 0) == 1;
+            mRecentString1 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_RECENT_APP1);
+            mRecentString2 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_RECENT_APP2);
+            mRecentString3 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_RECENT_APP3);
+            mRecentString4 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_RECENT_APP4);
             populateRecent();
         }
     }
@@ -324,45 +324,45 @@ public class PieControl implements OnClickListener {
 
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_HOME), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_HOME1), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_HOME2), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_HOME3), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_HOME4), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_HOME_LEVEL), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_HOME_APP), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_HOME_APP1), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_HOME_APP2), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_HOME_APP3), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_HOME_APP4), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_HOME), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_HOME1), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_HOME2), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_HOME3), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_HOME4), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_HOME_LEVEL), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_HOME_APP), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_HOME_APP1), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_HOME_APP2), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_HOME_APP3), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_HOME_APP4), false, this);
             onChange(true);
         }
 
         @Override
         public void onChange(boolean selfChange) {
             ContentResolver resolver = mContext.getContentResolver();
-            mHomeVal = 1; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME, 1);
-            mHomeVal1 = 0; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME1, 0);
-            mHomeVal2 = 2; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME2, 2);
-            mHomeVal3 = 4; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME3, 4);
-            mHomeVal4 = 3; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME4, 3);
-            mHomeAllowLevel = false; //Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_HOME_LEVEL, 0) == 1;
-            mHomeApp = false; //Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_HOME_APP, 0) == 1;
-            mHomeString1 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_HOME_APP1);
-            mHomeString2 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_HOME_APP2);
-            mHomeString3 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_HOME_APP3);
-            mHomeString4 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_HOME_APP4);
+            mHomeVal = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME, 1);
+            mHomeVal1 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME1, 0);
+            mHomeVal2 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME2, 2);
+            mHomeVal3 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME3, 4);
+            mHomeVal4 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_HOME4, 3);
+            mHomeAllowLevel = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_HOME_LEVEL, 0) == 1;
+            mHomeApp = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_HOME_APP, 0) == 1;
+            mHomeString1 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_HOME_APP1);
+            mHomeString2 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_HOME_APP2);
+            mHomeString3 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_HOME_APP3);
+            mHomeString4 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_HOME_APP4);
             populateHome();
         }
     }
@@ -374,45 +374,45 @@ public class PieControl implements OnClickListener {
 
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_BACK), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_BACK1), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_BACK2), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_BACK3), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_BUTTON_BACK4), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_BACK_LEVEL), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_BACK_APP), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_BACK_APP1), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_BACK_APP2), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_BACK_APP3), false, this);
-            //resolver.registerContentObserver(
-            //        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_BACK_APP4), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_BACK), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_BACK1), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_BACK2), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_BACK3), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_BUTTON_BACK4), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_BACK_LEVEL), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_ENABLE_BUTTON_BACK_APP), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_BACK_APP1), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_BACK_APP2), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_BACK_APP3), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CUSTOM_BUTTON_BACK_APP4), false, this);
             onChange(true);
         }
 
         @Override
         public void onChange(boolean selfChange) {
             ContentResolver resolver = mContext.getContentResolver();
-            mBackVal = 0; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK, 0);
-            mBackVal1 = 1; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK1, 3);
-            mBackVal2 = 2; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK2, 2);
-            mBackVal3 = 4; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK3, 4);
-            mBackVal4 = 3; //Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK4, 1);
-            mBackAllowLevel = false; //Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_BACK_LEVEL, 0) == 1;
-            mBackApp = false; //Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_BACK_APP, 0) == 1;
-            mBackString1 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_BACK_APP1);
-            mBackString2 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_BACK_APP2);
-            mBackString3 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_BACK_APP3);
-            mBackString4 = null; //Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_BACK_APP4);
+            mBackVal = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK, 0);
+            mBackVal1 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK1, 3);
+            mBackVal2 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK2, 2);
+            mBackVal3 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK3, 4);
+            mBackVal4 = Settings.System.getInt(resolver, Settings.System.PIE_BUTTON_BACK4, 1);
+            mBackAllowLevel = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_BACK_LEVEL, 0) == 1;
+            mBackApp = Settings.System.getInt(resolver, Settings.System.PIE_ENABLE_BUTTON_BACK_APP, 0) == 1;
+            mBackString1 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_BACK_APP1);
+            mBackString2 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_BACK_APP2);
+            mBackString3 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_BACK_APP3);
+            mBackString4 = Settings.System.getString(resolver, Settings.System.PIE_CUSTOM_BUTTON_BACK_APP4);
             populateBack();
         }
     }

@@ -328,11 +328,13 @@ public final class ShutdownThread extends Thread {
                 SystemProperties.set(SHUTDOWN_ACTION_PROPERTY, reason);
             }
 
-        Log.i(TAG, "Sending shutdown broadcast...");
+            Log.i(TAG, "Sending shutdown broadcast...");
 
             // First send the high-level shut down broadcast.
             mActionDone = false;
-            mContext.sendOrderedBroadcast(new Intent(Intent.ACTION_SHUTDOWN), null,
+            Intent intent = new Intent(Intent.ACTION_SHUTDOWN);
+            intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+            mContext.sendOrderedBroadcast(intent, null,
                     br, mHandler, 0, null, null);
 
             final long endTime = SystemClock.elapsedRealtime() + MAX_BROADCAST_TIME;

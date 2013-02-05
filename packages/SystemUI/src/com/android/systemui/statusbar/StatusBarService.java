@@ -374,6 +374,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private boolean mShowNotif = false;
     private boolean mFirstis = true;
     private boolean mNaviShow = true;
+    private boolean mPieEnable = true;
     private boolean mStatusBarReverse = false;
     private boolean mStatusBarTab = false;
     private boolean mStatusBarGrid = false;
@@ -489,6 +490,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.getUriFor(Settings.System.PIE_GRAVITY), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.PIE_TRIGGER), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_CONTROL_ENABLE), false, this);
             onChange(true);
         }
 
@@ -530,6 +533,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mBrightnessControl = !autoBrightness && Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_BRIGHTNESS_TOGGLE, 0) == 1;
             IntruderTime = Settings.System.getInt(resolver, Settings.System.STATUS_BAR_INTRUDER_TIME, INTRUDER_ALERT_DECAY_MS);
+            mPieEnable = (Settings.System.getInt(resolver, Settings.System.PIE_CONTROL_ENABLE, 1) == 1);
             updateColors();
             updateLayout();
             updateCarrierLabel();
@@ -720,6 +724,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mBrightnessControl = !autoBrightness && Settings.System.getInt(getContentResolver(),
                             Settings.System.STATUS_BAR_BRIGHTNESS_TOGGLE, 0) == 1;
         IntruderTime = Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_INTRUDER_TIME, INTRUDER_ALERT_DECAY_MS);
+        mPieEnable = (Settings.System.getInt(getContentResolver(), Settings.System.PIE_CONTROL_ENABLE, 1) == 1);
 
         if (!mStatusBarTab) {
             mExpandedView = (ExpandedView)View.inflate(context, R.layout.status_bar_expanded, null);
@@ -1441,7 +1446,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     private boolean showPie() {
-        return !mNaviShow;
+        return !mNaviShow && mPieEnable;
     }
 
     private void attachPies() {

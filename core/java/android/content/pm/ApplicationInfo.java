@@ -263,6 +263,15 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
     public static final int FLAG_EXTERNAL_STORAGE = 1<<18;
 
     /**
+     * Value for {@link #flags}: true when the application's window can be
+     * increased in size for extra large screens.  Corresponds to
+     * {@link android.R.styleable#AndroidManifestSupportsScreens_xlargeScreens
+     * android:xlargeScreens}.
+     * @hide
+     */
+    public static final int FLAG_SUPPORTS_XLARGE_SCREENS = 1<<19;
+
+    /**
      * Value for {@link #flags}: Set to true if the application is
      * currently installed on external/removable/unprotected storage.  Such
      * applications may not be available if their storage is not currently
@@ -271,15 +280,6 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
      * but its persistent data is not removed.
      */
     public static final int FLAG_SDEXT_STORAGE = 1<<20;
-
-    /**
-     * Value for {@link #flags}: true when the application's window can be
-     * increased in size for extra large screens.  Corresponds to
-     * {@link android.R.styleable#AndroidManifestSupportsScreens_xlargeScreens
-     * android:xlargeScreens}.
-     * @hide
-     */
-    public static final int FLAG_SUPPORTS_XLARGE_SCREENS = 1<<19;
 
     /**
      * Value for {@link #flags}: true if this application's package is in
@@ -510,6 +510,7 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
         manageSpaceActivityName = orig.manageSpaceActivityName;
         descriptionRes = orig.descriptionRes;
         isThemeable = orig.isThemeable;
+        backupAgentName = orig.backupAgentName;
     }
 
 
