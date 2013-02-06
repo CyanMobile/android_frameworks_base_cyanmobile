@@ -341,6 +341,10 @@ public interface IActivityManager extends IInterface {
     public void updatePersistentConfiguration(Configuration values) throws RemoteException;
     public long[] getProcessPss(int[] pids) throws RemoteException;
 
+    // This is not public because you need to be very careful in how you
+    // manage your activity to make sure it is always the uid you expect.
+    public int getLaunchedFromUid(IBinder activityToken) throws RemoteException;
+
     /*
      * Private non-Binder interfaces
      */
@@ -565,4 +569,5 @@ public interface IActivityManager extends IInterface {
     int GET_PROCESS_PSS_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+129;
     int KILL_ALL_BACKGROUND_PROCESSES_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+130;
     int GET_MY_MEMORY_STATE_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+131;
+    int GET_LAUNCHED_FROM_UID_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+132;
 }

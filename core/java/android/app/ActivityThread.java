@@ -202,6 +202,8 @@ public final class ActivityThread {
 
     static Handler sMainThreadHandler;  // set once in main()
 
+    Bundle mCoreSettings = null;
+
     private static final class ActivityClientRecord {
         IBinder token;
         int ident;
@@ -359,7 +361,6 @@ public final class ActivityThread {
         boolean persistent;
         Configuration config;
         boolean handlingProfiling;
-        Bundle coreSettings;
         public String toString() {
             return "AppBindData{appInfo=" + appInfo + "}";
         }
@@ -633,6 +634,8 @@ public final class ActivityThread {
                 ServiceManager.initServiceCache(services);
             }
 
+            setCoreSettings(coreSettings);
+
             AppBindData data = new AppBindData();
             data.processName = processName;
             data.appInfo = appInfo;
@@ -646,7 +649,6 @@ public final class ActivityThread {
             data.restrictedBackupMode = isRestrictedBackupMode;
             data.persistent = persistent;
             data.config = config;
-            data.coreSettings = coreSettings;
             queueOrSendMessage(H.BIND_APPLICATION, data);
         }
 
@@ -934,8 +936,8 @@ public final class ActivityThread {
             pw.println(String.format(format, objs));
         }
 
-        public void setCoreSettings(Bundle settings) {
-            queueOrSendMessage(H.SET_CORE_SETTINGS, settings);
+        public void setCoreSettings(Bundle coreSettings) {
+            queueOrSendMessage(H.SET_CORE_SETTINGS, coreSettings);
         }
 
         public void scheduleTrimMemory(int level) {
@@ -2909,10 +2911,8 @@ public final class ActivityThread {
     }
 
     private void handleSetCoreSettings(Bundle coreSettings) {
-        if (mBoundApplication != null) {
-            synchronized (mBoundApplication) {
-                mBoundApplication.coreSettings = coreSettings;
-            }
+        synchronized (mPackages) {
+            mCoreSettings = coreSettings;
         }
     }
 
@@ -2991,6 +2991,9 @@ public final class ActivityThread {
             r.activity.mConfigChangeFlags |= configChanges;
             if (finishing) {
                 r.activity.mFinished = true;
+            }
+            if (getNonConfigInstance) {
+                r.activity.mChangingConfigurations = true;
             }
             if (!r.paused) {
                 try {
@@ -4144,13 +4147,9 @@ public final class ActivityThread {
     }
 
     public int getIntCoreSetting(String key, int defaultValue) {
-        if (mBoundApplication == null) {
-            return defaultValue;
-        }
-        synchronized (mBoundApplication) {
-            Bundle coreSettings = mBoundApplication.coreSettings;
-            if (coreSettings != null) {
-                return coreSettings.getInt(key, defaultValue);
+        synchronized (mPackages) {
+            if (mCoreSettings != null) {
+                return mCoreSettings.getInt(key, defaultValue);
             } else {
                 return defaultValue;
             }

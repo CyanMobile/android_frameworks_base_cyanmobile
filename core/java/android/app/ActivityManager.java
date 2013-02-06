@@ -1334,6 +1334,49 @@ public class ActivityManager {
         }
     }
 
+    /** @hide */
+    public static int checkComponentPermission(String permission, int uid,
+            int reqUid, boolean exported) {
+        // Root, system server get to do everything.
+                // Root, system server and our own process get to do everything.
+        if (uid == 0 || uid == Process.SYSTEM_UID ||
+            !Process.supportsProcesses()) {
+            return PackageManager.PERMISSION_GRANTED;
+        }
+
+        // If there is a uid that owns whatever is being accessed, it has
+        // blanket access to it regardless of the permissions it requires.
+        if (reqUid >= 0 && uid == reqUid) {
+            return PackageManager.PERMISSION_GRANTED;
+        }
+
+        // If the target requires a specific UID, always fail for others.
+        /*if (reqUid >= 0 && uid != reqUid) {
+            Slog.w(TAG, "Permission denied: checkComponentPermission() reqUid=" + reqUid);
+            return PackageManager.PERMISSION_DENIED;
+        }*/
+
+        // If the target is not exported, then nobody else can get to it.
+        if (!exported) {
+            Slog.w(TAG, "Permission denied: checkComponentPermission() reqUid=" + reqUid);
+            return PackageManager.PERMISSION_DENIED;
+        }
+
+        if (permission == null) {
+            return PackageManager.PERMISSION_GRANTED;
+        }
+
+        try {
+            return AppGlobals.getPackageManager()
+                    .checkUidPermission(permission, uid);
+        } catch (RemoteException e) {
+            // Should never happen, but if it does... deny!
+            Slog.e(TAG, "PackageManager is dead?!?", e);
+        }
+
+        return PackageManager.PERMISSION_DENIED;
+    }
+
     /**
      * Returns the usage statistics of each installed package.
      *

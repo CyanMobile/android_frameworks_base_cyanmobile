@@ -472,7 +472,7 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             }
         });
 
-        (new MyPackageMonitor()).register(mContext, true);
+        (new MyPackageMonitor()).register(mContext, null, true);
 
         IntentFilter screenOnOffFilt = new IntentFilter();
         screenOnOffFilt.addAction(Intent.ACTION_SCREEN_ON);

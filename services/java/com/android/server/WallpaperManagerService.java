@@ -298,7 +298,7 @@ class WallpaperManagerService extends IWallpaperManager.Stub {
         mIWindowManager = IWindowManager.Stub.asInterface(
                 ServiceManager.getService(Context.WINDOW_SERVICE));
         mMonitor = new MyPackageMonitor();
-        mMonitor.register(context, true);
+        mMonitor.register(context, null, true);
         WALLPAPER_DIR.mkdirs();
         loadSettingsLocked();
         mWallpaperObserver.startWatching();

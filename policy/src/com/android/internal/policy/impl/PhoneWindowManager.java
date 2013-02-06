@@ -769,8 +769,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 return;
             }
             try {
-                final Intent intent = Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_HOME);
+                final Intent intent = new Intent(Intent.ACTION_MAIN);
                 String defaultHomePackage = "com.android.launcher";
+                intent.addCategory(Intent.CATEGORY_HOME);
                 final ResolveInfo res = mContext.getPackageManager().resolveActivity(intent, 0);
                 if (res.activityInfo != null && !res.activityInfo.packageName.equals("android")) {
                     defaultHomePackage = res.activityInfo.packageName;

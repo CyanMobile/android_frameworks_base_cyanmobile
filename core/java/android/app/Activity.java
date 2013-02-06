@@ -636,6 +636,7 @@ public class Activity extends ContextThemeWrapper
     private boolean mStopped;
     boolean mFinished;
     boolean mStartedActivity;
+    /*package*/ boolean mChangingConfigurations = false;
     /*package*/ int mConfigChangeFlags;
     /*package*/ Configuration mCurrentConfig;
     private SearchManager mSearchManager;
@@ -3283,6 +3284,19 @@ public class Activity extends ContextThemeWrapper
     }
 
     /**
+     * Check to see whether this activity is in the process of being destroyed in order to be
+     * recreated with a new configuration. This is often used in
+     * {@link #onStop} to determine whether the state needs to be cleaned up or will be passed
+     * on to the next instance of the activity via {@link #onRetainNonConfigurationInstance()}.
+     * 
+     * @return If the activity is being torn down in order to be recreated with a new configuration,
+     * returns true; else returns false.
+     */
+    public boolean isChangingConfigurations() {
+        return mChangingConfigurations;
+    }
+
+    /**
      * Call this when your activity is done and should be closed.  The
      * ActivityResult is propagated back to whoever launched you via
      * onActivityResult().
@@ -3831,7 +3845,8 @@ public class Activity extends ContextThemeWrapper
         mCurrentConfig = config;
     }
 
-    final IBinder getActivityToken() {
+    /** @hide */
+    public final IBinder getActivityToken() {
         return mParent != null ? mParent.getActivityToken() : mToken;
     }
 
