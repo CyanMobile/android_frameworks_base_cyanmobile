@@ -1140,7 +1140,9 @@ public class ViewDebug {
                             }
 
                             public void post(Object... data) {
-                                ((Bitmap) data[0]).recycle();
+                                if (data[0] != null) {
+                                    ((Bitmap) data[0]).recycle();
+                                }
                             }
                         }) : 0;
         out.write(String.valueOf(durationMeasure));

@@ -71,7 +71,8 @@ enum {
     WOULD_BLOCK         = 0x80000004,
     TIMED_OUT           = 0x80000005,
     UNKNOWN_TRANSACTION = 0x80000006,
-#endif    
+#endif
+    FDS_NOT_ALLOWED     = 0x80000007,
 };
 
 // Restore define; enumeration is in "android" namespace, so the value defined

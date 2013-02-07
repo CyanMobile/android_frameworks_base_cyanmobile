@@ -52,7 +52,7 @@ public interface IApplicationThread extends IInterface {
     void scheduleResumeActivity(IBinder token, boolean isForward) throws RemoteException;
     void scheduleSendResult(IBinder token, List<ResultInfo> results) throws RemoteException;
     void scheduleLaunchActivity(Intent intent, IBinder token, int ident,
-            ActivityInfo info, Bundle state, List<ResultInfo> pendingResults,
+            ActivityInfo info, Configuration curConfig, Bundle state, List<ResultInfo> pendingResults,
     	    List<Intent> pendingNewIntents, boolean notResumed, boolean isForward,
                 String profileName, ParcelFileDescriptor profileFd, boolean autoStopProfiler)
     		throws RemoteException;

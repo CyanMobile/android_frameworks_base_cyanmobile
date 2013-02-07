@@ -127,13 +127,14 @@ public class WeatherTile extends QuickSettingsTile {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (ACTION_LOC_UPDATE.equals(intent.getAction())) {
+            String action = intent.getAction();
+        if (action.equals(ACTION_LOC_UPDATE)) {
             Location location = (Location) intent.getParcelableExtra(LocationManager.KEY_LOCATION_CHANGED);
             triggerLocationQueryWithLocation(location);
-        } else {
+        } else if (action.equals(Intent.ACTION_TIMEZONE_CHANGED)) {
             updateLocationListenerState();
-            refreshWeather();
         }
+        refreshWeather();
     }
 
     //===============================================================================================

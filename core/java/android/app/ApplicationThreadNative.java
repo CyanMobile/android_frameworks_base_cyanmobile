@@ -131,6 +131,7 @@ public abstract class ApplicationThreadNative extends Binder
             IBinder b = data.readStrongBinder();
             int ident = data.readInt();
             ActivityInfo info = ActivityInfo.CREATOR.createFromParcel(data);
+            Configuration curConfig = Configuration.CREATOR.createFromParcel(data);
             Bundle state = data.readBundle();
             List<ResultInfo> ri = data.createTypedArrayList(ResultInfo.CREATOR);
             List<Intent> pi = data.createTypedArrayList(Intent.CREATOR);
@@ -140,7 +141,7 @@ public abstract class ApplicationThreadNative extends Binder
             ParcelFileDescriptor profileFd = data.readInt() != 0
                     ? data.readFileDescriptor() : null;
             boolean autoStopProfiler = data.readInt() != 0;
-            scheduleLaunchActivity(intent, b, ident, info, state, ri, pi,
+            scheduleLaunchActivity(intent, b, ident, info, curConfig, state, ri, pi,
                     notResumed, isForward, profileName, profileFd, autoStopProfiler);
             return true;
         }
@@ -530,7 +531,7 @@ class ApplicationThreadProxy implements IApplicationThread {
     }
 
     public final void scheduleLaunchActivity(Intent intent, IBinder token, int ident,
-            ActivityInfo info, Bundle state, List<ResultInfo> pendingResults,
+            ActivityInfo info, Configuration curConfig, Bundle state, List<ResultInfo> pendingResults,
             List<Intent> pendingNewIntents, boolean notResumed, boolean isForward,
                 String profileName, ParcelFileDescriptor profileFd, boolean autoStopProfiler)
     		throws RemoteException {
@@ -540,6 +541,7 @@ class ApplicationThreadProxy implements IApplicationThread {
         data.writeStrongBinder(token);
         data.writeInt(ident);
         info.writeToParcel(data, 0);
+        curConfig.writeToParcel(data, 0);
         data.writeBundle(state);
         data.writeTypedList(pendingResults);
         data.writeTypedList(pendingNewIntents);

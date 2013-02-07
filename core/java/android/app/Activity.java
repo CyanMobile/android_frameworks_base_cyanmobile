@@ -2911,6 +2911,7 @@ public class Activity extends ContextThemeWrapper
         try {
             String resolvedType = null;
             if (fillInIntent != null) {
+                fillInIntent.setAllowFds(false);
                 resolvedType = fillInIntent.resolveTypeIfNeeded(getContentResolver());
             }
             int result = ActivityManagerNative.getDefault()
@@ -3035,6 +3036,7 @@ public class Activity extends ContextThemeWrapper
         if (mParent == null) {
             int result = IActivityManager.START_RETURN_INTENT_TO_CALLER;
             try {
+                intent.setAllowFds(false);
                 result = ActivityManagerNative.getDefault()
                     .startActivity(mMainThread.getApplicationThread(),
                             intent, intent.resolveTypeIfNeeded(
@@ -3084,6 +3086,7 @@ public class Activity extends ContextThemeWrapper
     public boolean startNextMatchingActivity(Intent intent) {
         if (mParent == null) {
             try {
+                intent.setAllowFds(false);
                 return ActivityManagerNative.getDefault()
                     .startNextMatchingActivity(mToken, intent);
             } catch (RemoteException e) {
@@ -3311,6 +3314,9 @@ public class Activity extends ContextThemeWrapper
             }
             if (Config.LOGV) Log.v(TAG, "Finishing self: token=" + mToken);
             try {
+                if (resultData != null) {
+                    resultData.setAllowFds(false);
+                }
                 if (ActivityManagerNative.getDefault()
                     .finishActivity(mToken, resultCode, resultData)) {
                     mFinished = true;
@@ -3432,6 +3438,7 @@ public class Activity extends ContextThemeWrapper
             int flags) {
         String packageName = getPackageName();
         try {
+            data.setAllowFds(false);
             IIntentSender target =
                 ActivityManagerNative.getDefault().getIntentSender(
                         IActivityManager.INTENT_SENDER_ACTIVITY_RESULT, packageName,

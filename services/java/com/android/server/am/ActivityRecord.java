@@ -109,6 +109,7 @@ class ActivityRecord {
     boolean idle;           // has the activity gone idle?
     boolean hasBeenLaunched;// has this activity ever been launched?
     boolean frozenBeforeDestroy;// has been frozen but not yet destroyed.
+    boolean forceNewConfig; // force re-create with new config next time
 
     String stringName;      // for caching of toString().
 
@@ -195,7 +196,8 @@ class ActivityRecord {
                 pw.print(" sleeping="); pw.print(sleeping);
                 pw.print(" idle="); pw.println(idle);
         pw.print(prefix); pw.print("frozenBeforeDestroy="); pw.print(frozenBeforeDestroy);
-                pw.print(" thumbnailNeeded="); pw.println(thumbnailNeeded);
+                pw.print(" thumbnailNeeded="); pw.print(thumbnailNeeded);
+                pw.print(" forceNewConfig="); pw.println(forceNewConfig);
         if (launchTime != 0 || startTime != 0) {
             pw.print(prefix); pw.print("launchTime=");
                     if (launchTime == 0) pw.print("0");

@@ -253,7 +253,7 @@ public final class ActivityThread {
         }
 
         public String toString() {
-            ComponentName componentName = intent.getComponent();
+            ComponentName componentName = intent != null ? intent.getComponent() : null;
             return "ActivityRecord{"
                 + Integer.toHexString(System.identityHashCode(this))
                 + " token=" + token + " " + (componentName == null
@@ -453,6 +453,15 @@ public final class ActivityThread {
         // Formatting for checkin service - update version if row format changes
         private static final int ACTIVITY_THREAD_CHECKIN_VERSION = 1;
 
+        private void updatePendingConfiguration(Configuration config) {
+            synchronized (mPackages) {
+                if (mPendingConfiguration == null ||
+                        mPendingConfiguration.isOtherSeqNewer(config)) {
+                    mPendingConfiguration = config;
+                }
+            }	
+        }
+
         public final void schedulePauseActivity(IBinder token, boolean finished,
                 boolean userLeaving, int configChanges) {
             queueOrSendMessage(
@@ -493,7 +502,7 @@ public final class ActivityThread {
         // we use token to identify this activity without having to send the
         // activity itself back to the activity manager. (matters more with ipc)
         public final void scheduleLaunchActivity(Intent intent, IBinder token, int ident,
-                ActivityInfo info, Bundle state, List<ResultInfo> pendingResults,
+                ActivityInfo info, Configuration curConfig, Bundle state, List<ResultInfo> pendingResults,
                 List<Intent> pendingNewIntents, boolean notResumed, boolean isForward,
                 String profileName, ParcelFileDescriptor profileFd, boolean autoStopProfiler) {
             ActivityClientRecord r = new ActivityClientRecord();
@@ -513,6 +522,8 @@ public final class ActivityThread {
             r.profileFile = profileName;
             r.profileFd = profileFd;
             r.autoStopProfiler = autoStopProfiler;
+
+            updatePendingConfiguration(curConfig);
 
             queueOrSendMessage(H.LAUNCH_ACTIVITY, r);
         }
@@ -665,12 +676,7 @@ public final class ActivityThread {
         }
 
         public void scheduleConfigurationChanged(Configuration config) {
-            synchronized (mPackages) {
-                if (mPendingConfiguration == null ||
-                        mPendingConfiguration.isOtherSeqNewer(config)) {
-                    mPendingConfiguration = config;
-                }
-            }
+            updatePendingConfiguration(config);
             queueOrSendMessage(H.CONFIGURATION_CHANGED, config);
         }
 
@@ -1176,7 +1182,8 @@ public final class ActivityThread {
         public final boolean queueIdle() {
             ActivityClientRecord a = mNewActivities;
             boolean stopProfiling = false;
-            if (mBoundApplication.profileFd != null && mBoundApplication.autoStopProfiler) {
+            if (mBoundApplication != null && mBoundApplication.profileFd != null
+                    && mBoundApplication.autoStopProfiler) {
                 stopProfiling = true;
             }
             if (a != null) {
@@ -1952,6 +1959,9 @@ public final class ActivityThread {
             mBoundApplication.autoStopProfiler = r.autoStopProfiler;
         }
 
+        // Make sure we are running with the most recent config.
+        handleConfigurationChanged(null);
+
         if (localLOGV) Slog.v(
             TAG, "Handling launch of " + r);
         Activity a = performLaunchActivity(r, customIntent);
@@ -2642,6 +2652,7 @@ public final class ActivityThread {
             // Next have the activity save its current state and managed dialogs...
             if (!r.activity.mFinished && saveState) {
                 state = new Bundle();
+                state.setAllowFds(false);
                 mInstrumentation.callActivityOnSaveInstanceState(r.activity, state);
                 r.state = state;
             } else {
@@ -2771,6 +2782,7 @@ public final class ActivityThread {
             if (!r.activity.mFinished && saveState) {
                 if (r.state == null) {
                     state = new Bundle();
+                    state.setAllowFds(false);
                     mInstrumentation.callActivityOnSaveInstanceState(r.activity, state);
                     r.state = state;
                 } else {
@@ -3969,7 +3981,7 @@ public final class ActivityThread {
     final void removeDeadProvider(String name, IContentProvider provider) {
         synchronized(mProviderMap) {
             ProviderClientRecord pr = mProviderMap.get(name);
-            if (pr.mProvider.asBinder() == provider.asBinder()) {
+            if (pr != null && pr.mProvider.asBinder() == provider.asBinder()) {
                 Slog.i(TAG, "Removing dead content provider: " + name);
                 ProviderClientRecord removed = mProviderMap.remove(name);
                 if (removed != null) {
@@ -4133,7 +4145,7 @@ public final class ActivityThread {
         sThreadLocal.set(null);
     }
 
-    public static final ActivityThread systemMain() {
+    public static ActivityThread systemMain() {
         ActivityThread thread = new ActivityThread();
         thread.attach(true);
         return thread;

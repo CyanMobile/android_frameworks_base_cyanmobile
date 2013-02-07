@@ -398,6 +398,8 @@ status_t Parcel::appendFrom(Parcel *parcel, size_t offset, size_t len)
     mDataPos += len;
     mDataSize += len;
 
+    err = NO_ERROR;
+
     if (numObjects > 0) {
         // grow objects
         if (mObjectsCapacity < mObjectsSize + numObjects) {
@@ -429,11 +431,21 @@ status_t Parcel::appendFrom(Parcel *parcel, size_t offset, size_t len)
                 flat->handle = dup(flat->handle);
                 flat->cookie = (void*)1;
                 mHasFds = mFdsKnown = true;
+                if (!mAllowFds) {
+                    err = FDS_NOT_ALLOWED;
+                }
             }
         }
     }
 
-    return NO_ERROR;
+    return err;
+}
+
+bool Parcel::setAllowFds(bool allowFds)
+{
+    const bool origValue = mAllowFds;
+    mAllowFds = allowFds;
+    return origValue;
 }
 
 bool Parcel::hasFileDescriptors() const
@@ -767,6 +779,9 @@ restart_write:
         
         // remember if it's a file descriptor
         if (val.type == BINDER_TYPE_FD) {
+            if (!mAllowFds) {
+                return FDS_NOT_ALLOWED;
+            }
             mHasFds = mFdsKnown = true;
         }
 
@@ -1291,7 +1306,8 @@ status_t Parcel::restartWrite(size_t desired)
     mNextObjectHint = 0;
     mHasFds = false;
     mFdsKnown = true;
-    
+    mAllowFds = true;
+
     return NO_ERROR;
 }
 
@@ -1440,6 +1456,7 @@ void Parcel::initState()
     mNextObjectHint = 0;
     mHasFds = false;
     mFdsKnown = true;
+    mAllowFds = true;
     mOwner = NULL;
 }
 

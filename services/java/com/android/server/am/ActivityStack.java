@@ -602,6 +602,7 @@ final class ActivityStack {
             String profileFile = null;
             ParcelFileDescriptor profileFd = null;
             boolean profileAutoStop = false;
+            r.forceNewConfig = false;
             if (mService.mProfileApp != null && mService.mProfileApp.equals(app.processName)) {
                 if (mService.mProfileProc == null || mService.mProfileProc == app) {
                     mService.mProfileProc = app;
@@ -621,7 +622,7 @@ final class ActivityStack {
             }
             app.thread.scheduleLaunchActivity(new Intent(r.intent), r.appToken,
                     System.identityHashCode(r),
-                    r.info, r.icicle, results, newIntents, !andResume,
+                    r.info, mService.mConfiguration, r.icicle, results, newIntents, !andResume,
                     mService.isNextTransitionForward(), profileFile, profileFd,
                     profileAutoStop);
             
@@ -956,6 +957,11 @@ final class ActivityStack {
 
     final void activityStoppedLocked(ActivityRecord r, Bundle icicle, Bitmap thumbnail,
             CharSequence description) {
+        if (r.state != ActivityState.STOPPING) {
+            Slog.i(TAG, "Activity reported stop, but no longer stopping: " + r);
+            mHandler.removeMessages(STOP_TIMEOUT_MSG, r);
+            return;
+        }
         if (icicle != null) {
             // If icicle is null, this is happening due to a timeout, so we
             // haven't really saved the state.
@@ -2494,6 +2500,7 @@ final class ActivityStack {
         }
 
         boolean addingToTask = false;
+        boolean movedHome = false;
         TaskRecord reuseTask = null;
         if (((launchFlags&Intent.FLAG_ACTIVITY_NEW_TASK) != 0 &&
                 (launchFlags&Intent.FLAG_ACTIVITY_MULTIPLE_TASK) == 0)
@@ -2532,6 +2539,7 @@ final class ActivityStack {
                         if (callerAtFront) {
                             // We really do want to push this one into the
                             // user's face, right now.
+                            movedHome = true;
                             moveHomeToFrontFromLaunchLocked(launchFlags);
                             moveTaskToFrontLocked(taskTop.task, r);
                         }
@@ -2706,7 +2714,10 @@ final class ActivityStack {
                 r.setTask(reuseTask, true);
             }
             newTask = true;
-            moveHomeToFrontFromLaunchLocked(launchFlags);
+            if (!movedHome) {
+                moveHomeToFrontFromLaunchLocked(launchFlags);
+            }
+
         } else if (sourceRecord != null) {
             if (!addingToTask &&
                     (launchFlags&Intent.FLAG_ACTIVITY_CLEAR_TOP) != 0) {
@@ -4102,7 +4113,7 @@ final class ActivityStack {
         // Short circuit: if the two configurations are the exact same
         // object (the common case), then there is nothing to do.
         Configuration newConfig = mService.mConfiguration;
-        if (r.configuration == newConfig) {
+        if (r.configuration == newConfig && !r.forceNewConfig) {
             if (DEBUG_SWITCH || DEBUG_CONFIGURATION) Slog.v(TAG,
                     "Configuration unchanged in " + r);
             return true;
@@ -4120,28 +4131,40 @@ final class ActivityStack {
         // But then we need to figure out how it needs to deal with that.
         Configuration oldConfig = r.configuration;
         r.configuration = newConfig;
-        
+
+        // Determine what has changed.  May be nothing, if this is a config
+        // that has come back from the app after going idle.  In that case
+        // we just want to leave the official config object now in the
+        // activity and do nothing else.
+        final int changes = oldConfig.diff(newConfig);
+        if (changes == 0 && !r.forceNewConfig) {
+            if (DEBUG_SWITCH || DEBUG_CONFIGURATION) Slog.v(TAG,
+                    "Configuration no differences in " + r);
+            return true;
+        }
+
         // If the activity isn't currently running, just leave the new
         // configuration and it will pick that up next time it starts.
         if (r.app == null || r.app.thread == null) {
             if (DEBUG_SWITCH || DEBUG_CONFIGURATION) Slog.v(TAG,
                     "Configuration doesn't matter not running " + r);
             r.stopFreezingScreenLocked(false);
+            r.forceNewConfig = false;
             return true;
         }
         
-        // Figure out what has changed between the two configurations.
-        int changes = oldConfig.diff(newConfig);
+        // Figure out how to handle the changes between the configurations.
         if (DEBUG_SWITCH || DEBUG_CONFIGURATION) {
             Slog.v(TAG, "Checking to restart " + r.info.name + ": changed=0x"
                     + Integer.toHexString(changes) + ", handles=0x"
                     + Integer.toHexString(r.info.configChanges)
                     + ", newConfig=" + newConfig);
         }
-        if ((changes&(~r.info.configChanges)) != 0) {
+        if ((changes&(~r.info.configChanges)) != 0 || r.forceNewConfig) {
             // Aha, the activity isn't handling the change, so DIE DIE DIE.
             r.configChangeFlags |= changes;
             r.startFreezingScreenLocked(r.app, globalChanges);
+            r.forceNewConfig = false;
             if (r.app == null || r.app.thread == null) {
                 if (DEBUG_SWITCH || DEBUG_CONFIGURATION) Slog.v(TAG,
                         "Switch is destroying non-running " + r);
@@ -4212,13 +4235,13 @@ final class ActivityStack {
         
         try {
             if (DEBUG_SWITCH) Slog.i(TAG, "Switch is restarting resumed " + r);
+            r.forceNewConfig = false;
             r.app.thread.scheduleRelaunchActivity(r.appToken, results, newIntents,
                     changes, !andResume, mService.mConfiguration);
             // Note: don't need to call pauseIfSleepingLocked() here, because
             // the caller will only pass in 'andResume' if this activity is
             // currently resumed, which implies we aren't sleeping.
         } catch (RemoteException e) {
-            return false;
         }
 
         if (andResume) {
@@ -4227,6 +4250,10 @@ final class ActivityStack {
             if (mMainStack) {
                 mService.reportResumedActivityLocked(r);
             }
+            r.state = ActivityState.RESUMED;
+        } else {
+            mHandler.removeMessages(PAUSE_TIMEOUT_MSG, r);
+            r.state = ActivityState.PAUSED;
         }
 
         return true;

@@ -3396,12 +3396,16 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      *        the View's internal state from a previously set "pressed" state.
      */
     public void setPressed(boolean pressed) {
+        final boolean needsRefresh = pressed != ((mPrivateFlags & PRESSED) == PRESSED);
+
         if (pressed) {
             mPrivateFlags |= PRESSED;
         } else {
             mPrivateFlags &= ~PRESSED;
         }
-        refreshDrawableState();
+        if (needsRefresh) {
+            refreshDrawableState();
+        }
         dispatchSetPressed(pressed);
     }
 
@@ -4164,9 +4168,10 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
 
     void performCollectViewAttributes(int visibility) {
         //noinspection PointlessBitwiseExpression
-        if (((visibility | mViewFlags) & (VISIBILITY_MASK | KEEP_SCREEN_ON))
-                == (VISIBLE | KEEP_SCREEN_ON)) {
-            mAttachInfo.mKeepScreenOn = true;
+        if ((visibility & VISIBILITY_MASK) == VISIBLE && mAttachInfo != null) {
+           if ((mViewFlags & KEEP_SCREEN_ON) == KEEP_SCREEN_ON) {
+                mAttachInfo.mKeepScreenOn = true;
+           }
         }
     }
 
@@ -4456,6 +4461,10 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
         final int viewFlags = mViewFlags;
 
         if ((viewFlags & ENABLED_MASK) == DISABLED) {
+            if (event.getAction() == MotionEvent.ACTION_UP && (mPrivateFlags & PRESSED) != 0) {
+                setPressed(false);
+            }
+
             // A disabled view that is clickable still consumes the touch
             // events, it just doesn't respond to them.
             return (((viewFlags & CLICKABLE) == CLICKABLE ||
@@ -4481,6 +4490,14 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
                             focusTaken = requestFocus();
                         }
 
+                        if (prepressed) {
+                            // The button is being released before we actually
+                            // showed it as pressed.  Make it show the pressed
+                            // state now (before scheduling the click) to ensure
+                            // the user sees it.
+                            setPressed(true);
+                        }
+
                         if (!mHasPerformedLongPress) {
                             // This is a tap, so remove the longpress check
                             removeLongPressCallback();
@@ -4504,8 +4521,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
                         }
 
                         if (prepressed) {
-                            mPrivateFlags |= PRESSED;
-                            refreshDrawableState();
                             postDelayed(mUnsetPressedState,
                                     ViewConfiguration.getPressedStateDuration());
                         } else if (!post(mUnsetPressedState)) {
@@ -4539,15 +4554,13 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
                         postDelayed(mPendingCheckForTap, ViewConfiguration.getTapTimeout());
                     } else {
                         // Not inside a scrolling container, so show the feedback right away
-                        mPrivateFlags |= PRESSED;
-                        refreshDrawableState();
+                        setPressed(true);
                         checkForLongClick(0);
                     }
                     break;
 
                 case MotionEvent.ACTION_CANCEL:
-                    mPrivateFlags &= ~PRESSED;
-                    refreshDrawableState();
+                    setPressed(false);
                     removeTapCallback();
                     break;
 
@@ -4566,8 +4579,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
                             removeLongPressCallback();
 
                             // Need to switch from pressed to not pressed
-                            mPrivateFlags &= ~PRESSED;
-                            refreshDrawableState();
+                            setPressed(false);
                         }
                     }
                     break;
@@ -7638,6 +7650,10 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      *        background
      */
     public void setBackgroundDrawable(Drawable d) {
+        if (d == mBGDrawable) {
+            return;
+        }
+
         boolean requestLayout = false;
 
         mBackgroundResource = 0;
@@ -8494,7 +8510,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     public static int resolveSize(int size, int measureSpec) {
         int result = size;
         int specMode = MeasureSpec.getMode(measureSpec);
-        int specSize =  MeasureSpec.getSize(measureSpec);
+        int specSize = MeasureSpec.getSize(measureSpec);
         switch (specMode) {
         case MeasureSpec.UNSPECIFIED:
             result = size;
@@ -8521,7 +8537,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     public static int getDefaultSize(int size, int measureSpec) {
         int result = size;
         int specMode = MeasureSpec.getMode(measureSpec);
-        int specSize =  MeasureSpec.getSize(measureSpec);
+        int specSize = MeasureSpec.getSize(measureSpec);
 
         switch (specMode) {
         case MeasureSpec.UNSPECIFIED:
@@ -9176,8 +9192,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     private final class CheckForTap implements Runnable {
         public void run() {
             mPrivateFlags &= ~PREPRESSED;
-            mPrivateFlags |= PRESSED;
-            refreshDrawableState();
+            setPressed(true);
             checkForLongClick(ViewConfiguration.getTapTimeout());
         }
     }

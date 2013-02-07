@@ -55,6 +55,8 @@ public:
 
     status_t            appendFrom(Parcel *parcel, size_t start, size_t len);
 
+    bool                setAllowFds(bool allowFds);
+
     bool                hasFileDescriptors() const;
 
     // Writes the RPC header.
@@ -214,7 +216,8 @@ private:
 
     mutable bool        mFdsKnown;
     mutable bool        mHasFds;
-    
+    bool                mAllowFds;
+
     release_func        mOwner;
     void*               mOwnerCookie;
 };
