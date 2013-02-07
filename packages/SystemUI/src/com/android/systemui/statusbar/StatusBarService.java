@@ -56,6 +56,7 @@ import com.android.systemui.statusbar.powerwidget.MusicControls;
 import com.android.systemui.statusbar.qwidgets.QwikWidgetsPanelView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
+import com.android.systemui.statusbar.quicksettings.Tile3dFlipAnimation;
 import com.android.systemui.statusbar.policy.NetworkController;
 import com.android.systemui.statusbar.policy.PiePolicy;
 import com.android.systemui.statusbar.policy.StatusBarPolicy;
@@ -126,6 +127,7 @@ import android.view.WindowManager;
 import android.view.WindowManagerImpl;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.AccelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -3212,10 +3214,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
           mNotificationsToggle.setTextColor(Color.parseColor("#666666"));
           LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
           parent.setBackgroundResource(R.drawable.title_bar_portrait);
-          mPowerCarrier.setVisibility(View.VISIBLE);
-          mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.slide_in_left, null));
-          mNotifications.setVisibility(View.GONE);
-          mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.slide_out_left, null));
+          setFlipping(mNotifications, mPowerCarrier);
           updateExpandedViewPos(EXPANDED_FULL_OPEN);
           NotifEnable = true;
     }
@@ -3228,15 +3227,28 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
           mButtonsToggle.setTextColor(Color.parseColor("#666666"));
           LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
           parent.setBackgroundResource(R.drawable.title_bar_portrait);
-          mNotifications.setVisibility(View.VISIBLE);
-          mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.slide_in_right, null));
-          mPowerCarrier.setVisibility(View.GONE);
-          mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.slide_out_right, null));
+          setFlipping(mPowerCarrier, mNotifications);
           updateExpandedViewPos(EXPANDED_FULL_OPEN);
           NotifEnable = false;
     }
 
-    static Bitmap getNinePatch(int id,int x, int y, Context context){
+    private void setFlipping(View vw, View wv) {
+
+        final float centerX = vw.getWidth() / 2.0f;
+        final float centerY = vw.getHeight() / 2.0f;
+
+         // Create a new 3D rotation with the supplied parameter
+         // The animation listener is used to trigger the next animation
+         final Tile3dFlipAnimation rotation =
+                new Tile3dFlipAnimation(0, 90, centerX, centerY);
+         rotation.setDuration(225);
+         rotation.setFillAfter(true);
+         rotation.setInterpolator(new AccelerateInterpolator());
+         rotation.setAnimationListener(new DisplayNextLayout(true, vw, wv));
+         vw.startAnimation(rotation);
+    }
+
+    private static Bitmap getNinePatch(int id,int x, int y, Context context){
         Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), id);
 
         byte[] chunk = bitmap.getNinePatchChunk();
