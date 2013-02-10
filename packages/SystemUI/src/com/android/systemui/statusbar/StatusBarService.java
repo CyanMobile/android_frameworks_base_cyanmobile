@@ -3214,7 +3214,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
           mNotificationsToggle.setTextColor(Color.parseColor("#666666"));
           LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
           parent.setBackgroundResource(R.drawable.title_bar_portrait);
-          setFlipping(mNotifications, mPowerCarrier);
+          mPowerCarrier.setVisibility(View.VISIBLE);
+          mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.slide_in_left, null));
+          mNotifications.setVisibility(View.GONE);
+          mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.slide_out_left, null));
           updateExpandedViewPos(EXPANDED_FULL_OPEN);
           NotifEnable = true;
     }
@@ -3227,25 +3230,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
           mButtonsToggle.setTextColor(Color.parseColor("#666666"));
           LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
           parent.setBackgroundResource(R.drawable.title_bar_portrait);
-          setFlipping(mPowerCarrier, mNotifications);
+          mNotifications.setVisibility(View.VISIBLE);
+          mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.slide_in_right, null));	
+          mPowerCarrier.setVisibility(View.GONE);	
+          mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.slide_out_right, null));
           updateExpandedViewPos(EXPANDED_FULL_OPEN);
           NotifEnable = false;
-    }
-
-    private void setFlipping(View vw, View wv) {
-
-        final float centerX = vw.getWidth() / 2.0f;
-        final float centerY = vw.getHeight() / 2.0f;
-
-         // Create a new 3D rotation with the supplied parameter
-         // The animation listener is used to trigger the next animation
-         final Tile3dFlipAnimation rotation =
-                new Tile3dFlipAnimation(0, 90, centerX, centerY);
-         rotation.setDuration(225);
-         rotation.setFillAfter(true);
-         rotation.setInterpolator(new AccelerateInterpolator());
-         rotation.setAnimationListener(new DisplayNextLayout(true, vw, wv));
-         vw.startAnimation(rotation);
     }
 
     private static Bitmap getNinePatch(int id,int x, int y, Context context){
