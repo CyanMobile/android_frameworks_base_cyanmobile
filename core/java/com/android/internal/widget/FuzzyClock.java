@@ -173,8 +173,7 @@ public class FuzzyClock extends LinearLayout {
         super.onFinishInflate();
 
         mTimeDisplay = (TextView) findViewById(R.id.timeDisplay);
-        mTimeDisplay.setTypeface(Typeface.createFromFile("/system/fonts/DroidSans.ttf"));
-        mAmPm = new AmPm(this, Typeface.createFromFile("/system/fonts/DroidSans-Bold.ttf"));
+        mAmPm = new AmPm(this, null);
         mCalendar = Calendar.getInstance();
 
         setDateFormat();

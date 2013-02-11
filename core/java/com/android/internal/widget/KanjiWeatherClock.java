@@ -222,14 +222,7 @@ public class KanjiWeatherClock extends LinearLayout {
         fullkanji = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.LOCKSCREEN_FUZZY_CLOCK, 1) == 3;
 
-        int font = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.CLOCK_FONT, 0);
-        if (font == 0) {
-            mTimeDisplay.setTypeface(Typeface.createFromFile("/system/fonts/DroidSans.ttf"));
-        } else if (font == 1) {
-            mTimeDisplay.setTypeface(Typeface
-                    .createFromFile("/system/fonts/DroidSansJapanese.ttf"));
-        }
+        mTimeDisplay.setTypeface(Typeface.createFromFile("/system/fonts/DroidSansJapanese.ttf"));
         mCalendar = Calendar.getInstance();
     }
 

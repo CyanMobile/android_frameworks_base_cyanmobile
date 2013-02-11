@@ -224,8 +224,8 @@ public class DigitalWeatherClock extends LinearLayout {
         mWeatherLoc = (TextView) findViewById(R.id.weatherthree_textview);
         mWeatherCond = (TextView) findViewById(R.id.weatherfour_textview);
         mWeatherUpdateTime = (TextView) findViewById(R.id.weathertwo_textview);
-        mTimeDisplay.setTypeface(Typeface.createFromFile("/system/fonts/Clockopia.ttf"));
-        mAmPm = new AmPm(this, Typeface.createFromFile("/system/fonts/HoneycombAndroidClock.ttf"));
+        mTimeDisplay.setTypeface(Typeface.createFromFile("/system/fonts/AndroidClock.ttf"));
+        mAmPm = new AmPm(this, null);
 
         mCalendar = Calendar.getInstance();
 

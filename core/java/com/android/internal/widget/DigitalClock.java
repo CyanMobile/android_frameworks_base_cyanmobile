@@ -150,25 +150,8 @@ public class DigitalClock extends LinearLayout {
         super.onFinishInflate();
 
         mTimeDisplay = (TextView) findViewById(R.id.timeDisplay);
-        int font = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.CLOCK_FONT, 0);
-
-        if (font == 0) {
-
-            mTimeDisplay.setTypeface(Typeface.createFromFile("/system/fonts/Clockopia.ttf"));
-            mAmPm = new AmPm(this, Typeface.createFromFile("/system/fonts/HoneycombAndroidClock.ttf"));
-
-        } else if (font == 1) {
-
-            mTimeDisplay.setTypeface(Typeface
-                    .createFromFile("/system/fonts/HoneycombAndroidClock.ttf"));
-            mAmPm = new AmPm(this,
-                    Typeface.createFromFile("/system/fonts/HoneycombAndroidClock.ttf"));
-        }
-
-        // mTimeDisplay.setTypeface(Typeface.createFromFile("/system/fonts/Clockopia.ttf"));
-        // mAmPm = new AmPm(this,
-        // Typeface.createFromFile("/system/fonts/DroidSans-Bold.ttf"));
+        mTimeDisplay.setTypeface(Typeface.createFromFile("/system/fonts/AndroidClock_Highlight.ttf"));
+        mAmPm = new AmPm(this, null);
         mCalendar = Calendar.getInstance();
 
         setDateFormat();
