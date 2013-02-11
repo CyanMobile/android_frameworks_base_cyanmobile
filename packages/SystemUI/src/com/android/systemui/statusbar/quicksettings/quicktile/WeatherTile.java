@@ -109,6 +109,8 @@ public class WeatherTile extends QuickSettingsTile {
                 , this);
         qsc.registerObservedContent(Settings.System.getUriFor(Settings.System.WEATHER_USE_CUSTOM_LOCATION)
                 , this);
+        qsc.registerObservedContent(Settings.System.getUriFor(Settings.System.WEATHER_UPDATE_INTERVAL)
+                , this);
     }
 
     @Override
@@ -157,15 +159,19 @@ public class WeatherTile extends QuickSettingsTile {
                                 Settings.System.WEATHER_USE_CUSTOM_LOCATION, 0) == 1;
         String customLoc = Settings.System.getString(resolver,
                                     Settings.System.WEATHER_CUSTOM_LOCATION);
-        if (useCustomLoc && customLoc != null) {
-            mLocManager.removeUpdates(mLocUpdateIntent);
-            mLocationInfo.customLocation = customLoc;
-            triggerLocationQueryWithLocation(null);
-        } else {
-            mLocManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER,
-                    MIN_LOC_UPDATE_INTERVAL, MIN_LOC_UPDATE_DISTANCE, mLocUpdateIntent);
-            mLocationInfo.customLocation = null;
-            triggerLocationQueryWithLocation(mLocManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER));
+        final long interval = Settings.System.getLong(resolver,
+                    Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
+        if ((((System.currentTimeMillis() - mWeatherInfo.getLastSync()) / 60000) >= interval)) {
+            if (useCustomLoc && customLoc != null) {
+                mLocManager.removeUpdates(mLocUpdateIntent);
+                mLocationInfo.customLocation = customLoc;
+                triggerLocationQueryWithLocation(null);
+            } else {
+                mLocManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER,
+                        MIN_LOC_UPDATE_INTERVAL, MIN_LOC_UPDATE_DISTANCE, mLocUpdateIntent);
+                mLocationInfo.customLocation = null;
+                triggerLocationQueryWithLocation(mLocManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER));
+            }
         }
     }
 
@@ -299,7 +305,10 @@ public class WeatherTile extends QuickSettingsTile {
             return;
         }
 
-        if (mForceRefresh) {
+        final ContentResolver resolver = mContext.getContentResolver();
+        final long interval = Settings.System.getLong(resolver,
+                Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
+        if (mForceRefresh || (((System.currentTimeMillis() - mWeatherInfo.getLastSync()) / 60000) >= interval)) {
             updating = true;
             updateQuickSettings();
             if (triggerWeatherQuery(false)) {
