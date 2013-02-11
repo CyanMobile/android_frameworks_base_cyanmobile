@@ -6789,10 +6789,10 @@ public class WindowManagerService extends IWindowManager.Stub
                     e.fillInStackTrace();
                 }
                 Slog.v(TAG, "performShow on " + this
-                        + ": readyToShow=" + mReadyToShow + " readyForDisplay=" + isReadyForDisplay()
+                        + ": readyToShow=" + mReadyToShow + " readyForDisplay=" + isReadyForDisplayIgnoringKeyguard()
                         + " starting=" + (mAttrs.type == TYPE_APPLICATION_STARTING), e);
             }
-            if (mReadyToShow && isReadyForDisplay()) {
+            if (mReadyToShow && isReadyForDisplayIgnoringKeyguard()) {
                 if (SHOW_TRANSACTIONS || DEBUG_ORIENTATION) logSurface(this,
                         "SHOW (performShowLocked)", null);
                 if (DEBUG_VISIBILITY) Slog.v(TAG, "Showing " + this
@@ -7246,6 +7246,29 @@ public class WindowManagerService extends IWindowManager.Stub
             final boolean animating = atoken != null
                     ? (atoken.animation != null) : false;
             return mSurface != null && mPolicyVisibility && !mDestroying
+                    && ((!mAttachedHidden && mViewVisibility == View.VISIBLE
+                                    && !mRootToken.hidden)
+                            || mAnimation != null || animating);
+        }
+
+        /**
+         * Like isReadyForDisplay(), but ignores any force hiding of the window due
+         * to the keyguard.
+         */
+        boolean isReadyForDisplayIgnoringKeyguard() {
+            if (mRootToken.waitingToShow &&
+                    mNextAppTransition != WindowManagerPolicy.TRANSIT_UNSET) {
+                return false;
+            }
+            final AppWindowToken atoken = mAppToken;
+            if (atoken == null && !mPolicyVisibility) {
+                // If this is not an app window, and the policy has asked to force
+                // hide, then we really do want to hide.
+                return false;
+            }
+            final boolean animating = atoken != null
+                    ? (atoken.animation != null) : false;
+            return mSurface != null && !mDestroying
                     && ((!mAttachedHidden && mViewVisibility == View.VISIBLE
                                     && !mRootToken.hidden)
                             || mAnimation != null || animating);
