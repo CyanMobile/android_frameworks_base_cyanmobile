@@ -109,8 +109,6 @@ public class WeatherTile extends QuickSettingsTile {
                 , this);
         qsc.registerObservedContent(Settings.System.getUriFor(Settings.System.WEATHER_USE_CUSTOM_LOCATION)
                 , this);
-        qsc.registerObservedContent(Settings.System.getUriFor(Settings.System.WEATHER_UPDATE_INTERVAL)
-                , this);
     }
 
     @Override
@@ -158,10 +156,6 @@ public class WeatherTile extends QuickSettingsTile {
                                 Settings.System.WEATHER_USE_CUSTOM_LOCATION, 0) == 1;
         String customLoc = Settings.System.getString(resolver,
                                     Settings.System.WEATHER_CUSTOM_LOCATION);
-        final long interval = Settings.System.getLong(resolver,
-                    Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
-        boolean manualSync = (interval == 0);
-      if (!manualSync && (((System.currentTimeMillis() - mWeatherInfo.getLastSync()) / 60000) >= interval)) {
         if (useCustomLoc && customLoc != null) {
             mLocManager.removeUpdates(mLocUpdateIntent);
             mLocationInfo.customLocation = customLoc;
@@ -172,7 +166,6 @@ public class WeatherTile extends QuickSettingsTile {
             mLocationInfo.customLocation = null;
             triggerLocationQueryWithLocation(mLocManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER));
         }
-      }
     }
 
     private void triggerLocationQueryWithLocation(Location location) {
@@ -305,21 +298,18 @@ public class WeatherTile extends QuickSettingsTile {
             return;
         }
 
-            final ContentResolver resolver = mContext.getContentResolver();
-            final long interval = Settings.System.getLong(resolver,
-                    Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
-            boolean manualSync = (interval == 0);
-            if (mForceRefresh || !manualSync && (((System.currentTimeMillis() - mWeatherInfo.getLastSync()) / 60000) >= interval)) {
-                updating = true;
-                updateQuickSettings();
-                if (triggerWeatherQuery(false)) {
-                    mForceRefresh = false;
-                }
-            } else if (manualSync && mWeatherInfo.getLastSync() == 0) {
-                setNoWeatherData();
-            } else {
-                setWeatherData(mWeatherInfo);
+        final ContentResolver resolver = mContext.getContentResolver();
+        if (mForceRefresh) {
+            updating = true;
+            updateQuickSettings();
+            if (triggerWeatherQuery(false)) {
+                mForceRefresh = false;
             }
+        } else if (mWeatherInfo.getLastSync() == 0) {
+            setNoWeatherData();
+        } else {
+            setWeatherData(mWeatherInfo);
+        }
     }
 
     /**
