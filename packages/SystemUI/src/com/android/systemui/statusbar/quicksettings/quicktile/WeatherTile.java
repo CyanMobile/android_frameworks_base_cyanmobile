@@ -298,7 +298,6 @@ public class WeatherTile extends QuickSettingsTile {
             return;
         }
 
-        final ContentResolver resolver = mContext.getContentResolver();
         if (mForceRefresh) {
             updating = true;
             updateQuickSettings();
