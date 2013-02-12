@@ -2346,6 +2346,12 @@ public final class Settings {
         public static final String PIE_CONTROL_ENABLE = "pie_control_enable";
 
         /**
+         * Center Pie? Should default to 1 (yes, center)
+         * @hide
+         */
+        public static final String PIE_CENTER = "pie_center";
+
+        /**
          * Pie gap angle, should default to 1
          * @hide
          */
