@@ -150,358 +150,8 @@ public class StatusBarPolicy {
     public static final int PHONE_SIGNAL_IS_NULL = 2;
     public static final int PHONE_SIGNAL_IS_NORMAL = 0;
 
-    //***** Signal strength icons
-    //GSM/UMTS
-    private static final int[][] sSignalImages = {
-        { R.drawable.stat_sys_signal_0,
-          R.drawable.stat_sys_signal_1,
-          R.drawable.stat_sys_signal_2,
-          R.drawable.stat_sys_signal_3,
-          R.drawable.stat_sys_signal_4 },
-        { R.drawable.stat_sys_signal_0_fully,
-          R.drawable.stat_sys_signal_1_fully,
-          R.drawable.stat_sys_signal_2_fully,
-          R.drawable.stat_sys_signal_3_fully,
-          R.drawable.stat_sys_signal_4_fully }
-    };
-    private static final int[][] sSignalImages_r = {
-        { R.drawable.stat_sys_r_signal_0,
-          R.drawable.stat_sys_r_signal_1,
-          R.drawable.stat_sys_r_signal_2,
-          R.drawable.stat_sys_r_signal_3,
-          R.drawable.stat_sys_r_signal_4 },
-        { R.drawable.stat_sys_r_signal_0_fully,
-          R.drawable.stat_sys_r_signal_1_fully,
-          R.drawable.stat_sys_r_signal_2_fully,
-          R.drawable.stat_sys_r_signal_3_fully,
-          R.drawable.stat_sys_r_signal_4_fully }
-    };
-    private static final int[] sRoamingIndicatorImages_cdma = new int[] {
-        R.drawable.stat_sys_roaming_cdma_0, //Standard Roaming Indicator
-        // 1 is Standard Roaming Indicator OFF
-        // TODO T: image never used, remove and put 0 instead?
-        R.drawable.stat_sys_roaming_cdma_0,
-
-        // 2 is Standard Roaming Indicator FLASHING
-        // TODO T: image never used, remove and put 0 instead?
-        R.drawable.stat_sys_roaming_cdma_0,
-
-        // 3-12 Standard ERI
-        R.drawable.stat_sys_roaming_cdma_0, //3
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-
-        // 13-63 Reserved for Standard ERI
-        R.drawable.stat_sys_roaming_cdma_0, //13
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-
-        // 64-127 Reserved for Non Standard (Operator Specific) ERI
-        R.drawable.stat_sys_roaming_cdma_0, //64
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0, //83
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0,
-        R.drawable.stat_sys_roaming_cdma_0 //239
-
-        // 240-255 Reserved
-    };
-
     //***** Data connection icons
-    private int[] mDataIconList = sDataNetType_g[0];
-    //GSM/UMTS
-    private static final int[][] sDataNetType_g = {
-            { R.drawable.stat_sys_data_connected_g,
-              R.drawable.stat_sys_data_in_g,
-              R.drawable.stat_sys_data_out_g,
-              R.drawable.stat_sys_data_inandout_g },
-            { R.drawable.stat_sys_data_fully_connected_g,
-              R.drawable.stat_sys_data_fully_in_g,
-              R.drawable.stat_sys_data_fully_out_g,
-              R.drawable.stat_sys_data_fully_inandout_g }
-        };
-    private static final int[][] sDataNetType_3g = {
-            { R.drawable.stat_sys_data_connected_3g,
-              R.drawable.stat_sys_data_in_3g,
-              R.drawable.stat_sys_data_out_3g,
-              R.drawable.stat_sys_data_inandout_3g },
-            { R.drawable.stat_sys_data_fully_connected_3g,
-              R.drawable.stat_sys_data_fully_in_3g,
-              R.drawable.stat_sys_data_fully_out_3g,
-              R.drawable.stat_sys_data_fully_inandout_3g }
-        };
-    private static final int[][] sDataNetType_e = {
-            { R.drawable.stat_sys_data_connected_e,
-              R.drawable.stat_sys_data_in_e,
-              R.drawable.stat_sys_data_out_e,
-              R.drawable.stat_sys_data_inandout_e },
-            { R.drawable.stat_sys_data_fully_connected_e,
-              R.drawable.stat_sys_data_fully_in_e,
-              R.drawable.stat_sys_data_fully_out_e,
-              R.drawable.stat_sys_data_fully_inandout_e }
-        };
-    //3.5G
-    private static final int[][] sDataNetType_h = {
-            { R.drawable.stat_sys_data_connected_h,
-              R.drawable.stat_sys_data_in_h,
-              R.drawable.stat_sys_data_out_h,
-              R.drawable.stat_sys_data_inandout_h },
-            { R.drawable.stat_sys_data_fully_connected_h,
-              R.drawable.stat_sys_data_fully_in_h,
-              R.drawable.stat_sys_data_fully_out_h,
-              R.drawable.stat_sys_data_fully_inandout_h }
-    };
-    //CDMA
-    // Use 3G icons for EVDO data and 1x icons for 1XRTT data
-    private static final int[][] sDataNetType_1x = {
-            { R.drawable.stat_sys_data_connected_1x,
-              R.drawable.stat_sys_data_in_1x,
-              R.drawable.stat_sys_data_out_1x,
-              R.drawable.stat_sys_data_inandout_1x },
-            { R.drawable.stat_sys_data_fully_connected_1x,
-              R.drawable.stat_sys_data_fully_in_1x,
-              R.drawable.stat_sys_data_fully_out_1x,
-              R.drawable.stat_sys_data_fully_inandout_1x }
-            };
-
-    //LTE, + stuff like HSPAP+, which is still
-    //3.5G but carriers like to pretend it's 4G
-    private static final int[][] sDataNetType_4g = {
-            { R.drawable.stat_sys_data_connected_4g,
-              R.drawable.stat_sys_data_in_4g,
-              R.drawable.stat_sys_data_out_4g,
-              R.drawable.stat_sys_data_inandout_4g },
-            { R.drawable.stat_sys_data_fully_connected_4g,
-              R.drawable.stat_sys_data_fully_in_4g,
-              R.drawable.stat_sys_data_fully_out_4g,
-              R.drawable.stat_sys_data_fully_inandout_4g }
-    };
-
+    private int[] mDataIconList = TelephonyIcons.sDataNetType_g[0];
 
     // Assume it's all good unless we hear otherwise.  We don't always seem
     // to get broadcasts that it *is* there.
@@ -530,34 +180,12 @@ public class StatusBarPolicy {
     private boolean mBluetoothPanConnected;
     private boolean mBluetoothEnabled;
 
-    // wifi
-    private static final int[][] sWifiSignalImages = {
-            { R.drawable.stat_sys_wifi_signal_1,
-              R.drawable.stat_sys_wifi_signal_2,
-              R.drawable.stat_sys_wifi_signal_3,
-              R.drawable.stat_sys_wifi_signal_4 },
-            { R.drawable.stat_sys_wifi_signal_1_fully,
-              R.drawable.stat_sys_wifi_signal_2_fully,
-              R.drawable.stat_sys_wifi_signal_3_fully,
-              R.drawable.stat_sys_wifi_signal_4_fully }
-        };
     private static final int sWifiTemporarilyNotConnectedImage =
             R.drawable.stat_sys_wifi_signal_0;
 
     private int mLastWifiSignalLevel = -1;
     private boolean mIsWifiConnected = false;
 
-    //4G
-    private static final int[][] sWimaxSignalImages = {
-            { R.drawable.stat_sys_data_wimax_signal_0,
-              R.drawable.stat_sys_data_wimax_signal_1,
-              R.drawable.stat_sys_data_wimax_signal_2,
-              R.drawable.stat_sys_data_wimax_signal_3 },
-            { R.drawable.stat_sys_data_wimax_signal_0_fully,
-              R.drawable.stat_sys_data_wimax_signal_1_fully,
-              R.drawable.stat_sys_data_wimax_signal_2_fully,
-              R.drawable.stat_sys_data_wimax_signal_3_fully }
-        };
     private static final int sWimaxDisconnectedImg =
             R.drawable.stat_sys_data_wimax_signal_disconnected;
     private static final int sWimaxIdleImg = R.drawable.stat_sys_data_wimax_signal_idle;
@@ -673,7 +301,7 @@ public class StatusBarPolicy {
 
     private boolean mShowSyncIcon;
 
-    class SettingsObserver extends ContentObserver {
+    private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
         }
@@ -682,8 +310,6 @@ public class StatusBarPolicy {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_BATTERY), false, this);
-            resolver.registerContentObserver(Settings.System
-                    .getUriFor(Settings.System.STATUS_BAR_CM_SIGNAL_TEXT), false, this);
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUS_BAR_HEADSET), false, this);
             resolver.registerContentObserver(Settings.System
@@ -715,6 +341,24 @@ public class StatusBarPolicy {
         }
     }
 
+    private class SettingsSignalObserver extends ContentObserver {
+        SettingsSignalObserver(Handler handler) {
+            super(handler);
+        }
+
+        void observe() {
+            ContentResolver resolver = mContext.getContentResolver();
+            resolver.registerContentObserver(Settings.System
+                    .getUriFor(Settings.System.STATUS_BAR_CM_SIGNAL_TEXT), false, this);
+            onChange(true);
+        }
+
+        @Override 
+        public void onChange(boolean selfChange) {
+            updateSignalSettings();
+        }
+    }
+
     // phone_signal visibility
     private boolean mPhoneSignalHidden;
     public StatusBarPolicy(Context context) {
@@ -726,7 +370,13 @@ public class StatusBarPolicy {
         // settings observer for cm-battery change
         SettingsObserver settingsObserver = new SettingsObserver(mHandler);
         settingsObserver.observe();
+
+        SettingsSignalObserver settingsSignalObserver = new SettingsSignalObserver(mHandler);
+        settingsSignalObserver.observe();
+
         updateSettings();
+
+        updateSignalSettings();
 
         // storage
         mStorageManager = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
@@ -767,7 +417,7 @@ public class StatusBarPolicy {
         mService.setIconVisibility("data_connection", false);
 
         // wifi
-        mService.setIcon("wifi", sWifiSignalImages[0][0], 0);
+        mService.setIcon("wifi", WifiIcons.sWifiSignalImages[0][0], 0);
         mService.setIconVisibility("wifi", false);
         // wifi will get updated by the sticky intents
 
@@ -1368,12 +1018,12 @@ public class StatusBarPolicy {
                              Settings.System.STATUS_BAR_CM_WIFI_TEXT, 0) == 1);
             if (info.isConnected()) {
                 mIsWifiConnected = true;
-                int iconId = sWifiSignalImages[mInetCondition][0];
+                int iconId = WifiIcons.sWifiSignalImages[mInetCondition][0];
                 if (mShowWifiIcon && !mShowWifiText) {
                   if (mLastWifiSignalLevel == -1) {
-                      iconId = sWifiSignalImages[mInetCondition][0];
+                      iconId = WifiIcons.sWifiSignalImages[mInetCondition][0];
                   } else {
-                      iconId = sWifiSignalImages[mInetCondition][mLastWifiSignalLevel];
+                      iconId = WifiIcons.sWifiSignalImages[mInetCondition][mLastWifiSignalLevel];
                   }
                 }
                 mService.setIcon("wifi", iconId, 0);
@@ -1386,7 +1036,7 @@ public class StatusBarPolicy {
             } else {
                 mLastWifiSignalLevel = -1;
                 mIsWifiConnected = false;
-                int iconId = sWifiSignalImages[0][0];
+                int iconId = WifiIcons.sWifiSignalImages[0][0];
 
                 mService.setIcon("wifi", iconId, 0);
                 // Hide the icon since we're not connected
@@ -1542,12 +1192,12 @@ public class StatusBarPolicy {
 
             // Though mPhone is a Manager, this call is not an IPC
             if (mPhone.isNetworkRoaming()) {
-                iconList = sSignalImages_r[mInetCondition];
+                iconList = TelephonyIcons.sSignalImages_r[mInetCondition];
             } else {
-                iconList = sSignalImages[mInetCondition];
+                iconList = TelephonyIcons.sSignalImages[mInetCondition];
             }
         } else {
-            iconList = sSignalImages[mInetCondition];
+            iconList = TelephonyIcons.sSignalImages[mInetCondition];
 
             // If 3G(EV) and 1x network are available than 3G should be
             // displayed, displayed RSSI should be from the EV side.
@@ -1655,13 +1305,13 @@ public class StatusBarPolicy {
 
         switch (net) {
         case TelephonyManager.NETWORK_TYPE_EDGE:
-            mDataIconList = sDataNetType_e[mInetCondition];
+            mDataIconList = TelephonyIcons.sDataNetType_e[mInetCondition];
             break;
         case TelephonyManager.NETWORK_TYPE_UMTS:
             if (mShowFourG) {
-                mDataIconList = sDataNetType_4g[mInetCondition];
+                mDataIconList = TelephonyIcons.sDataNetType_4g[mInetCondition];
             } else {
-                mDataIconList = sDataNetType_3g[mInetCondition];
+                mDataIconList = TelephonyIcons.sDataNetType_3g[mInetCondition];
             }
             break;
         case TelephonyManager.NETWORK_TYPE_HSDPA:
@@ -1669,41 +1319,41 @@ public class StatusBarPolicy {
         case TelephonyManager.NETWORK_TYPE_HSPA:
             if (mHspaDataDistinguishable) {
                 if (mShowFourG) {
-                    mDataIconList = sDataNetType_4g[mInetCondition];
+                    mDataIconList = TelephonyIcons.sDataNetType_4g[mInetCondition];
                 } else {
-                    mDataIconList = sDataNetType_h[mInetCondition];
+                    mDataIconList = TelephonyIcons.sDataNetType_h[mInetCondition];
                 }
             } else {
                 if (mShowFourG) {
-                    mDataIconList = sDataNetType_4g[mInetCondition];
+                    mDataIconList = TelephonyIcons.sDataNetType_4g[mInetCondition];
                 } else {
-                    mDataIconList = sDataNetType_3g[mInetCondition];
+                    mDataIconList = TelephonyIcons.sDataNetType_3g[mInetCondition];
                 }
             }
             break;
         case TelephonyManager.NETWORK_TYPE_CDMA:
             // display 1xRTT for IS95A/B
-            mDataIconList = sDataNetType_1x[mInetCondition];
+            mDataIconList = TelephonyIcons.sDataNetType_1x[mInetCondition];
             break;
         case TelephonyManager.NETWORK_TYPE_1xRTT:
-            mDataIconList = sDataNetType_1x[mInetCondition];
+            mDataIconList = TelephonyIcons.sDataNetType_1x[mInetCondition];
             break;
         case TelephonyManager.NETWORK_TYPE_EVDO_0: //fall through
         case TelephonyManager.NETWORK_TYPE_EVDO_A:
         case TelephonyManager.NETWORK_TYPE_EVDO_B:
         case TelephonyManager.NETWORK_TYPE_EHRPD:
             if (mShowFourG) {
-                mDataIconList = sDataNetType_4g[mInetCondition];
+                mDataIconList = TelephonyIcons.sDataNetType_4g[mInetCondition];
             } else {
-                mDataIconList = sDataNetType_3g[mInetCondition];
+                mDataIconList = TelephonyIcons.sDataNetType_3g[mInetCondition];
             }
             break;
         case TelephonyManager.NETWORK_TYPE_LTE:
         case TelephonyManager.NETWORK_TYPE_HSPAP:
-            mDataIconList = sDataNetType_4g[mInetCondition];
+            mDataIconList = TelephonyIcons.sDataNetType_4g[mInetCondition];
             break;
         default:
-            mDataIconList = sDataNetType_g[mInetCondition];
+            mDataIconList = TelephonyIcons.sDataNetType_g[mInetCondition];
         break;
         }
     }
@@ -1882,11 +1532,11 @@ public class StatusBarPolicy {
             int iconId;
             final int newRssi = intent.getIntExtra(WifiManager.EXTRA_NEW_RSSI, -200);
             int newSignalLevel = WifiManager.calculateSignalLevel(newRssi,
-                                                                  sWifiSignalImages[0].length);
+                                                                  WifiIcons.sWifiSignalImages[0].length);
             if (newSignalLevel != mLastWifiSignalLevel) {
                 mLastWifiSignalLevel = newSignalLevel;
                 if (mIsWifiConnected) {
-                    iconId = sWifiSignalImages[mInetCondition][newSignalLevel];
+                    iconId = WifiIcons.sWifiSignalImages[mInetCondition][newSignalLevel];
                 } else {
                     iconId = sWifiTemporarilyNotConnectedImage;
                 }
@@ -1958,7 +1608,7 @@ public class StatusBarPolicy {
                 if(mWimaxExtraState == WimaxManagerConstants.WIMAX_IDLE) {
                     iconId = sWimaxIdleImg;
                 } else {
-                    iconId = sWimaxSignalImages[mInetCondition][mWimaxSignal];
+                    iconId = WifiIcons.sWimaxSignalImages[mInetCondition][mWimaxSignal];
                 }
                 break;
         }
@@ -2014,7 +1664,7 @@ public class StatusBarPolicy {
             return;
         }
 
-        int[] iconList = sRoamingIndicatorImages_cdma;
+        int[] iconList = TelephonyIcons.sRoamingIndicatorImages_cdma;
         int iconIndex = state.getCdmaEriIconIndex();
         int iconMode = state.getCdmaEriIconMode();
 
@@ -2113,6 +1763,10 @@ public class StatusBarPolicy {
         mShowHeadset = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_HEADSET, 1) == 1);
         mService.setIconVisibility("headset", mShowHeadset && mHeadsetPlugged);
+    }
+
+    private void updateSignalSettings() {
+        ContentResolver resolver = mContext.getContentResolver();
 
         mPhoneSignalHidden = (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.STATUS_BAR_CM_SIGNAL_TEXT, 0) != 4);
