@@ -132,10 +132,11 @@ public class WeatherTile extends QuickSettingsTile {
             Location location = (Location) intent.getParcelableExtra(LocationManager.KEY_LOCATION_CHANGED);
             triggerLocationQueryWithLocation(location);
         } else if (action.equals(Intent.ACTION_TIME_CHANGED) || 
-                    action.equals(Intent.ACTION_TIMEZONE_CHANGED)) {
+                    action.equals(Intent.ACTION_TIMEZONE_CHANGED) ||
+                    action.equals(Intent.ACTION_CONFIGURATION_CHANGED)) {
             updateLocationListenerState();
-            refreshWeather();
         }
+        refreshWeather();
     }
 
     //===============================================================================================
@@ -308,13 +309,14 @@ public class WeatherTile extends QuickSettingsTile {
         final ContentResolver resolver = mContext.getContentResolver();
         final long interval = Settings.System.getLong(resolver,
                 Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
-        if (mForceRefresh || (((System.currentTimeMillis() - mWeatherInfo.getLastSync()) / 60000) >= interval)) {
+        boolean manualSync = (interval == 0);
+        if (mForceRefresh || !manualSync && (((System.currentTimeMillis() - mWeatherInfo.getLastSync()) / 60000) >= interval)) {
             updating = true;
             updateQuickSettings();
             if (triggerWeatherQuery(false)) {
                 mForceRefresh = false;
             }
-        } else if (mWeatherInfo.getLastSync() == 0) {
+        } else if (manualSync && mWeatherInfo.getLastSync() == 0) {
             setNoWeatherData();
         } else {
             setWeatherData(mWeatherInfo);

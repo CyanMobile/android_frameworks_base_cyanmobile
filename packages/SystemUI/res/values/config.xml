@@ -32,7 +32,7 @@
     <integer name="quick_settings_user_time_settings_tile_span">1</integer>
     <integer name="quicktile_num_columns">3</integer>
     <integer name="quick_settings_num_columns">3</integer>
-    <integer name="quick_settings_brightness_dialog_short_timeout">2000</integer>
-    <integer name="quick_settings_brightness_dialog_long_timeout">4000</integer>
+    <integer name="quick_settings_brightness_dialog_short_timeout">10000</integer>
+    <integer name="quick_settings_brightness_dialog_long_timeout">30000</integer>
 </resources>
 
