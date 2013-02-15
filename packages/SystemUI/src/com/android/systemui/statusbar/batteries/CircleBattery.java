@@ -37,6 +37,7 @@ import android.os.Handler;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.view.View;
+import android.util.DisplayMetrics;
 import android.widget.ImageView;
 
 import com.android.internal.R;
@@ -87,7 +88,7 @@ public class CircleBattery extends ImageView {
     };
 
     // observes changes in system battery settings and enables/disables view accordingly
-    class SettingsObserver extends ContentObserver {
+    private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
         }
@@ -98,6 +99,8 @@ public class CircleBattery extends ImageView {
                     Settings.System.STATUS_BAR_BATTERY), false, this);
 	    resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_BATTERY_COLOR), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUSBAR_ICONS_SIZE), false, this);
             onChange(true);
         }
 
@@ -117,11 +120,13 @@ public class CircleBattery extends ImageView {
             if (mActivated && mAttached) {
                 invalidate();
             }
+
+             initSizeMeasureIconHeight();
         }
     }
 
     // keeps track of current battery level and charger-plugged-state
-    class BatteryReceiver extends BroadcastReceiver {
+    private class BatteryReceiver extends BroadcastReceiver {
         private boolean mIsRegistered = false;
 
         public BatteryReceiver(Context context) {
@@ -374,16 +379,11 @@ public class CircleBattery extends ImageView {
      * statusbar for all resolutions
      */
     private void initSizeMeasureIconHeight() {
-        final Bitmap measure = BitmapFactory.decodeResource(getResources(),
-                com.android.systemui.R.drawable.stat_sys_wifi_signal_4_fully);
-        final int x = measure.getWidth() / 2;
-
-        mCircleSize = 0;
-        for (int y = 0; y < measure.getHeight(); y++) {
-            int alpha = Color.alpha(measure.getPixel(x, y));
-            if (alpha > 5) {
-                mCircleSize++;
-            }
-        }
+        int defValuesFontSize = getContext().getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
+        float mCarrierSizeval = (float) Settings.System.getInt(getContext().getContentResolver(),
+                Settings.System.STATUSBAR_ICONS_SIZE, defValuesFontSize);
+        DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+        int CarrierSizepx = (int) (metrics.density * (mCarrierSizeval * 1.8));
+        mCircleSize = CarrierSizepx;
     }
 }
