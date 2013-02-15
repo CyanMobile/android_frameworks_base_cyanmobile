@@ -3212,6 +3212,12 @@ public final class Settings {
         public static final String SYSTEMUI_STATUSBAR_VISIBILITY = "systemui_statusbar_visibility";
 
         /**
+         * Whether to hide statusbar on lockscreen
+         * @hide
+         */
+        public static final String STATUSBAR_ICONS_VISIBILITY = "statusbar_icons_visibility";
+
+        /**
          * Whether to keep the messaging app at a higher OOM adjustement
          * @hide
          */
@@ -4793,6 +4799,7 @@ public final class Settings {
             LOCKSCREEN_TARGETS,
             ENABLE_BOOTSOUND,
             SYSTEMUI_STATUSBAR_VISIBILITY,
+            STATUSBAR_ICONS_VISIBILITY,
             CARRIER_LABEL_TYPE,
             CARRIER_LABEL_LOCKSCREEN_TYPE,
             CARRIER_LABEL_CUSTOM_STRING,

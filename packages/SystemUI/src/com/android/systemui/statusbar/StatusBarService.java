@@ -377,6 +377,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private boolean mFirstis = true;
     private boolean mNaviShow = true;
     private boolean mPieEnable = true;
+    private boolean mStatusBarHidden = false;
     private boolean mStatusBarReverse = false;
     private boolean mStatusBarTab = false;
     private boolean mStatusBarGrid = false;
@@ -494,6 +495,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.getUriFor(Settings.System.PIE_TRIGGER), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.PIE_CONTROL_ENABLE), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.STATUSBAR_ICONS_VISIBILITY), false, this);
             onChange(true);
         }
 
@@ -536,6 +539,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     Settings.System.STATUS_BAR_BRIGHTNESS_TOGGLE, 0) == 1;
             IntruderTime = Settings.System.getInt(resolver, Settings.System.STATUS_BAR_INTRUDER_TIME, INTRUDER_ALERT_DECAY_MS);
             mPieEnable = (Settings.System.getInt(resolver, Settings.System.PIE_CONTROL_ENABLE, 1) == 1);
+            mStatusBarHidden = (Settings.System.getInt(resolver, Settings.System.STATUSBAR_ICONS_VISIBILITY, 0) == 1);
             updateColors();
             updateLayout();
             updateCarrierLabel();
@@ -728,6 +732,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                             Settings.System.STATUS_BAR_BRIGHTNESS_TOGGLE, 0) == 1;
         IntruderTime = Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_INTRUDER_TIME, INTRUDER_ALERT_DECAY_MS);
         mPieEnable = (Settings.System.getInt(getContentResolver(), Settings.System.PIE_CONTROL_ENABLE, 1) == 1);
+        mStatusBarHidden = (Settings.System.getInt(getContentResolver(), Settings.System.STATUSBAR_ICONS_VISIBILITY, 0) == 1);
 
         if (!mStatusBarTab) {
             mExpandedView = (ExpandedView)View.inflate(context, R.layout.status_bar_expanded, null);
@@ -965,8 +970,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         mCarrierLabelLayout = (LinearLayout) mExpandedView.findViewById(R.id.carrier_label_layout);
         mCompactCarrierLayout = (LinearLayout) mExpandedView.findViewById(R.id.compact_carrier_layout);
+
         mAvalMemLayout = (LinearLayout) mExpandedView.findViewById(R.id.memlabel_layout);
         mAvalMemLayout.setOnClickListener(mAvalMemLayoutListener);
+        mAvalMemLayout.setOnLongClickListener(mAvalMemLayoutTaskListener);
+
         memHeader = (TextView) mExpandedView.findViewById(R.id.avail_mem_text);
         avalMemPB = (ProgressBar) mExpandedView.findViewById(R.id.aval_memos);
         mTicker = new MyTicker(context, mStatusBarView);
@@ -1990,29 +1998,53 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     public void showClock(boolean show) {
-      if (mStatusBarView != null) {
-       Clock clock = (Clock) mStatusBarView.findViewById(R.id.clock);
-       if (clock != null) {
-           clock.VisibilityChecks(show);
-           clock.setOnClickListener(mCarrierButtonListener);
+       if (mStatusBarView != null) {
+          Clock clock = (Clock) mStatusBarView.findViewById(R.id.clock);
+          if (clock != null) {
+              clock.VisibilityChecks(show);
+              clock.setOnClickListener(mCarrierButtonListener);
+          }
+          CenterClock centerClo = (CenterClock) mStatusBarView.findViewById(R.id.centerClo);
+          if (centerClo != null) {
+              centerClo.VisibilityChecks(show);
+              centerClo.setOnClickListener(mCarrierButtonListener);
+          }
+          LeftClock clockLeft = (LeftClock) mStatusBarView.findViewById(R.id.clockLe);
+          if (clockLeft != null) {
+              clockLeft.VisibilityChecks(show);
+              clockLeft.setOnClickListener(mCarrierButtonListener);
+          }
+          mHidingAllViews(show);
        }
-       CenterClock centerClo = (CenterClock) mStatusBarView.findViewById(R.id.centerClo);
-       if (centerClo != null) {
-           centerClo.VisibilityChecks(show);
-           centerClo.setOnClickListener(mCarrierButtonListener);
-       }
-       LeftClock clockLeft = (LeftClock) mStatusBarView.findViewById(R.id.clockLe);
-       if (clockLeft != null) {
-           clockLeft.VisibilityChecks(show);
-           clockLeft.setOnClickListener(mCarrierButtonListener);
-       }
-      }
     }
 
     public void showNaviBar(boolean show) {
       if (mNavigationBarView != null) {
           mNavigationBarView.setNaviVisible(show);
       }
+    }
+
+    private void mHidingAllViews(boolean show) {
+        if (mStatusBarHidden) {
+            mIcons.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+        if (mStatusBarCarrier == 1) {
+            mCarrierLabelStatusBarLayout.setVisibility(show ? View.VISIBLE : View.GONE);
+        } else if (mStatusBarCarrier == 2) {
+            mCenterCarrierLabelStatusBarLayout.setVisibility(show ? View.VISIBLE : View.GONE);
+        } else if (mStatusBarCarrier == 3) {
+            mLeftCarrierLabelStatusBarLayout.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+        if (mStatusBarCarrierLogo == 1) {
+            mCarrierLogoLayout.setVisibility(show ? View.VISIBLE : View.GONE);
+        } else if (mStatusBarCarrierLogo == 2) {
+            mCarrierLogoCenterLayout.setVisibility(show ? View.VISIBLE : View.GONE);
+        } else if (mStatusBarCarrierLogo == 3) {
+            mCarrierLogoLeftLayout.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+        if (mStatusBarHidden && mShowCmBatteryStatusBar) {
+            mCmBatteryStatusBar.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
     }
 
     /**
@@ -3200,6 +3232,18 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         public void onClick(View v) {
             CmStatusBarView.simulateKeypress(CmStatusBarView.KEYCODE_VIRTUAL_BACK_LONG);
             getMemInfo();
+        }
+    };
+
+    private View.OnLongClickListener mAvalMemLayoutTaskListener = new View.OnLongClickListener() {
+        @Override
+        public boolean onLongClick(View v) {
+             Intent intentx = new Intent(Intent.ACTION_MAIN);
+             intentx.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
+             intentx.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+             mContext.startActivity(intentx);
+             animateCollapse();
+             return true;
         }
     };
 
