@@ -180,7 +180,7 @@ public class RingPanelView extends FrameLayout {
         }
     }
 
-    Runnable mResetRing = new Runnable() {
+    private Runnable mResetRing = new Runnable() {
         public void run() {
            hide();
         }

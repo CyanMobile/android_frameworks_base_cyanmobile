@@ -54,7 +54,7 @@ public final class DateView extends TextView {
         }
 
         void observe() {
-            ContentResolver resolver = mContext.getContentResolver();
+            ContentResolver resolver = getContext().getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUSBAR_ICON_FONT_SIZE), false, this);
         }
@@ -134,11 +134,12 @@ public final class DateView extends TextView {
     }
 
     private void updateSettings(){
-        ContentResolver resolver = mContext.getContentResolver();
-
-        int mCarrierSizeval = Settings.System.getInt(resolver,
-                Settings.System.STATUSBAR_ICON_FONT_SIZE, 25);
-        int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, mContext.getResources().getDisplayMetrics());
+        ContentResolver resolver = getContext().getContentResolver();
+        int defValuesFontSize = getContext().getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
+        float mCarrierSizeval = (float) Settings.System.getInt(resolver,
+                Settings.System.STATUSBAR_ICON_FONT_SIZE, defValuesFontSize);
+        DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+        int CarrierSizepx = (int) (metrics.density * mCarrierSizeval);
         mCarrierSize = CarrierSizepx;
 
            if (mAttached) {

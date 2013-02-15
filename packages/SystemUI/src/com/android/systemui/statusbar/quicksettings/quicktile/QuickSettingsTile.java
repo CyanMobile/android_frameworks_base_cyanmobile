@@ -127,7 +127,7 @@ public class QuickSettingsTile implements OnClickListener {
         setHapticFeedback(hapticFeedback, clickPattern, longClickPattern);
     }
 
-    void setHapticFeedback(boolean enabled, long[] clickPattern, long[] longClickPattern) {
+    private void setHapticFeedback(boolean enabled, long[] clickPattern, long[] longClickPattern) {
         mHapticFeedback = enabled;
         mClickPattern = clickPattern;
         mLongClickPattern = longClickPattern;

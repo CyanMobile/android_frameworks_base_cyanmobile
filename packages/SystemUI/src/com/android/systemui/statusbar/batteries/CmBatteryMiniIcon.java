@@ -94,7 +94,7 @@ public class CmBatteryMiniIcon extends ImageView {
         }
 
         void observe() {
-            ContentResolver resolver = mContext.getContentResolver();
+            ContentResolver resolver = getContext().getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_BATTERY), false, this);
         }
@@ -107,7 +107,7 @@ public class CmBatteryMiniIcon extends ImageView {
 
     // provides a fake-timer using Handler to force onDraw() events when
     // animating
-    final Runnable onFakeTimer = new Runnable() {
+    private final Runnable onFakeTimer = new Runnable() {
         public void run() {
             ++mCurrentFrame;
             if (mCurrentFrame > 10)
@@ -268,7 +268,7 @@ public class CmBatteryMiniIcon extends ImageView {
      * settings. Also does the initial call from constructor
      */
     private void updateSettings() {
-        ContentResolver resolver = mContext.getContentResolver();
+        ContentResolver resolver = getContext().getContentResolver();
 
         int statusBarBattery = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_BATTERY, 2));

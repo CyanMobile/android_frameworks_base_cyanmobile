@@ -51,7 +51,7 @@ public final class PowerDateView extends TextView {
         }
 
         void observe() {
-            ContentResolver resolver = mContext.getContentResolver();
+            ContentResolver resolver = getContext().getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_DATE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
@@ -128,14 +128,14 @@ public final class PowerDateView extends TextView {
     private final void updateClock() {
         Date now = new Date();
         CharSequence dow = DateFormat.format("EEEE", now);
-        CharSequence date = DateFormat.getLongDateFormat(mContext).format(now);
-        setText(mContext.getString(R.string.status_bar_date_formatter, dow, date).toUpperCase());
+        CharSequence date = DateFormat.getLongDateFormat(getContext()).format(now);
+        setText(getContext().getString(R.string.status_bar_date_formatter, dow, date).toUpperCase());
 	setTextColor(mClockColor);
     }
 
     private void updateSettings(){
-        ContentResolver resolver = mContext.getContentResolver();
-        int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+        ContentResolver resolver = getContext().getContentResolver();
+        int defValuesColor = getContext().getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
 	int mCColor = mClockColor;
 	mClockColor = (Settings.System.getInt(resolver,
                 Settings.System.COLOR_DATE, defValuesColor));

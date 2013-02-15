@@ -81,7 +81,7 @@ public class Clock extends TextView {
         }
 
         void observe() {
-            ContentResolver resolver = mContext.getContentResolver();
+            ContentResolver resolver = getContext().getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_AM_PM), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
@@ -279,25 +279,25 @@ public class Clock extends TextView {
         String currentDay = null;
         switch (today) {
             case 1:
-                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_sunday);
+                currentDay = getContext().getResources().getString(R.string.day_of_week_medium_sunday);
             break;
             case 2:
-                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_monday);
+                currentDay = getContext().getResources().getString(R.string.day_of_week_medium_monday);
             break;
             case 3:
-                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_tuesday);
+                currentDay = getContext().getResources().getString(R.string.day_of_week_medium_tuesday);
             break;
             case 4:
-                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_wednesday);
+                currentDay = getContext().getResources().getString(R.string.day_of_week_medium_wednesday);
             break;
             case 5:
-                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_thursday);
+                currentDay = getContext().getResources().getString(R.string.day_of_week_medium_thursday);
             break;
             case 6:
-                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_friday);
+                currentDay = getContext().getResources().getString(R.string.day_of_week_medium_friday);
             break;
             case 7:
-                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_saturday);
+                currentDay = getContext().getResources().getString(R.string.day_of_week_medium_saturday);
             break;
         }
         return currentDay.toUpperCase() + " ";
@@ -309,20 +309,21 @@ public class Clock extends TextView {
     }
 
     private void updateSettings(){
-        ContentResolver resolver = mContext.getContentResolver();
+        ContentResolver resolver = getContext().getContentResolver();
 
 	int mCColor = mClockColor;
-        int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+        int defValuesColor = getContext().getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
         mAmPmStyle = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_AM_PM, 2));
         mWeekdayStyle = (Settings.System.getInt(resolver,
             Settings.System.STATUS_BAR_WEEKDAY, 2));
 	mClockColor = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
-        int defValuesFontSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
-        int mCarrierSizeval = Settings.System.getInt(resolver,
+        int defValuesFontSize = getContext().getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
+        float mCarrierSizeval = (float) Settings.System.getInt(resolver,
                 Settings.System.STATUSBAR_CLOCK_FONT_SIZE, defValuesFontSize);
-        int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, mContext.getResources().getDisplayMetrics());
+        DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+        int CarrierSizepx = (int) (metrics.density * mCarrierSizeval);
         mCarrierSize = CarrierSizepx;
 
         if ((mAmPmStyle != AM_PM_STYLE) || (mCColor != mClockColor)) {

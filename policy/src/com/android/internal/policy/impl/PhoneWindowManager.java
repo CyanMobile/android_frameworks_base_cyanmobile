@@ -1926,18 +1926,18 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     private int getNavBarSize() {
-        int navSizeval = Settings.System.getInt(mContext.getContentResolver(),
-             Settings.System.STATUSBAR_NAVI_SIZE, 25);
-        int navSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                 navSizeval, mContext.getResources().getDisplayMetrics());
+        int defValuesNaviSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_navibarsize_default_cyanmobile);
+        float navSizeval = (float) Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUSBAR_NAVI_SIZE, defValuesNaviSize);
+        int navSizepx = (int) (mContext.getResources().getDisplayMetrics().density * navSizeval);
         return (mNaviShow && mNaviShowAll && mNaviShowAll2) ? navSizepx : 0;
     }
 
     private int getStatBarSize() {
-        int statSizeval = Settings.System.getInt(mContext.getContentResolver(),
-             Settings.System.STATUSBAR_STATS_SIZE, 25);
-        int statSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                 statSizeval, mContext.getResources().getDisplayMetrics());
+        int defValuesStatsSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_statbarsize_default_cyanmobile);
+        float statSizeval = (float) Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUSBAR_STATS_SIZE, defValuesStatsSize);
+        int statSizepx = (int) (mContext.getResources().getDisplayMetrics().density * statSizeval);
         return statSizepx;
     }
 

@@ -72,7 +72,7 @@ public class LeftCarrierLabelStatusBar extends TextView {
         }
 
         void observe() {
-            ContentResolver resolver = mContext.getContentResolver();
+            ContentResolver resolver = getContext().getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.CARRIER_LABEL_TYPE),
                     false, this);
@@ -151,28 +151,29 @@ public class LeftCarrierLabelStatusBar extends TextView {
         }
     };
 
-    void updateSettings() {
-        ContentResolver resolver = mContext.getContentResolver();
-        int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
-        int defValuesFontSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
+    private void updateSettings() {
+        ContentResolver resolver = getContext().getContentResolver();
+        int defValuesColor = getContext().getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+        int defValuesFontSize = getContext().getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
         mCarrierLabelType = Settings.System.getInt(resolver,
                 Settings.System.CARRIER_LABEL_TYPE, TYPE_DEFAULT);
         mCarrierLabelCustom = Settings.System.getString(resolver,
                 Settings.System.CARRIER_LABEL_CUSTOM_STRING);
-        mAirplaneOn = (Settings.System.getInt(mContext.getContentResolver(),
+        mAirplaneOn = (Settings.System.getInt(getContext().getContentResolver(),
                     Settings.System.AIRPLANE_MODE_ON, 0) == 1);
         mCarrierColor = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_CARRIERCOLOR, defValuesColor));
         mStatusBarCarrierLeft = (Settings.System.getInt(resolver,
                     Settings.System.STATUS_BAR_CARRIER, 6) == 3);
-        int mCarrierSizeval = Settings.System.getInt(resolver,
+        float mCarrierSizeval = (float) Settings.System.getInt(resolver,
                 Settings.System.STATUSBAR_CARRIER_FONT_SIZE, defValuesFontSize);
-        int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, mContext.getResources().getDisplayMetrics());
+        DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+        int CarrierSizepx = (int) (metrics.density * mCarrierSizeval);
         mCarrierSize = CarrierSizepx;
     }
 
-    void updateNetworkName(boolean showSpn, String spn, boolean showPlmn, String plmn) {
-        ContentResolver resolver = mContext.getContentResolver();
+    private void updateNetworkName(boolean showSpn, String spn, boolean showPlmn, String plmn) {
+        ContentResolver resolver = getContext().getContentResolver();
 
       if(mStatusBarCarrierLeft){
         if (false) {
@@ -216,7 +217,7 @@ public class LeftCarrierLabelStatusBar extends TextView {
                     if (plmn != null) {
                         str.append(plmn);
                     } else {
-                        str.append(mContext.getText(R.string.lockscreen_carrier_default));
+                        str.append(getContext().getText(R.string.lockscreen_carrier_default));
                     }
                 }
                 if (showSpn && spn != null) {

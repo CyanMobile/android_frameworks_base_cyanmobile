@@ -51,7 +51,7 @@ public final class ExDateView extends TextView {
         }
 
         void observe() {
-            ContentResolver resolver = mContext.getContentResolver();
+            ContentResolver resolver = getContext().getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_DATE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
@@ -126,15 +126,15 @@ public final class ExDateView extends TextView {
     }
 
     private final void updateClock() {
-        final String dateFormat = mContext.getString(R.string.abbrev_wday_month_day_no_year);
+        final String dateFormat = getContext().getString(R.string.abbrev_wday_month_day_no_year);
         CharSequence dow = DateFormat.format(dateFormat, new Date());
-        setText(mContext.getString(R.string.status_bar_date_formats, dow).toUpperCase());
+        setText(getContext().getString(R.string.status_bar_date_formats, dow).toUpperCase());
 	setTextColor(mClockColor);
     }
 
     private void updateSettings(){
-        ContentResolver resolver = mContext.getContentResolver();
-        int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+        ContentResolver resolver = getContext().getContentResolver();
+        int defValuesColor = getContext().getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
 	int mCColor = mClockColor;
 	mClockColor = (Settings.System.getInt(resolver,
                 Settings.System.COLOR_DATE, defValuesColor));

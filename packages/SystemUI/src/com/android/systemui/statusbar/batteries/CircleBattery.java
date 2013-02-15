@@ -52,7 +52,6 @@ import com.android.internal.R;
 
 public class CircleBattery extends ImageView {
     private Handler mHandler;
-    private Context mContext;
     private BatteryReceiver mBatteryReceiver = null;
 
     // state variables
@@ -79,6 +78,7 @@ public class CircleBattery extends ImageView {
 
     // runnable to invalidate view via mHandler.postDelayed() call
     private final Runnable mInvalidate = new Runnable() {
+        @Override
         public void run() {
             if(mActivated && mAttached) {
                 invalidate();
@@ -93,7 +93,7 @@ public class CircleBattery extends ImageView {
         }
 
         public void observe() {
-            ContentResolver resolver = mContext.getContentResolver();
+            ContentResolver resolver = getContext().getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_BATTERY), false, this);
 	    resolver.registerContentObserver(Settings.System.getUriFor(
@@ -103,7 +103,7 @@ public class CircleBattery extends ImageView {
 
         @Override
         public void onChange(boolean selfChange) {
-            int batteryStyle = (Settings.System.getInt(mContext.getContentResolver(),
+            int batteryStyle = (Settings.System.getInt(getContext().getContentResolver(),
                     Settings.System.STATUS_BAR_BATTERY, 0));
 
             mActivated = (batteryStyle == 8 || batteryStyle == 9);
@@ -146,14 +146,14 @@ public class CircleBattery extends ImageView {
 
                 IntentFilter filter = new IntentFilter();
                 filter.addAction(Intent.ACTION_BATTERY_CHANGED);
-                mContext.registerReceiver(mBatteryReceiver, filter);
+                getContext().registerReceiver(mBatteryReceiver, filter);
             }
         }
 
         private void unregisterSelf() {
             if (mIsRegistered) {
                 mIsRegistered = false;
-                mContext.unregisterReceiver(this);
+                getContext().unregisterReceiver(this);
             }
         }
 
@@ -180,18 +180,17 @@ public class CircleBattery extends ImageView {
     public CircleBattery(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        mContext = context;
         mHandler = new Handler();
 
         SettingsObserver settingsObserver = new SettingsObserver(mHandler);
         settingsObserver.observe();
-        mBatteryReceiver = new BatteryReceiver(mContext);
+        mBatteryReceiver = new BatteryReceiver(getContext());
 
         // initialize and setup all paint variables
         // stroke width is later set in initSizeBasedStuff()
         Resources res = getResources();
-        int defValuesColor = mContext.getResources().getInteger(R.color.color_default_cyanmobile);
-        String colores = Settings.System.getString(mContext.getContentResolver(), Settings.System.STATUS_BAR_BATTERY_COLOR);
+        int defValuesColor = getContext().getResources().getInteger(R.color.color_default_cyanmobile);
+        String colores = Settings.System.getString(getContext().getContentResolver(), Settings.System.STATUS_BAR_BATTERY_COLOR);
         Integer barColor = null;
         if (!TextUtils.isEmpty(colores)) {
            try {
@@ -265,8 +264,8 @@ public class CircleBattery extends ImageView {
 
         updateChargeAnim();
 
-        int defValuesColor = mContext.getResources().getInteger(R.color.color_default_cyanmobile);
-        String colores = Settings.System.getString(mContext.getContentResolver(), Settings.System.STATUS_BAR_BATTERY_COLOR);
+        int defValuesColor = getContext().getResources().getInteger(R.color.color_default_cyanmobile);
+        String colores = Settings.System.getString(getContext().getContentResolver(), Settings.System.STATUS_BAR_BATTERY_COLOR);
         Integer barColor = null;
         if (!TextUtils.isEmpty(colores)) {
            try {

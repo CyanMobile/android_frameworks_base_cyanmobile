@@ -141,7 +141,7 @@ public class CmSignalText extends TextView {
         }
 
         void observe() {
-            ContentResolver resolver = mContext.getContentResolver();
+            ContentResolver resolver = getContext().getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_CM_SIGNAL_TEXT), false,
                     this);
@@ -175,9 +175,10 @@ public class CmSignalText extends TextView {
         mClockColor = (Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
         int defValuesFontSize = getContext().getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
-        int mCarrierSizeval = Settings.System.getInt(getContext().getContentResolver(),
+        float mCarrierSizeval = (float) Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.STATUSBAR_ICON_FONT_SIZE, defValuesFontSize);
-        int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, getContext().getResources().getDisplayMetrics());
+        DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+        int CarrierSizepx = (int) (metrics.density * mCarrierSizeval);
         mCarrierSize = CarrierSizepx;
 
         if (mPhoneState == StatusBarPolicy.PHONE_SIGNAL_IS_AIRPLANE_MODE) {

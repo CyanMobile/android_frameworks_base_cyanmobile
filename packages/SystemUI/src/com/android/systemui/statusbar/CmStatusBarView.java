@@ -168,6 +168,7 @@ public class CmStatusBarView extends StatusBarView {
         if (mHasSoftButtons) {
             mHomeButton = (ImageButton) findViewById(R.id.status_home);
             mHomeButton.setOnClickListener(new ImageButton.OnClickListener() {
+                    @Override
                     public void onClick(View v) {
                       if(mService.mExpanded) mQuickNaButton.performClick();
                       if (mShowHome == 1) {
@@ -219,6 +220,7 @@ public class CmStatusBarView extends StatusBarView {
                 );
             mMenuButton = (ImageButton) findViewById(R.id.status_menu);
             mMenuButton.setOnClickListener(new ImageButton.OnClickListener() {
+                    @Override
                     public void onClick(View v) {
                       if (mShowMenu == 1) {
                         if (DEBUG) Slog.i(TAG, "Home clicked");
@@ -269,6 +271,7 @@ public class CmStatusBarView extends StatusBarView {
                 );
             mBackButton = (ImageButton) findViewById(R.id.status_back);
             mBackButton.setOnClickListener(new ImageButton.OnClickListener() {
+                    @Override
                     public void onClick(View v) {
                       if (mShowBack == 1) {
                         if (DEBUG) Slog.i(TAG, "Home clicked");
@@ -319,6 +322,7 @@ public class CmStatusBarView extends StatusBarView {
                 );
             mSearchButton = (ImageButton) findViewById(R.id.status_search);
             mSearchButton.setOnClickListener(new ImageButton.OnClickListener() {
+                    @Override
                     public void onClick(View v) {
                       if (mShowSearch == 1) {
                         if (DEBUG) Slog.i(TAG, "Home clicked");
@@ -369,6 +373,7 @@ public class CmStatusBarView extends StatusBarView {
                 );
             mQuickNaButton = (ImageButton) findViewById(R.id.status_quick_na);
             mQuickNaButton.setOnClickListener(new ImageButton.OnClickListener() {
+                    @Override
                     public void onClick(View v) {
                         if (mService.mExpanded) {
                             mService.animateCollapse(); // with regards to flawed sources. doesnt work without animating call. blame google (:
@@ -382,6 +387,7 @@ public class CmStatusBarView extends StatusBarView {
             );
             mHideButton = (ImageButton) findViewById(R.id.status_hide);
             mHideButton.setOnClickListener(new ImageButton.OnClickListener() {
+                    @Override
                     public void onClick(View v) {
                         if(isStillActive(mFsCallerProcess, mFsCallerActivity))
                             mContext.sendBroadcast(mFsForceIntent);
@@ -566,6 +572,7 @@ public class CmStatusBarView extends StatusBarView {
         // we use this variable to make sure, the active app isnt returned in two consecutive loops before hiding the button
         private boolean mWasInactiveLastCall;
 
+        @Override
         public void run() {
             boolean appStillForeground=false;
 
@@ -830,7 +837,8 @@ public class CmStatusBarView extends StatusBarView {
         }
     }
 
-    Runnable mResetHome = new Runnable() {
+    private Runnable mResetHome = new Runnable() {
+        @Override
         public void run() {
             if (mShowHome == 1 && mIsBottom) {
                mHomeButton.setBackgroundResource(R.drawable.ic_statusbar_home_bottom);
@@ -852,7 +860,8 @@ public class CmStatusBarView extends StatusBarView {
         }
     };
 
-    Runnable mResetBack = new Runnable() {
+    private Runnable mResetBack = new Runnable() {
+        @Override
         public void run() {
             if (mShowBack == 1 && mIsBottom) {
                mBackButton.setBackgroundResource(R.drawable.ic_statusbar_home_bottom);
@@ -874,7 +883,8 @@ public class CmStatusBarView extends StatusBarView {
         }
     };
 
-    Runnable mResetMenu = new Runnable() {
+    private Runnable mResetMenu = new Runnable() {
+        @Override
         public void run() {
             if (mShowMenu == 1 && mIsBottom) {
                mMenuButton.setBackgroundResource(R.drawable.ic_statusbar_home_bottom);
@@ -896,7 +906,8 @@ public class CmStatusBarView extends StatusBarView {
         }
     };
 
-    Runnable mResetSearch = new Runnable() {
+    private Runnable mResetSearch = new Runnable() {
+        @Override
         public void run() {
             if (mShowSearch == 1 && mIsBottom) {
                mSearchButton.setBackgroundResource(R.drawable.ic_statusbar_home_bottom);
@@ -934,6 +945,7 @@ public class CmStatusBarView extends StatusBarView {
             this.keyCode = keyCode;
         }
 
+        @Override
         public void run() {
             try {
                 if (!(IWindowManager.Stub.asInterface(ServiceManager.getService("window")))

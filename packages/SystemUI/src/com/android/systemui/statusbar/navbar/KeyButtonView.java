@@ -61,6 +61,7 @@ public class KeyButtonView extends ImageView {
     private boolean mPressed;
 
     Runnable mCheckLongPress = new Runnable() {
+        @Override
         public void run() {
             if (isPressed()) {
                 mPressed = false;
@@ -148,6 +149,7 @@ public class KeyButtonView extends ImageView {
     }
 
     private void updateGlowColor() {
+        if (mGlowBG == null) return;
         if (!mOverColorEnable) {
             mGlowBG.clearColorFilter();
         } else {

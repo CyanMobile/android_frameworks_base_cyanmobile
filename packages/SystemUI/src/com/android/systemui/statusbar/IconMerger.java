@@ -23,6 +23,8 @@ import android.util.AttributeSet;
 import android.util.Slog;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.provider.Settings;
+import android.util.DisplayMetrics;
 
 import com.android.internal.statusbar.StatusBarIcon;
 
@@ -39,8 +41,12 @@ public class IconMerger extends LinearLayout {
     public IconMerger(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        mIconSize = context.getResources().getDimensionPixelSize(
-                com.android.internal.R.dimen.status_bar_icon_size);
+        int defValuesIconSize = context.getResources().getInteger(com.android.internal.R.integer.config_iconsize_default_cyanmobile);
+        float mIconSizeval = (float) Settings.System.getInt(context.getContentResolver(),
+                Settings.System.STATUSBAR_ICONS_SIZE, defValuesIconSize);
+        DisplayMetrics metrics = context.getResources().getDisplayMetrics();
+        int IconSizepx = (int) (metrics.density * mIconSizeval);
+        mIconSize = IconSizepx;
 
         mMoreView = new StatusBarIconView(context, "more");
         mMoreView.set(mMoreIcon);

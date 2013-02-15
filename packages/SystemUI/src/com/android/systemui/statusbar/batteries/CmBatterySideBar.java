@@ -52,14 +52,14 @@ public class CmBatterySideBar extends ProgressBar implements Animatable, Runnabl
 
     private Interpolator mInterpolator = new DecelerateInterpolator();
 
-    class SettingsObserver extends ContentObserver {
+    private class SettingsObserver extends ContentObserver {
 
         public SettingsObserver(Handler handler) {
             super(handler);
         }
 
         void observer() {
-            ContentResolver resolver = mContext.getContentResolver();
+            ContentResolver resolver = getContext().getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_BATTERY), false, this);
             resolver.registerContentObserver(
@@ -137,7 +137,7 @@ public class CmBatterySideBar extends ProgressBar implements Animatable, Runnabl
     };
 
     private void updateSettings() {
-        ContentResolver resolver = mContext.getContentResolver();
+        ContentResolver resolver = getContext().getContentResolver();
         mShowCmBatterySideBar = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_BATTERY, 0) == 4);
         if (mShowCmBatterySideBar) {

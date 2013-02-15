@@ -568,7 +568,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
-    Runnable mLongPressBrightnessChange = new Runnable() {
+    private Runnable mLongPressBrightnessChange = new Runnable() {
+        @Override
         public void run() {
             mStatusBarView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
             adjustBrightness(mInitialTouchX);
@@ -695,9 +696,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         //Check for compact carrier layout and apply if enabled
         int defValuesColor = context.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
         int defValuesIconSize = context.getResources().getInteger(com.android.internal.R.integer.config_iconsize_default_cyanmobile);
-        int mIconSizeval = Settings.System.getInt(context.getContentResolver(),
+        float mIconSizeval = (float) Settings.System.getInt(getContentResolver(),
                 Settings.System.STATUSBAR_ICONS_SIZE, defValuesIconSize);
-        int IconSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mIconSizeval, res.getDisplayMetrics());
+        int IconSizepx = (int) (mDisplayMetrics.density * mIconSizeval);
         mIconSize = IconSizepx;
 
         mStatusBarCarrier = Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_CARRIER, 6);
@@ -1100,7 +1101,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         getMemInfo();
     }
 
-    void updateColors() {
+    private void updateColors() {
         ContentResolver resolver = mContext.getContentResolver();
         int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
         mItemText = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_ITEM_TEXT, mBlackColor);
@@ -1140,7 +1141,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mOngoingTitle.setTextColor(mNotifyOngoing);    
     }
 
-    void resetTextViewColors(View vw) {
+    private void resetTextViewColors(View vw) {
         ViewGroup gv = (ViewGroup)vw;
         int ct = gv.getChildCount();
 
@@ -1156,7 +1157,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
-    void setTextViewColors(TextView tc) {
+    private void setTextViewColors(TextView tc) {
         try {        
             int id = tc.getId();
             switch (id) {
@@ -1385,10 +1386,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
-    int getNavBarSize() {
+    private int getNavBarSize() {
         int defValuesNaviSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_navibarsize_default_cyanmobile);
-        int navSizeval = Settings.System.getInt(mContext.getContentResolver(), Settings.System.STATUSBAR_NAVI_SIZE, defValuesNaviSize);
-        int navSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, navSizeval, mContext.getResources().getDisplayMetrics());
+        float navSizeval = (float) Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUSBAR_NAVI_SIZE, defValuesNaviSize);
+        int navSizepx = (int) (mDisplayMetrics.density * navSizeval);
         return mNaviShow ? navSizepx : 0;
     }
 
@@ -1432,18 +1434,19 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         return lp;
     }
 
-    int getStatBarSize() {
+    private int getStatBarSize() {
         int defValuesStatsSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_statbarsize_default_cyanmobile);
-        int statSizeval = Settings.System.getInt(mContext.getContentResolver(), Settings.System.STATUSBAR_STATS_SIZE, defValuesStatsSize);
-        int statSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, statSizeval, mContext.getResources().getDisplayMetrics());
+        float statSizeval = (float) Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUSBAR_STATS_SIZE, defValuesStatsSize);
+        int statSizepx = (int) (mDisplayMetrics.density * statSizeval);
         return statSizepx;
     }
 
-    int getCloseDragSize() {
+    private int getCloseDragSize() {
         int defValuesStatsSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_statbarsize_default_cyanmobile);
-        int dragSizeval = Settings.System.getInt(mContext.getContentResolver(), Settings.System.STATUSBAR_STATS_SIZE, defValuesStatsSize);
-        int dragSizefitUp = (dragSizeval-5);
-        int dragSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dragSizefitUp, mContext.getResources().getDisplayMetrics());
+        float dragSizeval = (float) Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUSBAR_STATS_SIZE, defValuesStatsSize);
+        int dragSizepx = (int) ((mDisplayMetrics.density * dragSizeval) - 5);
         return dragSizepx;
     }
 
@@ -1667,7 +1670,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         updateExpandedViewPos(EXPANDED_LEAVE_ALONE);
     }
 
-    void IntroducerView(StatusBarNotification notification) {
+    private void IntroducerView(StatusBarNotification notification) {
         ImageView alertIcon = (ImageView) mIntruderAlertView.findViewById(R.id.alertIcon);
         TextView alertText = (TextView) mIntruderAlertView.findViewById(R.id.alertText);
         alertIcon.setImageDrawable(StatusBarIconView.getIcon(alertIcon.getContext(),
@@ -1809,6 +1812,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         LatestItemContainer row = (LatestItemContainer) inflater.inflate(R.layout.status_bar_latest_event, parent, false);
         if ((n.flags & Notification.FLAG_ONGOING_EVENT) == 0 && (n.flags & Notification.FLAG_NO_CLEAR) == 0) {
             row.setOnSwipeCallback(mTouchDispatcher, new Runnable() {
+                @Override
                 public void run() {
                     try {
                         mBarService.onNotificationClear(notification.pkg, notification.tag, notification.id);
@@ -1924,14 +1928,14 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         return entry.notification;
     }
 
-    public NotificationData getNotifications(NotificationData list) {
+    private NotificationData getNotifications(NotificationData list) {
         if (mPieControlPanel != null) {
             mPieControlPanel.setNotifications(list);
         }
         return list;
     }
 
-    public void setNotifNew(boolean notifnew) {
+    private void setNotifNew(boolean notifnew) {
         if (mPieControlPanel != null) {
             mPieControlPanel.setNotifNew(notifnew);
         }
@@ -2098,7 +2102,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
-    View.OnFocusChangeListener mFocusChangeListener = new View.OnFocusChangeListener() {
+    private View.OnFocusChangeListener mFocusChangeListener = new View.OnFocusChangeListener() {
         public void onFocusChange(View v, boolean hasFocus) {
             // Because 'v' is a ViewGroup, all its children will be (un)selected
             // too, which allows marqueeing to work.
@@ -2234,7 +2238,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mStatusBarView.updateQuickNaImage();
     }
 
-    void doAnimation() {
+    private void doAnimation() {
         if (mAnimating) {
             if (SPEW) Slog.d(TAG, "doAnimation");
             if (SPEW) Slog.d(TAG, "doAnimation before mAnimY=" + mAnimY);
@@ -2264,12 +2268,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
-    void stopTracking() {
+    private void stopTracking() {
         mTracking = false;
         mVelocityTracker.clear();
     }
 
-    void incrementAnim() {
+    private void incrementAnim() {
         long now = SystemClock.uptimeMillis();
         float t = ((float)(now - mAnimLastTime)) / 1000;            // ms -> s
         final float y = mAnimY;
@@ -2285,7 +2289,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         //        + " mAnimAccel=" + mAnimAccel);
     }
 
-    void doRevealAnimation() {
+    private void doRevealAnimation() {
         int h = mCloseView.getHeight() + (mShowDate ? getStatBarSize() : 0);
 
         if(mBottomBar)
@@ -2304,7 +2308,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
-    void prepareTracking(int y, boolean opening) {
+    private void prepareTracking(int y, boolean opening) {
 
         updateExpandedHeight();
 
@@ -2335,7 +2339,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
-    void performFling(int y, float vel, boolean always) {
+    private void performFling(int y, float vel, boolean always) {
         mAnimatingReveal = false;
 
         mAnimY = y;
@@ -2394,7 +2398,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         stopTracking();
     }
 
-    void adjustBrightness(int x) {
+    private void adjustBrightness(int x) {
         float screen_width = (float)(mContext.getResources().getDisplayMetrics().widthPixels);
         float raw = ((float) x) / screen_width;
         int minBrightness = 4;
@@ -2422,7 +2426,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
-    void brightnessControl(MotionEvent event) {
+    private void brightnessControl(MotionEvent event) {
         if (mBrightnessControl) {
             final int statusBarSize = getStatBarSize();
             final int action = event.getAction();
@@ -2554,6 +2558,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
                 performFling(y + mViewDelta, vel, false);
                 mHandler.postDelayed(new Runnable() {
+                       @Override
                        public void run() {
                            mSettingsButton.clearColorFilter();
                            getMemInfo();
@@ -2565,7 +2570,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         return false;
     }
 
-    void trackMovement(MotionEvent event) {
+    private void trackMovement(MotionEvent event) {
         // Add movement to velocity tracker using raw screen X and Y coordinates instead
         // of window coordinates because the window frame may be moving at the same time.
         float deltaX = event.getRawX() - event.getX();
@@ -2588,6 +2593,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mId = id;
         }
 
+        @Override
         public void onClick(View v) {
             try {
                 // The intent we are sending is for the application, which
@@ -2649,7 +2655,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
      *
      * WARNING: this will call back into us.  Don't hold any locks.
      */
-    void handleNotificationError(IBinder key, StatusBarNotification n, String message) {
+    public void handleNotificationError(IBinder key, StatusBarNotification n, String message) {
         removeNotification(key);
         try {
             mBarService.onNotificationError(n.pkg, n.tag, n.id, n.uid, n.initialPid, message);
@@ -2758,6 +2764,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         if (true) {
             // must happen on ui thread
             mHandler.post(new Runnable() {
+                    @Override
                     public void run() {
                         Slog.d(TAG, "mStatusIcons:");
                         mStatusIcons.debug();
@@ -2835,10 +2842,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mExpandedDialog.show();
     }
 
-    void onTrackingViewDetached() {
-    }
+    void onTrackingViewDetached() {}
 
-    void setDateViewVisibility(boolean visible, int anim) {
+    private void setDateViewVisibility(boolean visible, int anim) {
         if(mHasSoftButtons && mButtonsLeft)
             return;
 
@@ -2855,7 +2861,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
-    void setAllViewVisibility(boolean visible, int anim) {
+    private void setAllViewVisibility(boolean visible, int anim) {
         mIcons.setVisibility(visible ? View.VISIBLE : View.GONE);
         mIcons.startAnimation(loadAnim(anim, null));
         if (mStatusBarClock == 2) {
@@ -2891,7 +2897,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
-    void setNotificationIconVisibility(boolean visible, int anim) {
+    private void setNotificationIconVisibility(boolean visible, int anim) {
         int old = mNotificationIcons.getVisibility();
         int v = visible ? View.VISIBLE : View.INVISIBLE;
         if (old != v) {
@@ -2908,7 +2914,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
-    void updateExpandedInvisiblePosition() {
+    private void updateExpandedInvisiblePosition() {
          int disph = mBottomBar ? mDisplayMetrics.heightPixels : (mDisplayMetrics.heightPixels-getNavBarSize());
          if (mTrackingView != null) {
              mTrackingPosition = mBottomBar ? disph : -disph;
@@ -2923,7 +2929,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
          }
     }
 
-    void updateExpandedViewPos(int expandedPosition) {
+    public void updateExpandedViewPos(int expandedPosition) {
         if (SPEW) {
             Slog.d(TAG, "updateExpandedViewPos before expandedPosition=" + expandedPosition
                     + " mTrackingParams.y="
@@ -3014,14 +3020,14 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
-    int getExpandedWidth() {
+    private int getExpandedWidth() {
         int defValuesTinyExpSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_tinyexpsize_default_cyanmobile);
         int expandedSizeval = Settings.System.getInt(mContext.getContentResolver(), Settings.System.STATUSBAR_EXPANDED_SIZE, defValuesTinyExpSize);
         int expandedSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, expandedSizeval, mContext.getResources().getDisplayMetrics());
         return (mDisplayMetrics.widthPixels-expandedSizepx);
     }
 
-    int getExpandedHeight() {
+    private int getExpandedHeight() {
         return (mDisplayMetrics.heightPixels-(mShowDate ? getStatBarSize() : 0)-mCloseView.getHeight());
     }
 
@@ -3030,7 +3036,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         updateExpandedHeight();
     }
 
-    void updateExpandedHeight() {
+    private void updateExpandedHeight() {
         if (mExpandedView != null && mExpandedParams != null && mDisplayMetrics != null) {
             mExpandedParams.height = mBottomBar ? getExpandedHeight() : (getExpandedHeight()-getNavBarSize());
             if (mTinyExpanded) {
@@ -3058,7 +3064,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
-    void performDisableActions(int net) {
+    private void performDisableActions(int net) {
         int old = mDisabled;
         int diff = net ^ old;
         mDisabled = net;
@@ -3096,6 +3102,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     private View.OnClickListener mMusicToggleButtonListener = new View.OnClickListener() {
+        @Override
 	public void onClick(View v) {
            if (mStatusBarTab) {
                toggleNotif();
@@ -3105,6 +3112,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     };
 
     private View.OnClickListener mPowerClickListener = new View.OnClickListener() {
+        @Override
          public void onClick(View v) {
                 if (Settings.System.getInt(getContentResolver(),
                          Settings.System.EXPANDED_HIDE_ONCHANGE, 0) == 1) {
@@ -3129,6 +3137,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
     
     private View.OnClickListener mClearButtonListener = new View.OnClickListener() {
+        @Override
         public void onClick(View v) {
             mClearButton.clearColorFilter();
             try {
@@ -3138,6 +3147,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 // system process is dead if we're here.
             }
             mHandler.postDelayed(new Runnable() {
+                       @Override
                        public void run() {
                            mClearButton.setColorFilter(mSettingsColor, Mode.MULTIPLY);
                        }
@@ -3160,6 +3170,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     };
 
     private View.OnClickListener mSettingsIconButtonListener = new View.OnClickListener() {
+        @Override
         public void onClick(View v) {
               mSettingsIconButton.clearColorFilter();
               if (mStatusBarTab) {
@@ -3176,6 +3187,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 animateCollapse();
               }
               mHandler.postDelayed(new Runnable() {
+                       @Override
                        public void run() {
                            mSettingsIconButton.setColorFilter(mSettingsColor, Mode.MULTIPLY);
                        }
@@ -3184,6 +3196,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     };
 
     private View.OnClickListener mAvalMemLayoutListener = new View.OnClickListener() {
+        @Override
         public void onClick(View v) {
             CmStatusBarView.simulateKeypress(CmStatusBarView.KEYCODE_VIRTUAL_BACK_LONG);
             getMemInfo();
@@ -3191,6 +3204,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     };
 
     private View.OnClickListener mTogglePowerListener = new View.OnClickListener() {
+        @Override
         public void onClick(View v) {
              if (NotifEnable) {
                  togglePower();
@@ -3199,6 +3213,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     };
 
     private View.OnClickListener mToggleNotifListener = new View.OnClickListener() {
+        @Override
         public void onClick(View v) {
             if (!NotifEnable) {
                 toggleNotif();
@@ -3276,6 +3291,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     };
 
     private View.OnClickListener mCarrierButtonListener = new View.OnClickListener() {
+        @Override
         public void onClick(View v) {
              if(Settings.System.getInt(getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 5) == 0) {
                 QuickSettingsPopupWindow quickSettingsWindow = new QuickSettingsPopupWindow(v);
@@ -3313,11 +3329,13 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     private View.OnClickListener mIconButtonListener = new View.OnClickListener() {
+        @Override
         public void onClick(View v) {
             if(Settings.System.getInt(getContentResolver(), Settings.System.USE_CUSTOM_SHORTCUT_TOGGLE, 0) == 1) {
                if (mBrightnessControl) {
                    final View vW = v;
                    mHandler.postDelayed(new Runnable() {
+                       @Override
                        public void run() {
                            ShortcutPopupWindow shortCutWindow = new ShortcutPopupWindow(vW);
                            shortCutWindow.showLikeQuickAction();
@@ -3377,11 +3395,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     };
 
-    void setIntruderAlertVisibility(boolean vis) {
+    private void setIntruderAlertVisibility(boolean vis) {
         mIntruderAlertView.setVisibility(vis ? View.VISIBLE : View.GONE);
     }
 
-    void getMemInfo() {
+    private void getMemInfo() {
         if (!mShowRam) return;
 
 	if(totalMemory == 0) {
@@ -3464,7 +3482,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
      * should, but getting that smooth is tough.  Someday we'll fix that.  In the
      * meantime, just update the things that we know change.
      */
-    void updateResources() {
+    public void updateResources() {
         Resources res = getResources();
 
         // detect theme change.
@@ -3504,11 +3522,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     // tracing
     //
 
-    void postStartTracing() {
+    public void postStartTracing() {
         mHandler.postDelayed(mStartTracing, 3000);
     }
 
-    void vibrate() {
+    private void vibrate() {
         if (Settings.System.getInt(mContext.getContentResolver(),
                      Settings.System.HAPTIC_FEEDBACK_ENABLED, 1) == 1) {
             android.os.Vibrator vib = (android.os.Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
@@ -3516,7 +3534,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     }
 
-    Runnable mStartTracing = new Runnable() {
+    private Runnable mStartTracing = new Runnable() {
+        @Override
         public void run() {
             vibrate();
             SystemClock.sleep(250);
@@ -3526,7 +3545,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     };
 
-    Runnable mStopTracing = new Runnable() {
+    private Runnable mStopTracing = new Runnable() {
+        @Override
         public void run() {
             android.os.Debug.stopMethodTracing();
             Slog.d(TAG, "stopTracing");

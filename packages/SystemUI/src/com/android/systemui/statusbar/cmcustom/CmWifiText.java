@@ -62,7 +62,6 @@ public class CmWifiText extends TextView {
 
     public CmWifiText(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        mContext = context;
     }
     
     public BroadcastReceiver rssiReceiver = new BroadcastReceiver() {
@@ -84,8 +83,8 @@ public class CmWifiText extends TextView {
             mHandler = new Handler();
             SettingsObserver settingsObserver = new SettingsObserver(mHandler);
             settingsObserver.observe();
-            mWifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
-            mContext.registerReceiver(rssiReceiver, new IntentFilter(WifiManager.RSSI_CHANGED_ACTION));
+            mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
+            getContext().registerReceiver(rssiReceiver, new IntentFilter(WifiManager.RSSI_CHANGED_ACTION));
             updateSettings();
         }
     }
@@ -95,7 +94,7 @@ public class CmWifiText extends TextView {
         super.onDetachedFromWindow();
         if (mAttached) {
             mAttached = false;
-           mContext.unregisterReceiver(rssiReceiver);
+           getContext().unregisterReceiver(rssiReceiver);
         }
     }
 
@@ -105,7 +104,7 @@ public class CmWifiText extends TextView {
         }
 
         void observe() {
-            ContentResolver resolver = mContext.getContentResolver();
+            ContentResolver resolver = getContext().getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_CM_WIFI_TEXT), false,
                     this);
@@ -130,14 +129,13 @@ public class CmWifiText extends TextView {
         int defValuesColor = getContext().getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
         mClockColor = (Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
-
         style = Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.STATUS_BAR_CM_WIFI_TEXT, STYLE_HIDE);
         int defValuesFontSize = getContext().getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
-
-        int mCarrierSizeval = Settings.System.getInt(getContext().getContentResolver(),
+        float mCarrierSizeval = (float) Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.STATUSBAR_ICON_FONT_SIZE, defValuesFontSize);
-        int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, getContext().getResources().getDisplayMetrics());
+        DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+        int CarrierSizepx = (int) (metrics.density * mCarrierSizeval);
         mCarrierSize = CarrierSizepx;
 
         if (style == STYLE_SHOW) {

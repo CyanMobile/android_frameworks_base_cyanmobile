@@ -1111,7 +1111,8 @@ public class NavigationBarView extends LinearLayout {
         updateNaviButtons();
     }
 
-    Runnable mResetNormal = new Runnable() {
+    private Runnable mResetNormal = new Runnable() {
+        @Override
         public void run() {
              mDisableAnimate = false;
              mRecentIcon = mRecentIconNorm;
@@ -1133,7 +1134,8 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
-    Runnable mResetRotate30 = new Runnable() {
+    private Runnable mResetRotate30 = new Runnable() {
+        @Override
         public void run() {
             runIconRecentRot(30);
             runIconPowerRot(30);
@@ -1162,7 +1164,8 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
-    Runnable mResetRotate60 = new Runnable() {
+    private Runnable mResetRotate60 = new Runnable() {
+        @Override
         public void run() {
             runIconRecentRot(60);
             runIconPowerRot(60);
@@ -1191,7 +1194,8 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
-    Runnable mResetRotate90 = new Runnable() {
+    private Runnable mResetRotate90 = new Runnable() {
+        @Override
         public void run() {
             runIconRecentRot(90);
             runIconPowerRot(90);
@@ -1220,7 +1224,8 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
-    Runnable mResetRotate120 = new Runnable() {
+    private Runnable mResetRotate120 = new Runnable() {
+        @Override
         public void run() {
             runIconRecentRot(120);
             runIconPowerRot(120);
@@ -1249,7 +1254,8 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
-    Runnable mResetRotate150 = new Runnable() {
+    private Runnable mResetRotate150 = new Runnable() {
+        @Override
         public void run() {
             runIconRecentRot(150);
             runIconPowerRot(150);
@@ -1278,7 +1284,8 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
-    Runnable mResetRotate180 = new Runnable() {
+    private Runnable mResetRotate180 = new Runnable() {
+        @Override
         public void run() {
             runIconRecentRot(180);
             runIconPowerRot(180);
@@ -1307,7 +1314,8 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
-    Runnable mResetRotate210 = new Runnable() {
+    private Runnable mResetRotate210 = new Runnable() {
+        @Override
         public void run() {
             runIconRecentRot(210);
             runIconPowerRot(210);
@@ -1336,7 +1344,8 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
-    Runnable mResetRotate240 = new Runnable() {
+    private Runnable mResetRotate240 = new Runnable() {
+        @Override
         public void run() {
             runIconRecentRot(240);
             runIconPowerRot(240);
@@ -1365,7 +1374,8 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
-    Runnable mResetRotate270 = new Runnable() {
+    private Runnable mResetRotate270 = new Runnable() {
+        @Override
         public void run() {
             runIconRecentRot(270);
             runIconPowerRot(270);
@@ -1394,7 +1404,8 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
-    Runnable mResetRotate300 = new Runnable() {
+    private Runnable mResetRotate300 = new Runnable() {
+        @Override
         public void run() {
             runIconRecentRot(300);
             runIconPowerRot(300);
@@ -1423,7 +1434,8 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
-    Runnable mResetRotate330 = new Runnable() {
+    private Runnable mResetRotate330 = new Runnable() {
+        @Override
         public void run() {
             runIconRecentRot(330);
             runIconPowerRot(330);
@@ -1821,7 +1833,8 @@ public class NavigationBarView extends LinearLayout {
         mVolDownIconRot = asIconS;
     }
 
-    Runnable mResetHome = new Runnable() {
+    private Runnable mResetHome = new Runnable() {
+        @Override
         public void run() {
             if (mShowHome == 1) {
                mHomeButton.setImageBitmap(mHomeIcon);
@@ -1857,7 +1870,8 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
-    Runnable mResetBack = new Runnable() {
+    private Runnable mResetBack = new Runnable() {
+        @Override
         public void run() {
             if (mShowBack == 1) {
                mBackButton.setImageBitmap(mHomeIcon);
@@ -1893,7 +1907,8 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
-    Runnable mResetSearch = new Runnable() {
+    private Runnable mResetSearch = new Runnable() {
+        @Override
         public void run() {
             if (mShowSearch == 1) {
                mSearchButton.setImageBitmap(mHomeIcon);
@@ -1929,7 +1944,8 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
-    Runnable mResetMenu = new Runnable() {
+    private Runnable mResetMenu = new Runnable() {
+        @Override
         public void run() {
             if (mShowMenu == 1) {
                mMenuButton.setImageBitmap(mHomeIcon);
@@ -1965,7 +1981,8 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
-    Runnable mResetQuick = new Runnable() {
+    private Runnable mResetQuick = new Runnable() {
+        @Override
         public void run() {
             if (mShowQuicker == 0) {
                mQuickButton.setImageBitmap(mHomeIcon);
@@ -2001,13 +2018,15 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
-    Runnable mResetVolUp = new Runnable() {
+    private Runnable mResetVolUp = new Runnable() {
+        @Override
         public void run() {
             mVolUpButton.setImageBitmap(mVolUpIcon);
         }
     };
 
-    Runnable mResetVolDown = new Runnable() {
+    private Runnable mResetVolDown = new Runnable() {
+        @Override
         public void run() {
             mVolDownButton.setImageBitmap(mVolDownIcon);
         }

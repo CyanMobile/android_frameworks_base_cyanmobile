@@ -50,7 +50,7 @@ public class LeftCarrierLogo extends TextView {
         }
 
         void observe() {
-            ContentResolver resolver = mContext.getContentResolver();
+            ContentResolver resolver = getContext().getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.CARRIER_LOGO),
                     false, this);
@@ -98,14 +98,8 @@ public class LeftCarrierLogo extends TextView {
         }
     }
 
-    private final BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-        }
-    };
-
     private void updateSettings() {
-        ContentResolver resolver = mContext.getContentResolver();
+        ContentResolver resolver = getContext().getContentResolver();
 
         mCarrierLogoLeft = (Settings.System.getInt(resolver,
                 Settings.System.CARRIER_LOGO, 0) == 3);

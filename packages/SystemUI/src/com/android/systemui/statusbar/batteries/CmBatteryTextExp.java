@@ -63,7 +63,7 @@ public class CmBatteryTextExp extends TextView {
         }
 
         void observe() {
-            ContentResolver resolver = mContext.getContentResolver();
+            ContentResolver resolver = getContext().getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_BATTERY), false, this);
             resolver.registerContentObserver(
@@ -139,16 +139,17 @@ public class CmBatteryTextExp extends TextView {
      *
      * @param intent
      */
-    final void updateCmBatteryText(Intent intent) {
+    private final void updateCmBatteryText(Intent intent) {
         style = Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.STATUS_BAR_BATTERY_STYLE, 0);
         int defValuesColor = getContext().getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
         mClockColor = (Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
         int defValuesFontSize = getContext().getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
-        int mCarrierSizeval = Settings.System.getInt(getContext().getContentResolver(),
+        float mCarrierSizeval = (float) Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.STATUSBAR_ICON_FONT_SIZE, defValuesFontSize);
-        int CarrierSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mCarrierSizeval, getContext().getResources().getDisplayMetrics());
+        DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+        int CarrierSizepx = (int) (metrics.density * mCarrierSizeval);
         mCarrierSize = CarrierSizepx;
 
         int level = intent.getIntExtra("level", 0);
@@ -200,7 +201,7 @@ public class CmBatteryTextExp extends TextView {
      * settings. Also does the initial call from constructor
      */
     private void updateSettings() {
-        ContentResolver resolver = mContext.getContentResolver();
+        ContentResolver resolver = getContext().getContentResolver();
 
         int statusBarBattery = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_BATTERY, 2));
