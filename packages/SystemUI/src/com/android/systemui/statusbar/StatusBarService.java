@@ -3011,7 +3011,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 mExpandedContents.getLocationInWindow(mPositionTmp);
                 conBot = mPositionTmp[1] + mExpandedContents.getHeight();
             } else {
-                conBot = mPositionTmp[1] + getExpandedHeight();
+                mExpandededContents.getLocationInWindow(mPositionTmp);
+                conBot = mPositionTmp[1] + mExpandededContents.getHeight();
             }
 
             final int contentsBottom = conBot;
@@ -3054,8 +3055,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     private int getExpandedWidth() {
         int defValuesTinyExpSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_tinyexpsize_default_cyanmobile);
-        int expandedSizeval = Settings.System.getInt(mContext.getContentResolver(), Settings.System.STATUSBAR_EXPANDED_SIZE, defValuesTinyExpSize);
-        int expandedSizepx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, expandedSizeval, mContext.getResources().getDisplayMetrics());
+        float expandedSizeval = (float) Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUSBAR_EXPANDED_SIZE, defValuesTinyExpSize);
+        int expandedSizepx = (int) (mDisplayMetrics.density * expandedSizeval);
         return (mDisplayMetrics.widthPixels-expandedSizepx);
     }
 
