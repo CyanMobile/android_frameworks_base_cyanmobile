@@ -1751,6 +1751,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 final StatusBarIcon ic = new StatusBarIcon(notification.pkg,
                         notification.notification.icon, notification.notification.iconLevel,
                         notification.notification.number);
+                setLauncherNotif(notification);
                 if (!oldEntry.icon.set(ic)) {
                     handleNotificationError(key, notification, "Couldn't update icon: " + ic);
                     return;
@@ -1761,11 +1762,13 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 Slog.w(TAG, "Couldn't reapply views for package " + contentView.getPackage(), e);
                 removeNotificationViews(key);
                 addNotificationViews(key, notification);
+                setLauncherNotif(notification);
             }
         } else {
             if (SPEW) Slog.d(TAG, "not reusing notification");
             removeNotificationViews(key);
             addNotificationViews(key, notification);
+            setLauncherNotif(notification);
         }
 
         // Restart the ticker if it's still running
@@ -1824,6 +1827,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 public void run() {
                     try {
                         mBarService.onNotificationClear(notification.pkg, notification.tag, notification.id);
+                        setClearLauncherNotif(notification.pkg);
                         NotificationData list = mLatest;
                         int index = mLatest.findEntry(key);
                         if (index < 0) {
@@ -1909,6 +1913,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mNotificationIcons.addView(iconView, iconIndex);
         setNotifNew(true);
         mNotifData = getNotifications(list);
+        setLauncherNotif(notification);
         return iconView;
     }
 
@@ -1934,6 +1939,22 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
 
         return entry.notification;
+    }
+
+    private void setLauncherNotif(StatusBarNotification notification) {
+         Intent intentd = new Intent();
+         intentd.setAction("org.adw.launcher.counter.SEND");
+         intentd.putExtra("PNAME", notification.pkg);
+         intentd.putExtra("COUNT", notification.notification.number);
+         mContext.sendBroadcast(intentd);
+    }
+
+    private void setClearLauncherNotif(String pkg) {
+         Intent intentdc = new Intent();
+         intentdc.setAction("org.adw.launcher.counter.SEND");
+         intentdc.putExtra("PNAME", pkg);
+         intentdc.putExtra("COUNT", 0);
+         mContext.sendBroadcast(intentdc);
     }
 
     private NotificationData getNotifications(NotificationData list) {
@@ -2665,6 +2686,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             if (shouldTick && mShowNotif) {
                 mHandler.sendEmptyMessage(MSG_HIDE_INTRUDER);
             }
+            setClearLauncherNotif(mPkg);
         }
     }
 
@@ -3174,12 +3196,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         @Override
         public void onClick(View v) {
             mClearButton.clearColorFilter();
-            try {
-                mBarService.onClearAllNotifications();
-                setNotifNew(false);
-            } catch (RemoteException ex) {
-                // system process is dead if we're here.
-            }
+            toggleClearNotif();
             mHandler.postDelayed(new Runnable() {
                        @Override
                        public void run() {

@@ -503,9 +503,10 @@ public class Notification implements Parcelable
         if (this.icon != 0) {
             contentView.setImageViewResource(R.id.iconBig, this.icon);
             if (this.when != 0 || this.number > 0) {
+                contentView.setViewVisibility(R.id.iconplaces, View.VISIBLE);
                 contentView.setImageViewResource(R.id.icon, this.icon);
             } else {
-                contentView.setViewVisibility(R.id.icon, View.GONE);
+                contentView.setViewVisibility(R.id.iconplaces, View.GONE);
             }
         }
         if (contentTitle != null) {
@@ -519,14 +520,46 @@ public class Notification implements Parcelable
         } else {
             contentView.setViewVisibility(R.id.time, View.GONE);
         }
-        if (this.number > 0) {
+        if (getOnlyNumerics(contentText) > 0) {
+            this.number = getOnlyNumerics(contentText);
             NumberFormat f = NumberFormat.getIntegerInstance();
-            contentView.setTextViewText(R.id.info, f.format(number));
+            contentView.setTextViewText(R.id.info, f.format(getOnlyNumerics(contentText)));
         } else {
             contentView.setViewVisibility(R.id.info, View.GONE);
         }
         this.contentView = contentView;
         this.contentIntent = contentIntent;
+    }
+
+    private int getOnlyNumerics(CharSequence contentText) {
+        String str = contentText.toString();
+        if (str == null) {
+            return 0;
+        }
+
+        StringBuffer strBuff = new StringBuffer();
+        char c;
+
+        for (int i = 0; i < 3 ; i++) {
+             c = str.charAt(i);
+             if (Character.isDigit(c)) {
+                 strBuff.append(c);
+             }
+        }
+        if (strBuff == null) {
+             return 0;
+        } else if (TextUtils.equals(strBuff, "''")) {
+             return 0;
+        } else if (TextUtils.isEmpty(strBuff)) {
+             return 0;
+        } else if (!TextUtils.isDigitsOnly(strBuff)) {
+             return 0;
+        }
+        try {
+              return Integer.parseInt(strBuff.toString());
+        } catch (java.lang.NumberFormatException ne) {
+              return 0;
+        }
     }
 
     @Override

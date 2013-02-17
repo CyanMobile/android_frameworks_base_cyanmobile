@@ -41,17 +41,25 @@
             android:layout_height="wrap_content"
             android:singleLine="true"
             />
-        <TextView android:id="@+id/info"
-            android:textAppearance="@style/TextAppearance.StatusBar.EventContent.Title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:singleLine="true"
-            />
-        <ImageView android:id="@+id/icon"
+
+        <FrameLayout android:id="@+id/iconplaces"
             android:layout_width="25dp"
             android:layout_height="25dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/arrow_down_float"/>
+            android:layout_marginLeft="24dp"
+            >
+            <ImageView android:id="@+id/icon"
+                 android:layout_width="match_parent"
+                 android:layout_height="match_parent" />
+            <TextView android:id="@+id/info"
+                 android:layout_width="wrap_content"
+                 android:layout_height="wrap_content"
+                 android:layout_gravity="right|bottom"
+                 android:layout_marginRight="1dp"
+                 android:layout_marginBottom="1dp"
+                 android:textSize="10sp"
+                 android:gravity="center"
+                 android:textStyle="bold"
+                 android:textColor="#ffffffff" />
+        </FrameLayout>
     </LinearLayout>
 </LinearLayout>
