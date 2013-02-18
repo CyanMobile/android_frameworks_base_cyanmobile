@@ -2864,6 +2864,13 @@ public class PackageManagerTests extends AndroidTestCase {
         assertNotNull("Verifier device identity should not be null", id);
     }
 
+    @LargeTest
+    public void testInstallNonexistentFile() {
+        int retCode = PackageManager.INSTALL_FAILED_INVALID_URI;
+        File invalidFile = new File("/nonexistent-file.apk");
+        invokeInstallPackageFail(Uri.fromFile(invalidFile), 0, retCode);
+    }
+
     /*---------- Recommended install location tests ----*/
     /*
      * TODO's

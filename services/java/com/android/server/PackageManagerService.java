@@ -3671,7 +3671,7 @@ class PackageManagerService extends IPackageManager.Stub {
 
                             Slog.i(TAG, "Unpacking native libraries for " + path);
                             mInstaller.unlinkNativeLibraryDirectory(dataPathString);
-                            NativeLibraryHelper.copyNativeBinariesLI(scanFile, nativeLibraryDir);
+                            NativeLibraryHelper.copyNativeBinariesIfNeededLI(scanFile, nativeLibraryDir);
                         }
                     }
                 } else {
@@ -4852,10 +4852,19 @@ class PackageManagerService extends IPackageManager.Stub {
             }
         }
     }
-    
+
+    /**
+     * Check if the external storage media is available. This is true if there
+     * is a mounted external storage medium or if the external storage is
+     * emulated.
+     */
+    private boolean isExternalMediaAvailable() {
+        return mMediaMounted || Environment.isExternalStorageEmulated();
+    }
+
     public String nextPackageToClean(String lastPackage) {
         synchronized (mPackages) {
-            if (!mMediaMounted) {
+            if (!isExternalMediaAvailable()) {
                 // If the external storage is no longer mounted at this point,
                 // the caller may not have been able to delete all of this
                 // packages files and can not delete any more.  Bail.
@@ -4875,7 +4884,7 @@ class PackageManagerService extends IPackageManager.Stub {
     
     void startCleaningPackages() {
         synchronized (mPackages) {
-            if (!mMediaMounted) {
+            if (!isExternalMediaAvailable()) {
                 return;
             }
             if (mSettings.mPackagesToBeCleaned.size() <= 0) {
@@ -5183,6 +5192,74 @@ class PackageManagerService extends IPackageManager.Stub {
         abstract void handleReturnCode();
     }
 
+    class MeasureParams extends HandlerParams {
+        private final PackageStats mStats;
+        private boolean mSuccess;
+
+        private final IPackageStatsObserver mObserver;
+
+        public MeasureParams(PackageStats stats, boolean success,
+                IPackageStatsObserver observer) {
+            mObserver = observer;
+            mStats = stats;
+            mSuccess = success;
+        }
+
+        @Override
+        void handleStartCopy() throws RemoteException {
+            final boolean mounted;
+
+            if (Environment.isExternalStorageEmulated()) {
+                mounted = true;
+            } else {
+                final String status = Environment.getExternalStorageState();
+
+                mounted = status.equals(Environment.MEDIA_MOUNTED)
+                        || status.equals(Environment.MEDIA_MOUNTED_READ_ONLY);
+            }
+
+            if (mounted) {
+                final File externalCacheDir = Environment
+                        .getExternalStorageAppCacheDirectory(mStats.packageName);
+                final long externalCacheSize = mContainerService
+                        .calculateDirectorySize(externalCacheDir.getPath());
+                mStats.externalCacheSize = externalCacheSize;
+
+                final File externalDataDir = Environment
+                        .getExternalStorageAppDataDirectory(mStats.packageName);
+                long externalDataSize = mContainerService.calculateDirectorySize(externalDataDir
+                        .getPath());
+
+                if (externalCacheDir.getParentFile().equals(externalDataDir)) {
+                    externalDataSize -= externalCacheSize;
+                }
+                mStats.externalDataSize = externalDataSize;
+
+                final File externalMediaDir = Environment
+                        .getExternalStorageAppMediaDirectory(mStats.packageName);
+                mStats.externalMediaSize = mContainerService
+                        .calculateDirectorySize(externalCacheDir.getPath());
+            }
+        }
+
+        @Override
+        void handleReturnCode() {
+            if (mObserver != null) {
+                try {
+                    mObserver.onGetStatsCompleted(mStats, mSuccess);
+                } catch (RemoteException e) {
+                    Slog.i(TAG, "Observer no longer exists.");
+                }
+            }
+        }
+
+        @Override
+        void handleServiceError() {
+            Slog.e(TAG, "Could not measure application " + mStats.packageName
+                            + " external storage");
+        }
+    }
+
     class InstallParams extends HandlerParams {
         final IPackageInstallObserver observer;
         int flags;
@@ -5293,27 +5370,41 @@ class PackageManagerService extends IPackageManager.Stub {
                 Slog.w(TAG, "Cannot install fwd locked apps on sdcard");
                 ret = PackageManager.INSTALL_FAILED_INVALID_INSTALL_LOCATION;
             } else {
+                final long lowThreshold;
+
+                final DeviceStorageMonitorService dsm = (DeviceStorageMonitorService) ServiceManager
+                        .getService(DeviceStorageMonitorService.SERVICE);
+                if (dsm == null) {
+                    Log.w(TAG, "Couldn't get low memory threshold; no free limit imposed");
+                    lowThreshold = 0L;
+                } else {
+                    lowThreshold = dsm.getMemoryLowThreshold();
+                }
+
                 // Remote call to find out default install location
                 final PackageInfoLite pkgLite;
                 try {
                     mContext.grantUriPermission(DEFAULT_CONTAINER_PACKAGE, packageURI,
                             Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    pkgLite = mContainerService.getMinimalPackageInfo(packageURI, flags);
+                    pkgLite = mContainerService.getMinimalPackageInfo(packageURI, flags,
+                            lowThreshold);
                 } finally {
                     mContext.revokeUriPermission(packageURI, Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 }
 
                 int loc = pkgLite.recommendedInstallLocation;
-                if (loc == PackageHelper.RECOMMEND_FAILED_INVALID_LOCATION){
+                if (loc == PackageHelper.RECOMMEND_FAILED_INVALID_LOCATION) {
                     ret = PackageManager.INSTALL_FAILED_INVALID_INSTALL_LOCATION;
-                } else if (loc == PackageHelper.RECOMMEND_FAILED_ALREADY_EXISTS){
+                } else if (loc == PackageHelper.RECOMMEND_FAILED_ALREADY_EXISTS) {
                     ret = PackageManager.INSTALL_FAILED_ALREADY_EXISTS;
-                } else if (loc == PackageHelper.RECOMMEND_FAILED_INSUFFICIENT_STORAGE){
+                } else if (loc == PackageHelper.RECOMMEND_FAILED_INSUFFICIENT_STORAGE) {
                     ret = PackageManager.INSTALL_FAILED_INSUFFICIENT_STORAGE;
                 } else if (loc == PackageHelper.RECOMMEND_FAILED_INVALID_APK) {
                     ret = PackageManager.INSTALL_FAILED_INVALID_APK;
+                } else if (loc == PackageHelper.RECOMMEND_FAILED_INVALID_URI) {
+                    ret = PackageManager.INSTALL_FAILED_INVALID_URI;
                 } else if (loc == PackageHelper.RECOMMEND_MEDIA_UNAVAILABLE) {
-                  ret = PackageManager.INSTALL_FAILED_MEDIA_UNAVAILABLE;
+                    ret = PackageManager.INSTALL_FAILED_MEDIA_UNAVAILABLE;
                 } else {
                     // Override with defaults if needed.
                     loc = installLocationPolicy(pkgLite, flags);
@@ -5531,10 +5622,26 @@ class PackageManagerService extends IPackageManager.Stub {
         }
 
         boolean checkFreeStorage(IMediaContainerService imcs) throws RemoteException {
+            final long lowThreshold;
+
+            final DeviceStorageMonitorService dsm = (DeviceStorageMonitorService) ServiceManager
+                    .getService(DeviceStorageMonitorService.SERVICE);
+            if (dsm == null) {
+                Log.w(TAG, "Couldn't get low memory threshold; no free limit imposed");
+                lowThreshold = 0L;
+            } else {
+                if (dsm.isMemoryLow()) {
+                    Log.w(TAG, "Memory is reported as being too low; aborting package install");
+                    return false;
+                }
+
+                lowThreshold = dsm.getMemoryLowThreshold();
+            }
+
             try {
                 mContext.grantUriPermission(DEFAULT_CONTAINER_PACKAGE, packageURI,
                         Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                return imcs.checkFreeStorage(false, packageURI);
+                return imcs.checkInternalFreeStorage(packageURI, lowThreshold);
             } finally {
                 mContext.revokeUriPermission(packageURI, Intent.FLAG_GRANT_READ_URI_PERMISSION);
             }
@@ -5583,9 +5690,7 @@ class PackageManagerService extends IPackageManager.Stub {
             try {
                 mContext.grantUriPermission(DEFAULT_CONTAINER_PACKAGE, packageURI,
                         Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                if (imcs.copyResource(packageURI, out)) {
-                    ret = PackageManager.INSTALL_SUCCEEDED;
-                }
+                ret = imcs.copyResource(packageURI, out);
             } finally {
                 try { if (out != null) out.close(); } catch (IOException e) {}
                 mContext.revokeUriPermission(packageURI, Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -5753,7 +5858,7 @@ class PackageManagerService extends IPackageManager.Stub {
             try {
                 mContext.grantUriPermission(DEFAULT_CONTAINER_PACKAGE, packageURI,
                         Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                return imcs.checkFreeStorage(false, packageURI);
+                return imcs.checkSDExternalFreeStorage(packageURI);
             } finally {
                 mContext.revokeUriPermission(packageURI, Intent.FLAG_GRANT_READ_URI_PERMISSION);
             }
@@ -5794,7 +5899,7 @@ class PackageManagerService extends IPackageManager.Stub {
             try {
                 out = ParcelFileDescriptor.open(codeFile, ParcelFileDescriptor.MODE_READ_WRITE);
             } catch (FileNotFoundException e) {
-                Slog.e(TAG, "Failed to create file descritpor for : " + codeFileName);
+                Slog.e(TAG, "Failed to create file descriptor for : " + codeFileName);
                 return PackageManager.INSTALL_FAILED_INSUFFICIENT_STORAGE;
             }
             // Copy the resource now
@@ -5802,9 +5907,7 @@ class PackageManagerService extends IPackageManager.Stub {
             try {
                 mContext.grantUriPermission(DEFAULT_CONTAINER_PACKAGE, packageURI,
                         Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                if (imcs.copyResource(packageURI, out)) {
-                    ret = PackageManager.INSTALL_SUCCEEDED;
-                }
+                ret = imcs.copyResource(packageURI, out);
             } finally {
                 try { if (out != null) out.close(); } catch (IOException e) {}
                 mContext.revokeUriPermission(packageURI, Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -5979,7 +6082,7 @@ class PackageManagerService extends IPackageManager.Stub {
             try {
                 mContext.grantUriPermission(DEFAULT_CONTAINER_PACKAGE, packageURI,
                         Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                return imcs.checkFreeStorage(true, packageURI);
+                return imcs.checkExternalFreeStorage(packageURI);
             } finally {
                 mContext.revokeUriPermission(packageURI, Intent.FLAG_GRANT_READ_URI_PERMISSION);
             }
@@ -5988,6 +6091,12 @@ class PackageManagerService extends IPackageManager.Stub {
         int copyApk(IMediaContainerService imcs, boolean temp) throws RemoteException {
             if (temp) {
                 createCopyFile();
+            } else {
+                /*
+                 * Pre-emptively destroy the container since it's destroyed if
+                 * copying fails due to it existing anyway.
+                 */
+                PackageHelper.destroySdDir(cid);
             }
 
             final String newCachePath;
@@ -7464,18 +7573,15 @@ class PackageManagerService extends IPackageManager.Stub {
         mHandler.post(new Runnable() {
             public void run() {
                 mHandler.removeCallbacks(this);
-                PackageStats lStats = new PackageStats(packageName);
-                final boolean succeded;
+                PackageStats stats = new PackageStats(packageName);
+
+                final boolean success;
                 synchronized (mInstallLock) {
-                    succeded = getPackageSizeInfoLI(packageName, lStats);
+                    success = getPackageSizeInfoLI(packageName, stats);
                 }
-                if(observer != null) {
-                    try {
-                        observer.onGetStatsCompleted(lStats, succeded);
-                    } catch (RemoteException e) {
-                        Log.i(TAG, "Observer no longer exists.");
-                    }
-                } //end if observer
+                Message msg = mHandler.obtainMessage(INIT_COPY);
+                msg.obj = new MeasureParams(stats, success, observer);
+                mHandler.sendMessage(msg);
             } //end run
         });
     }
@@ -11485,7 +11591,7 @@ class PackageManagerService extends IPackageManager.Stub {
                                                 .unlinkNativeLibraryDirectory(pkg.applicationInfo.dataDir) < 0) {
                                             returnCode = PackageManager.MOVE_FAILED_INSUFFICIENT_STORAGE;
                                         } else {
-                                            NativeLibraryHelper.copyNativeBinariesLI(
+                                            NativeLibraryHelper.copyNativeBinariesIfNeededLI(
                                                     new File(newCodePath), new File(newNativePath));
                                         }
                                     } else {

@@ -539,14 +539,24 @@ public class Notification implements Parcelable
 
         StringBuffer strBuff = new StringBuffer();
         char c;
-
-        for (int i = 0; i < 3 ; i++) {
+        boolean isDigitOnly = false;
+        for (int i = 0; i < 1 ; i++) {
+             c = str.charAt(i);
+             if (Character.isDigit(c)) {
+                 isDigitOnly = true;
+             }
+        }
+        if (isDigitOnly) {
+           for (int i = 0; i < 3 ; i++) {
              c = str.charAt(i);
              if (Character.isDigit(c)) {
                  strBuff.append(c);
              }
+           }
         }
         if (strBuff == null) {
+             return 0;
+        } else if (!isDigitOnly) {
              return 0;
         } else if (TextUtils.equals(strBuff, "''")) {
              return 0;

@@ -26,13 +26,39 @@ import java.util.Arrays;
  * application package.
  */
 public class PackageStats implements Parcelable {
+    /** Name of the package to which this stats applies. */
     public String packageName;
+
+    /** Size of the code (e.g., APK) */
     public long codeSize;
+
+    /**
+     * Size of the internal data size for the application. (e.g.,
+     * /data/data/<app>)
+     */
     public long dataSize;
+
+    /** Size of cache used by the application. (e.g., /data/data/<app>/cache) */
     public long cacheSize;
-    
+
+    /**
+     * Size of the external data used by the application (e.g.,
+     * <sdcard>/Android/data/<app>)
+     */
+    public long externalDataSize;
+
+    /**
+     * Size of the external cache used by the application (i.e., on the SD
+     * card). If this is a subdirectory of the data directory, this size will be
+     * subtracted out of the external data size.
+     */
+    public long externalCacheSize;
+
+    /** Size of the external media size used by the application. */
+    public long externalMediaSize;
+
     public static final Parcelable.Creator<PackageStats> CREATOR
-    = new Parcelable.Creator<PackageStats>() {
+            = new Parcelable.Creator<PackageStats>() {
         public PackageStats createFromParcel(Parcel in) {
             return new PackageStats(in);
         }
@@ -43,9 +69,23 @@ public class PackageStats implements Parcelable {
     };
     
     public String toString() {
-        return "PackageStats{"
-        + Integer.toHexString(System.identityHashCode(this))
-        + " " + packageName + "}";
+        final StringBuilder sb = new StringBuilder("PackageStats{");
+        sb.append(Integer.toHexString(System.identityHashCode(this)));
+        sb.append(" packageName=");	
+        sb.append(packageName);	
+        sb.append(",codeSize=");
+        sb.append(codeSize);
+        sb.append(",dataSize=");
+        sb.append(dataSize);
+        sb.append(",cacheSize=");
+        sb.append(cacheSize);
+        sb.append(",externalDataSize=");
+        sb.append(externalDataSize);
+        sb.append(",externalCacheSize=");
+        sb.append(externalCacheSize);
+        sb.append(",externalMediaSize=");
+        sb.append(externalMediaSize);
+        return sb.toString();
     }
     
     public PackageStats(String pkgName) {
@@ -57,6 +97,9 @@ public class PackageStats implements Parcelable {
         codeSize = source.readLong();
         dataSize = source.readLong();
         cacheSize = source.readLong();
+        externalDataSize = source.readLong();
+        externalCacheSize = source.readLong();
+        externalMediaSize = source.readLong();
     }
     
     public PackageStats(PackageStats pStats) {
@@ -64,6 +107,9 @@ public class PackageStats implements Parcelable {
         codeSize = pStats.codeSize;
         dataSize = pStats.dataSize;
         cacheSize = pStats.cacheSize;
+        externalDataSize = pStats.externalDataSize;
+        externalCacheSize = pStats.externalCacheSize;	
+        externalMediaSize = pStats.externalMediaSize;
     }
 
     public int describeContents() {
@@ -75,5 +121,8 @@ public class PackageStats implements Parcelable {
         dest.writeLong(codeSize);
         dest.writeLong(dataSize);
         dest.writeLong(cacheSize);
+        dest.writeLong(externalDataSize);	
+        dest.writeLong(externalCacheSize);
+        dest.writeLong(externalMediaSize);
     }
 }

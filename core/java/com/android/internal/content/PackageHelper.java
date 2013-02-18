@@ -40,6 +40,8 @@ public class PackageHelper {
     public static final int RECOMMEND_FAILED_INVALID_LOCATION = -3;
     public static final int RECOMMEND_FAILED_ALREADY_EXISTS = -4;
     public static final int RECOMMEND_MEDIA_UNAVAILABLE = -5;
+    public static final int RECOMMEND_FAILED_INVALID_URI = -6;
+
     private static final boolean localLOGV = true;
     private static final String TAG = "PackageHelper";
     // App installation location settings values
@@ -58,18 +60,12 @@ public class PackageHelper {
         return null;
     }
 
-    public static String createSdDir(long sizeBytes, String cid,
+    public static String createSdDir(int sizeMb, String cid,
             String sdEncKey, int uid) {
         // Create mount point via MountService
         IMountService mountService = getMountService();
-        int sizeMb = (int) (sizeBytes >> 20);
-        if ((sizeBytes - (sizeMb * 1024 * 1024)) > 0) {
-            sizeMb++;
-        }
-        // Add buffer size
-        sizeMb++;
         if (localLOGV)
-            Log.i(TAG, "Size of container " + sizeMb + " MB " + sizeBytes + " bytes");
+            Log.i(TAG, "Size of container " + sizeMb + " MB");
 
         try {
             int rc = mountService.createSecureContainer(

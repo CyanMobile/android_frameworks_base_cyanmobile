@@ -151,6 +151,7 @@ class MountService extends IMountService.Stub
     private boolean                               mBooted = false;
     private boolean                               mReady = false;
     private boolean                               mSendUmsConnectedOnBoot = false;
+    private boolean                               mEmulateExternalStorage = false;
 
     /**
      * Private hash of currently mounted secure containers.
@@ -1301,6 +1302,10 @@ class MountService extends IMountService.Stub
 
     private void setVolumeState(String mountPoint, String volumeState) {
         mVolumeStates.put(mountPoint, volumeState);
+    }
+
+    public boolean isExternalStorageEmulated() {
+        return mEmulateExternalStorage;
     }
 
     public int mountVolume(String path) {

@@ -414,4 +414,23 @@ class DeviceStorageMonitorService extends Binder {
         return mUiContext != null ? mUiContext : mContext;
     }
 
+    /**
+     * Callable from other things in the system service to obtain the low memory
+     * threshold.
+     * 
+     * @return low memory threshold in bytes
+     */
+    public long getMemoryLowThreshold() {
+        return mMemLowThreshold;
+    }
+
+    /**
+     * Callable from other things in the system process to check whether memory
+     * is low.
+     * 
+     * @return true is memory is low	
+     */
+    public boolean isMemoryLow() {	
+        return mLowMemFlag;
+    }
 }

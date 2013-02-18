@@ -15,6 +15,7 @@
 */
 
 #include "installd.h"
+#include <diskusage/dirsize.h>
 
 int install(const char *pkgname, int encrypted_fs_flag, uid_t uid, gid_t gid)
 {
@@ -339,55 +340,6 @@ int protect(char *pkgname, gid_t gid, int InstLocation)
     return 0;
 }
 
-static int64_t stat_size(struct stat *s)
-{
-    int64_t blksize = s->st_blksize;
-    int64_t size = s->st_size;
-
-    if (blksize) {
-            /* round up to filesystem block size */
-        size = (size + blksize - 1) & (~(blksize - 1));
-    }
-
-    return size;
-}
-
-static int64_t calculate_dir_size(int dfd)
-{
-    int64_t size = 0;
-    struct stat s;
-    DIR *d;
-    struct dirent *de;
-
-    d = fdopendir(dfd);
-    if (d == NULL) {
-        close(dfd);
-        return 0;
-    }
-
-    while ((de = readdir(d))) {
-        const char *name = de->d_name;
-        if (de->d_type == DT_DIR) {
-            int subfd;
-                /* always skip "." and ".." */
-            if (name[0] == '.') {
-                if (name[1] == 0) continue;
-                if ((name[1] == '.') && (name[2] == 0)) continue;
-            }
-            subfd = openat(dfd, name, O_RDONLY | O_DIRECTORY);
-            if (subfd >= 0) {
-                size += calculate_dir_size(subfd);
-            }
-        } else {
-            if (fstatat(dfd, name, &s, AT_SYMLINK_NOFOLLOW) == 0) {
-                size += stat_size(&s);
-            }
-        }
-    }
-    closedir(d);
-    return size;
-}
-
 int get_size(const char *pkgname, const char *apkpath,
              const char *fwdlock_apkpath,
              int64_t *_codesize, int64_t *_datasize, int64_t *_cachesize, int encrypted_fs_flag)
@@ -425,6 +377,16 @@ int get_size(const char *pkgname, const char *apkpath,
         }
     }
 
+        /* add in size of any libraries */
+    if (!create_pkg_path_in_dir(path, &android_app_lib_dir, pkgname, PKG_DIR_POSTFIX)) {
+        d = opendir(path);
+        if (d != NULL) {
+            dfd = dirfd(d);
+            codesize += calculate_dir_size(dfd);
+            closedir(d);
+        }
+    }
+
     if (encrypted_fs_flag == 0) {
         if (create_pkg_path(path, PKG_DIR_PREFIX, pkgname, PKG_DIR_POSTFIX)) {
             goto done;
@@ -450,21 +412,33 @@ int get_size(const char *pkgname, const char *apkpath,
 
         if (de->d_type == DT_DIR) {
             int subfd;
+            int64_t statsize = 0;
+            int64_t dirsize = 0;
                 /* always skip "." and ".." */
             if (name[0] == '.') {
                 if (name[1] == 0) continue;
                 if ((name[1] == '.') && (name[2] == 0)) continue;
             }
+            if (fstatat(dfd, name, &s, AT_SYMLINK_NOFOLLOW) == 0) {
+                statsize = stat_size(&s);
+            }
             subfd = openat(dfd, name, O_RDONLY | O_DIRECTORY);
             if (subfd >= 0) {
-                int64_t size = calculate_dir_size(subfd);
-                if (!strcmp(name,"lib")) {
-                    codesize += size;
-                } else if(!strcmp(name,"cache")) {
-                    cachesize += size;
-                } else {
-                    datasize += size;
-                }
+                dirsize = calculate_dir_size(subfd);
+            }
+            if(!strcmp(name,"lib")) {
+                codesize += dirsize + statsize;
+            } else if(!strcmp(name,"cache")) {
+                cachesize += dirsize + statsize;
+            } else {
+                datasize += dirsize + statsize;
+            }
+        } else if (de->d_type == DT_LNK && !strcmp(name,"lib")) {
+            // This is the symbolic link to the application's library
+            // code.  We'll count this as code instead of data, since
+            // it is not something that the app creates.
+            if (fstatat(dfd, name, &s, AT_SYMLINK_NOFOLLOW) == 0) {
+                codesize += stat_size(&s);
             }
         } else {
             if (fstatat(dfd, name, &s, AT_SYMLINK_NOFOLLOW) == 0) {
