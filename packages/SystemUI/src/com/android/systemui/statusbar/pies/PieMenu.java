@@ -51,8 +51,10 @@ import android.os.Handler;
 import android.os.Vibrator;
 import android.provider.Settings;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -113,9 +115,13 @@ public class PieMenu extends FrameLayout {
     private static final int COLOR_STATUS = 0xffffff;
     private static final int BASE_SPEED = 1000;
     private static final int EMPTY_ANGLE_BASE = 12;
+    private static final int CHEVRON_FRAGMENTS = 16;
     private static final float SIZE_BASE = 1f;
 
     private static final long ANIMATION = 80;
+
+    private Display mDisplay;
+    private DisplayMetrics mDisplayMetrics = new DisplayMetrics();
 
     // System
     private Context mContext;
@@ -142,6 +148,8 @@ public class PieMenu extends FrameLayout {
     private int mPieGap;
     private int mInnerChevronRadius;
     private int mOuterChevronRadius;
+    private int mInnerChevronRightRadius;
+    private int mOuterChevronRightRadius;
     private int mInnerBatteryRadius;
     private int mOuterBatteryRadius;
     private int mStatusRadius;
@@ -152,7 +160,7 @@ public class PieMenu extends FrameLayout {
     private float mCenterDistance = 0;
 
     private Path mStatusPath = new Path();
-    private Path mChevronPathLeft;
+    private Path[] mChevronPathLeft  = new Path[CHEVRON_FRAGMENTS+1];
     private Path mChevronPathRight;
     private Path mBatteryPathBackground;
     private Path mBatteryPathJuice;
@@ -288,15 +296,20 @@ public class PieMenu extends FrameLayout {
         mSnapRadius = (int)(mResources.getDimensionPixelSize(R.dimen.pie_snap_radius) * mPieSize);
         mSnapThickness = (int)(mResources.getDimensionPixelSize(R.dimen.pie_snap_thickness) * mPieSize);
 
+        mDisplay = ((WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        mDisplay.getMetrics(mDisplayMetrics);
+        int mWidth = mDisplayMetrics.widthPixels;
+        int mHeight = mDisplayMetrics.heightPixels;
+
         int snapIndex = 0;
         if (mPanelOrientation != Gravity.LEFT)
-            mSnapPoint[snapIndex++] = new SnapPoint(0 + mSnapThickness / 2,getHeight()/2, mSnapRadius, 0x22, Gravity.LEFT);
+            mSnapPoint[snapIndex++] = new SnapPoint(0 + mSnapThickness / 2, mHeight / 2, mSnapRadius, 0x22, Gravity.LEFT);
         if (mPanelOrientation != Gravity.TOP)
-            mSnapPoint[snapIndex++] = new SnapPoint(getWidth()/2,0 + mSnapThickness / 2, mSnapRadius, 0x22, Gravity.TOP);
+            mSnapPoint[snapIndex++] = new SnapPoint(mWidth / 2, mSnapThickness / 2, mSnapRadius, 0x22, Gravity.TOP);
         if (mPanelOrientation != Gravity.RIGHT)
-            mSnapPoint[snapIndex++] = new SnapPoint(getWidth() - mSnapThickness / 2,getHeight()/2, mSnapRadius, 0x22, Gravity.RIGHT);
+            mSnapPoint[snapIndex++] = new SnapPoint(mWidth - mSnapThickness / 2, mHeight / 2, mSnapRadius, 0x22, Gravity.RIGHT);
         if (mPanelOrientation != Gravity.BOTTOM)
-            mSnapPoint[snapIndex++] = new SnapPoint(getWidth()/2, getHeight() - mSnapThickness / 2, mSnapRadius, 0x22, Gravity.BOTTOM);
+            mSnapPoint[snapIndex++] = new SnapPoint(mWidth / 2, mHeight - mSnapThickness / 2, mSnapRadius, 0x22, Gravity.BOTTOM);
  
         // Create Pie
         mEmptyAngle = (int)(EMPTY_ANGLE_BASE * mPieSize);
@@ -306,10 +319,17 @@ public class PieMenu extends FrameLayout {
         // Calculate chevrons: 0 - 82 & -4 - 90
         mInnerChevronRadius = (int)(mResources.getDimensionPixelSize(R.dimen.pie_chevron_start) * mPieSize);
         mOuterChevronRadius = (int)(mInnerChevronRadius + mResources.getDimensionPixelSize(R.dimen.pie_chevron_increment) * mPieSize);
-        mChevronPathLeft = makeSlice(mPanelDegree, mPanelDegree + (mPanelOrientation != Gravity.TOP ? 80 : 87), mInnerChevronRadius,
-                mOuterChevronRadius, mCenter);
-        mChevronPathRight = makeSlice(mPanelDegree + (mPanelOrientation != Gravity.TOP ? -5 : 3), mPanelDegree + 90, mInnerChevronRadius,
-                mOuterChevronRadius, mCenter);
+        mInnerChevronRightRadius = (int)(mResources.getDimensionPixelSize(R.dimen.pie_chevron_start_right) * mPieSize);
+        mOuterChevronRightRadius = (int)(mInnerChevronRightRadius + mResources.getDimensionPixelSize(R.dimen.pie_chevron_increment_right) * mPieSize);
+
+        // Create slices
+        float fragmentSize = 90 / CHEVRON_FRAGMENTS;
+        for (int i=0; i < CHEVRON_FRAGMENTS + 1; i++) {
+            mChevronPathLeft[i] = makeSlice(mPanelDegree + (i * fragmentSize), mPanelDegree + (i * fragmentSize) + fragmentSize / 2,
+                    mInnerChevronRadius, mOuterChevronRadius, mCenter);
+        }
+        mChevronPathRight = makeSlice(mPanelDegree + (mPanelOrientation != Gravity.TOP ? -5 : 3), mPanelDegree + 90, mInnerChevronRightRadius,
+                mOuterChevronRightRadius, mCenter);
 
         // Calculate text circle
         mStatusRadius = (int)(mResources.getDimensionPixelSize(R.dimen.pie_status_start) * mPieSize);
@@ -776,7 +796,7 @@ public class PieMenu extends FrameLayout {
                     SnapPoint snap = mSnapPoint[i];
                     mSnapBackground.setAlpha((int)(snap.alpha + (snap.active ? mAnimators[ANIMATOR_SNAP_GROW].fraction * 80 : 0)));
 
-                    canvas.drawCircle (snap.x, snap.y, snap.radius + (snap.active ? mAnimators[ANIMATOR_SNAP_GROW].fraction *
+                    canvas.drawCircle (snap.x, snap.y, (snap.active ? mAnimators[ANIMATOR_SNAP_GROW].fraction *
                             Math.max(getWidth(), getHeight()) : 0), mSnapBackground);
 
                     mSnapBackground.setAlpha((int)(snap.alpha * 2.15f  + (snap.active ? mAnimators[ANIMATOR_SNAP_GROW].fraction * 80 : 0)));
@@ -805,17 +825,19 @@ public class PieMenu extends FrameLayout {
             if (mStatusMode != -1 && !mNavbarZero) {
 
                 // Draw chevron rings
-                mChevronBackgroundLeft.setAlpha((int)(mAnimators[ANIMATOR_DEC_SPEED30].fraction * mGlowOffsetLeft * (mPanelOrientation == Gravity.TOP ? 0.2 : 1)));
+                mChevronBackgroundLeft.setAlpha((int)(mAnimators[ANIMATOR_DEC_SPEED30].fraction * mGlowOffsetLeft / 2 * (mPanelOrientation == Gravity.TOP ? 0.2 : 1)));
                 mChevronBackgroundRight.setAlpha((int)(mAnimators[ANIMATOR_DEC_SPEED30].fraction * mGlowOffsetRight * (mPanelOrientation == Gravity.TOP ? 0.2 : 1)));
 
-                if (mStatusPanel.getCurrentViewState() != PieStatusPanel.QUICK_SETTINGS_PANEL && mChevronPathLeft != null) {
+                if (mStatusPanel.getCurrentViewState() != PieStatusPanel.QUICK_SETTINGS_PANEL) {
                     state = canvas.save();
                     canvas.rotate(90, mCenter.x, mCenter.y);
-                    canvas.drawPath(mChevronPathLeft, mChevronBackgroundLeft);
+                    for (int i=0; i < CHEVRON_FRAGMENTS + 1; i++) {
+                        canvas.drawPath(mChevronPathLeft[i], mChevronBackgroundLeft);
+                    }
                     canvas.restoreToCount(state);
                 }
 
-                if (mStatusPanel.getCurrentViewState() != PieStatusPanel.NOTIFICATIONS_PANEL && mChevronPathRight != null) {
+                if (mStatusPanel.getCurrentViewState() != PieStatusPanel.NOTIFICATIONS_PANEL) {
                     state = canvas.save();
                     canvas.rotate(180, mCenter.x, mCenter.y);
                     canvas.drawPath(mChevronPathRight, mChevronBackgroundRight);
@@ -988,7 +1010,7 @@ public class PieMenu extends FrameLayout {
                 float snapDistance = (float)Math.sqrt(Math.pow(snapDistanceX, 2) + Math.pow(snapDistanceY, 2));
 
                 if (snapDistance < mSnapRadius) {
-                    snap.alpha = 60;
+                    snap.alpha = 50;
                     if (!snap.active) {
                         mAnimators[ANIMATOR_SNAP_GROW].cancel();
                         mAnimators[ANIMATOR_SNAP_GROW].animator.start();
