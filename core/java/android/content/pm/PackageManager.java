@@ -228,6 +228,7 @@ public abstract class PackageManager {
     public static final int COMPONENT_ENABLED_STATE_DEFAULT = 0;
     public static final int COMPONENT_ENABLED_STATE_ENABLED = 1;
     public static final int COMPONENT_ENABLED_STATE_DISABLED = 2;
+    public static final int COMPONENT_ENABLED_STATE_DISABLED_USER = 3;
 
     /**
      * Flag parameter for {@link #installPackage(android.net.Uri, IPackageInstallObserver, int)} to

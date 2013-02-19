@@ -63,6 +63,7 @@ import android.content.pm.VerifierDeviceIdentity;
 
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.ENFORCEMENT_DEFAULT;
 import static android.content.pm.PackageManager.ENFORCEMENT_YES;
@@ -7812,7 +7813,8 @@ class PackageManagerService extends IPackageManager.Stub {
             final String packageName, String className, int newState, final int flags) {
         if (!(newState == COMPONENT_ENABLED_STATE_DEFAULT
               || newState == COMPONENT_ENABLED_STATE_ENABLED
-              || newState == COMPONENT_ENABLED_STATE_DISABLED)) {
+              || newState == COMPONENT_ENABLED_STATE_DISABLED
+              || newState == COMPONENT_ENABLED_STATE_DISABLED_USER)) {
             throw new IllegalArgumentException("Invalid new component state: "
                     + newState);
         }
@@ -11097,6 +11099,7 @@ class PackageManagerService extends IPackageManager.Stub {
                 return false;
             }
             if (packageSettings.enabled == COMPONENT_ENABLED_STATE_DISABLED
+                    || packageSettings.enabled == COMPONENT_ENABLED_STATE_DISABLED_USER
                     || (packageSettings.pkg != null && !packageSettings.pkg.applicationInfo.enabled
                             && packageSettings.enabled == COMPONENT_ENABLED_STATE_DEFAULT)) {
                 return false;
