@@ -46,7 +46,7 @@ public class CmBatteryNaviBarBottom extends ProgressBar implements Animatable, R
 
     // Current "step" of charging animation
     private int mChargingLevel = -1;
-
+    private Context mContext;
     // Are we charging?
     private boolean mBatteryCharging = false;
 
@@ -63,7 +63,7 @@ public class CmBatteryNaviBarBottom extends ProgressBar implements Animatable, R
         }
 
         void observe() {
-            ContentResolver resolver = getContext().getContentResolver();
+            ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_BATTERY), false, this);
             resolver.registerContentObserver(
@@ -89,7 +89,7 @@ public class CmBatteryNaviBarBottom extends ProgressBar implements Animatable, R
 
     public CmBatteryNaviBarBottom(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
+        mContext = context;
         mSettingsObserver = new SettingsObserver(mHandler);
         updateSettings();
     }
@@ -104,7 +104,7 @@ public class CmBatteryNaviBarBottom extends ProgressBar implements Animatable, R
             filter.addAction(Intent.ACTION_BATTERY_CHANGED);
             filter.addAction(Intent.ACTION_SCREEN_OFF);
             filter.addAction(Intent.ACTION_SCREEN_ON);
-            getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mContext.registerReceiver(mIntentReceiver, filter, null, getHandler());
             mSettingsObserver.observe();
         }
     }
@@ -115,8 +115,8 @@ public class CmBatteryNaviBarBottom extends ProgressBar implements Animatable, R
 
         if (mAttached) {
             mAttached = false;
-            getContext().unregisterReceiver(mIntentReceiver);
-            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mContext.unregisterReceiver(mIntentReceiver);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
         }
     }
 
@@ -144,7 +144,7 @@ public class CmBatteryNaviBarBottom extends ProgressBar implements Animatable, R
     };
 
     private void updateSettings() {
-        ContentResolver resolver = getContext().getContentResolver();
+        ContentResolver resolver = mContext.getContentResolver();
         mShowCmBatteryNaviBar = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_BATTERY, 0) == 7);
          mNVShow = (Settings.System.getInt(resolver,

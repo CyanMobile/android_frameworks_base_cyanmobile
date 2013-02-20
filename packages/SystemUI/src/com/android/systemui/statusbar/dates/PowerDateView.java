@@ -44,7 +44,7 @@ public final class PowerDateView extends TextView {
     private boolean mShowDate;
     private int mClockColor;
     private Handler mHandler;
-
+    private Context mContext;
     private SettingsObserver mSettingsObserver;
 
     private class SettingsObserver extends ContentObserver {
@@ -53,7 +53,7 @@ public final class PowerDateView extends TextView {
         }
 
         void observe() {
-            ContentResolver resolver = getContext().getContentResolver();
+            ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_DATE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
@@ -87,7 +87,7 @@ public final class PowerDateView extends TextView {
 
     public PowerDateView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
+        mContext = context;
         mHandler = new Handler();
         mSettingsObserver = new SettingsObserver(mHandler);
         updateSettings();
@@ -102,7 +102,7 @@ public final class PowerDateView extends TextView {
             filter.addAction(Intent.ACTION_TIME_TICK);
             filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
             filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
-            getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mContext.registerReceiver(mIntentReceiver, filter, null, getHandler());
             mSettingsObserver.observe();
         }
 
@@ -113,8 +113,8 @@ public final class PowerDateView extends TextView {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (mAttached) {
-            getContext().unregisterReceiver(mIntentReceiver);
-            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mContext.unregisterReceiver(mIntentReceiver);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
             mAttached = false;
         }
     }
@@ -128,14 +128,14 @@ public final class PowerDateView extends TextView {
     private final void updateClock() {
         Date now = new Date();
         CharSequence dow = DateFormat.format("EEEE", now);
-        CharSequence date = DateFormat.getLongDateFormat(getContext()).format(now);
-        setText(getContext().getString(R.string.status_bar_date_formatter, dow, date).toUpperCase());
+        CharSequence date = DateFormat.getLongDateFormat(mContext).format(now);
+        setText(mContext.getString(R.string.status_bar_date_formatter, dow, date).toUpperCase());
 	setTextColor(mClockColor);
     }
 
     private void updateSettings(){
-        ContentResolver resolver = getContext().getContentResolver();
-        int defValuesColor = getContext().getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+        ContentResolver resolver = mContext.getContentResolver();
+        int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
 	int mCColor = mClockColor;
 	mClockColor = (Settings.System.getInt(resolver,
                 Settings.System.COLOR_DATE, defValuesColor));

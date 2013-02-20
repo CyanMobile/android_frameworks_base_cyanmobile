@@ -167,6 +167,7 @@ public class NavigationBarView extends LinearLayout {
     private Handler mHandler;
     private boolean mAttached;
     private SettingsObserver mSettingsObserver;
+    private Context mContext;
 
     private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
@@ -221,6 +222,7 @@ public class NavigationBarView extends LinearLayout {
 
     public NavigationBarView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        mContext = context;
         mDisplay = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         mGestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
                 public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
@@ -294,7 +296,7 @@ public class NavigationBarView extends LinearLayout {
             ActionItem sndItem = new ActionItem(ID_SOUND, "Sound");
             ActionItem tbltItem = new ActionItem(ID_TABLET, "Tablet tweaks");
 
-            final QuickAction quickAction = new QuickAction(getContext(), QuickAction.VERTICAL);
+            final QuickAction quickAction = new QuickAction(mContext, QuickAction.VERTICAL);
 
             quickAction.addActionItem(appItem);
             quickAction.addActionItem(dispItem);
@@ -314,47 +316,47 @@ public class NavigationBarView extends LinearLayout {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.ApplicationActivity");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_DISPLAY) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.DisplayActivity");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_INPUT) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.InputActivity");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_UIN) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.UIActivity");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_LOCKSCREEN) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.LockscreenActivity");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_PERFORMANCE) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.PerformanceSettingsActivity");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_POWERSAVER) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.PowerSaverActivity");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_SOUND) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.SoundActivity");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_TABLET) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.TabletTweaksActivity");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				}
 			}
 		});
@@ -375,7 +377,7 @@ public class NavigationBarView extends LinearLayout {
             ActionItem displayItem = new ActionItem(ID_DISPLAYS, "Display settings");
             ActionItem callsItem = new ActionItem(ID_CALLSET, "Call settings");
 
-            final QuickAction quickActionss = new QuickAction(getContext(), QuickAction.VERTICAL);
+            final QuickAction quickActionss = new QuickAction(mContext, QuickAction.VERTICAL);
 
             quickActionss.addActionItem(wifiItem);
             quickActionss.addActionItem(blueItem);
@@ -395,47 +397,47 @@ public class NavigationBarView extends LinearLayout {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.settings", "com.android.settings.wifi.WifiSettings");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_BLUETOOTH) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.settings", "com.android.settings.bluetooth.BluetoothSettings");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_MOBILENETWORK) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.phone", "com.android.phone.Settings");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_TETHERING) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.settings", "com.android.settings.TetherSettings");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_APPLICATIONS) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.settings", "com.android.settings.ApplicationSettings");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_LOCSECURE) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.settings", "com.android.settings.SecuritySettings");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_SOUNDS) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.settings", "com.android.settings.SoundSettings");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_DISPLAYS) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.settings", "com.android.settings.DisplaySettings");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_CALLSET) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.phone", "com.android.phone.CallFeaturesSetting");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				}
 			}
 		});
@@ -456,7 +458,7 @@ public class NavigationBarView extends LinearLayout {
             ActionItem dvlpItem = new ActionItem(ID_DEVELOP, "Development");
             ActionItem adwItem = new ActionItem(ID_ADWLAUNCHER, "ADW settings");
 
-            final QuickAction quickActionrr = new QuickAction(getContext(), QuickAction.VERTICAL);
+            final QuickAction quickActionrr = new QuickAction(mContext, QuickAction.VERTICAL);
 
             quickActionrr.addActionItem(strgItem);
             quickActionrr.addActionItem(prfleItem);
@@ -476,47 +478,47 @@ public class NavigationBarView extends LinearLayout {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.settings", "com.android.settings.deviceinfo.Memory");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_PROFILE) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.settings", "com.android.settings.ProfileList");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_PRIVACY) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.settings", "com.android.settings.PrivacySettings");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_DATETIME) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.settings", "com.android.settings.DateTimeSettings");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_LANGKEY) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.settings", "com.android.settings.LanguageSettings");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_VOICEN) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.settings", "com.android.settings.VoiceInputOutputSettings");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_ACCESS) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.settings", "com.android.settings.AccessibilitySettings");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_DEVELOP) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.settings", "com.android.settings.DevelopmentSettings");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				} else if (actionId == ID_ADWLAUNCHER) {
                                     Intent intent = new Intent(Intent.ACTION_MAIN);
                                     intent.setClassName("com.android.launcher", "com.android.launcher.MyLauncherSettings");
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    getContext().startActivity(intent);
+                                    mContext.startActivity(intent);
 				}
 			}
 		});
@@ -531,7 +533,7 @@ public class NavigationBarView extends LinearLayout {
             ActionItem sscItem = new ActionItem(ID_SCREENSHOT, "Screenshots");
             ActionItem pwrItem = new ActionItem(ID_POWERMENU, "Power menu");
 
-            final QuickAction quickActionmm = new QuickAction(getContext(), QuickAction.VERTICAL);
+            final QuickAction quickActionmm = new QuickAction(mContext, QuickAction.VERTICAL);
 
             quickActionmm.addActionItem(bckItem);
             quickActionmm.addActionItem(sscItem);
@@ -550,7 +552,7 @@ public class NavigationBarView extends LinearLayout {
                                     }
 				} else if (actionId == ID_SCREENSHOT) {
                                     Intent intent = new Intent("android.intent.action.SCREENSHOT");
-                                    getContext().sendBroadcast(intent);
+                                    mContext.sendBroadcast(intent);
                                 } else if (actionId == ID_POWERMENU) {
                                     CmStatusBarView.simulateKeypress(CmStatusBarView.KEYCODE_VIRTUAL_POWER_LONG);
 				}
@@ -597,11 +599,11 @@ public class NavigationBarView extends LinearLayout {
                         updateNaviButtons();
                         mHandler.postDelayed(mResetHome, 80);
                       } else if (mShowHome == 6) {
-                            boolean mCustomHomeAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
+                            boolean mCustomHomeAppToggle = (Settings.System.getInt(mContext.getContentResolver(),
                                     Settings.System.USE_CUSTOM_HOME_APP_TOGGLE, 0) == 1);
 
                             if (mCustomHomeAppToggle) {
-                                runCustomApp(Settings.System.getString(getContext().getContentResolver(),
+                                runCustomApp(Settings.System.getString(mContext.getContentResolver(),
                                     Settings.System.USE_CUSTOM_HOME_APP_ACTIVITY));
                             }
                         updateNaviButtons();
@@ -628,7 +630,7 @@ public class NavigationBarView extends LinearLayout {
                              Intent intent = new Intent(Intent.ACTION_MAIN);
                              intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             getContext().startActivity(intent);
+                             mContext.startActivity(intent);
                              return true;
                           } else if (mShowHome == 4) {
                              quickActionss.show(v);
@@ -689,11 +691,11 @@ public class NavigationBarView extends LinearLayout {
                         updateNaviButtons();
                         mHandler.postDelayed(mResetMenu, 80);
                       } else if (mShowMenu == 6) {
-                            boolean mCustomMenuAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
+                            boolean mCustomMenuAppToggle = (Settings.System.getInt(mContext.getContentResolver(),
                                     Settings.System.USE_CUSTOM_MENU_APP_TOGGLE, 0) == 1);
 
                             if (mCustomMenuAppToggle) {
-                                runCustomApp(Settings.System.getString(getContext().getContentResolver(),
+                                runCustomApp(Settings.System.getString(mContext.getContentResolver(),
                                     Settings.System.USE_CUSTOM_MENU_APP_ACTIVITY));
                             }
                         updateNaviButtons();
@@ -720,7 +722,7 @@ public class NavigationBarView extends LinearLayout {
                              Intent intent = new Intent(Intent.ACTION_MAIN);
                              intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             getContext().startActivity(intent);
+                             mContext.startActivity(intent);
                              return true;
                           } else if (mShowMenu == 4) {
                              quickActionss.show(v);
@@ -781,11 +783,11 @@ public class NavigationBarView extends LinearLayout {
                         updateNaviButtons();
                         mHandler.postDelayed(mResetBack, 80);
                       } else if (mShowBack == 6) {
-                            boolean mCustomBackAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
+                            boolean mCustomBackAppToggle = (Settings.System.getInt(mContext.getContentResolver(),
                                     Settings.System.USE_CUSTOM_BACK_APP_TOGGLE, 0) == 1);
 
                             if (mCustomBackAppToggle) {
-                                runCustomApp(Settings.System.getString(getContext().getContentResolver(),
+                                runCustomApp(Settings.System.getString(mContext.getContentResolver(),
                                     Settings.System.USE_CUSTOM_BACK_APP_ACTIVITY));
                             }
                         updateNaviButtons();
@@ -812,7 +814,7 @@ public class NavigationBarView extends LinearLayout {
                              Intent intent = new Intent(Intent.ACTION_MAIN);
                              intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             getContext().startActivity(intent);
+                             mContext.startActivity(intent);
                              return true;
                           } else if (mShowBack == 4) {
                              quickActionss.show(v);
@@ -873,11 +875,11 @@ public class NavigationBarView extends LinearLayout {
                         updateNaviButtons();
                         mHandler.postDelayed(mResetSearch, 80);
                       } else if (mShowSearch == 6) {
-                            boolean mCustomSearchAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
+                            boolean mCustomSearchAppToggle = (Settings.System.getInt(mContext.getContentResolver(),
                                     Settings.System.USE_CUSTOM_NAVISEARCH_APP_TOGGLE, 0) == 1);
 
                             if (mCustomSearchAppToggle) {
-                                runCustomApp(Settings.System.getString(getContext().getContentResolver(),
+                                runCustomApp(Settings.System.getString(mContext.getContentResolver(),
                                     Settings.System.USE_CUSTOM_NAVISEARCH_APP_ACTIVITY));
                             }
                         updateNaviButtons();
@@ -904,7 +906,7 @@ public class NavigationBarView extends LinearLayout {
                              Intent intent = new Intent(Intent.ACTION_MAIN);
                              intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             getContext().startActivity(intent);
+                             mContext.startActivity(intent);
                              return true;
                           } else if (mShowSearch == 4) {
                              quickActionss.show(v);
@@ -985,11 +987,11 @@ public class NavigationBarView extends LinearLayout {
                         updateNaviButtons();
                         mHandler.postDelayed(mResetQuick, 80);
                       } else if (mShowQuicker == 5) {
-                            boolean mCustomQuickerAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
+                            boolean mCustomQuickerAppToggle = (Settings.System.getInt(mContext.getContentResolver(),
                                     Settings.System.USE_CUSTOM_QUICK_APP_TOGGLE, 0) == 1);
 
                             if (mCustomQuickerAppToggle) {
-                                runCustomApp(Settings.System.getString(getContext().getContentResolver(),
+                                runCustomApp(Settings.System.getString(mContext.getContentResolver(),
                                     Settings.System.USE_CUSTOM_QUICK_APP_ACTIVITY));
                             }
                         updateNaviButtons();
@@ -1016,7 +1018,7 @@ public class NavigationBarView extends LinearLayout {
                              Intent intent = new Intent(Intent.ACTION_MAIN);
                              intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             getContext().startActivity(intent);
+                             mContext.startActivity(intent);
                              return true;
                           } else if (mShowQuicker == 3) {
                              quickActionss.show(v);
@@ -1063,7 +1065,7 @@ public class NavigationBarView extends LinearLayout {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (mAttached) {
-            if (mNVShow) getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            if (mNVShow) mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
             mAttached = false;
         }
     }
@@ -1612,7 +1614,7 @@ public class NavigationBarView extends LinearLayout {
             try {
                 Intent i = Intent.parseUri(uri, 0);
                 i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-                getContext().startActivity(i);
+                mContext.startActivity(i);
             } catch (URISyntaxException e) {
 
             } catch (ActivityNotFoundException e) {
@@ -1625,7 +1627,7 @@ public class NavigationBarView extends LinearLayout {
         if (uri != null) {
             try {
                 Intent i = Intent.parseUri(uri, 0);
-                PackageManager pm = getContext().getPackageManager();
+                PackageManager pm = mContext.getPackageManager();
                 ActivityInfo ai = i.resolveActivityInfo(pm,PackageManager.GET_ACTIVITIES);
                 if (ai != null) {
                     Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
@@ -1643,7 +1645,7 @@ public class NavigationBarView extends LinearLayout {
         if (uri != null) {
             try {
                 Intent i = Intent.parseUri(uri, 0);
-                PackageManager pm = getContext().getPackageManager();
+                PackageManager pm = mContext.getPackageManager();
                 ActivityInfo ai = i.resolveActivityInfo(pm,PackageManager.GET_ACTIVITIES);
                 if (ai != null) {
                     Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
@@ -1661,7 +1663,7 @@ public class NavigationBarView extends LinearLayout {
         if (uri != null) {
             try {
                 Intent i = Intent.parseUri(uri, 0);
-                PackageManager pm = getContext().getPackageManager();
+                PackageManager pm = mContext.getPackageManager();
                 ActivityInfo ai = i.resolveActivityInfo(pm,PackageManager.GET_ACTIVITIES);
                 if (ai != null) {
                     Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
@@ -1679,7 +1681,7 @@ public class NavigationBarView extends LinearLayout {
         if (uri != null) {
             try {
                 Intent i = Intent.parseUri(uri, 0);
-                PackageManager pm = getContext().getPackageManager();
+                PackageManager pm = mContext.getPackageManager();
                 ActivityInfo ai = i.resolveActivityInfo(pm,PackageManager.GET_ACTIVITIES);
                 if (ai != null) {
                     Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
@@ -1697,7 +1699,7 @@ public class NavigationBarView extends LinearLayout {
         if (uri != null) {
             try {
                 Intent i = Intent.parseUri(uri, 0);
-                PackageManager pm = getContext().getPackageManager();
+                PackageManager pm = mContext.getPackageManager();
                 ActivityInfo ai = i.resolveActivityInfo(pm,PackageManager.GET_ACTIVITIES);
                 if (ai != null) {
                     Bitmap iconBmp = ((BitmapDrawable)ai.loadIcon(pm)).getBitmap();
@@ -1712,52 +1714,52 @@ public class NavigationBarView extends LinearLayout {
     }
 
     private void runIconRecent() {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_recent);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_recent);
         mRecentIconNorm = asIcon;
     }
 
     private void runIconPower() {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_power);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_power);
         mPowerIconNorm = asIcon;
     }
 
     private void runIconHome() {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_home);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_home);
         mHomeIconNorm = asIcon;
     }
 
     private void runIconMenu() {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_menu);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_menu);
         mMenuIconNorm = asIcon;
     }
 
     private void runIconBack() {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_back);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_back);
         mBackIconNorm = asIcon;
     }
 
     private void runIconSearch() {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_search);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_search);
         mSearchIconNorm = asIcon;
     }
 
     private void runIconQuick() {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_quickna);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_quickna);
         mQuickIconNorm = asIcon;
     }
 
     private void runIconVolUp() {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_volup);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_volup);
         mVolUpIconNorm = asIcon;
     }
 
     private void runIconVolDown() {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_voldown);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_voldown);
         mVolDownIconNorm = asIcon;
     }
 
     private void runIconRecentRot(int Degrs) {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_recent);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_recent);
         int w = asIcon.getWidth();
         int h = asIcon.getHeight();
         Matrix mtx = new Matrix();
@@ -1767,7 +1769,7 @@ public class NavigationBarView extends LinearLayout {
     }
 
     private void runIconPowerRot(int Degrs) {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_power);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_power);
         int w = asIcon.getWidth();
         int h = asIcon.getHeight();
         Matrix mtx = new Matrix();
@@ -1777,7 +1779,7 @@ public class NavigationBarView extends LinearLayout {
     }
 
     private void runIconHomeRot(int Degrs) {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_home);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_home);
         int w = asIcon.getWidth();
         int h = asIcon.getHeight();
         Matrix mtx = new Matrix();
@@ -1787,7 +1789,7 @@ public class NavigationBarView extends LinearLayout {
     }
 
     private void runIconMenuRot(int Degrs) {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_menu);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_menu);
         int w = asIcon.getWidth();
         int h = asIcon.getHeight();
         Matrix mtx = new Matrix();
@@ -1797,7 +1799,7 @@ public class NavigationBarView extends LinearLayout {
     }
 
     private void runIconBackRot(int Degrs) {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_back);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_back);
         int w = asIcon.getWidth();
         int h = asIcon.getHeight();
         Matrix mtx = new Matrix();
@@ -1807,7 +1809,7 @@ public class NavigationBarView extends LinearLayout {
     }
 
     private void runIconSearchRot(int Degrs) {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_search);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_search);
         int w = asIcon.getWidth();
         int h = asIcon.getHeight();
         Matrix mtx = new Matrix();
@@ -1817,7 +1819,7 @@ public class NavigationBarView extends LinearLayout {
     }
 
     private void runIconQuickRot(int Degrs) {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_quickna);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_quickna);
         int w = asIcon.getWidth();
         int h = asIcon.getHeight();
         Matrix mtx = new Matrix();
@@ -1827,7 +1829,7 @@ public class NavigationBarView extends LinearLayout {
     }
 
     private void runIconVolUpRot(int Degrs) {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_volup);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_volup);
         int w = asIcon.getWidth();
         int h = asIcon.getHeight();
         Matrix mtx = new Matrix();
@@ -1837,7 +1839,7 @@ public class NavigationBarView extends LinearLayout {
     }
 
     private void runIconVolDownRot(int Degrs) {
-        Bitmap asIcon = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.ic_sysbar_voldown);
+        Bitmap asIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_sysbar_voldown);
         int w = asIcon.getWidth();
         int h = asIcon.getHeight();
         Matrix mtx = new Matrix();
@@ -1864,11 +1866,11 @@ public class NavigationBarView extends LinearLayout {
             } else if (mShowHome == 5) {
                mHomeButton.setImageBitmap(mQuickIcon);
             } else if (mShowHome == 6) {
-               boolean mCustomHomeAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
+               boolean mCustomHomeAppToggle = (Settings.System.getInt(mContext.getContentResolver(),
                         Settings.System.USE_CUSTOM_HOME_APP_TOGGLE, 0) == 1);
 
                if (mCustomHomeAppToggle) {
-                    runCustomIconHome(Settings.System.getString(getContext().getContentResolver(),
+                    runCustomIconHome(Settings.System.getString(mContext.getContentResolver(),
                                     Settings.System.USE_CUSTOM_HOME_APP_ACTIVITY));
                     if (mCustomHomeIcon != null)
                         mHomeButton.setImageBitmap(mCustomHomeIcon);
@@ -1901,11 +1903,11 @@ public class NavigationBarView extends LinearLayout {
             } else if (mShowBack == 5) {
                mBackButton.setImageBitmap(mQuickIcon);
             } else if (mShowBack == 6) {
-               boolean mCustomBackAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
+               boolean mCustomBackAppToggle = (Settings.System.getInt(mContext.getContentResolver(),
                         Settings.System.USE_CUSTOM_BACK_APP_TOGGLE, 0) == 1);
 
                if (mCustomBackAppToggle) {
-                    runCustomIconBack(Settings.System.getString(getContext().getContentResolver(),
+                    runCustomIconBack(Settings.System.getString(mContext.getContentResolver(),
                                     Settings.System.USE_CUSTOM_BACK_APP_ACTIVITY));
                     if (mCustomBackIcon != null)
                         mBackButton.setImageBitmap(mCustomBackIcon);
@@ -1938,11 +1940,11 @@ public class NavigationBarView extends LinearLayout {
             } else if (mShowSearch == 5) {
                mSearchButton.setImageBitmap(mQuickIcon);
             } else if (mShowSearch == 6) {
-               boolean mCustomSearchAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
+               boolean mCustomSearchAppToggle = (Settings.System.getInt(mContext.getContentResolver(),
                         Settings.System.USE_CUSTOM_NAVISEARCH_APP_TOGGLE, 0) == 1);
 
                if (mCustomSearchAppToggle) {
-                    runCustomIconSearch(Settings.System.getString(getContext().getContentResolver(),
+                    runCustomIconSearch(Settings.System.getString(mContext.getContentResolver(),
                                     Settings.System.USE_CUSTOM_NAVISEARCH_APP_ACTIVITY));
                     if (mCustomSearchIcon != null)
                         mSearchButton.setImageBitmap(mCustomSearchIcon);
@@ -1975,11 +1977,11 @@ public class NavigationBarView extends LinearLayout {
             } else if (mShowMenu == 5) {
                mMenuButton.setImageBitmap(mQuickIcon);
             } else if (mShowMenu == 6) {
-               boolean mCustomMenuAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
+               boolean mCustomMenuAppToggle = (Settings.System.getInt(mContext.getContentResolver(),
                         Settings.System.USE_CUSTOM_MENU_APP_TOGGLE, 0) == 1);
 
                if (mCustomMenuAppToggle) {
-                    runCustomIconMenu(Settings.System.getString(getContext().getContentResolver(),
+                    runCustomIconMenu(Settings.System.getString(mContext.getContentResolver(),
                                     Settings.System.USE_CUSTOM_MENU_APP_ACTIVITY));
                     if (mCustomMenuIcon != null)
                         mMenuButton.setImageBitmap(mCustomMenuIcon);
@@ -2012,11 +2014,11 @@ public class NavigationBarView extends LinearLayout {
             } else if (mShowQuicker == 4) {
                mQuickButton.setImageBitmap(mQuickIcon);
             } else if (mShowQuicker == 5) {
-               boolean mCustomQuickerAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
+               boolean mCustomQuickerAppToggle = (Settings.System.getInt(mContext.getContentResolver(),
                         Settings.System.USE_CUSTOM_QUICK_APP_TOGGLE, 0) == 1);
 
                if (mCustomQuickerAppToggle) {
-                    runCustomIconQuick(Settings.System.getString(getContext().getContentResolver(),
+                    runCustomIconQuick(Settings.System.getString(mContext.getContentResolver(),
                                     Settings.System.USE_CUSTOM_QUICK_APP_ACTIVITY));
                     if (mCustomQuickIcon != null)
                         mQuickButton.setImageBitmap(mCustomQuickIcon);
@@ -2049,7 +2051,7 @@ public class NavigationBarView extends LinearLayout {
         Intent intentx = new Intent(Intent.ACTION_MAIN);
         intentx.setClassName("com.cyanmobile.TaskSwitcher", "com.cyanmobile.TaskSwitcher.TaskSwitcherMainActivity");
         intentx.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-        getContext().startActivity(intentx);
+        mContext.startActivity(intentx);
     }
 
     private void startCollapseActivity() {

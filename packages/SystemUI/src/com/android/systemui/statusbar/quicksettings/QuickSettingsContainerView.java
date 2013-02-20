@@ -32,13 +32,13 @@ public class QuickSettingsContainerView extends FrameLayout {
 
     // The number of columns in the QuickSettings grid
     private int mNumColumns;
-
+    private Context mContext;
     // The gap between tiles in the QuickSettings grid
     private float mCellGap;
 
     public QuickSettingsContainerView(Context context, AttributeSet attrs) {
         super(context, attrs);
-
+        mContext = context;
         updateResources();
     }
 
@@ -48,7 +48,7 @@ public class QuickSettingsContainerView extends FrameLayout {
     }
 
     void updateResources() {
-        Resources r = getContext().getResources();
+        Resources r = mContext.getResources();
         mCellGap = r.getDimension(R.dimen.quicktile_cell_gap);
         mNumColumns = r.getInteger(R.integer.quicktile_num_columns);
         requestLayout();

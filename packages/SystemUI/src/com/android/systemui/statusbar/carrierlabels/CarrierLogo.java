@@ -43,7 +43,7 @@ public class CarrierLogo extends TextView {
     private boolean mCarrierLogo;
 
     private Handler mHandler;
-
+    private Context mContext;
     private SettingsObserver mSettingsObserver;
 
     private class SettingsObserver extends ContentObserver {
@@ -52,7 +52,7 @@ public class CarrierLogo extends TextView {
         }
 
         void observe() {
-            ContentResolver resolver = getContext().getContentResolver();
+            ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.CARRIER_LOGO),
                     false, this);
@@ -75,7 +75,7 @@ public class CarrierLogo extends TextView {
 
     public CarrierLogo(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
+        mContext = context;
         mHandler = new Handler();
         mSettingsObserver = new SettingsObserver(mHandler);
         updateSettings();
@@ -96,12 +96,12 @@ public class CarrierLogo extends TextView {
         super.onDetachedFromWindow();
         if (mAttached) {
             mAttached = false;
-            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
         }
     }
 
     private void updateSettings() {
-        ContentResolver resolver = getContext().getContentResolver();
+        ContentResolver resolver = mContext.getContentResolver();
 
         mCarrierLogo = (Settings.System.getInt(resolver,
                 Settings.System.CARRIER_LOGO, 0) == 1);

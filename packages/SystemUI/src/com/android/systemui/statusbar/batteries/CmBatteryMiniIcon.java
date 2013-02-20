@@ -83,7 +83,7 @@ public class CmBatteryMiniIcon extends ImageView {
     private Handler mHandler;
 
     private float mDensity;
-
+    private Context mContext;
     private transient Bitmap[] mMiniIconCache;
 
     private SettingsObserver mSettingsObserver;
@@ -96,7 +96,7 @@ public class CmBatteryMiniIcon extends ImageView {
         }
 
         void observe() {
-            ContentResolver resolver = getContext().getContentResolver();
+            ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_BATTERY), false, this);
         }
@@ -129,11 +129,11 @@ public class CmBatteryMiniIcon extends ImageView {
 
     public CmBatteryMiniIcon(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
+        mContext = context;
         mHandler = new Handler();
         mSettingsObserver = new SettingsObserver(mHandler);
 
-        mRes = getContext().getResources();
+        mRes = context.getResources();
 
         mDensity = mRes.getDisplayMetrics().density;
         mWidthPx = (int) (BATTERY_MINI_ICON_WIDTH_DIP * mDensity);
@@ -151,7 +151,7 @@ public class CmBatteryMiniIcon extends ImageView {
             mAttached = true;
             IntentFilter filter = new IntentFilter();
             filter.addAction(Intent.ACTION_BATTERY_CHANGED);
-            getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mContext.registerReceiver(mIntentReceiver, filter, null, getHandler());
             mSettingsObserver.observe();
         }
     }
@@ -160,8 +160,8 @@ public class CmBatteryMiniIcon extends ImageView {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (mAttached) {
-            getContext().unregisterReceiver(mIntentReceiver);
-            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mContext.unregisterReceiver(mIntentReceiver);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
             mAttached = false;
         }
     }
@@ -269,7 +269,7 @@ public class CmBatteryMiniIcon extends ImageView {
      * settings. Also does the initial call from constructor
      */
     private void updateSettings() {
-        ContentResolver resolver = getContext().getContentResolver();
+        ContentResolver resolver = mContext.getContentResolver();
 
         int statusBarBattery = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_BATTERY, 2));

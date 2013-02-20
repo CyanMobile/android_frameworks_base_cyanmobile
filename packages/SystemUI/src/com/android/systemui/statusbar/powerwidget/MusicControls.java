@@ -74,7 +74,7 @@ public class MusicControls extends FrameLayout {
     private AudioManager mAudioManager;
 
     private StatusBarService mSBService;
-    private AudioManager am = (AudioManager)getContext().getSystemService(Context.AUDIO_SERVICE);
+    private AudioManager am = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
     private boolean mIsMusicActive = am.isMusicActive();
 
     private int mClockColor;
@@ -159,7 +159,7 @@ public class MusicControls extends FrameLayout {
     public void updateInfo() {
 	Slog.d(TAG, "Updating Music Controls Info");
         // Set album art
-        Uri uri = getArtworkUri(getContext(), SongId(), AlbumId());
+        Uri uri = getArtworkUri(mContext, SongId(), AlbumId());
         if (uri != null) {
            mAlbumArt.setImageURI(uri);
         } else {
@@ -305,11 +305,11 @@ public class MusicControls extends FrameLayout {
         Intent downIntent = new Intent(Intent.ACTION_MEDIA_BUTTON, null);
         KeyEvent downEvent = new KeyEvent(eventtime, eventtime, KeyEvent.ACTION_DOWN, code, 0);
         downIntent.putExtra(Intent.EXTRA_KEY_EVENT, downEvent);
-        getContext().sendOrderedBroadcast(downIntent, null);
+        mContext.sendOrderedBroadcast(downIntent, null);
 
         Intent upIntent = new Intent(Intent.ACTION_MEDIA_BUTTON, null);
         KeyEvent upEvent = new KeyEvent(eventtime, eventtime, KeyEvent.ACTION_UP, code, 0);
         upIntent.putExtra(Intent.EXTRA_KEY_EVENT, upEvent);
-        getContext().sendOrderedBroadcast(upIntent, null);
+        mContext.sendOrderedBroadcast(upIntent, null);
     }
 }

@@ -40,9 +40,11 @@ public class LatestItemContainer extends LinearLayout {
     private final Handler mHandler = new Handler();
     private final Point mStartPoint = new Point();
     private int mTouchSlop;
+    private Context mContext;
 
     public LatestItemContainer(final Context context, AttributeSet attrs) {
         super(context, attrs);
+        mContext = context;
         final ViewConfiguration vc = ViewConfiguration.get(context);
         mTouchSlop = vc.getScaledTouchSlop();
     }
@@ -50,7 +52,7 @@ public class LatestItemContainer extends LinearLayout {
     public void finishSwipe(boolean toRight) {
         if (DBG) Log.v(TAG, "Finishing swipe of item " + this + " to " + (toRight ? "right" : "left"));
         int id = toRight ? R.anim.slide_out_right_basic : R.anim.slide_out_left_basic;
-        Animation animation = AnimationUtils.loadAnimation(getContext(), id);
+        Animation animation = AnimationUtils.loadAnimation(mContext, id);
         startAnimation(animation);
         mHandler.postDelayed(mSwipeCallback, animation.getDuration());
         mEventsControlledByDispatcher = false;

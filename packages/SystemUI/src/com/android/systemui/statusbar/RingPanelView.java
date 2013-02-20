@@ -225,10 +225,9 @@ public class RingPanelView extends FrameLayout {
     }
 
     private void vibrate() {
-        Context context = getContext();
-        if (Settings.System.getInt(context.getContentResolver(),
+        if (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.HAPTIC_FEEDBACK_ENABLED, 1) != 0) {
-            Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+            Vibrator vibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
             vibrator.vibrate(100);
         }
     }

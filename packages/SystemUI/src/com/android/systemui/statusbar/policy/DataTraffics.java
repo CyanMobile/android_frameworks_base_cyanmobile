@@ -48,8 +48,9 @@ public class DataTraffics extends TextView {
     private long gOldMtx;
     private long gOldMrx;
     private DecimalFormat mDecimalFormater;
-
+    private Context mContext;
     private Handler mHandler;
+    private SettingsObserver mSettingsObserver;
 
     private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
@@ -81,11 +82,10 @@ public class DataTraffics extends TextView {
 
     public DataTraffics(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
+        mContext = context;
         mHandler = new Handler();
         mDecimalFormater = new DecimalFormat("##.#");
-        SettingsObserver settingsObserver = new SettingsObserver(mHandler);
-        settingsObserver.observe();
+        mSettingsObserver = new SettingsObserver(mHandler);
 
         ((TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE))
                 .listen(mPhoneStateListener,
@@ -106,7 +106,6 @@ public class DataTraffics extends TextView {
         if (!mAttached) {
             mAttached = true;
             IntentFilter filter = new IntentFilter();
-
             filter.addAction(Intent.ACTION_TIME_TICK);
             filter.addAction(Intent.ACTION_TIME_CHANGED);
             filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
@@ -117,7 +116,8 @@ public class DataTraffics extends TextView {
             filter.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
             filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
             filter.addAction(WifiManager.RSSI_CHANGED_ACTION);
-            getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mContext.registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mSettingsObserver.observe();
         }
         updateDatas();
         updateSettings();
@@ -128,6 +128,7 @@ public class DataTraffics extends TextView {
         super.onDetachedFromWindow();
         if (mAttached) {
             mContext.unregisterReceiver(mIntentReceiver);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
             mAttached = false;
         }
     }

@@ -89,7 +89,7 @@ public class CmStatusBarView extends StatusBarView {
     private ComponentName mFsCallerActivity;
     private Intent mFsForceIntent;
     private Intent mFsOffIntent;
-
+    private Context mContext;
     private Handler mHandler;
     private boolean mAttached;
     private SettingsObserver mSettingsObserver;
@@ -106,7 +106,7 @@ public class CmStatusBarView extends StatusBarView {
         }
 
         void observe() {
-            ContentResolver resolver = getContext().getContentResolver();
+            ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.USE_SOFT_BUTTONS), false, this);
             resolver.registerContentObserver(
@@ -128,19 +128,19 @@ public class CmStatusBarView extends StatusBarView {
 
         @Override
         public void onChange(boolean selfChange) {
-            ContentResolver resolver = getContext().getContentResolver();
+            ContentResolver resolver = mContext.getContentResolver();
             int defValue;
 
-            defValue = (CmSystem.getDefaultBool(getContext(), CmSystem.CM_DEFAULT_BOTTOM_STATUS_BAR) ? 1 : 0);
+            defValue = (CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_BOTTOM_STATUS_BAR) ? 1 : 0);
             mIsBottom = (Settings.System.getInt(resolver, Settings.System.STATUS_BAR_BOTTOM, defValue) == 1);
             mHasSoftButtons = (Settings.System.getInt(resolver, Settings.System.USE_SOFT_BUTTONS, 0) == 1);
-            defValue = (CmSystem.getDefaultBool(getContext(), CmSystem.CM_DEFAULT_SOFT_BUTTONS_LEFT) ? 1 : 0);
+            defValue = (CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SOFT_BUTTONS_LEFT) ? 1 : 0);
             mIsLeft = (Settings.System.getInt(resolver, Settings.System.SOFT_BUTTONS_LEFT, defValue) == 1);
             mShowHome = Settings.System.getInt(resolver, Settings.System.SOFT_BUTTON_SHOW_HOME, 1);
             mShowMenu = Settings.System.getInt(resolver, Settings.System.SOFT_BUTTON_SHOW_MENU, 4);
             mShowBack = Settings.System.getInt(resolver, Settings.System.SOFT_BUTTON_SHOW_BACK, 2);
             mShowSearch = Settings.System.getInt(resolver, Settings.System.SOFT_BUTTON_SHOW_SEARCH, 3);
-            defValue=(CmSystem.getDefaultBool(getContext(), CmSystem.CM_DEFAULT_SHOW_SOFT_QUICK_NA) ? 1 : 0);
+            defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SHOW_SOFT_QUICK_NA) ? 1 : 0);
             mShowQuickNa = (Settings.System.getInt(resolver, Settings.System.SOFT_BUTTON_SHOW_QUICK_NA, defValue) == 1);
             updateSoftButtons();
             updateQuickNaImage();
@@ -149,6 +149,7 @@ public class CmStatusBarView extends StatusBarView {
 
     public CmStatusBarView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        mContext = context;
     }
 
     @Override
@@ -156,7 +157,7 @@ public class CmStatusBarView extends StatusBarView {
         super.onFinishInflate();
 
         // load config to determine if we want statusbar buttons
-        ContentResolver resolver = getContext().getContentResolver();
+        ContentResolver resolver = mContext.getContentResolver();
         mHasSoftButtons = (Settings.System.getInt(resolver, Settings.System.USE_SOFT_BUTTONS, 0) == 1);
         mHandler = new Handler();
         mSoftButtons = (ViewGroup)findViewById(R.id.buttons);
@@ -204,7 +205,7 @@ public class CmStatusBarView extends StatusBarView {
                              Intent intent = new Intent(Intent.ACTION_MAIN);
                              intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             getContext().startActivity(intent);
+                             mContext.startActivity(intent);
                              return true;
                           } else if (mShowHome == 4) {
                              return false;
@@ -255,7 +256,7 @@ public class CmStatusBarView extends StatusBarView {
                              Intent intent = new Intent(Intent.ACTION_MAIN);
                              intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             getContext().startActivity(intent);
+                             mContext.startActivity(intent);
                              return true;
                           } else if (mShowMenu == 4) {
                              return false;
@@ -306,7 +307,7 @@ public class CmStatusBarView extends StatusBarView {
                              Intent intent = new Intent(Intent.ACTION_MAIN);
                              intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             getContext().startActivity(intent);
+                             mContext.startActivity(intent);
                              return true;
                           } else if (mShowBack == 4) {
                              return false;
@@ -357,7 +358,7 @@ public class CmStatusBarView extends StatusBarView {
                              Intent intent = new Intent(Intent.ACTION_MAIN);
                              intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
                              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             getContext().startActivity(intent);
+                             mContext.startActivity(intent);
                              return true;
                           } else if (mShowSearch == 4) {
                              return false;
@@ -392,7 +393,7 @@ public class CmStatusBarView extends StatusBarView {
                     @Override
                     public void onClick(View v) {
                         if(isStillActive(mFsCallerProcess, mFsCallerActivity))
-                            getContext().sendBroadcast(mFsForceIntent);
+                            mContext.sendBroadcast(mFsForceIntent);
                         if(DEBUG) Slog.i(TAG, "Fullscreen Hide clicked");
                     }
                 }
@@ -412,7 +413,7 @@ public class CmStatusBarView extends StatusBarView {
 
             // catching fullscreen attempts
             FullscreenReceiver fullscreenReceiver = new FullscreenReceiver();
-            getContext().registerReceiver(fullscreenReceiver, new IntentFilter("android.intent.action.FULLSCREEN_ATTEMPT"));
+            mContext.registerReceiver(fullscreenReceiver, new IntentFilter("android.intent.action.FULLSCREEN_ATTEMPT"));
             mFsForceIntent = new Intent("android.intent.action.FORCE_FULLSCREEN");
             mFsOffIntent = new Intent("android.intent.action.FULLSCREEN_REAL_OFF");
         }
@@ -432,7 +433,7 @@ public class CmStatusBarView extends StatusBarView {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (mAttached) {
-            if (mHasSoftButtons) getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            if (mHasSoftButtons) mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
             mAttached = false;
         }
     }
@@ -564,7 +565,7 @@ public class CmStatusBarView extends StatusBarView {
 
         private boolean isPidRunning(int pid){
             if (mActivityManager == null)
-                mActivityManager = (ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE);
+                mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
 
             List <RunningAppProcessInfo> l = mActivityManager.getRunningAppProcesses();
             Iterator <RunningAppProcessInfo> i = l.iterator();
@@ -621,7 +622,7 @@ public class CmStatusBarView extends StatusBarView {
             if (appStillForeground) {
                 mHandler.postDelayed(mHideButtonDisabler, 500);
             } else {
-                getContext().sendBroadcast(mFsOffIntent);
+                mContext.sendBroadcast(mFsOffIntent);
                 mFsCallerProcess = null;
                 mHideButton.setVisibility(View.GONE);
                 mSeperator5.setVisibility(View.GONE);
@@ -668,7 +669,7 @@ public class CmStatusBarView extends StatusBarView {
         if (target == null) return null;
 
         if (mActivityManager == null)
-            mActivityManager = (ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE);
+            mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
         List <ActivityManager.RunningTaskInfo> l = mActivityManager.getRunningTasks(9999);
         Iterator <ActivityManager.RunningTaskInfo> i = l.iterator();
 
@@ -689,7 +690,7 @@ public class CmStatusBarView extends StatusBarView {
         RunningAppProcessInfo result = null, info = null;
 
         if (mActivityManager == null)
-            mActivityManager = (ActivityManager)getContext().getSystemService(Context.ACTIVITY_SERVICE);
+            mActivityManager = (ActivityManager)mContext.getSystemService(Context.ACTIVITY_SERVICE);
         List <RunningAppProcessInfo> l = mActivityManager.getRunningAppProcesses();
         Iterator <RunningAppProcessInfo> i = l.iterator();
         while (i.hasNext()) {
@@ -827,11 +828,11 @@ public class CmStatusBarView extends StatusBarView {
 
     private void runCustomAppSearch() {
         // start custom app
-        boolean mCustomLongSearchAppToggle = (Settings.System.getInt(getContext().getContentResolver(),
+        boolean mCustomLongSearchAppToggle = (Settings.System.getInt(mContext.getContentResolver(),
                Settings.System.USE_CUSTOM_LONG_SEARCH_APP_TOGGLE, 0) == 1);
 
         if (mCustomLongSearchAppToggle) {
-              runCustomApp(Settings.System.getString(getContext().getContentResolver(),
+              runCustomApp(Settings.System.getString(mContext.getContentResolver(),
                       Settings.System.USE_CUSTOM_LONG_SEARCH_APP_ACTIVITY));
         }
     }
@@ -842,7 +843,7 @@ public class CmStatusBarView extends StatusBarView {
                 Intent i = Intent.parseUri(uri, 0);
                 i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                         | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-                getContext().startActivity(i);
+                mContext.startActivity(i);
             } catch (URISyntaxException e) {
 
             } catch (ActivityNotFoundException e) {

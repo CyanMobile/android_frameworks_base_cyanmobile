@@ -37,7 +37,7 @@ public class CmWifiText extends TextView {
     private static final int STYLE_SHOW = 1;
     private int style;
     private Handler mHandler;
-
+    private Context mContext;
     private WifiManager mWifiManager;
     private int mClockColor;
     private int mCarrierSize;
@@ -64,10 +64,10 @@ public class CmWifiText extends TextView {
 
     public CmWifiText(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
+        mContext = context;
         mHandler = new Handler();
         mSettingsObserver = new SettingsObserver(mHandler);
-        mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
+        mWifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
         updateSettings();
     }
     
@@ -87,7 +87,7 @@ public class CmWifiText extends TextView {
 
         if (!mAttached) {
             mAttached = true;
-            getContext().registerReceiver(rssiReceiver, new IntentFilter(WifiManager.RSSI_CHANGED_ACTION));
+            mContext.registerReceiver(rssiReceiver, new IntentFilter(WifiManager.RSSI_CHANGED_ACTION));
             mSettingsObserver.observe();
         }
     }
@@ -97,8 +97,8 @@ public class CmWifiText extends TextView {
         super.onDetachedFromWindow();
         if (mAttached) {
             mAttached = false;
-            getContext().unregisterReceiver(rssiReceiver);
-            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mContext.unregisterReceiver(rssiReceiver);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
         }
     }
 
@@ -108,7 +108,7 @@ public class CmWifiText extends TextView {
         }
 
         void observe() {
-            ContentResolver resolver = getContext().getContentResolver();
+            ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_CM_WIFI_TEXT), false,
                     this);
@@ -130,15 +130,15 @@ public class CmWifiText extends TextView {
     }
 
     private void updateSignalText() {
-        int defValuesColor = getContext().getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
-        mClockColor = (Settings.System.getInt(getContext().getContentResolver(),
+        int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+        mClockColor = (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
-        style = Settings.System.getInt(getContext().getContentResolver(),
+        style = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.STATUS_BAR_CM_WIFI_TEXT, STYLE_HIDE);
-        int defValuesFontSize = getContext().getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
-        float mCarrierSizeval = (float) Settings.System.getInt(getContext().getContentResolver(),
+        int defValuesFontSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
+        float mCarrierSizeval = (float) Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.STATUSBAR_ICON_FONT_SIZE, defValuesFontSize);
-        DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+        DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
         int CarrierSizepx = (int) (metrics.density * mCarrierSizeval);
         mCarrierSize = CarrierSizepx;
 

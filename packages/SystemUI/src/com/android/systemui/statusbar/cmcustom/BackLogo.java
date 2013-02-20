@@ -43,7 +43,7 @@ public class BackLogo extends TextView {
     private boolean mBackLogo;
 
     private Handler mHandler;
-
+    private Context mContext;
     private SettingsObserver mSettingsObserver;
 
     private class SettingsObserver extends ContentObserver {
@@ -75,7 +75,7 @@ public class BackLogo extends TextView {
 
     public BackLogo(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
+        mContext = context;
         mHandler = new Handler();
         mSettingsObserver = new SettingsObserver(mHandler);
         updateSettings();
@@ -96,7 +96,7 @@ public class BackLogo extends TextView {
         super.onDetachedFromWindow();
         if (mAttached) {
             mAttached = false;
-            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
         }
     }
 

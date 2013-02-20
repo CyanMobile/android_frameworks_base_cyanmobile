@@ -149,7 +149,7 @@ public class KeyButtonView extends ImageView {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (mAttached) {
-            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
             mAttached = false;
         }
     }

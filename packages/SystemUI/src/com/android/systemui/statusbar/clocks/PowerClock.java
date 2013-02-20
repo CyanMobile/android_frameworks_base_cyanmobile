@@ -62,7 +62,7 @@ public class PowerClock extends TextView {
     private int mClockColor;
 
     private Handler mHandler;
-
+    private Context mContext;
     private SettingsObserver mSettingsObserver;
 
     private class SettingsObserver extends ContentObserver {
@@ -93,7 +93,7 @@ public class PowerClock extends TextView {
 
     public PowerClock(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
+        mContext = context;
         mHandler = new Handler();
         mSettingsObserver = new SettingsObserver(mHandler);
         updateSettings();
@@ -110,7 +110,7 @@ public class PowerClock extends TextView {
             filter.addAction(Intent.ACTION_TIME_CHANGED);
             filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
             filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
-            getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mContext.registerReceiver(mIntentReceiver, filter, null, getHandler());
             mSettingsObserver.observe();
         }
 
@@ -128,8 +128,8 @@ public class PowerClock extends TextView {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (mAttached) {
-            getContext().unregisterReceiver(mIntentReceiver);
-            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mContext.unregisterReceiver(mIntentReceiver);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
             mAttached = false;
         }
     }
@@ -162,8 +162,7 @@ public class PowerClock extends TextView {
     }
 
     private final CharSequence getSmallTime() {
-        Context context = getContext();
-        boolean b24 = DateFormat.is24HourFormat(context);
+        boolean b24 = DateFormat.is24HourFormat(mContext);
         int res;
 
         if (b24) {
@@ -176,7 +175,7 @@ public class PowerClock extends TextView {
         final char MAGIC2 = '\uEF01';
 
         SimpleDateFormat sdf;
-        String format = context.getString(res);
+        String format = mContext.getString(res);
         if (!format.equals(mClockFormatString)) {
             /*
              * Search for an unquoted "a" in the format string, so we can

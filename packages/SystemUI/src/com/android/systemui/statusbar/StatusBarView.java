@@ -61,12 +61,13 @@ public class StatusBarView extends FrameLayout {
     public View mDate;
     private FixedSizeDrawable mBackground;
     private FixedSizeDrawable mStatusBackground;
-
+    private Context mContext;
     private int mSBColor;
     private int mSBTrans;
 
     public StatusBarView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        mContext = context;
     }
 
     @Override

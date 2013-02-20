@@ -43,9 +43,11 @@ public class StatusBarIconView extends AnimatedImageView {
     private int mNumberX;
     private int mNumberY;
     private String mNumberText;
+    private Context mContext;
 
     public StatusBarIconView(Context context, String slot) {
         super(context);
+        mContext = context;
         final Resources res = context.getResources();
         mSlot = slot;
         mNumberPain = new Paint();
@@ -95,7 +97,7 @@ public class StatusBarIconView extends AnimatedImageView {
         if (!numberEquals) {
             if (icon.number > 0) {
                 if (mNumberBackground == null) {
-                    mNumberBackground = getContext().getResources().getDrawable(
+                    mNumberBackground = mContext.getResources().getDrawable(
                             R.drawable.ic_notification_overlay);
                 }
                 placeNumber();
@@ -112,7 +114,7 @@ public class StatusBarIconView extends AnimatedImageView {
     }
 
     private Drawable getIcon(StatusBarIcon icon) {
-        return getIcon(getContext(), icon);
+        return getIcon(mContext, icon);
     }
 
     /**

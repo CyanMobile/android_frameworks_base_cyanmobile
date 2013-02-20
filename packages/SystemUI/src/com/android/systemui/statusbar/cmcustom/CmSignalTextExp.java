@@ -45,7 +45,6 @@ import java.util.TimeZone;
 public class CmSignalTextExp extends TextView {
 
     private int dBm = 0;
-
     private int ASU = 0;
 
     private SignalStrength signal;
@@ -53,13 +52,9 @@ public class CmSignalTextExp extends TextView {
     private boolean mAttached;
 
     private static final int STYLE_HIDE = 0;
-
     private static final int STYLE_SHOW = 1;
-
     private static final int STYLE_SHOW_DBM = 2;
-
     private static final int STYLE_SHOW_WITH_COLOR = 3;
-
     private static final int STYLE_HIDDEN = 4;
 
     private int mClockColor;
@@ -70,7 +65,7 @@ public class CmSignalTextExp extends TextView {
     private int mPhoneState;
 
     private Handler mHandler;
-
+    private Context mContext;
     private SettingsObserver mSettingsObserver;
 
     public CmSignalTextExp(Context context) {
@@ -82,6 +77,7 @@ public class CmSignalTextExp extends TextView {
 
     public CmSignalTextExp(Context context, AttributeSet attrs) {
         super(context, attrs);
+        mContext = context;
         mHandler = new Handler();
         mSettingsObserver = new SettingsObserver(mHandler);
 
@@ -111,7 +107,7 @@ public class CmSignalTextExp extends TextView {
             mAttached = true;
             IntentFilter filter = new IntentFilter();
             filter.addAction(Intent.ACTION_SIGNAL_DBM_CHANGED);
-            getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mContext.registerReceiver(mIntentReceiver, filter, null, getHandler());
             mSettingsObserver.observe();
         }
     }
@@ -121,7 +117,7 @@ public class CmSignalTextExp extends TextView {
         super.onDetachedFromWindow();
         if (mAttached) {
             mAttached = false;
-            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
         }
     }
 
@@ -143,7 +139,7 @@ public class CmSignalTextExp extends TextView {
         }
 
         void observe() {
-            ContentResolver resolver = getContext().getContentResolver();
+            ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_CM_SIGNAL_TEXT), false,
                     this);
@@ -171,15 +167,15 @@ public class CmSignalTextExp extends TextView {
     }
 
     private final void updateSignalText() {
-        style = Settings.System.getInt(getContext().getContentResolver(),
+        style = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.STATUS_BAR_CM_SIGNAL_TEXT, STYLE_HIDE);
-        int defValuesColor = getContext().getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
-        mClockColor = (Settings.System.getInt(getContext().getContentResolver(),
+        int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+        mClockColor = (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
-        int defValuesFontSize = getContext().getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
-        float mCarrierSizeval = (float) Settings.System.getInt(getContext().getContentResolver(),
+        int defValuesFontSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
+        float mCarrierSizeval = (float) Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.STATUSBAR_ICON_FONT_SIZE, defValuesFontSize);
-        DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+        DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
         int CarrierSizepx = (int) (metrics.density * mCarrierSizeval);
         mCarrierSize = CarrierSizepx;
 

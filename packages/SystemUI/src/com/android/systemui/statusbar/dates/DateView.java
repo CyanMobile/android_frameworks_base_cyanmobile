@@ -47,7 +47,7 @@ public final class DateView extends TextView {
     private boolean mAttached;
 
     private Handler mHandler;
-
+    private Context mContext;
     private SettingsObserver mSettingsObserver;
 
     private class SettingsObserver extends ContentObserver {
@@ -56,7 +56,7 @@ public final class DateView extends TextView {
         }
 
         void observe() {
-            ContentResolver resolver = getContext().getContentResolver();
+            ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUSBAR_ICON_FONT_SIZE), false, this);
         }
@@ -88,7 +88,7 @@ public final class DateView extends TextView {
 
     public DateView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
+        mContext = context;
         mHandler = new Handler();
         mSettingsObserver = new SettingsObserver(mHandler);
         updateSettings();
@@ -103,7 +103,7 @@ public final class DateView extends TextView {
             filter.addAction(Intent.ACTION_TIME_TICK);
             filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
             filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
-            getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mContext.registerReceiver(mIntentReceiver, filter, null, getHandler());
             mSettingsObserver.observe();
         }
 
@@ -114,8 +114,8 @@ public final class DateView extends TextView {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (mAttached) {
-            getContext().unregisterReceiver(mIntentReceiver);
-            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mContext.unregisterReceiver(mIntentReceiver);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
             mAttached = false;
         }
     }
@@ -134,11 +134,11 @@ public final class DateView extends TextView {
     }
 
     private void updateSettings(){
-        ContentResolver resolver = getContext().getContentResolver();
-        int defValuesFontSize = getContext().getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
+        ContentResolver resolver = mContext.getContentResolver();
+        int defValuesFontSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
         float mCarrierSizeval = (float) Settings.System.getInt(resolver,
                 Settings.System.STATUSBAR_ICON_FONT_SIZE, defValuesFontSize);
-        DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+        DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
         int CarrierSizepx = (int) (metrics.density * mCarrierSizeval);
         mCarrierSize = CarrierSizepx;
 

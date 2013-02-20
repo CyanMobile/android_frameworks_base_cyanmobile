@@ -46,6 +46,7 @@ public class IconMerger extends LinearLayout {
     private boolean mStatusBarReverse;
     private boolean mAttached;
     private SettingsObserver mSettingsObserver;
+    private Context mContext;
 
     // observes changes in system battery settings and enables/disables view accordingly
     private class SettingsObserver extends ContentObserver {
@@ -54,7 +55,7 @@ public class IconMerger extends LinearLayout {
         }
 
         public void observe() {
-            ContentResolver resolver = getContext().getContentResolver();
+            ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUSBAR_ICONS_SIZE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
@@ -76,7 +77,7 @@ public class IconMerger extends LinearLayout {
 
     public IconMerger(Context context, AttributeSet attrs) {
         super(context, attrs);
-
+        mContext = context;
         mHandler = new Handler();
         mSettingsObserver = new SettingsObserver(mHandler);
         updateSettings();
@@ -99,7 +100,7 @@ public class IconMerger extends LinearLayout {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (mAttached) {
-            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
             mAttached = false;
         }
     }
@@ -112,16 +113,16 @@ public class IconMerger extends LinearLayout {
     }
 
     private void updateSettings() {
-        int defValuesIconSize = getContext().getResources().getInteger(com.android.internal.R.integer.config_iconsize_default_cyanmobile);
-        float mIconSizeval = (float) Settings.System.getInt(getContext().getContentResolver(),
+        int defValuesIconSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_iconsize_default_cyanmobile);
+        float mIconSizeval = (float) Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.STATUSBAR_ICONS_SIZE, defValuesIconSize);
-        DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+        DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
         int IconSizepx = (int) (metrics.density * mIconSizeval);
         mIconSize = IconSizepx;
-        mClockCenter = (Settings.System.getInt(getContext().getContentResolver(), Settings.System.STATUS_BAR_CLOCK, 1) == 2);
-        mCarrierCenter = (Settings.System.getInt(getContext().getContentResolver(), Settings.System.STATUS_BAR_CARRIER, 6) == 2);
-        mLogoCenter = (Settings.System.getInt(getContext().getContentResolver(), Settings.System.CARRIER_LOGO, 0) == 2);
-        mStatusBarReverse = (Settings.System.getInt(getContext().getContentResolver(), Settings.System.STATUS_BAR_REVERSE, 0) == 1);
+        mClockCenter = (Settings.System.getInt(mContext.getContentResolver(), Settings.System.STATUS_BAR_CLOCK, 1) == 2);
+        mCarrierCenter = (Settings.System.getInt(mContext.getContentResolver(), Settings.System.STATUS_BAR_CARRIER, 6) == 2);
+        mLogoCenter = (Settings.System.getInt(mContext.getContentResolver(), Settings.System.CARRIER_LOGO, 0) == 2);
+        mStatusBarReverse = (Settings.System.getInt(mContext.getContentResolver(), Settings.System.STATUS_BAR_REVERSE, 0) == 1);
     }
 
     @Override

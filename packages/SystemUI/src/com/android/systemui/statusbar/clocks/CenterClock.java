@@ -74,7 +74,7 @@ public class CenterClock extends TextView {
     private int mCarrierSize;
   
     private Handler mHandler;
-
+    private Context mContext;
     private SettingsObserver mSettingsObserver;
 
     private class SettingsObserver extends ContentObserver {
@@ -83,7 +83,7 @@ public class CenterClock extends TextView {
         }
 
         void observe() {
-            ContentResolver resolver = getContext().getContentResolver();
+            ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_AM_PM), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
@@ -111,7 +111,7 @@ public class CenterClock extends TextView {
 
     public CenterClock(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
+        mContext = context;
         mHandler = new Handler();
         mSettingsObserver = new SettingsObserver(mHandler);
         updateSettings();
@@ -128,7 +128,7 @@ public class CenterClock extends TextView {
             filter.addAction(Intent.ACTION_TIME_CHANGED);
             filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
             filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
-            getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mContext.registerReceiver(mIntentReceiver, filter, null, getHandler());
             mSettingsObserver.observe();
         }
 
@@ -146,8 +146,8 @@ public class CenterClock extends TextView {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (mAttached) {
-            getContext().unregisterReceiver(mIntentReceiver);
-            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mContext.unregisterReceiver(mIntentReceiver);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
             mAttached = false;
         }
     }
@@ -175,8 +175,7 @@ public class CenterClock extends TextView {
     }
 
     private final CharSequence getSmallTime() {
-        Context context = getContext();
-        boolean b24 = DateFormat.is24HourFormat(context);
+        boolean b24 = DateFormat.is24HourFormat(mContext);
         int res;
 
         if (b24) {
@@ -189,7 +188,7 @@ public class CenterClock extends TextView {
         final char MAGIC2 = '\uEF01';
 
         SimpleDateFormat sdf;
-        String format = context.getString(res);
+        String format = mContext.getString(res);
         if (!format.equals(mClockFormatString)) {
             /*
              * Search for an unquoted "a" in the format string, so we can
@@ -279,25 +278,25 @@ public class CenterClock extends TextView {
         String currentDay = null;
         switch (today) {
             case 1:
-                currentDay = getContext().getResources().getString(R.string.day_of_week_medium_sunday);
+                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_sunday);
             break;
             case 2:
-                currentDay = getContext().getResources().getString(R.string.day_of_week_medium_monday);
+                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_monday);
             break;
             case 3:
-                currentDay = getContext().getResources().getString(R.string.day_of_week_medium_tuesday);
+                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_tuesday);
             break;
             case 4:
-                currentDay = getContext().getResources().getString(R.string.day_of_week_medium_wednesday);
+                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_wednesday);
             break;
             case 5:
-                currentDay = getContext().getResources().getString(R.string.day_of_week_medium_thursday);
+                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_thursday);
             break;
             case 6:
-                currentDay = getContext().getResources().getString(R.string.day_of_week_medium_friday);
+                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_friday);
             break;
             case 7:
-                currentDay = getContext().getResources().getString(R.string.day_of_week_medium_saturday);
+                currentDay = mContext.getResources().getString(R.string.day_of_week_medium_saturday);
             break;
         }
         return currentDay.toUpperCase() + " ";
@@ -309,20 +308,20 @@ public class CenterClock extends TextView {
     }
 
     private void updateSettings(){
-        ContentResolver resolver = getContext().getContentResolver();
+        ContentResolver resolver = mContext.getContentResolver();
 
         int mCColor = mClockColor;
-        int defValuesColor = getContext().getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+        int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
         mAmPmStyle = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_AM_PM, 2));
         mWeekdayStyle = (Settings.System.getInt(resolver,
             Settings.System.STATUS_BAR_WEEKDAY, 2));
         mClockColor = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
-        int defValuesFontSize = getContext().getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
+        int defValuesFontSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
         float mCarrierSizeval = (float) Settings.System.getInt(resolver,
                 Settings.System.STATUSBAR_CLOCK_FONT_SIZE, defValuesFontSize);
-        DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+        DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
         int CarrierSizepx = (int) (metrics.density * mCarrierSizeval);
         mCarrierSize = CarrierSizepx;
 

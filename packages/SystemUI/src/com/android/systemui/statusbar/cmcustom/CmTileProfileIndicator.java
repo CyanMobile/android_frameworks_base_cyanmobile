@@ -63,7 +63,7 @@ public class CmTileProfileIndicator extends ImageView {
     final private Rect mDrawSrcRect = new Rect();
     final private Rect mDrawDstRect = new Rect();
     final private Rect mTextBounds = new Rect();
-
+    private Context mContext;
     /*
      * constructor - w00t w00t!
      * @param context
@@ -78,7 +78,7 @@ public class CmTileProfileIndicator extends ImageView {
 
     public CmTileProfileIndicator(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
+        mContext = context;
         mColor = context.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
 
         // initilize paint for later text output
@@ -114,11 +114,9 @@ public class CmTileProfileIndicator extends ImageView {
 
         if (!mAttached) {
             mAttached = true;
-
             IntentFilter filter = new IntentFilter();
             filter.addAction(INTENT_ACTION_PROFILE_SELECTED);
-            getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
-
+            mContext.registerReceiver(mIntentReceiver, filter, null, getHandler());
         }
 
         // request active profile, since the initial broadcast was too early
@@ -130,8 +128,7 @@ public class CmTileProfileIndicator extends ImageView {
         super.onDetachedFromWindow();
 
         if (mAttached) {
-            getContext().unregisterReceiver(mIntentReceiver);
-
+            mContext.unregisterReceiver(mIntentReceiver);
             mAttached = false;
         }
     }

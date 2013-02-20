@@ -54,7 +54,7 @@ public class CarrierLabelExp extends TextView {
     private static final int TYPE_DEFAULT = 0;
 
     private Handler mHandler;
-
+    private Context mContext;
     private SettingsObserver mSettingsObserver;
 
     private class SettingsObserver extends ContentObserver {
@@ -63,7 +63,7 @@ public class CarrierLabelExp extends TextView {
         }
 
         void observe() {
-            ContentResolver resolver = getContext().getContentResolver();
+            ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.CARRIER_LABEL_TYPE),
                     false, this);
@@ -91,7 +91,7 @@ public class CarrierLabelExp extends TextView {
 
     public CarrierLabelExp(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
+        mContext = context;
         mHandler = new Handler();
         mSettingsObserver = new SettingsObserver(mHandler);
         updateSettings();
@@ -106,7 +106,7 @@ public class CarrierLabelExp extends TextView {
             mAttached = true;
             IntentFilter filter = new IntentFilter();
             filter.addAction(Telephony.Intents.SPN_STRINGS_UPDATED_ACTION);
-            getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mContext.registerReceiver(mIntentReceiver, filter, null, getHandler());
             mSettingsObserver.observe();
         }
     }
@@ -115,8 +115,8 @@ public class CarrierLabelExp extends TextView {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (mAttached) {
-            getContext().unregisterReceiver(mIntentReceiver);
-            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mContext.unregisterReceiver(mIntentReceiver);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
             mAttached = false;
         }
     }
@@ -135,9 +135,9 @@ public class CarrierLabelExp extends TextView {
     };
 
     private void updateSettings() {
-        ContentResolver resolver = getContext().getContentResolver();
-        int defValuesColor = getContext().getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
-        mAirplaneOn = (Settings.System.getInt(getContext().getContentResolver(),
+        ContentResolver resolver = mContext.getContentResolver();
+        int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+        mAirplaneOn = (Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.AIRPLANE_MODE_ON, 0) == 1);
         mCarrierColor = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_CARRIERCOLOR, defValuesColor));
@@ -158,7 +158,7 @@ public class CarrierLabelExp extends TextView {
             if (mAirplaneOn) {
                 str = "Airplane Mode";
             } else {
-                str = getContext().getResources().getString(com.android.internal.R.string.lockscreen_carrier_default);
+                str = mContext.getResources().getString(com.android.internal.R.string.lockscreen_carrier_default);
             }
         } else {
             if (plmnValid && spnValid) {
@@ -168,7 +168,7 @@ public class CarrierLabelExp extends TextView {
             } else if (spnValid) {
                 str = spn;
             } else {
-                str = getContext().getResources().getString(com.android.internal.R.string.lockscreen_carrier_default);
+                str = mContext.getResources().getString(com.android.internal.R.string.lockscreen_carrier_default);
             }
         }
 

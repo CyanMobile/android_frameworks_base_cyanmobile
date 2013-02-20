@@ -65,7 +65,7 @@ public class CarrierLabelStatusBar extends TextView {
     private static final int TYPE_CUSTOM = 3;
 
     private Handler mHandler;
-
+    private Context mContext;
     private SettingsObserver mSettingsObserver;
 
     private class SettingsObserver extends ContentObserver {
@@ -74,7 +74,7 @@ public class CarrierLabelStatusBar extends TextView {
         }
 
         void observe() {
-            ContentResolver resolver = getContext().getContentResolver();
+            ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.CARRIER_LABEL_TYPE),
                     false, this);
@@ -110,7 +110,7 @@ public class CarrierLabelStatusBar extends TextView {
 
     public CarrierLabelStatusBar(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
+        mContext = context;
         mHandler = new Handler();
         mSettingsObserver = new SettingsObserver(mHandler);
         updateSettings();
@@ -125,7 +125,7 @@ public class CarrierLabelStatusBar extends TextView {
             mAttached = true;
             IntentFilter filter = new IntentFilter();
             filter.addAction(Telephony.Intents.SPN_STRINGS_UPDATED_ACTION);
-            getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mContext.registerReceiver(mIntentReceiver, filter, null, getHandler());
             mSettingsObserver.observe();
         }
     }
@@ -134,8 +134,8 @@ public class CarrierLabelStatusBar extends TextView {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (mAttached) {
-            getContext().unregisterReceiver(mIntentReceiver);
-            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mContext.unregisterReceiver(mIntentReceiver);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
             mAttached = false;
         }
     }
@@ -154,14 +154,14 @@ public class CarrierLabelStatusBar extends TextView {
     };
 
     private void updateSettings() {
-        ContentResolver resolver = getContext().getContentResolver();
-        int defValuesColor = getContext().getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
-        int defValuesFontSize = getContext().getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
+        ContentResolver resolver = mContext.getContentResolver();
+        int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+        int defValuesFontSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_fontsize_default_cyanmobile);
         mCarrierLabelType = Settings.System.getInt(resolver,
                 Settings.System.CARRIER_LABEL_TYPE, TYPE_DEFAULT);
         mCarrierLabelCustom = Settings.System.getString(resolver,
                 Settings.System.CARRIER_LABEL_CUSTOM_STRING);
-        mAirplaneOn = (Settings.System.getInt(getContext().getContentResolver(),
+        mAirplaneOn = (Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.AIRPLANE_MODE_ON, 0) == 1);
         mCarrierColor = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_CARRIERCOLOR, defValuesColor));
@@ -169,13 +169,13 @@ public class CarrierLabelStatusBar extends TextView {
                     Settings.System.STATUS_BAR_CARRIER, 6) == 1);
         float mCarrierSizeval = (float) Settings.System.getInt(resolver,
                 Settings.System.STATUSBAR_CARRIER_FONT_SIZE, defValuesFontSize);
-        DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+        DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
         int CarrierSizepx = (int) (metrics.density * mCarrierSizeval);
         mCarrierSize = CarrierSizepx;
     }
 
     private void updateNetworkName(boolean showSpn, String spn, boolean showPlmn, String plmn) {
-        ContentResolver resolver = getContext().getContentResolver();
+        ContentResolver resolver = mContext.getContentResolver();
 
       if(mStatusBarCarrier){
         if (false) {
@@ -219,7 +219,7 @@ public class CarrierLabelStatusBar extends TextView {
                     if (plmn != null) {
                         str.append(plmn);
                     } else {
-                        str.append(getContext().getText(R.string.lockscreen_carrier_default));
+                        str.append(mContext.getText(R.string.lockscreen_carrier_default));
                     }
                 }
                 if (showSpn && spn != null) {

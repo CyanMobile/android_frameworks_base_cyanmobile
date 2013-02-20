@@ -44,7 +44,7 @@ public class CmBatterySideBar extends ProgressBar implements Animatable, Runnabl
 
     // Current "step" of charging animation
     private int mChargingLevels = -1;
-
+    private Context mContext;
     // Are we charging?
     private boolean mBatteryChargings = false;
 
@@ -61,7 +61,7 @@ public class CmBatterySideBar extends ProgressBar implements Animatable, Runnabl
         }
 
         void observe() {
-            ContentResolver resolver = getContext().getContentResolver();
+            ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_BATTERY), false, this);
             resolver.registerContentObserver(
@@ -85,7 +85,7 @@ public class CmBatterySideBar extends ProgressBar implements Animatable, Runnabl
 
     public CmBatterySideBar(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
+        mContext = context;
         mSettingsObserver = new SettingsObserver(mHandler);
         updateSettings();
     }
@@ -100,7 +100,7 @@ public class CmBatterySideBar extends ProgressBar implements Animatable, Runnabl
             filter.addAction(Intent.ACTION_BATTERY_CHANGED);
             filter.addAction(Intent.ACTION_SCREEN_OFF);
             filter.addAction(Intent.ACTION_SCREEN_ON);
-            getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mContext.registerReceiver(mIntentReceiver, filter, null, getHandler());
             mSettingsObserver.observe();
         }
     }
@@ -111,8 +111,8 @@ public class CmBatterySideBar extends ProgressBar implements Animatable, Runnabl
 
         if (mAttacheds) {
             mAttacheds = false;
-            getContext().unregisterReceiver(mIntentReceiver);
-            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mContext.unregisterReceiver(mIntentReceiver);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
         }
     }
 
@@ -140,7 +140,7 @@ public class CmBatterySideBar extends ProgressBar implements Animatable, Runnabl
     };
 
     private void updateSettings() {
-        ContentResolver resolver = getContext().getContentResolver();
+        ContentResolver resolver = mContext.getContentResolver();
         mShowCmBatterySideBar = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_BATTERY, 0) == 4);
         if (mShowCmBatterySideBar) {
