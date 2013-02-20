@@ -74,7 +74,7 @@ public class MusicControls extends FrameLayout {
     private AudioManager mAudioManager;
 
     private StatusBarService mSBService;
-    private AudioManager am = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
+    private AudioManager am;
     private boolean mIsMusicActive = am.isMusicActive();
 
     private int mClockColor;
@@ -97,7 +97,7 @@ public class MusicControls extends FrameLayout {
 
         mContext = context;
         mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
+        am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         IntentFilter iF = new IntentFilter();
         iF.addAction("com.android.music.playstatechanged");
         iF.addAction("com.android.music.metachanged");
