@@ -35,6 +35,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Process;
 import android.os.RemoteException;
+import android.os.StrictMode;
 import android.util.AndroidRuntimeException;
 import android.util.Slog;
 
@@ -63,7 +64,7 @@ final class ServiceConnectionLeaked extends AndroidRuntimeException {
  * Local state maintained about a currently loaded .apk.
  * @hide
  */
-final class LoadedApk {
+public final class LoadedApk {
 
     private final ActivityThread mActivityThread;
     private final ApplicationInfo mApplicationInfo;
@@ -97,6 +98,12 @@ final class LoadedApk {
         return mApplication;
     }
 
+    /**
+     * Create information about a new .apk
+     *
+     * NOTE: This constructor is called with ActivityThread's lock held,
+     * so MUST NOT call back out to the activity manager.
+     */
     public LoadedApk(ActivityThread activityThread, ApplicationInfo aInfo,
             ActivityThread mainThread, ClassLoader baseLoader,
             boolean securityViolation, boolean includeCode) {
@@ -243,6 +250,7 @@ final class LoadedApk {
 
             if (mIncludeCode && !mPackageName.equals("android")) {
                 String zip = mAppDir;
+                String libraryPath = mLibDir;
 
                 /*
                  * The following is a bit of a hack to inject
@@ -255,15 +263,20 @@ final class LoadedApk {
 
                 String instrumentationAppDir =
                         mActivityThread.mInstrumentationAppDir;
+                String instrumentationAppLibraryDir =
+                        mActivityThread.mInstrumentationAppLibraryDir;
                 String instrumentationAppPackage =
                         mActivityThread.mInstrumentationAppPackage;
                 String instrumentedAppDir =
                         mActivityThread.mInstrumentedAppDir;
+                String instrumentedAppLibraryDir =
+                        mActivityThread.mInstrumentedAppLibraryDir;
                 String[] instrumentationLibs = null;
 
                 if (mAppDir.equals(instrumentationAppDir)
                         || mAppDir.equals(instrumentedAppDir)) {
                     zip = instrumentationAppDir + ":" + instrumentedAppDir;
+                    libraryPath = instrumentationAppLibraryDir + ":" + instrumentedAppLibraryDir;
                     if (! instrumentedAppDir.equals(instrumentationAppDir)) {
                         instrumentationLibs =
                             getLibrariesFor(instrumentationAppPackage);
@@ -283,12 +296,18 @@ final class LoadedApk {
                  */
 
                 if (ActivityThread.localLOGV)
-                    Slog.v(ActivityThread.TAG, "Class path: " + zip + ", JNI path: " + mLibDir);
+                    Slog.v(ActivityThread.TAG, "Class path: " + zip + ", JNI path: " + libraryPath);
+
+                // Temporarily disable logging of disk reads on the Looper thread
+                // as this is early and necessary.
+                StrictMode.ThreadPolicy oldPolicy = StrictMode.allowThreadDiskReads();
 
                 mClassLoader =
                     ApplicationLoaders.getDefault().getClassLoader(
-                        zip, mLibDir, mBaseClassLoader);
+                        zip, libraryPath, mBaseClassLoader);
                 initializeJavaContextClassLoader();
+
+                StrictMode.setThreadPolicy(oldPolicy);
             } else {
                 if (mBaseClassLoader == null) {
                     mClassLoader = ClassLoader.getSystemClassLoader();
@@ -416,6 +435,10 @@ final class LoadedApk {
 
     public String getAppDir() {
         return mAppDir;
+    }
+
+    public String getLibDir() {
+        return mLibDir;
     }
 
     public String getResDir() {
@@ -560,6 +583,7 @@ final class LoadedApk {
             } else {
                 rd.validate(context, handler);
             }
+            rd.mForgotten = false;
             return rd.getIIntentReceiver();
         }
     }
@@ -589,6 +613,7 @@ final class LoadedApk {
                         rd.setUnregisterLocation(ex);
                         holder.put(r, rd);
                     }
+                    rd.mForgotten = true;
                     return rd.getIIntentReceiver();
                 }
             }
@@ -662,6 +687,7 @@ final class LoadedApk {
         final boolean mRegistered;
         final IntentReceiverLeaked mLocation;
         RuntimeException mUnregisterLocation;
+        boolean mForgotten;
 
         final class Args implements Runnable {
             private Intent mCurIntent;
@@ -907,6 +933,7 @@ final class LoadedApk {
         private RuntimeException mUnbindLocation;
 
         private boolean mDied;
+        private boolean mForgotten;
 
         private static class ConnectionInfo {
             IBinder binder;
@@ -965,6 +992,7 @@ final class LoadedApk {
                     ci.binder.unlinkToDeath(ci.deathMonitor, 0);
                 }
                 mActiveConnections.clear();
+                mForgotten = true;
             }
         }
 
@@ -1026,6 +1054,11 @@ final class LoadedApk {
             ServiceDispatcher.ConnectionInfo info;
 
             synchronized (this) {
+                if (mForgotten) {
+                    // We unbound before receiving the connection; ignore
+                    // any connection received.
+                    return;
+                }
                 old = mActiveConnections.get(name);
                 if (old != null && old.binder == service) {
                     // Huh, already have this one.  Oh well!

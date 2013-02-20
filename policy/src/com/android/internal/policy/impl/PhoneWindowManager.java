@@ -795,10 +795,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     if (uid >= Process.FIRST_APPLICATION_UID && uid <= Process.LAST_APPLICATION_UID
                             && appInfo.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
                         // Kill the entire pid
-                        if (appInfo.pkgList != null && (apps.size() > 0)){
+                        if (appInfo.pkgList != null && (apps.size() > 0) && (appInfo.pkgList.length > 0)){
                             for (String pkg : appInfo.pkgList) {
                                 if (!pkg.equals("com.android.systemui") && !pkg.equals(defaultHomePackage)) {
-                                    mgr.forceStopPackage(appInfo.pkgList[0]);
+                                    if (pkg != null) {
+                                        mgr.forceStopPackage(pkg);
+                                    }
                                     targetKilled = true;
                                     break;
                                 }

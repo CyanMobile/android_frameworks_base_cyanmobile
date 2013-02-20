@@ -166,8 +166,10 @@ public final class ActivityThread {
     static final ThreadLocal<ActivityThread> sThreadLocal = new ThreadLocal();
     Instrumentation mInstrumentation;
     String mInstrumentationAppDir = null;
+    String mInstrumentationAppLibraryDir = null;
     String mInstrumentationAppPackage = null;
     String mInstrumentedAppDir = null;
+    String mInstrumentedAppLibraryDir = null;
     boolean mSystemThread = false;
     boolean mJitEnabled = false;
 
@@ -3700,8 +3702,10 @@ public final class ActivityThread {
             }
 
             mInstrumentationAppDir = ii.sourceDir;
+            mInstrumentationAppLibraryDir = ii.nativeLibraryDir;
             mInstrumentationAppPackage = ii.packageName;
             mInstrumentedAppDir = data.info.getAppDir();
+            mInstrumentedAppLibraryDir = data.info.getLibDir();
 
             ApplicationInfo instrApp = new ApplicationInfo();
             instrApp.packageName = ii.packageName;
