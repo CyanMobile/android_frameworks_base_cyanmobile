@@ -59,8 +59,10 @@ public class KeyButtonView extends ImageView {
     private int mGlowingColor;
     private boolean mOverColorEnable;
     private boolean mPressed;
+    private boolean mAttached;
+    private SettingsObserver mSettingsObserver;
 
-    Runnable mCheckLongPress = new Runnable() {
+    private Runnable mCheckLongPress = new Runnable() {
         @Override
         public void run() {
             if (isPressed()) {
@@ -129,11 +131,27 @@ public class KeyButtonView extends ImageView {
         BUTTON_QUIESCENT_ALPHA = 0.70f;
         setDrawingAlpha(BUTTON_QUIESCENT_ALPHA);
 
-        SettingsObserver settingsObserver = new SettingsObserver(mHandler);
-        settingsObserver.observe();
-
+        mSettingsObserver = new SettingsObserver(mHandler);
         updateButtonColor();
         updateGlowColor();
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (!mAttached) {
+            mAttached = true;
+            mSettingsObserver.observe();
+        }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        if (mAttached) {
+            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mAttached = false;
+        }
     }
 
     private void updateButtonColor() {

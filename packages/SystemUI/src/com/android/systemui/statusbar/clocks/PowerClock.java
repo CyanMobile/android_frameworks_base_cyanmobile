@@ -63,6 +63,8 @@ public class PowerClock extends TextView {
 
     private Handler mHandler;
 
+    private SettingsObserver mSettingsObserver;
+
     private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
@@ -93,9 +95,7 @@ public class PowerClock extends TextView {
         super(context, attrs, defStyle);
 
         mHandler = new Handler();
-        SettingsObserver settingsObserver = new SettingsObserver(mHandler);
-        settingsObserver.observe();
-
+        mSettingsObserver = new SettingsObserver(mHandler);
         updateSettings();
     }
 
@@ -106,13 +106,12 @@ public class PowerClock extends TextView {
         if (!mAttached) {
             mAttached = true;
             IntentFilter filter = new IntentFilter();
-
             filter.addAction(Intent.ACTION_TIME_TICK);
             filter.addAction(Intent.ACTION_TIME_CHANGED);
             filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
             filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
-
             getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mSettingsObserver.observe();
         }
 
         // NOTE: It's safe to do these after registering the receiver since the receiver always runs
@@ -130,6 +129,7 @@ public class PowerClock extends TextView {
         super.onDetachedFromWindow();
         if (mAttached) {
             getContext().unregisterReceiver(mIntentReceiver);
+            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
             mAttached = false;
         }
     }

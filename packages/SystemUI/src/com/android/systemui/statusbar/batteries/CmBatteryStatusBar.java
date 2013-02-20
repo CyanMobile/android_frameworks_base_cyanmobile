@@ -52,13 +52,15 @@ public class CmBatteryStatusBar extends ProgressBar implements Animatable, Runna
 
     private Interpolator mInterpolator = new DecelerateInterpolator();
 
+    private SettingsObserver mSettingsObserver;
+
     private class SettingsObserver extends ContentObserver {
 
         public SettingsObserver(Handler handler) {
             super(handler);
         }
 
-        void observer() {
+        void observe() {
             ContentResolver resolver = getContext().getContentResolver();
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_BATTERY), false, this);
@@ -84,8 +86,7 @@ public class CmBatteryStatusBar extends ProgressBar implements Animatable, Runna
     public CmBatteryStatusBar(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        SettingsObserver observer = new SettingsObserver(mHandler);
-        observer.observer();
+        mSettingsObserver = new SettingsObserver(mHandler);
         updateSettings();
     }
 
@@ -100,6 +101,7 @@ public class CmBatteryStatusBar extends ProgressBar implements Animatable, Runna
             filter.addAction(Intent.ACTION_SCREEN_OFF);
             filter.addAction(Intent.ACTION_SCREEN_ON);
             getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mSettingsObserver.observe();
         }
     }
 
@@ -110,6 +112,7 @@ public class CmBatteryStatusBar extends ProgressBar implements Animatable, Runna
         if (mAttached) {
             mAttached = false;
             getContext().unregisterReceiver(mIntentReceiver);
+            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
         }
     }
 

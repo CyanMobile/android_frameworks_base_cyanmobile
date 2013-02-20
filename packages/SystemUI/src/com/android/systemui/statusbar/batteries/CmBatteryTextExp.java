@@ -55,6 +55,8 @@ public class CmBatteryTextExp extends TextView {
 
     private Handler mHandler;
 
+    private SettingsObserver mSettingsObserver;
+
     // tracks changes to settings, so status bar is auto updated the moment the
     // setting is toggled
     private class SettingsObserver extends ContentObserver {
@@ -92,9 +94,7 @@ public class CmBatteryTextExp extends TextView {
         super(context, attrs, defStyle);
 
         mHandler = new Handler();
-        SettingsObserver settingsObserver = new SettingsObserver(mHandler);
-        settingsObserver.observe();
-
+        mSettingsObserver = new SettingsObserver(mHandler);
         updateSettings();
     }
 
@@ -105,10 +105,9 @@ public class CmBatteryTextExp extends TextView {
         if (!mAttached) {
             mAttached = true;
             IntentFilter filter = new IntentFilter();
-
             filter.addAction(Intent.ACTION_BATTERY_CHANGED);
-
             getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mSettingsObserver.observe();
         }
     }
 
@@ -117,6 +116,7 @@ public class CmBatteryTextExp extends TextView {
         super.onDetachedFromWindow();
         if (mAttached) {
             getContext().unregisterReceiver(mIntentReceiver);
+            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
             mAttached = false;
         }
     }

@@ -71,6 +71,8 @@ public class CmSignalText extends TextView {
 
     private Handler mHandler;
 
+    private SettingsObserver mSettingsObserver;
+
     public CmSignalText(Context context) {
         this(context, null);
 
@@ -81,8 +83,7 @@ public class CmSignalText extends TextView {
     public CmSignalText(Context context, AttributeSet attrs) {
         super(context, attrs);
         mHandler = new Handler();
-        SettingsObserver settingsObserver = new SettingsObserver(mHandler);
-        settingsObserver.observe();
+        mSettingsObserver = new SettingsObserver(mHandler);
 
         // load config to determine if CmSignalText should be hidden
         try {
@@ -110,8 +111,8 @@ public class CmSignalText extends TextView {
             mAttached = true;
             IntentFilter filter = new IntentFilter();
             filter.addAction(Intent.ACTION_SIGNAL_DBM_CHANGED);
-
             getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mSettingsObserver.observe();
         }
     }
 
@@ -120,6 +121,7 @@ public class CmSignalText extends TextView {
         super.onDetachedFromWindow();
         if (mAttached) {
             mAttached = false;
+            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
         }
     }
 

@@ -77,6 +77,8 @@ public class CircleBattery extends ImageView {
     private Paint   mPaintSystem;
     private Paint   mPaintRed;
 
+    private SettingsObserver mSettingsObserver;
+
     // runnable to invalidate view via mHandler.postDelayed() call
     private final Runnable mInvalidate = new Runnable() {
         @Override
@@ -187,8 +189,7 @@ public class CircleBattery extends ImageView {
 
         mHandler = new Handler();
 
-        SettingsObserver settingsObserver = new SettingsObserver(mHandler);
-        settingsObserver.observe();
+        mSettingsObserver = new SettingsObserver(mHandler);
         mBatteryReceiver = new BatteryReceiver(getContext());
 
         // initialize and setup all paint variables
@@ -236,6 +237,7 @@ public class CircleBattery extends ImageView {
         if (!mAttached) {
             mAttached = true;
             mBatteryReceiver.updateRegistration();
+            mSettingsObserver.observe();
             mHandler.postDelayed(mInvalidate, 250);
         }
     }
@@ -246,6 +248,7 @@ public class CircleBattery extends ImageView {
         if (mAttached) {
             mAttached = false;
             mBatteryReceiver.updateRegistration();
+            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
             mCircleRect = null; // makes sure, size based variables get
                                 // recalculated on next attach
             mCircleSize = 0;    // makes sure, mCircleSize is reread from icons on

@@ -52,6 +52,8 @@ public class CmWifiText extends TextView {
     /** Anything better than or equal to this will show the max bars. */
     private static final int MAX_RSSI = -55;
 
+    private SettingsObserver mSettingsObserver;
+
     public CmWifiText(Context context) {
         this(context, null);
     }
@@ -62,6 +64,11 @@ public class CmWifiText extends TextView {
 
     public CmWifiText(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+
+        mHandler = new Handler();
+        mSettingsObserver = new SettingsObserver(mHandler);
+        mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
+        updateSettings();
     }
     
     public BroadcastReceiver rssiReceiver = new BroadcastReceiver() {
@@ -80,12 +87,8 @@ public class CmWifiText extends TextView {
 
         if (!mAttached) {
             mAttached = true;
-            mHandler = new Handler();
-            SettingsObserver settingsObserver = new SettingsObserver(mHandler);
-            settingsObserver.observe();
-            mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
             getContext().registerReceiver(rssiReceiver, new IntentFilter(WifiManager.RSSI_CHANGED_ACTION));
-            updateSettings();
+            mSettingsObserver.observe();
         }
     }
 
@@ -94,7 +97,8 @@ public class CmWifiText extends TextView {
         super.onDetachedFromWindow();
         if (mAttached) {
             mAttached = false;
-           getContext().unregisterReceiver(rssiReceiver);
+            getContext().unregisterReceiver(rssiReceiver);
+            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
         }
     }
 

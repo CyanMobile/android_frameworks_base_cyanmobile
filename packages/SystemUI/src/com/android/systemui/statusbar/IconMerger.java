@@ -44,6 +44,8 @@ public class IconMerger extends LinearLayout {
     private boolean mCarrierCenter;
     private boolean mLogoCenter;
     private boolean mStatusBarReverse;
+    private boolean mAttached;
+    private SettingsObserver mSettingsObserver;
 
     // observes changes in system battery settings and enables/disables view accordingly
     private class SettingsObserver extends ContentObserver {
@@ -76,14 +78,30 @@ public class IconMerger extends LinearLayout {
         super(context, attrs);
 
         mHandler = new Handler();
-
-        SettingsObserver settingsObserver = new SettingsObserver(mHandler);
-        settingsObserver.observe();
+        mSettingsObserver = new SettingsObserver(mHandler);
         updateSettings();
 
         mMoreView = new StatusBarIconView(context, "more");
         mMoreView.set(mMoreIcon);
         addView(mMoreView, 0, new LinearLayout.LayoutParams(mIconSize, mIconSize));
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (!mAttached) {
+            mAttached = true;
+            mSettingsObserver.observe();
+        }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        if (mAttached) {
+            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mAttached = false;
+        }
     }
 
     public void addView(StatusBarIconView v, int index) {

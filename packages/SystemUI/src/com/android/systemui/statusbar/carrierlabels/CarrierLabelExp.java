@@ -55,6 +55,8 @@ public class CarrierLabelExp extends TextView {
 
     private Handler mHandler;
 
+    private SettingsObserver mSettingsObserver;
+
     private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
@@ -91,9 +93,7 @@ public class CarrierLabelExp extends TextView {
         super(context, attrs, defStyle);
 
         mHandler = new Handler();
-        SettingsObserver settingsObserver = new SettingsObserver(mHandler);
-        settingsObserver.observe();
-
+        mSettingsObserver = new SettingsObserver(mHandler);
         updateSettings();
         updateNetworkName(false, null, false, null);
     }
@@ -107,6 +107,7 @@ public class CarrierLabelExp extends TextView {
             IntentFilter filter = new IntentFilter();
             filter.addAction(Telephony.Intents.SPN_STRINGS_UPDATED_ACTION);
             getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mSettingsObserver.observe();
         }
     }
 
@@ -115,6 +116,7 @@ public class CarrierLabelExp extends TextView {
         super.onDetachedFromWindow();
         if (mAttached) {
             getContext().unregisterReceiver(mIntentReceiver);
+            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
             mAttached = false;
         }
     }

@@ -86,6 +86,8 @@ public class CmBatteryMiniIcon extends ImageView {
 
     private transient Bitmap[] mMiniIconCache;
 
+    private SettingsObserver mSettingsObserver;
+
     // tracks changes to settings, so status bar is auto updated the moment the
     // setting is toggled
     private class SettingsObserver extends ContentObserver {
@@ -129,8 +131,7 @@ public class CmBatteryMiniIcon extends ImageView {
         super(context, attrs, defStyle);
 
         mHandler = new Handler();
-        SettingsObserver settingsObserver = new SettingsObserver(mHandler);
-        settingsObserver.observe();
+        mSettingsObserver = new SettingsObserver(mHandler);
 
         mRes = getContext().getResources();
 
@@ -149,10 +150,9 @@ public class CmBatteryMiniIcon extends ImageView {
         if (!mAttached) {
             mAttached = true;
             IntentFilter filter = new IntentFilter();
-
             filter.addAction(Intent.ACTION_BATTERY_CHANGED);
-
             getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            mSettingsObserver.observe();
         }
     }
 
@@ -161,6 +161,7 @@ public class CmBatteryMiniIcon extends ImageView {
         super.onDetachedFromWindow();
         if (mAttached) {
             getContext().unregisterReceiver(mIntentReceiver);
+            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
             mAttached = false;
         }
     }

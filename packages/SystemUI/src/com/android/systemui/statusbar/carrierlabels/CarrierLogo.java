@@ -44,6 +44,8 @@ public class CarrierLogo extends TextView {
 
     private Handler mHandler;
 
+    private SettingsObserver mSettingsObserver;
+
     private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
@@ -75,9 +77,7 @@ public class CarrierLogo extends TextView {
         super(context, attrs, defStyle);
 
         mHandler = new Handler();
-        SettingsObserver settingsObserver = new SettingsObserver(mHandler);
-        settingsObserver.observe();
-
+        mSettingsObserver = new SettingsObserver(mHandler);
         updateSettings();
     }
 
@@ -87,6 +87,7 @@ public class CarrierLogo extends TextView {
 
         if (!mAttached) {
             mAttached = true;
+            mSettingsObserver.observe();
         }
     }
 
@@ -95,6 +96,7 @@ public class CarrierLogo extends TextView {
         super.onDetachedFromWindow();
         if (mAttached) {
             mAttached = false;
+            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
         }
     }
 

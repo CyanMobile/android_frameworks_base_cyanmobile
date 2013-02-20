@@ -165,6 +165,8 @@ public class NavigationBarView extends LinearLayout {
     boolean mForceRotate = false;
     private boolean mDisableAnimate = false;
     private Handler mHandler;
+    private boolean mAttached;
+    private SettingsObserver mSettingsObserver;
 
     private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
@@ -1043,9 +1045,7 @@ public class NavigationBarView extends LinearLayout {
                 );
 
             // set up settings observer
-            SettingsObserver settingsObserver = new SettingsObserver(mHandler);
-            settingsObserver.observe();
-
+            mSettingsObserver = new SettingsObserver(mHandler);
             mHandler.postDelayed(mResetNormal, 1000);
         }
     }
@@ -1053,6 +1053,19 @@ public class NavigationBarView extends LinearLayout {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+        if (!mAttached) {
+            mAttached = true;
+            if (mNVShow) mSettingsObserver.observe();
+        }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        if (mAttached) {
+            if (mNVShow) getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mAttached = false;
+        }
     }
 
     private boolean isEventInButton(final KeyButtonView button, final MotionEvent event) {
