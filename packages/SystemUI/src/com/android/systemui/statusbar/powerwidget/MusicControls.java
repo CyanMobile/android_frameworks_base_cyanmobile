@@ -75,7 +75,7 @@ public class MusicControls extends FrameLayout {
 
     private StatusBarService mSBService;
     private AudioManager am;
-    private boolean mIsMusicActive = am.isMusicActive();
+    private boolean mIsMusicActive;
 
     private int mClockColor;
     private ImageButton mPlayIcon;
@@ -102,6 +102,7 @@ public class MusicControls extends FrameLayout {
         iF.addAction("com.android.music.playstatechanged");
         iF.addAction("com.android.music.metachanged");
         mContext.registerReceiver(mMusicReceiver, iF);
+        mIsMusicActive = am.isMusicActive();
     }
 
     public void setupControls() {
