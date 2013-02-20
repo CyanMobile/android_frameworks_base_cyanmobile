@@ -586,6 +586,26 @@ public interface IMountService extends IInterface {
                 }
                 return _result;
             }
+
+            /*
+             * Returns the filesystem path of a mounted secure container.
+             */
+            public String getSecureContainerFilesystemPath(String id) throws RemoteException {
+                Parcel _data = Parcel.obtain();
+                Parcel _reply = Parcel.obtain();
+                String _result;
+                try {
+                    _data.writeInterfaceToken(DESCRIPTOR);
+                    _data.writeString(id);
+                    mRemote.transact(Stub.TRANSACTION_getSecureContainerFilesystemPath, _data, _reply, 0);
+                    _reply.readException();
+                    _result = _reply.readString();
+                } finally {
+                    _reply.recycle();
+                    _data.recycle();
+                }
+                return _result;
+            }
         }
 
         private static final String DESCRIPTOR = "IMountService";
@@ -641,6 +661,8 @@ public interface IMountService extends IInterface {
         static final int TRANSACTION_getMountedObbPath = IBinder.FIRST_CALL_TRANSACTION + 24;
 
         static final int TRANSACTION_isExternalStorageEmulated = IBinder.FIRST_CALL_TRANSACTION + 25;
+
+        static final int TRANSACTION_getSecureContainerFilesystemPath = IBinder.FIRST_CALL_TRANSACTION + 26;
 
         /**
          * Cast an IBinder object into an IMountService interface, generating a
@@ -923,6 +945,15 @@ public interface IMountService extends IInterface {
                     reply.writeInt(emulated ? 1 : 0);
                     return true;
                 }
+                case TRANSACTION_getSecureContainerFilesystemPath: {
+                    data.enforceInterface(DESCRIPTOR);
+                    String id;
+                    id = data.readString();
+                    String path = getSecureContainerFilesystemPath(id);
+                    reply.writeNoException();
+                    reply.writeString(path);
+                    return true;
+                }
             }
             return super.onTransact(code, data, reply, flags);
         }
@@ -1082,4 +1113,6 @@ public interface IMountService extends IInterface {
      * Returns whether or not the external storage is emulated.
      */
     public boolean isExternalStorageEmulated() throws RemoteException;
+
+    public String getSecureContainerFilesystemPath(String id) throws RemoteException;
 }

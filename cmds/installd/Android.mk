@@ -6,8 +6,8 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
     installd.c commands.c utils.c
 
-#LOCAL_C_INCLUDES := \
-#    $(call include-path-for, system-core)/cutils
+LOCAL_C_INCLUDES := \
+    $(call include-path-for, system-core)/cutils
 
 LOCAL_SHARED_LIBRARIES := \
     libcutils

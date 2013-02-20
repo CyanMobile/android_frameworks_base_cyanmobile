@@ -92,6 +92,7 @@ import android.os.RemoteException;
 import android.os.Environment;
 import android.os.FileObserver;
 import android.os.FileUtils;
+import android.os.FileUtils.FileStatus;
 import android.os.Handler;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
@@ -6042,6 +6043,17 @@ class PackageManagerService extends IPackageManager.Stub {
         }
     }
 
+    /**
+     * Extract the MountService "container ID" from the full code path of an
+     * .apk.
+     */
+    static String cidFromCodePath(String fullCodePath) {
+        int eidx = fullCodePath.lastIndexOf("/");
+        String subStr1 = fullCodePath.substring(0, eidx);
+        int sidx = subStr1.lastIndexOf("/");
+        return subStr1.substring(sidx+1, eidx);
+    }
+
     class SdInstallArgs extends InstallArgs {
         static final String RES_FILE_NAME = "pkg.apk";
 
@@ -7594,6 +7606,7 @@ class PackageManagerService extends IPackageManager.Stub {
         }
         PackageParser.Package p;
         boolean dataOnly = false;
+        String asecPath = null;
         synchronized (mPackages) {
             p = mPackages.get(packageName);
             if(p == null) {
@@ -7605,6 +7618,12 @@ class PackageManagerService extends IPackageManager.Stub {
                 }
                 p = ps.pkg;
             }
+            if (p != null && isExternal(p)) {
+                String secureContainerId = cidFromCodePath(p.applicationInfo.sourceDir);
+                if (secureContainerId != null) {
+                    asecPath = PackageHelper.getSdFilesystem(secureContainerId);
+                }
+            }
         }
         String publicSrcDir = null;
         if(!dataOnly) {
@@ -7613,12 +7632,14 @@ class PackageManagerService extends IPackageManager.Stub {
                 Slog.w(TAG, "Package " + packageName + " has no applicationInfo.");
                 return false;
             }
-            publicSrcDir = isForwardLocked(p) ? applicationInfo.publicSourceDir : null;
+            if (isForwardLocked(p)) {
+                publicSrcDir = applicationInfo.publicSourceDir;
+            }
         }
         boolean useEncryptedFSDir = useEncryptedFilesystemForPackage(p);
         if (mInstaller != null) {
             int res = mInstaller.getSizeInfo(packageName, p.mPath,
-                    publicSrcDir, pStats, useEncryptedFSDir);
+                    publicSrcDir, asecPath, pStats, useEncryptedFSDir);
             if (res < 0) {
                 return false;
             } else {
@@ -10183,9 +10204,7 @@ class PackageManagerService extends IPackageManager.Stub {
                 serializer.attribute(null, "uidError", "true");
             }
             if (pkg.enabled != COMPONENT_ENABLED_STATE_DEFAULT) {
-                serializer.attribute(null, "enabled",
-                        pkg.enabled == COMPONENT_ENABLED_STATE_ENABLED
-                        ? "true" : "false");
+                serializer.attribute(null, "enabled", Integer.toString(pkg.enabled));
             }
             if(pkg.installStatus == PKG_INSTALL_INCOMPLETE) {
                 serializer.attribute(null, "installStatus", "false");
@@ -10787,17 +10806,21 @@ class PackageManagerService extends IPackageManager.Stub {
                 packageSetting.nativeLibraryPathString = nativeLibraryPathStr;
                 final String enabledStr = parser.getAttributeValue(null, "enabled");
                 if (enabledStr != null) {
-                    if (enabledStr.equalsIgnoreCase("true")) {
-                        packageSetting.enabled = COMPONENT_ENABLED_STATE_ENABLED;
-                    } else if (enabledStr.equalsIgnoreCase("false")) {
-                        packageSetting.enabled = COMPONENT_ENABLED_STATE_DISABLED;
-                    } else if (enabledStr.equalsIgnoreCase("default")) {
-                        packageSetting.enabled = COMPONENT_ENABLED_STATE_DEFAULT;
-                    } else {
-                        reportSettingsProblem(Log.WARN,
-                                "Error in package manager settings: package "
-                                + name + " has bad enabled value: " + idStr
-                                + " at " + parser.getPositionDescription());
+                    try {
+                        packageSetting.enabled = Integer.parseInt(enabledStr);
+                    } catch (NumberFormatException e) {
+                        if (enabledStr.equalsIgnoreCase("true")) {
+                            packageSetting.enabled = COMPONENT_ENABLED_STATE_ENABLED;
+                        } else if (enabledStr.equalsIgnoreCase("false")) {
+                            packageSetting.enabled = COMPONENT_ENABLED_STATE_DISABLED;
+                        } else if (enabledStr.equalsIgnoreCase("default")) {
+                            packageSetting.enabled = COMPONENT_ENABLED_STATE_DEFAULT;
+                        } else {
+                            PackageManagerService.reportSettingsProblem(Log.WARN,
+                                "Error in package manager settings: package " + name
+                                        + " has bad enabled value: " + idStr + " at "
+                                        + parser.getPositionDescription());
+                        }
                     }
                 } else {
                     packageSetting.enabled = COMPONENT_ENABLED_STATE_DEFAULT;
