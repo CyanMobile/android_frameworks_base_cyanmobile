@@ -212,6 +212,8 @@ public class DefaultContainerService extends IntentService {
 
         @Override
         public long calculateDirectorySize(String path) throws RemoteException {
+            Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+
             final File directory = new File(path);
             if (directory.exists() && directory.isDirectory()) {
                 return MeasurementUtils.measureDirectory(path);

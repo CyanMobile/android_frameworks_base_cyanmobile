@@ -801,8 +801,8 @@ class PackageManagerService extends IPackageManager.Stub {
         return false;
     }
 
-    public static final IPackageManager main(Context context, boolean factoryTest) {
-        PackageManagerService m = new PackageManagerService(context, factoryTest);
+    public static final IPackageManager main(Context context, Installer installer, boolean factoryTest) {
+        PackageManagerService m = new PackageManagerService(context, installer, factoryTest);
         ServiceManager.addService("package", m);
         return m;
     }
@@ -829,7 +829,7 @@ class PackageManagerService extends IPackageManager.Stub {
         return res;
     }
 
-    public PackageManagerService(Context context, boolean factoryTest) {
+    public PackageManagerService(Context context, Installer installer, boolean factoryTest) {
         EventLog.writeEvent(EventLogTags.BOOT_PROGRESS_PMS_START,
                 SystemClock.uptimeMillis());
 
@@ -877,7 +877,7 @@ class PackageManagerService extends IPackageManager.Stub {
             mSeparateProcesses = null;
         }
 
-        mInstaller = new Installer();
+        mInstaller = installer;
 
         mWindowManager = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
         Display d = mWindowManager.getDefaultDisplay();
@@ -891,6 +891,7 @@ class PackageManagerService extends IPackageManager.Stub {
 
             File dataDir = Environment.getDataDirectory();
             mAppDataDir = new File(dataDir, "data");
+            mAppInstallDir = new File(dataDir, "app");
             File sdExtDir = Environment.getSdExtDirectory();
             mSdExtInstallDir = new File(sdExtDir, "app");
             mSecureAppDataDir = new File(dataDir, "secure/data");
@@ -1075,7 +1076,6 @@ class PackageManagerService extends IPackageManager.Stub {
                 }
             }
             
-            mAppInstallDir = new File(dataDir, "app");
             //look for any incomplete package installations
             ArrayList<PackageSetting> deletePkgsList = mSettings.getListOfIncompleteInstallPackages();
             //clean up list
@@ -1651,10 +1651,12 @@ class PackageManagerService extends IPackageManager.Stub {
             public void run() {
                 mHandler.removeCallbacks(this);
                 int retCode = -1;
+                synchronized (mInstallLock) {
                     retCode = mInstaller.freeCache(freeStorageSize);
                     if (retCode < 0) {
                         Slog.w(TAG, "Couldn't clear application caches");
                     }
+                }
                 if (observer != null) {
                     try {
                         observer.onRemoveCompleted(null, (retCode >= 0));
@@ -1674,10 +1676,12 @@ class PackageManagerService extends IPackageManager.Stub {
             public void run() {
                 mHandler.removeCallbacks(this);
                 int retCode = -1;
+                synchronized (mInstallLock) {
                     retCode = mInstaller.freeCache(freeStorageSize);
                     if (retCode < 0) {
                         Slog.w(TAG, "Couldn't clear application caches");
                     }
+                }
                 if(pi != null) {
                     try {
                         // Callback via pending intent
@@ -2168,7 +2172,7 @@ class PackageManagerService extends IPackageManager.Stub {
                     if (pa.mMatch != match) {
                         continue;
                     }
-                    ActivityInfo ai = getActivityInfo(pa.mActivity, flags);
+                    ActivityInfo ai = getActivityInfo(pa.mActivity, flags | PackageManager.GET_DISABLED_COMPONENTS);
                     if (DEBUG_PREFERRED) {
                         Log.v(TAG, "Got preferred activity:");
                         if (ai != null) {
@@ -2883,7 +2887,7 @@ class PackageManagerService extends IPackageManager.Stub {
                             + " better than installed " + ps.versionCode);
                     InstallArgs args = new FileInstallArgs(ps.codePathString,
                             ps.resourcePathString, ps.nativeLibraryPathString);
-                    synchronized (mInstaller) {
+                    synchronized (mInstallLock) {
                         args.cleanUpResourcesLI();
                     }
                     synchronized (mPackages) {
@@ -3618,8 +3622,13 @@ class PackageManagerService extends IPackageManager.Stub {
                     }
                 } else {
                     Slog.i(TAG, "Linking native library dir for " + path);
-                    mInstaller.linkNativeLibraryDirectory(dataPathString,
+                    int ret = mInstaller.linkNativeLibraryDirectory(dataPathString,
                             pkg.applicationInfo.nativeLibraryDir);
+                    if (ret < 0) {
+                        Slog.w(TAG, "Failed linking native library dir for " + path);
+                        mLastScanError = PackageManager.MOVE_FAILED_INSUFFICIENT_STORAGE;
+                        return null;
+                    }
                 }
               } catch (IOException ioe) {
                     Log.e(TAG, "Unable to get canonical file " + ioe.toString());
@@ -5142,14 +5151,17 @@ class PackageManagerService extends IPackageManager.Stub {
 
         private final IPackageStatsObserver mObserver;
 
-        public MeasureParams(PackageStats stats, boolean success, IPackageStatsObserver observer) {
+        public MeasureParams(PackageStats stats, IPackageStatsObserver observer) {
             mObserver = observer;
             mStats = stats;
-            mSuccess = success;
         }
 
         @Override
         void handleStartCopy() throws RemoteException {
+            synchronized (mInstallLock) {
+                mSuccess = getPackageSizeInfoLI(mStats.packageName, mStats);
+            }
+
             final boolean mounted;
             if (Environment.isExternalStorageEmulated()) {
                 mounted = true;
@@ -5342,6 +5354,18 @@ class PackageManagerService extends IPackageManager.Stub {
                             if (mInstaller.freeCache(size + lowThreshold) >= 0) {
                                 pkgLite = mContainerService.getMinimalPackageInfo(packageURI,
                                         flags, lowThreshold);
+                            }
+                            /*
+                             * The cache free must have deleted the file we
+                             * downloaded to install.
+                             *
+                             * TODO: fix the "freeCache" call to not delete
+                             *       the file we care about.
+                             */
+                            if (pkgLite.recommendedInstallLocation
+                                    == PackageHelper.RECOMMEND_FAILED_INVALID_URI) {
+                                pkgLite.recommendedInstallLocation
+                                    = PackageHelper.RECOMMEND_FAILED_INSUFFICIENT_STORAGE;
                             }
                         }
                 } finally {
@@ -6529,8 +6553,7 @@ class PackageManagerService extends IPackageManager.Stub {
                 // We didn't need to disable the .apk as a current system package,
                 // which means we are replacing another update that is already
                 // installed.  We need to make sure to delete the older one's .apk.
-                res.removedInfo.args = createInstallArgs(isExternal(pkg)
-                        ? PackageManager.INSTALL_EXTERNAL : PackageManager.INSTALL_INTERNAL,
+                res.removedInfo.args = createInstallArgs(packageFlagsToInstallFlags(pkg),
                         deletedPackage.applicationInfo.sourceDir,
                         deletedPackage.applicationInfo.publicSourceDir,
                         deletedPackage.applicationInfo.nativeLibraryDir);
@@ -6874,6 +6897,20 @@ class PackageManagerService extends IPackageManager.Stub {
 
     private static boolean isUpdatedSystemApp(PackageParser.Package pkg) {
         return (pkg.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0;
+    }
+
+    private int packageFlagsToInstallFlags(PackageParser.Package pkg) {
+        int installFlags = 0;
+        if (isExternal(pkg)) {
+            installFlags |= PackageManager.INSTALL_EXTERNAL;
+        }
+        if (isSdExt(pkg)) {
+            installFlags |= PackageManager.INSTALL_SDEXT;
+        }
+        if (isForwardLocked(pkg)) {
+            installFlags |= PackageManager.INSTALL_FORWARD_LOCK;
+        }
+        return installFlags;
     }
 
     private void extractPublicFiles(PackageParser.Package newPackage,
@@ -7250,12 +7287,8 @@ class PackageManagerService extends IPackageManager.Stub {
         removePackageDataLI(p, outInfo, flags, writeSettings);
 
         // Delete application code and resources
-        if (deleteCodeAndResources) {
-            // TODO can pick up from PackageSettings as well
-            int installFlags = isExternal(p) ? PackageManager.INSTALL_EXTERNAL : 0;
-            installFlags |= isSdExt(p) ? PackageManager.INSTALL_SDEXT : 0;
-            installFlags |= isForwardLocked(p) ? PackageManager.INSTALL_FORWARD_LOCK : 0;
-            outInfo.args = createInstallArgs(installFlags, applicationInfo.sourceDir,
+        if (deleteCodeAndResources && (outInfo != null)) {
+            outInfo.args = createInstallArgs(packageFlagsToInstallFlags(p), applicationInfo.sourceDir,
                     applicationInfo.publicSourceDir, applicationInfo.nativeLibraryDir);
         }
         return true;
@@ -7518,21 +7551,14 @@ class PackageManagerService extends IPackageManager.Stub {
             final IPackageStatsObserver observer) {
         mContext.enforceCallingOrSelfPermission(
                 android.Manifest.permission.GET_PACKAGE_SIZE, null);
-        // Queue up an async operation since the package deletion may take a little while.
-        mHandler.post(new Runnable() {
-            public void run() {
-                mHandler.removeCallbacks(this);
-                PackageStats stats = new PackageStats(packageName);
-
-                final boolean success;
-                synchronized (mInstallLock) {
-                    success = getPackageSizeInfoLI(packageName, stats);
-                }
-                Message msg = mHandler.obtainMessage(INIT_COPY);
-                msg.obj = new MeasureParams(stats, success, observer);
-                mHandler.sendMessage(msg);
-            } //end run
-        });
+        PackageStats stats = new PackageStats(packageName);
+        /*
+         * Queue up an async operation since the package measurement may take a
+         * little while.
+         */
+        Message msg = mHandler.obtainMessage(INIT_COPY);	
+        msg.obj = new MeasureParams(stats, observer);
+        mHandler.sendMessage(msg);
     }
 
     private boolean getPackageSizeInfoLI(String packageName, PackageStats pStats) {
@@ -8529,6 +8555,12 @@ class PackageManagerService extends IPackageManager.Stub {
                                         "Error in package manager settings: <cert> "
                                            + "index " + index + " is not a number at "
                                            + parser.getPositionDescription());
+                            } catch (IllegalArgumentException e) {
+                                reportSettingsProblem(Log.WARN,
+                                        "Error in package manager settings: <cert> "
+                                           + "index " + index + " has an invalid signature at "
+                                           + parser.getPositionDescription() + ": "
+                                           + e.getMessage());
                             }
                         } else {
                             reportSettingsProblem(Log.WARN,
@@ -9993,7 +10025,7 @@ class PackageManagerService extends IPackageManager.Stub {
 
                         // Avoid any application that has a space in its path
                         // or that is handled by the system.
-                        if (dataPath.indexOf(" ") >= 0 || ai.uid <= Process.FIRST_APPLICATION_UID)
+                        if (dataPath.indexOf(" ") >= 0 || ai.uid < Process.FIRST_APPLICATION_UID)
                             continue;
 
                         // we store on each line the following information for now:

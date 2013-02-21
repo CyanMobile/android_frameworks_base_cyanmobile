@@ -28,7 +28,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 
-class Installer {
+public final class Installer {
     private static final String TAG = "Installer";
 	InputStream mIn;
 	OutputStream mOut;

@@ -143,6 +143,7 @@ class ServerThread extends Thread {
         int factoryTest = "".equals(factoryTestStr) ? SystemServer.FACTORY_TEST_OFF
                 : Integer.parseInt(factoryTestStr);
 
+        Installer installer = null;
         LightsService lights = null;
         PowerManagerService power = null;
         BatteryService battery = null;
@@ -169,6 +170,10 @@ class ServerThread extends Thread {
 
         // Critical services...
         try {
+            Slog.i(TAG, "Waiting for installd to be ready.");
+            installer = new Installer();
+            installer.ping();
+
             Slog.i(TAG, "Entropy Mixer");
             ServiceManager.addService("entropy", new EntropyMixer());
 
@@ -185,7 +190,7 @@ class ServerThread extends Thread {
             AttributeCache.init(context);
 
             Slog.i(TAG, "Package Manager");
-            pm = PackageManagerService.main(context,
+            pm = PackageManagerService.main(context, installer,
                     factoryTest != SystemServer.FACTORY_TEST_OFF);
 
             boolean firstBoot = false;
