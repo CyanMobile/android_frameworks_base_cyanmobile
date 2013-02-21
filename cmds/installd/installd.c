@@ -78,17 +78,16 @@ static int do_get_size(char **arg, char reply[REPLY_MAX])
     int64_t codesize = 0;
     int64_t datasize = 0;
     int64_t cachesize = 0;
-    int64_t asecsize = 0;
     int res = 0;
 
         /* pkgdir, apkpath */
-    res = get_size(arg[0], arg[1], arg[2], arg[3], &codesize, &datasize, &cachesize, &asecsize, atoi(arg[4]));
+    res = get_size(arg[0], arg[1], arg[2], &codesize, &datasize, &cachesize, atoi(arg[3]));
 
     /*
      * Each int64_t can take up 22 characters printed out. Make sure it
      * doesn't go over REPLY_MAX in the future.
      */
-    snprintf(reply, REPLY_MAX, "%" PRId64 " %" PRId64 " %" PRId64 " %" PRId64, codesize, datasize, cachesize, asecsize);
+    snprintf(reply, REPLY_MAX, "%" PRId64 " %" PRId64 " %" PRId64, codesize, datasize, cachesize);
     return res;
 }
 
@@ -129,7 +128,7 @@ struct cmdinfo cmds[] = {
     { "freecache",            1, do_free_cache },
     { "rmcache",              2, do_rm_cache },
     { "protect",              3, do_protect },
-    { "getsize",              5, do_get_size },
+    { "getsize",              4, do_get_size },
     { "rmuserdata",           2, do_rm_user_data },
     { "movefiles",            0, do_movefiles },
     { "linklib",              2, do_linklib },

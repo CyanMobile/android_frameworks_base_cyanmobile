@@ -110,8 +110,8 @@ int delete_cache(const char *pkgname, int encrypted_fs_flag);
 int move_dex(const char *src, const char *dst);
 int rm_dex(const char *path);
 int protect(char *pkgname, gid_t gid, int InstLocation);
-int get_size(const char *pkgname, const char *apkpath, const char *fwdlock_apkpath, const char *asecpath,
-             int64_t *codesize, int64_t *datasize, int64_t *cachesize, int64_t *asecsize, int encrypted_fs_flag);
+int get_size(const char *pkgname, const char *apkpath, const char *fwdlock_apkpath,
+             int64_t *codesize, int64_t *datasize, int64_t *cachesize, int encrypted_fs_flag);
 int free_cache(int64_t free_size);
 int dexopt(const char *apk_path, uid_t uid, int is_public);
 int movefiles();

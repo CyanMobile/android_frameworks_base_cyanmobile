@@ -295,7 +295,7 @@ class Installer {
     }
     
     public int getSizeInfo(String pkgName, String apkPath,
-            String fwdLockApkPath, String asecPath, PackageStats pStats, boolean useEncryptedFilesystem) {
+            String fwdLockApkPath, PackageStats pStats, boolean useEncryptedFilesystem) {
         StringBuilder builder = new StringBuilder("getsize");
         builder.append(' ');
         builder.append(pkgName);
@@ -303,8 +303,6 @@ class Installer {
         builder.append(apkPath);
         builder.append(' ');
         builder.append(fwdLockApkPath != null ? fwdLockApkPath : "!");
-        builder.append(' ');
-        builder.append(asecPath != null ? asecPath : "!");
         builder.append(' ');
         if (useEncryptedFilesystem) {
             builder.append('1');
@@ -315,14 +313,13 @@ class Installer {
         String s = transaction(builder.toString());
         String res[] = s.split(" ");
 
-        if((res == null) || (res.length != 5)) {
+        if((res == null) || (res.length != 4)) {
             return -1;
         }
         try {
             pStats.codeSize = Long.parseLong(res[1]);
             pStats.dataSize = Long.parseLong(res[2]);
             pStats.cacheSize = Long.parseLong(res[3]);
-            pStats.externalCodeSize = Long.parseLong(res[4]);
             return Integer.parseInt(res[0]);
         } catch (NumberFormatException e) {
             return -1;

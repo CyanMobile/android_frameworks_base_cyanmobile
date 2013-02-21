@@ -44,30 +44,18 @@ int install(const char *pkgname, int encrypted_fs_flag, uid_t uid, gid_t gid)
         LOGE("cannot create dir '%s': %s\n", pkgdir, strerror(errno));
         return -errno;
     }
-    if (chmod(pkgdir, 0751) < 0) {	
-        LOGE("cannot chmod dir '%s': %s\n", pkgdir, strerror(errno));	
-        unlink(pkgdir);	
-        return -errno;	
+    if (chown(pkgdir, uid, gid) < 0) {	
+        LOGE("cannot chown dir '%s': %s\n", pkgdir, strerror(errno));
+        unlink(pkgdir);
+        return -errno;
     }
     if (mkdir(libdir, 0755) < 0) {
         LOGE("cannot create dir '%s': %s\n", libdir, strerror(errno));
         unlink(pkgdir);
         return -errno;
     }
-    if (chmod(libdir, 0755) < 0) {
-        LOGE("cannot chmod dir '%s': %s\n", libdir, strerror(errno));	
-        unlink(libdir);
-        unlink(pkgdir);
-        return -errno;
-    }
     if (chown(libdir, AID_SYSTEM, AID_SYSTEM) < 0) {
         LOGE("cannot chown dir '%s': %s\n", libdir, strerror(errno));
-        unlink(libdir);
-        unlink(pkgdir);
-        return -errno;
-    }
-    if (chown(pkgdir, uid, gid) < 0) {
-        LOGE("cannot chown dir '%s': %s\n", pkgdir, strerror(errno));
         unlink(libdir);
         unlink(pkgdir);
         return -errno;
@@ -353,8 +341,8 @@ int protect(char *pkgname, gid_t gid, int InstLocation)
 }
 
 int get_size(const char *pkgname, const char *apkpath,
-             const char *fwdlock_apkpath, const char *asecpath,
-             int64_t *_codesize, int64_t *_datasize, int64_t *_cachesize, int64_t* _asecsize, int encrypted_fs_flag)
+             const char *fwdlock_apkpath,
+             int64_t *_codesize, int64_t *_datasize, int64_t *_cachesize, int encrypted_fs_flag)
 {
     DIR *d;
     int dfd;
@@ -365,7 +353,6 @@ int get_size(const char *pkgname, const char *apkpath,
     int64_t codesize = 0;
     int64_t datasize = 0;
     int64_t cachesize = 0;
-    int64_t asecsize = 0;
 
         /* count the source apk as code -- but only if it's not
          * on the /system partition and its not on the sdcard.
@@ -387,14 +374,6 @@ int get_size(const char *pkgname, const char *apkpath,
     if (!create_cache_path(path, apkpath)) {
         if (stat(path, &s) == 0) {
             codesize += stat_size(&s);
-        }
-    }
-
-    /* compute asec size if it is given
-         */
-    if (asecpath != NULL && asecpath[0] != '!') {
-        if (stat(asecpath, &s) == 0) {
-            asecsize += stat_size(&s);
         }
     }
 
@@ -462,7 +441,6 @@ done:
     *_codesize = codesize;
     *_datasize = datasize;
     *_cachesize = cachesize;
-    *_asecsize = asecsize;
     return 0;
 }
 
@@ -1217,13 +1195,6 @@ int unlinklib(const char* dataDir)
 
     if (mkdir(libdir, 0755) < 0) {
         LOGE("cannot create dir '%s': %s\n", libdir, strerror(errno));
-        rc = -errno;
-        goto out;
-    }
-
-    if (chmod(libdir, 0755) < 0) {
-        LOGE("cannot chmod dir '%s': %s\n", libdir, strerror(errno));
-        unlink(libdir);
         rc = -errno;
         goto out;
     }

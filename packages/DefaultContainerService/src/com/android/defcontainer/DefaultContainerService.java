@@ -228,6 +228,21 @@ public class DefaultContainerService extends IntentService {
                 eraseFiles(directory);
             }
         }
+
+        @Override
+        public long calculateInstalledSize(String packagePath)
+                throws RemoteException {
+            final File packageFile = new File(packagePath);
+            try {
+                return calculateContainerSize(packageFile) * 1024 * 1024;
+            } catch (IOException e) {
+                /*
+                 * Okay, something failed, so let's just estimate it to be 2x
+                 * the file size. Note this will be 0 if the file doesn't exist.
+                 */
+                return packageFile.length() * 2;
+            }
+        }
     };
 
     public DefaultContainerService() {

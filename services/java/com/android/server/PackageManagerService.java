@@ -877,16 +877,7 @@ class PackageManagerService extends IPackageManager.Stub {
             mSeparateProcesses = null;
         }
 
-        Installer installer = new Installer();
-        // Little hacky thing to check if installd is here, to determine
-        // whether we are running on the simulator and thus need to take
-        // care of building the /data file structure ourself.
-        // (apparently the sim now has a working installer)
-        if (installer.ping() && Process.supportsProcesses()) {
-            mInstaller = installer;
-        } else {
-            mInstaller = null;
-        }
+        mInstaller = new Installer();
 
         mWindowManager = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
         Display d = mWindowManager.getDefaultDisplay();
@@ -905,20 +896,6 @@ class PackageManagerService extends IPackageManager.Stub {
             mSecureAppDataDir = new File(dataDir, "secure/data");
             mDrmAppPrivateInstallDir = new File(dataDir, "app-private");
             mDrmSdExtPrivateInstallDir = new File(sdExtDir, "app-private");
-
-            if (mInstaller == null) {
-                // Make sure these dirs exist, when we are running in
-                // the simulator.
-                // Make a wide-open directory for random misc stuff.
-                File miscDir = new File(dataDir, "misc");
-                miscDir.mkdirs();
-                mAppDataDir.mkdirs();
-                mSecureAppDataDir.mkdirs();
-                mDrmAppPrivateInstallDir.mkdirs();
-                // TODO check is sd-ext is mounted
-                mSdExtInstallDir.mkdirs();
-                mDrmSdExtPrivateInstallDir.mkdirs();
-            }
 
             readPermissions();
 
@@ -942,7 +919,6 @@ class PackageManagerService extends IPackageManager.Stub {
             mDalvikCacheDir = new File(dataDir, "dalvik-cache");
             mSdExtDalvikCacheDir = new File(sdExtDir, "dalvik-cache");
 
-            if (mInstaller != null) {
                 boolean didDexOpt = false;
 
                 /**
@@ -1056,7 +1032,6 @@ class PackageManagerService extends IPackageManager.Stub {
                         }
                     }
                 }
-            }
 
             // Find base frameworks (resource packages without code).
             mFrameworkInstallObserver = new AppDirObserver(
@@ -1082,10 +1057,8 @@ class PackageManagerService extends IPackageManager.Stub {
             scanDirLI(mVendorAppDir, PackageParser.PARSE_IS_SYSTEM
                     | PackageParser.PARSE_IS_SYSTEM_DIR, scanMode, 0);
 
-            if (mInstaller != null) {
                 if (DEBUG_UPGRADE) Log.v(TAG, "Running installd update commands");
                 mInstaller.moveFiles();
-            }
             
             // Prune any system packages that no longer exist.
             Iterator<PackageSetting> psit = mSettings.mPackages.values().iterator();
@@ -1098,20 +1071,11 @@ class PackageManagerService extends IPackageManager.Stub {
                     String msg = "System package " + ps.name
                             + " no longer exists; wiping its data";
                     reportSettingsProblem(Log.WARN, msg);
-                    if (mInstaller != null) {
-                        // XXX how to set useEncryptedFSDir for packages that
-                        // are not encrypted?
-                        mInstaller.remove(ps.name, true);
-                    }
+                    mInstaller.remove(ps.name, true);
                 }
             }
             
             mAppInstallDir = new File(dataDir, "app");
-            if (mInstaller == null) {
-                // Make sure these dirs exist, when we are running in
-                // the simulator.
-                mAppInstallDir.mkdirs(); // scanDirLI() assumes this dir exists
-            }
             //look for any incomplete package installations
             ArrayList<PackageSetting> deletePkgsList = mSettings.getListOfIncompleteInstallPackages();
             //clean up list
@@ -1201,19 +1165,12 @@ class PackageManagerService extends IPackageManager.Stub {
 
     void cleanupInstallFailedPackage(PackageSetting ps) {
         Slog.i(TAG, "Cleaning up incompletely installed app: " + ps.name);
-        if (mInstaller != null) {
             boolean useSecureFS = useEncryptedFilesystemForPackage(ps.pkg);
             int retCode = mInstaller.remove(ps.name, useSecureFS);
             if (retCode < 0) {
                 Slog.w(TAG, "Couldn't remove app data directory for package: "
                            + ps.name + ", retcode=" + retCode);
             }
-        } else {
-            //for emulator
-            PackageParser.Package pkg = mPackages.get(ps.name);
-            File dataDir = new File(pkg.applicationInfo.dataDir);
-            dataDir.delete();
-        }
         if (ps.codePath != null) {
             if (!ps.codePath.delete()) {
                 Slog.w(TAG, "Unable to remove old code file: " + ps.codePath);
@@ -1694,12 +1651,10 @@ class PackageManagerService extends IPackageManager.Stub {
             public void run() {
                 mHandler.removeCallbacks(this);
                 int retCode = -1;
-                if (mInstaller != null) {
                     retCode = mInstaller.freeCache(freeStorageSize);
                     if (retCode < 0) {
                         Slog.w(TAG, "Couldn't clear application caches");
                     }
-                } //end if mInstaller
                 if (observer != null) {
                     try {
                         observer.onRemoveCompleted(null, (retCode >= 0));
@@ -1719,12 +1674,10 @@ class PackageManagerService extends IPackageManager.Stub {
             public void run() {
                 mHandler.removeCallbacks(this);
                 int retCode = -1;
-                if (mInstaller != null) {
                     retCode = mInstaller.freeCache(freeStorageSize);
                     if (retCode < 0) {
                         Slog.w(TAG, "Couldn't clear application caches");
                     }
-                }
                 if(pi != null) {
                     try {
                         // Callback via pending intent
@@ -3095,7 +3048,7 @@ class PackageManagerService extends IPackageManager.Stub {
 
     private int performDexOptLI(PackageParser.Package pkg, boolean forceDex, boolean defer) {
         boolean performed = false;
-        if ((pkg.applicationInfo.flags&ApplicationInfo.FLAG_HAS_CODE) != 0 && mInstaller != null) {
+        if ((pkg.applicationInfo.flags&ApplicationInfo.FLAG_HAS_CODE) != 0) {
             String path = pkg.mScanPath;
             int ret = 0;
             try {
@@ -3516,7 +3469,6 @@ class PackageManagerService extends IPackageManager.Stub {
                     if ((parseFlags&PackageParser.PARSE_IS_SYSTEM) != 0) {
                         // If this is a system app, we can at least delete its
                         // current data so the application will still work.
-                        if (mInstaller != null) {
                             int ret = mInstaller.remove(pkgName, useEncryptedFSDir);
                             if (ret >= 0) {
                                 // Old data gone!
@@ -3539,7 +3491,6 @@ class PackageManagerService extends IPackageManager.Stub {
                                     return null;
                                 }
                             }
-                        }
                         if (!recovered) {
                             mHasSystemUidErrors = true;
                         }
@@ -3568,7 +3519,6 @@ class PackageManagerService extends IPackageManager.Stub {
                 if ((parseFlags&PackageParser.PARSE_CHATTY) != 0 && Config.LOGV)
                     Log.v(TAG, "Want this data dir: " + dataPath);
                 //invoke installer to do the actual installation
-                if (mInstaller != null) {
                     int ret = mInstaller.install(pkgName, useEncryptedFSDir, pkg.applicationInfo.uid,
                             pkg.applicationInfo.uid);
                     if(ret < 0) {
@@ -3576,15 +3526,6 @@ class PackageManagerService extends IPackageManager.Stub {
                         mLastScanError = PackageManager.INSTALL_FAILED_INSUFFICIENT_STORAGE;
                         return null;
                     }
-                } else {
-                    dataPath.mkdirs();
-                    if (dataPath.exists()) {
-                        FileUtils.setPermissions(
-                            dataPath.toString(),
-                            FileUtils.S_IRWXU|FileUtils.S_IRWXG|FileUtils.S_IXOTH,
-                            pkg.applicationInfo.uid, pkg.applicationInfo.uid);
-                    }
-                }
                 if (dataPath.exists()) {
                     pkg.applicationInfo.dataDir = dataPath.getPath();
                 } else {
@@ -3615,8 +3556,6 @@ class PackageManagerService extends IPackageManager.Stub {
             pkgSetting.uidError = uidError;
         }
 
-        // If we're running in the simulator, we don't need to unpack anything.
-        if (mInstaller != null) {
             String path = scanFile.getPath();
             /* Note: We don't want to unpack the native binaries for
              *        system applications, unless they have been updated
@@ -3629,8 +3568,9 @@ class PackageManagerService extends IPackageManager.Stub {
              *        only for non-system apps and system app upgrades.
              */
             if (pkg.applicationInfo.nativeLibraryDir != null) {
+              try {
                 final File nativeLibraryDir = new File(pkg.applicationInfo.nativeLibraryDir);
-                final String dataPathString = dataPath.getPath();
+                final String dataPathString = dataPath.getCanonicalPath();
 
                 if (isSystemApp(pkg) && !isUpdatedSystemApp(pkg)) {
                     /*
@@ -3650,7 +3590,7 @@ class PackageManagerService extends IPackageManager.Stub {
                             return null;
                         }
                     }
-                } else if (nativeLibraryDir.getParent().equals(dataPathString)) {
+                } else if (nativeLibraryDir.getParentFile().getCanonicalPath().equals(dataPathString)) {
                     /*
                      * If this is an internal application or our
                      * nativeLibraryPath points to our data directory, unpack
@@ -3681,6 +3621,9 @@ class PackageManagerService extends IPackageManager.Stub {
                     mInstaller.linkNativeLibraryDirectory(dataPathString,
                             pkg.applicationInfo.nativeLibraryDir);
                 }
+              } catch (IOException ioe) {
+                    Log.e(TAG, "Unable to get canonical file " + ioe.toString());
+              }
             }
             pkg.mScanPath = path;
 
@@ -3690,7 +3633,6 @@ class PackageManagerService extends IPackageManager.Stub {
                     return null;
                 }
             }
-        }
 
         if (mFactoryTest && pkg.requestedPermissions.contains(
                 android.Manifest.permission.FACTORY_TEST)) {
@@ -5200,8 +5142,7 @@ class PackageManagerService extends IPackageManager.Stub {
 
         private final IPackageStatsObserver mObserver;
 
-        public MeasureParams(PackageStats stats, boolean success,
-                IPackageStatsObserver observer) {
+        public MeasureParams(PackageStats stats, boolean success, IPackageStatsObserver observer) {
             mObserver = observer;
             mStats = stats;
             mSuccess = success;
@@ -5210,7 +5151,6 @@ class PackageManagerService extends IPackageManager.Stub {
         @Override
         void handleStartCopy() throws RemoteException {
             final boolean mounted;
-
             if (Environment.isExternalStorageEmulated()) {
                 mounted = true;
             } else {
@@ -5384,12 +5324,26 @@ class PackageManagerService extends IPackageManager.Stub {
                 }
 
                 // Remote call to find out default install location
-                final PackageInfoLite pkgLite;
+                PackageInfoLite pkgLite;
                 try {
                     mContext.grantUriPermission(DEFAULT_CONTAINER_PACKAGE, packageURI,
                             Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    final String packageFilePath = packageURI.getPath();
                     pkgLite = mContainerService.getMinimalPackageInfo(packageURI, flags,
                             lowThreshold);
+                        /*
+                         * If we have too little free space, try to free cache
+                         * before giving up.
+                         */
+                        if (packageFilePath != null && pkgLite.recommendedInstallLocation
+                                == PackageHelper.RECOMMEND_FAILED_INSUFFICIENT_STORAGE) {
+                            final long size = mContainerService.calculateInstalledSize(
+                                    packageFilePath);
+                            if (mInstaller.freeCache(size + lowThreshold) >= 0) {
+                                pkgLite = mContainerService.getMinimalPackageInfo(packageURI,
+                                        flags, lowThreshold);
+                            }
+                        }
                 } finally {
                     mContext.revokeUriPermission(packageURI, Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 }
@@ -5785,7 +5739,7 @@ class PackageManagerService extends IPackageManager.Stub {
 
         void cleanUpResourcesLI() {
             String sourceDir = getCodePath();
-            if (cleanUp() && mInstaller != null) {
+            if (cleanUp()) {
                 int retCode = mInstaller.rmdex(sourceDir);
                 if (retCode < 0) {
                     Slog.w(TAG, "Couldn't remove dex file for package: "
@@ -6002,7 +5956,7 @@ class PackageManagerService extends IPackageManager.Stub {
 
         void cleanUpResourcesLI() {
             String sourceDir = getCodePath();
-            if (cleanUp() && mInstaller != null) {
+            if (cleanUp()) {
                 int retCode = mInstaller.rmdex(sourceDir);
                 if (retCode < 0) {
                     Slog.w(TAG, "Couldn't remove dex file for package: "
@@ -6099,6 +6053,10 @@ class PackageManagerService extends IPackageManager.Stub {
             } finally {
                 mContext.revokeUriPermission(packageURI, Intent.FLAG_GRANT_READ_URI_PERMISSION);
             }
+        }
+
+        private final boolean isExternal() {
+            return (flags & PackageManager.INSTALL_EXTERNAL) != 0;
         }
 
         int copyApk(IMediaContainerService imcs, boolean temp) throws RemoteException {
@@ -6236,7 +6194,6 @@ class PackageManagerService extends IPackageManager.Stub {
         void cleanUpResourcesLI() {
             String sourceFile = getCodePath();
             // Remove dex file
-            if (mInstaller != null) {
                 int retCode = mInstaller.rmdex(sourceFile);
                 if (retCode < 0) {
                     Slog.w(TAG, "Couldn't remove dex file for package: "
@@ -6244,7 +6201,6 @@ class PackageManagerService extends IPackageManager.Stub {
                             + sourceFile.toString() + ", retcode=" + retCode);
                     // we don't consider this to be a failure of the core package deletion
                 }
-            }
             cleanUp();
         }
 
@@ -6668,9 +6624,7 @@ class PackageManagerService extends IPackageManager.Stub {
         }
         if((res.returnCode = setPermissionsLI(newPackage))
                 != PackageManager.INSTALL_SUCCEEDED) {
-            if (mInstaller != null) {
                 mInstaller.rmdex(newPackage.mScanPath);
-            }
             return;
         } else {
             Log.d(TAG, "New package installed in " + newPackage.mPath);
@@ -6880,16 +6834,9 @@ class PackageManagerService extends IPackageManager.Stub {
             } finally {
                 //TODO clean up the extracted public files
             }
-            if (mInstaller != null) {
                 retCode = mInstaller.setForwardLockPerm(getApkName(newPackage.mPath),
                         newPackage.applicationInfo.uid,
                         getApkLoc(newPackage.mPath));
-            } else {
-                final int filePermissions =
-                        FileUtils.S_IRUSR|FileUtils.S_IWUSR|FileUtils.S_IRGRP;
-                retCode = FileUtils.setPermissions(newPackage.mPath, filePermissions, -1,
-                                                   newPackage.applicationInfo.uid);
-            }
         } else {
             // The permissions on the resource file was set when it was copied for
             // non forward locked apps and apps on sdcard
@@ -7185,19 +7132,12 @@ class PackageManagerService extends IPackageManager.Stub {
         }
         if ((flags&PackageManager.DONT_DELETE_DATA) == 0) {
             boolean useEncryptedFSDir = useEncryptedFilesystemForPackage(p);
-            if (mInstaller != null) {
                 int retCode = mInstaller.remove(packageName, useEncryptedFSDir);
                 if (retCode < 0) {
                     Slog.w(TAG, "Couldn't remove app data or cache directory for package: "
                                + packageName + ", retcode=" + retCode);
                     // we don't consider this to be a failure of the core package deletion
                 }
-            } else {
-                // for simulator
-                PackageParser.Package pkg = mPackages.get(packageName);
-                File dataDir = new File(pkg.applicationInfo.dataDir);
-                dataDir.delete();
-            }
             schedulePackageCleaning(packageName);
         }
         synchronized (mPackages) {
@@ -7513,14 +7453,12 @@ class PackageManagerService extends IPackageManager.Stub {
             }
             useEncryptedFSDir = useEncryptedFilesystemForPackage(p);
         }
-        if (mInstaller != null) {
             int retCode = mInstaller.clearUserData(packageName, useEncryptedFSDir);
             if (retCode < 0) {
                 Slog.w(TAG, "Couldn't remove cache files for package: "
                         + packageName);
                 return false;
             }
-        }
         return true;
     }
 
@@ -7567,14 +7505,12 @@ class PackageManagerService extends IPackageManager.Stub {
             return false;
         }
         boolean useEncryptedFSDir = useEncryptedFilesystemForPackage(p);
-        if (mInstaller != null) {
             int retCode = mInstaller.deleteCacheFiles(packageName, useEncryptedFSDir);
             if (retCode < 0) {
                 Slog.w(TAG, "Couldn't remove cache files for package: "
                            + packageName);
                 return false;
             }
-        }
         return true;
     }
 
@@ -7606,7 +7542,6 @@ class PackageManagerService extends IPackageManager.Stub {
         }
         PackageParser.Package p;
         boolean dataOnly = false;
-        String asecPath = null;
         synchronized (mPackages) {
             p = mPackages.get(packageName);
             if(p == null) {
@@ -7617,12 +7552,6 @@ class PackageManagerService extends IPackageManager.Stub {
                     return false;
                 }
                 p = ps.pkg;
-            }
-            if (p != null && isExternal(p)) {
-                String secureContainerId = cidFromCodePath(p.applicationInfo.sourceDir);
-                if (secureContainerId != null) {
-                    asecPath = PackageHelper.getSdFilesystem(secureContainerId);
-                }
             }
         }
         String publicSrcDir = null;
@@ -7637,15 +7566,12 @@ class PackageManagerService extends IPackageManager.Stub {
             }
         }
         boolean useEncryptedFSDir = useEncryptedFilesystemForPackage(p);
-        if (mInstaller != null) {
             int res = mInstaller.getSizeInfo(packageName, p.mPath,
-                    publicSrcDir, asecPath, pStats, useEncryptedFSDir);
+                    publicSrcDir, pStats, useEncryptedFSDir);
             if (res < 0) {
                 return false;
-            } else {
-                return true;
             }
-        }
+
         return true;
     }
 
