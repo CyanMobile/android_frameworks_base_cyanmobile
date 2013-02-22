@@ -46,6 +46,11 @@ import com.android.systemui.R;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class WeatherTile extends QuickSettingsTile {
 
     private static final String TAG = "WeatherTile";
@@ -149,6 +154,7 @@ public class WeatherTile extends QuickSettingsTile {
     private LocationInfo mLocationInfo = new LocationInfo();
     private String mLastKnownWoeid;
     private boolean mNeedsWeatherRefresh;
+    private Set<String> mTrackedProviders;
 
     private void updateLocationListenerState() {
         if (mInfo == null || !mInfo.isConnected()) {
@@ -168,12 +174,38 @@ public class WeatherTile extends QuickSettingsTile {
                 mLocationInfo.customLocation = customLoc;
                 triggerLocationQueryWithLocation(null);
             } else {
-                mLocManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER,
-                        MIN_LOC_UPDATE_INTERVAL, MIN_LOC_UPDATE_DISTANCE, mLocUpdateIntent);
+                mTrackedProviders = getTrackedProviders();
+                List<String> locationProviders = mLocManager.getProviders(true);
+                for (String providerName : locationProviders) {
+                     if (mTrackedProviders.contains(providerName)) {
+                         mLocManager.requestLocationUpdates(providerName, MIN_LOC_UPDATE_INTERVAL,
+                                MIN_LOC_UPDATE_DISTANCE, mLocUpdateIntent);
+                         triggerLocationQueryWithLocation(mLocManager.getLastKnownLocation(providerName));
+                     }
+                }
                 mLocationInfo.customLocation = null;
-                triggerLocationQueryWithLocation(mLocManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER));
             }
         }
+    }
+
+    private Set<String> getTrackedProviders() {
+        Set<String> providerSet = new HashSet<String>();
+
+        if (trackGPS()) {
+            providerSet.add(LocationManager.GPS_PROVIDER);
+        }
+        if (trackNetwork()) {
+            providerSet.add(LocationManager.NETWORK_PROVIDER);
+        }
+        return providerSet;
+    }
+
+    private boolean trackNetwork() {
+        return true;
+    }
+
+    private boolean trackGPS() {
+        return true;
     }
 
     private void triggerLocationQueryWithLocation(Location location) {
