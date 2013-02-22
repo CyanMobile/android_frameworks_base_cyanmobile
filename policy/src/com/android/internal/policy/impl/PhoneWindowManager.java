@@ -797,7 +797,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         // Kill the entire pid
                         if (appInfo.pkgList != null && (apps.size() > 0) && (appInfo.pkgList.length > 0)){
                             for (String pkg : appInfo.pkgList) {
-                                if (!pkg.equals("com.android.systemui") && !pkg.equals(defaultHomePackage)) {
+                                if (!pkg.equals("com.android.systemui") 
+                                       && (!pkg.equals(defaultHomePackage) 
+                                         || !pkg.equals("com.wordpress.chislonchow.legacylauncher"))) {
                                     if (pkg != null) {
                                         mgr.forceStopPackage(pkg);
                                     }

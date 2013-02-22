@@ -97,6 +97,42 @@ public class NavigationBarView extends LinearLayout {
     private static final int ID_SCREENSHOT = 29;
     private static final int ID_POWERMENU = 30;
 
+    private QuickAction quickAction;
+    private QuickAction quickActionss;
+    private QuickAction quickActionrr;
+    private QuickAction quickActionmm;
+
+    private ActionItem appItem;
+    private ActionItem dispItem;
+    private ActionItem inpItem;
+    private ActionItem uisItem;
+    private ActionItem lockItem;
+    private ActionItem prfmItem;
+    private ActionItem pwrsItem;
+    private ActionItem sndItem;
+    private ActionItem tbltItem;
+    private ActionItem wifiItem;
+    private ActionItem blueItem;
+    private ActionItem mobileItem;
+    private ActionItem tetherItem;
+    private ActionItem appsItem;
+    private ActionItem locksecItem;
+    private ActionItem soundsItem;
+    private ActionItem displayItem;
+    private ActionItem callsItem;
+    private ActionItem strgItem;
+    private ActionItem prfleItem;
+    private ActionItem prvcyItem;
+    private ActionItem datetimeItem;
+    private ActionItem langkeyItem;
+    private ActionItem voicItem;
+    private ActionItem accsItem;
+    private ActionItem dvlpItem;
+    private ActionItem adwItem;
+    private ActionItem bckItem;
+    private ActionItem sscItem;
+    private ActionItem pwrItem;
+
     private static final int SWIPE_MIN_DISTANCE = 150;
     private static final int SWIPE_MAX_OFF_PATH = 100;
     private static final int SWIPE_THRESHOLD_VELOCITY = 100;
@@ -277,295 +313,17 @@ public class NavigationBarView extends LinearLayout {
         }
 
         if (mNVShow) {
-            runIconRecent();
-            runIconPower();
-            runIconHome();
-            runIconMenu();
-            runIconBack();
-            runIconSearch();
-            runIconQuick();
-            runIconVolUp();
-            runIconVolDown();
-	    ActionItem appItem = new ActionItem(ID_APPLICATION, "Application");
-	    ActionItem dispItem = new ActionItem(ID_DISPLAY, "Display");
-            ActionItem inpItem = new ActionItem(ID_INPUT, "Input");
-            ActionItem uisItem = new ActionItem(ID_UIN, "Interface");
-            ActionItem lockItem = new ActionItem(ID_LOCKSCREEN, "Lockscreen");
-            ActionItem prfmItem = new ActionItem(ID_PERFORMANCE, "Performance");
-            ActionItem pwrsItem = new ActionItem(ID_POWERSAVER, "Power saver");
-            ActionItem sndItem = new ActionItem(ID_SOUND, "Sound");
-            ActionItem tbltItem = new ActionItem(ID_TABLET, "Tablet tweaks");
-
-            final QuickAction quickAction = new QuickAction(mContext, QuickAction.VERTICAL);
-
-            quickAction.addActionItem(appItem);
-            quickAction.addActionItem(dispItem);
-            quickAction.addActionItem(inpItem);
-            quickAction.addActionItem(uisItem);
-            quickAction.addActionItem(lockItem);
-            quickAction.addActionItem(prfmItem);
-            quickAction.addActionItem(pwrsItem);
-            quickAction.addActionItem(sndItem);
-            quickAction.addActionItem(tbltItem);
-
-		quickAction.setOnActionItemClickListener(new QuickAction.OnActionItemClickListener() {			
-			@Override
-			public void onItemClick(QuickAction source, int pos, int actionId) {				
-				ActionItem actionItem = quickAction.getActionItem(pos);
-				if (actionId == ID_APPLICATION) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.ApplicationActivity");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_DISPLAY) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.DisplayActivity");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_INPUT) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.InputActivity");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_UIN) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.UIActivity");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_LOCKSCREEN) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.LockscreenActivity");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_PERFORMANCE) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.PerformanceSettingsActivity");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_POWERSAVER) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.PowerSaverActivity");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_SOUND) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.SoundActivity");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_TABLET) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.TabletTweaksActivity");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				}
-			}
-		});
-		
-		quickAction.setOnDismissListener(new QuickAction.OnDismissListener() {			
-			@Override
-			public void onDismiss() {
-			}
-                });
-
-            ActionItem wifiItem = new ActionItem(ID_WIFI, "Wifi settings");
-            ActionItem blueItem = new ActionItem(ID_BLUETOOTH, "Bluetooth settings");
-            ActionItem mobileItem = new ActionItem(ID_MOBILENETWORK, "Mobile Networks");
-            ActionItem tetherItem = new ActionItem(ID_TETHERING, "Tether settings");
-            ActionItem appsItem = new ActionItem(ID_APPLICATIONS, "Applications");
-            ActionItem locksecItem = new ActionItem(ID_LOCSECURE, "Location and Security");
-            ActionItem soundsItem = new ActionItem(ID_SOUNDS, "Sound settings");
-            ActionItem displayItem = new ActionItem(ID_DISPLAYS, "Display settings");
-            ActionItem callsItem = new ActionItem(ID_CALLSET, "Call settings");
-
-            final QuickAction quickActionss = new QuickAction(mContext, QuickAction.VERTICAL);
-
-            quickActionss.addActionItem(wifiItem);
-            quickActionss.addActionItem(blueItem);
-            quickActionss.addActionItem(mobileItem);
-            quickActionss.addActionItem(tetherItem);
-            quickActionss.addActionItem(appsItem);
-            quickActionss.addActionItem(locksecItem);
-            quickActionss.addActionItem(soundsItem);
-            quickActionss.addActionItem(displayItem);
-            quickActionss.addActionItem(callsItem);
-
-		quickActionss.setOnActionItemClickListener(new QuickAction.OnActionItemClickListener() {			
-			@Override
-			public void onItemClick(QuickAction source, int pos, int actionId) {				
-				ActionItem actionItem = quickAction.getActionItem(pos);
-				if (actionId == ID_WIFI) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.settings", "com.android.settings.wifi.WifiSettings");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_BLUETOOTH) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.settings", "com.android.settings.bluetooth.BluetoothSettings");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_MOBILENETWORK) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.phone", "com.android.phone.Settings");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_TETHERING) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.settings", "com.android.settings.TetherSettings");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_APPLICATIONS) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.settings", "com.android.settings.ApplicationSettings");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_LOCSECURE) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.settings", "com.android.settings.SecuritySettings");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_SOUNDS) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.settings", "com.android.settings.SoundSettings");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_DISPLAYS) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.settings", "com.android.settings.DisplaySettings");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_CALLSET) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.phone", "com.android.phone.CallFeaturesSetting");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				}
-			}
-		});
-		
-		quickActionss.setOnDismissListener(new QuickAction.OnDismissListener() {			
-			@Override
-			public void onDismiss() {
-			}
-                });
-
-            ActionItem strgItem = new ActionItem(ID_STORAGE, "Storage settings");
-            ActionItem prfleItem = new ActionItem(ID_PROFILE, "Profile settings");
-            ActionItem prvcyItem = new ActionItem(ID_PRIVACY, "Privacy settings");
-            ActionItem datetimeItem = new ActionItem(ID_DATETIME, "Date and Time");
-            ActionItem langkeyItem = new ActionItem(ID_LANGKEY, "Language and Keyboard");
-            ActionItem voicItem = new ActionItem(ID_VOICEN, "Voice input n output");
-            ActionItem accsItem = new ActionItem(ID_ACCESS, "Accessibility");
-            ActionItem dvlpItem = new ActionItem(ID_DEVELOP, "Development");
-            ActionItem adwItem = new ActionItem(ID_ADWLAUNCHER, "ADW settings");
-
-            final QuickAction quickActionrr = new QuickAction(mContext, QuickAction.VERTICAL);
-
-            quickActionrr.addActionItem(strgItem);
-            quickActionrr.addActionItem(prfleItem);
-            quickActionrr.addActionItem(prvcyItem);
-            quickActionrr.addActionItem(datetimeItem);
-            quickActionrr.addActionItem(langkeyItem);
-            quickActionrr.addActionItem(voicItem);
-            quickActionrr.addActionItem(accsItem);
-            quickActionrr.addActionItem(dvlpItem);
-            quickActionrr.addActionItem(adwItem);
-
-		quickActionrr.setOnActionItemClickListener(new QuickAction.OnActionItemClickListener() {			
-			@Override
-			public void onItemClick(QuickAction source, int pos, int actionId) {				
-				ActionItem actionItem = quickAction.getActionItem(pos);
-				if (actionId == ID_STORAGE) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.settings", "com.android.settings.deviceinfo.Memory");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_PROFILE) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.settings", "com.android.settings.ProfileList");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_PRIVACY) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.settings", "com.android.settings.PrivacySettings");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_DATETIME) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.settings", "com.android.settings.DateTimeSettings");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_LANGKEY) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.settings", "com.android.settings.LanguageSettings");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_VOICEN) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.settings", "com.android.settings.VoiceInputOutputSettings");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_ACCESS) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.settings", "com.android.settings.AccessibilitySettings");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_DEVELOP) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.settings", "com.android.settings.DevelopmentSettings");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				} else if (actionId == ID_ADWLAUNCHER) {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.setClassName("com.android.launcher", "com.android.launcher.MyLauncherSettings");
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    mContext.startActivity(intent);
-				}
-			}
-		});
-		
-		quickActionrr.setOnDismissListener(new QuickAction.OnDismissListener() {			
-			@Override
-			public void onDismiss() {
-			}
-                });
-
-            ActionItem bckItem = new ActionItem(ID_BACKILL, "KillAll app");
-            ActionItem sscItem = new ActionItem(ID_SCREENSHOT, "Screenshots");
-            ActionItem pwrItem = new ActionItem(ID_POWERMENU, "Power menu");
-
-            final QuickAction quickActionmm = new QuickAction(mContext, QuickAction.VERTICAL);
-
-            quickActionmm.addActionItem(bckItem);
-            quickActionmm.addActionItem(sscItem);
-            quickActionmm.addActionItem(pwrItem);
-
-		quickActionmm.setOnActionItemClickListener(new QuickAction.OnActionItemClickListener() {			
-			@Override
-			public void onItemClick(QuickAction source, int pos, int actionId) {				
-				ActionItem actionItem = quickAction.getActionItem(pos);
-				if (actionId == ID_BACKILL) {
-                                    if (mLongPressBackKills) {
-                                        CmStatusBarView.simulateKeypress(CmStatusBarView.KEYCODE_VIRTUAL_BACK_LONG);
-                                    } else {
-                                        Toast toast = Toast.makeText(mContext, "Enable Kill app back button option to use this!",Toast.LENGTH_LONG);
-                                        toast.show();
-                                    }
-				} else if (actionId == ID_SCREENSHOT) {
-                                    Intent intent = new Intent("android.intent.action.SCREENSHOT");
-                                    mContext.sendBroadcast(intent);
-                                } else if (actionId == ID_POWERMENU) {
-                                    CmStatusBarView.simulateKeypress(CmStatusBarView.KEYCODE_VIRTUAL_POWER_LONG);
-				}
-			}
-		});
-		
-		quickActionmm.setOnDismissListener(new QuickAction.OnDismissListener() {			
-			@Override
-			public void onDismiss() {
-			}
-                });
+            runIconFirst();
+            runQuickActions();
 
             mHomeButton = (KeyButtonView) findViewById(R.id.home);
+            mMenuButton = (KeyButtonView) findViewById(R.id.menu);
+            mBackButton = (KeyButtonView) findViewById(R.id.back);
+            mSearchButton = (KeyButtonView) findViewById(R.id.search);
+            mVolUpButton = (KeyButtonView) findViewById(R.id.volup);
+            mVolDownButton = (KeyButtonView)findViewById(R.id.voldown);
+            mQuickButton = (KeyButtonView) findViewById(R.id.quicker);
+
             mHomeButton.setOnClickListener(new KeyButtonView.OnClickListener() {
 	            @Override
                     public void onClick(View v) {
@@ -622,15 +380,11 @@ public class NavigationBarView extends LinearLayout {
                     }
                 }
             );
-            mHomeButton.setOnLongClickListener(
-                new KeyButtonView.OnLongClickListener() {
-	            @Override
-                    public boolean onLongClick(View v) {
+            mHomeButton.setOnLongClickListener(new KeyButtonView.OnLongClickListener() {
+	           @Override
+                   public boolean onLongClick(View v) {
                           if (mShowHome == 1) {
-                             Intent intent = new Intent(Intent.ACTION_MAIN);
-                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
-                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             mContext.startActivity(intent);
+                             runTaskManager();
                              return true;
                           } else if (mShowHome == 4) {
                              quickActionss.show(v);
@@ -657,7 +411,7 @@ public class NavigationBarView extends LinearLayout {
                     }
                 }
             );
-            mMenuButton = (KeyButtonView) findViewById(R.id.menu);
+
             mMenuButton.setOnClickListener(new KeyButtonView.OnClickListener() {
 	            @Override
                     public void onClick(View v) {
@@ -714,15 +468,11 @@ public class NavigationBarView extends LinearLayout {
                     }
                 }
             );
-            mMenuButton.setOnLongClickListener(
-                new KeyButtonView.OnLongClickListener() {
-	            @Override
-                    public boolean onLongClick(View v) {
+            mMenuButton.setOnLongClickListener(new KeyButtonView.OnLongClickListener() {
+	           @Override
+                   public boolean onLongClick(View v) {
                           if (mShowMenu == 1) {
-                             Intent intent = new Intent(Intent.ACTION_MAIN);
-                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
-                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             mContext.startActivity(intent);
+                             runTaskManager();
                              return true;
                           } else if (mShowMenu == 4) {
                              quickActionss.show(v);
@@ -749,7 +499,7 @@ public class NavigationBarView extends LinearLayout {
                     }
                 }
             );
-            mBackButton = (KeyButtonView) findViewById(R.id.back);
+
             mBackButton.setOnClickListener(new KeyButtonView.OnClickListener() {
 	            @Override
                     public void onClick(View v) {
@@ -806,15 +556,11 @@ public class NavigationBarView extends LinearLayout {
                     }
                 }
             );
-            mBackButton.setOnLongClickListener(
-                    new KeyButtonView.OnLongClickListener() {
-	                @Override
-                        public boolean onLongClick(View v) {
+            mBackButton.setOnLongClickListener(new KeyButtonView.OnLongClickListener() {
+	             @Override
+                     public boolean onLongClick(View v) {
                           if (mShowBack == 1) {
-                             Intent intent = new Intent(Intent.ACTION_MAIN);
-                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
-                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             mContext.startActivity(intent);
+                             runTaskManager();
                              return true;
                           } else if (mShowBack == 4) {
                              quickActionss.show(v);
@@ -838,10 +584,10 @@ public class NavigationBarView extends LinearLayout {
                           } else {
                              return false;
                           }
-                        }
-                    }
-                );
-            mSearchButton = (KeyButtonView) findViewById(R.id.search);
+                      }
+                 }
+            );
+
             mSearchButton.setOnClickListener(new KeyButtonView.OnClickListener() {
 	            @Override
                     public void onClick(View v) {
@@ -898,15 +644,11 @@ public class NavigationBarView extends LinearLayout {
                     }
                 }
             );
-            mSearchButton.setOnLongClickListener(
-                    new KeyButtonView.OnLongClickListener() {
-	                @Override
-                        public boolean onLongClick(View v) {
+            mSearchButton.setOnLongClickListener(new KeyButtonView.OnLongClickListener() {
+	             @Override
+                     public boolean onLongClick(View v) {
                           if (mShowSearch == 1) {
-                             Intent intent = new Intent(Intent.ACTION_MAIN);
-                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
-                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             mContext.startActivity(intent);
+                             runTaskManager();
                              return true;
                           } else if (mShowSearch == 4) {
                              quickActionss.show(v);
@@ -930,10 +672,10 @@ public class NavigationBarView extends LinearLayout {
                           } else {
                              return false;
                           }
-                        }
-                    }
-                );
-            mVolUpButton = (KeyButtonView) findViewById(R.id.volup);
+                      }
+                 }
+            );
+
             mVolUpButton.setOnClickListener(new KeyButtonView.OnClickListener() {
 	            @Override
                     public void onClick(View v) {
@@ -943,7 +685,7 @@ public class NavigationBarView extends LinearLayout {
                     }
                 }
             );
-            mVolDownButton = (KeyButtonView)findViewById(R.id.voldown);
+
             mVolDownButton.setOnClickListener(new KeyButtonView.OnClickListener() {
 	            @Override
                     public void onClick(View v) {
@@ -953,10 +695,10 @@ public class NavigationBarView extends LinearLayout {
                     }
                 }
             );
-            mQuickButton = (KeyButtonView) findViewById(R.id.quicker);
+
             mQuickButton.setOnClickListener(new KeyButtonView.OnClickListener() {
-	            @Override
-                    public void onClick(View v) {
+	           @Override
+                   public void onClick(View v) {
                       if (mShowQuicker == 0) {
                         if (DEBUG) Slog.i(TAG, "Home clicked");
                         CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_HOME);
@@ -1007,18 +749,14 @@ public class NavigationBarView extends LinearLayout {
                         updateNaviButtons();
                         mHandler.postDelayed(mResetQuick, 80);
                       }
-                    }
+                   }
                 }
             );
-            mQuickButton.setOnLongClickListener(
-                    new KeyButtonView.OnLongClickListener() {
-	                @Override
-                        public boolean onLongClick(View v) {
+            mQuickButton.setOnLongClickListener(new KeyButtonView.OnLongClickListener() {
+                   @Override
+                   public boolean onLongClick(View v) {
                           if (mShowQuicker == 0) {
-                             Intent intent = new Intent(Intent.ACTION_MAIN);
-                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
-                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             mContext.startActivity(intent);
+                             runTaskManager();
                              return true;
                           } else if (mShowQuicker == 3) {
                              quickActionss.show(v);
@@ -1042,14 +780,207 @@ public class NavigationBarView extends LinearLayout {
                           } else {
                              return false;
                           }
-                        }
-                    }
-                );
+                     }
+                 }
+            );
 
             // set up settings observer
             mSettingsObserver = new SettingsObserver(mHandler);
             mHandler.postDelayed(mResetNormal, 1000);
         }
+    }
+
+    private void runIconFirst() {
+       runIconRecent();
+       runIconPower();
+       runIconHome();
+       runIconMenu();
+       runIconBack();
+       runIconSearch();
+       runIconQuick();
+       runIconVolUp();
+       runIconVolDown();
+    }
+
+    private void runQuickActions() {
+        quickAction = new QuickAction(mContext, QuickAction.VERTICAL);
+        quickActionss = new QuickAction(mContext, QuickAction.VERTICAL);
+        quickActionrr = new QuickAction(mContext, QuickAction.VERTICAL);
+        quickActionmm = new QuickAction(mContext, QuickAction.VERTICAL);
+        appItem = new ActionItem(ID_APPLICATION, "Application");
+        dispItem = new ActionItem(ID_DISPLAY, "Display");
+        inpItem = new ActionItem(ID_INPUT, "Input");
+        uisItem = new ActionItem(ID_UIN, "Interface");
+        lockItem = new ActionItem(ID_LOCKSCREEN, "Lockscreen");
+        prfmItem = new ActionItem(ID_PERFORMANCE, "Performance");
+        pwrsItem = new ActionItem(ID_POWERSAVER, "Power saver");
+        sndItem = new ActionItem(ID_SOUND, "Sound");
+        tbltItem = new ActionItem(ID_TABLET, "Tablet tweaks");
+        wifiItem = new ActionItem(ID_WIFI, "Wifi settings");
+        blueItem = new ActionItem(ID_BLUETOOTH, "Bluetooth settings");
+        mobileItem = new ActionItem(ID_MOBILENETWORK, "Mobile Networks");
+        tetherItem = new ActionItem(ID_TETHERING, "Tether settings");
+        appsItem = new ActionItem(ID_APPLICATIONS, "Applications");
+        locksecItem = new ActionItem(ID_LOCSECURE, "Location and Security");
+        soundsItem = new ActionItem(ID_SOUNDS, "Sound settings");
+        displayItem = new ActionItem(ID_DISPLAYS, "Display settings");
+        callsItem = new ActionItem(ID_CALLSET, "Call settings");
+        strgItem = new ActionItem(ID_STORAGE, "Storage settings");
+        prfleItem = new ActionItem(ID_PROFILE, "Profile settings");
+        prvcyItem = new ActionItem(ID_PRIVACY, "Privacy settings");
+        datetimeItem = new ActionItem(ID_DATETIME, "Date and Time");
+        langkeyItem = new ActionItem(ID_LANGKEY, "Language and Keyboard");
+        voicItem = new ActionItem(ID_VOICEN, "Voice input n output");
+        accsItem = new ActionItem(ID_ACCESS, "Accessibility");
+        dvlpItem = new ActionItem(ID_DEVELOP, "Development");
+        adwItem = new ActionItem(ID_ADWLAUNCHER, "Launcher settings");
+        bckItem = new ActionItem(ID_BACKILL, "KillAll app");
+        sscItem = new ActionItem(ID_SCREENSHOT, "Screenshots");
+        pwrItem = new ActionItem(ID_POWERMENU, "Power menu");
+        quickAction.addActionItem(appItem);
+        quickAction.addActionItem(dispItem);
+        quickAction.addActionItem(inpItem);
+        quickAction.addActionItem(uisItem);
+        quickAction.addActionItem(lockItem);
+        quickAction.addActionItem(prfmItem);
+        quickAction.addActionItem(pwrsItem);
+        quickAction.addActionItem(sndItem);
+        quickAction.addActionItem(tbltItem);
+        quickActionss.addActionItem(wifiItem);
+        quickActionss.addActionItem(blueItem);
+        quickActionss.addActionItem(mobileItem);
+        quickActionss.addActionItem(tetherItem);
+        quickActionss.addActionItem(appsItem);
+        quickActionss.addActionItem(locksecItem);
+        quickActionss.addActionItem(soundsItem);
+        quickActionss.addActionItem(displayItem);
+        quickActionss.addActionItem(callsItem);
+        quickActionrr.addActionItem(strgItem);
+        quickActionrr.addActionItem(prfleItem);
+        quickActionrr.addActionItem(prvcyItem);
+        quickActionrr.addActionItem(datetimeItem);
+        quickActionrr.addActionItem(langkeyItem);
+        quickActionrr.addActionItem(voicItem);
+        quickActionrr.addActionItem(accsItem);
+        quickActionrr.addActionItem(dvlpItem);
+        quickActionrr.addActionItem(adwItem);
+        quickActionmm.addActionItem(bckItem);
+        quickActionmm.addActionItem(sscItem);
+        quickActionmm.addActionItem(pwrItem);
+
+            quickAction.setOnActionItemClickListener(new QuickAction.OnActionItemClickListener() {			
+                  @Override
+                  public void onItemClick(QuickAction source, int pos, int actionId) {				
+                       ActionItem actionItem = quickAction.getActionItem(pos);
+                       if (actionId == ID_APPLICATION) {
+                           runCMSettings("com.cyanogenmod.cmparts.activities.ApplicationActivity");
+                       } else if (actionId == ID_DISPLAY) {
+                           runCMSettings("com.cyanogenmod.cmparts.activities.DisplayActivity");
+                       } else if (actionId == ID_INPUT) {
+                           runCMSettings("com.cyanogenmod.cmparts.activities.InputActivity");
+                       } else if (actionId == ID_UIN) {
+                           runCMSettings("com.cyanogenmod.cmparts.activities.UIActivity");
+                       } else if (actionId == ID_LOCKSCREEN) {
+                           runCMSettings("com.cyanogenmod.cmparts.activities.LockscreenActivity");
+                       } else if (actionId == ID_PERFORMANCE) {
+                           runCMSettings("com.cyanogenmod.cmparts.activities.PerformanceSettingsActivity");
+                       } else if (actionId == ID_POWERSAVER) {
+                           runCMSettings("com.cyanogenmod.cmparts.activities.PowerSaverActivity");
+                       } else if (actionId == ID_SOUND) {
+                           runCMSettings("com.cyanogenmod.cmparts.activities.SoundActivity");
+                       } else if (actionId == ID_TABLET) {
+                           runCMSettings("com.cyanogenmod.cmparts.activities.TabletTweaksActivity");
+                       }
+                   }
+             });
+
+             quickAction.setOnDismissListener(new QuickAction.OnDismissListener() {			
+                   @Override public void onDismiss() {}
+             });
+
+             quickActionss.setOnActionItemClickListener(new QuickAction.OnActionItemClickListener() {			
+                   @Override
+                   public void onItemClick(QuickAction source, int pos, int actionId) {				
+                        ActionItem actionItem = quickAction.getActionItem(pos);
+                        if (actionId == ID_WIFI) {
+                            runSettings("com.android.settings.wifi.WifiSettings");
+                        } else if (actionId == ID_BLUETOOTH) {
+                            runSettings("com.android.settings.bluetooth.BluetoothSettings");
+                        } else if (actionId == ID_MOBILENETWORK) {
+                            runPhoneSettings("com.android.phone.Settings");
+                        } else if (actionId == ID_TETHERING) {
+                            runSettings("com.android.settings.TetherSettings");
+                        } else if (actionId == ID_APPLICATIONS) {
+                            runSettings("com.android.settings.ApplicationSettings");
+                        } else if (actionId == ID_LOCSECURE) {
+                            runSettings("com.android.settings.SecuritySettings");
+                        } else if (actionId == ID_SOUNDS) {
+                            runSettings("com.android.settings.SoundSettings");
+                        } else if (actionId == ID_DISPLAYS) {
+                            runSettings("com.android.settings.DisplaySettings");
+                        } else if (actionId == ID_CALLSET) {
+                            runPhoneSettings("com.android.phone.CallFeaturesSetting");
+                        }
+                   }
+             });
+		
+             quickActionss.setOnDismissListener(new QuickAction.OnDismissListener() {			
+                   @Override public void onDismiss() {}
+             });
+
+             quickActionrr.setOnActionItemClickListener(new QuickAction.OnActionItemClickListener() {			
+                   @Override
+                   public void onItemClick(QuickAction source, int pos, int actionId) {				
+                         ActionItem actionItem = quickAction.getActionItem(pos);
+                         if (actionId == ID_STORAGE) {
+                             runSettings("com.android.settings.deviceinfo.Memory");
+                         } else if (actionId == ID_PROFILE) {
+                             runSettings("com.android.settings.ProfileList");
+                         } else if (actionId == ID_PRIVACY) {
+                             runSettings("com.android.settings.PrivacySettings");
+                         } else if (actionId == ID_DATETIME) {
+                             runSettings("com.android.settings.DateTimeSettings");
+                         } else if (actionId == ID_LANGKEY) {
+                             runSettings("com.android.settings.LanguageSettings");
+                         } else if (actionId == ID_VOICEN) {
+                             runSettings("com.android.settings.VoiceInputOutputSettings");
+                         } else if (actionId == ID_ACCESS) {
+                             runSettings("com.android.settings.AccessibilitySettings");
+                         } else if (actionId == ID_DEVELOP) {
+                             runSettings("com.android.settings.DevelopmentSettings");
+                         } else if (actionId == ID_ADWLAUNCHER) {
+                             runLauncherSettings();
+                         }
+                   }
+             });
+
+             quickActionrr.setOnDismissListener(new QuickAction.OnDismissListener() {			
+                   @Override public void onDismiss() {}
+             });
+
+             quickActionmm.setOnActionItemClickListener(new QuickAction.OnActionItemClickListener() {			
+                   @Override
+                   public void onItemClick(QuickAction source, int pos, int actionId) {				
+                       ActionItem actionItem = quickAction.getActionItem(pos);
+                       if (actionId == ID_BACKILL) {
+                           if (mLongPressBackKills) {
+                               CmStatusBarView.simulateKeypress(CmStatusBarView.KEYCODE_VIRTUAL_BACK_LONG);
+                           } else {
+                               Toast toast = Toast.makeText(mContext, "Enable Kill app back button option to use this!",Toast.LENGTH_LONG);
+                               toast.show();
+                           }
+                       } else if (actionId == ID_SCREENSHOT) {
+                           Intent intent = new Intent("android.intent.action.SCREENSHOT");
+                           mContext.sendBroadcast(intent);
+                       } else if (actionId == ID_POWERMENU) {
+                           CmStatusBarView.simulateKeypress(CmStatusBarView.KEYCODE_VIRTUAL_POWER_LONG);
+                       }
+                   }
+              });
+		
+              quickActionmm.setOnDismissListener(new QuickAction.OnDismissListener() {			
+                   @Override public void onDismiss() {}
+              });
     }
 
     @Override
@@ -2047,9 +1978,55 @@ public class NavigationBarView extends LinearLayout {
         }
     };
 
+    private void runCMSettings(String what) {
+         Intent intent = new Intent(Intent.ACTION_MAIN);
+         intent.setClassName("com.cyanogenmod.cmparts", what);
+         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+         mContext.startActivity(intent);
+    }
+
+    private void runSettings(String what) {
+         Intent intent = new Intent(Intent.ACTION_MAIN);
+         intent.setClassName("com.android.settings", what);
+         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+         mContext.startActivity(intent);
+    }
+
+    private void runPhoneSettings(String what) {
+         Intent intent = new Intent(Intent.ACTION_MAIN);
+         intent.setClassName("com.android.phone", what);
+         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+         mContext.startActivity(intent);
+    }
+
+    private void runLauncherSettings() {
+       try {
+         Intent intenta = new Intent(Intent.ACTION_MAIN);
+         intenta.setClassName("com.wordpress.chislonchow.legacylauncher", "com.wordpress.chislonchow.legacylauncher.MyLauncherSettings");
+         intenta.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+         mContext.startActivity(intenta);
+       } catch (ActivityNotFoundException ae) {
+          try {
+             Intent intentb = new Intent(Intent.ACTION_MAIN);
+             intentb.setClassName("com.android.launcher", "com.android.launcher.MyLauncherSettings");
+             intentb.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+             mContext.startActivity(intentb);
+          } catch (ActivityNotFoundException ea) {
+
+          }
+       }
+    }
+
     private void runTaskSwitcher() {
         Intent intentx = new Intent(Intent.ACTION_MAIN);
         intentx.setClassName("com.cyanmobile.TaskSwitcher", "com.cyanmobile.TaskSwitcher.TaskSwitcherMainActivity");
+        intentx.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        mContext.startActivity(intentx);
+    }
+
+    private void runTaskManager() {
+        Intent intentx = new Intent(Intent.ACTION_MAIN);
+        intentx.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
         intentx.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
         mContext.startActivity(intentx);
     }

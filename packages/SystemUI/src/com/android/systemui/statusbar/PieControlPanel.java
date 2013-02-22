@@ -311,7 +311,9 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
         // Note, we'll only get as many as the system currently has - up to 5
         while ((lastAppId == 0) && (looper < tasks.size())) {
             packageName = tasks.get(looper).topActivity.getPackageName();
-            if (!packageName.equals(defaultHomePackage) && !packageName.equals("com.android.systemui")) {
+            if (!packageName.equals("com.android.systemui")
+                       && (!packageName.equals(defaultHomePackage) 
+                         || !packageName.equals("com.wordpress.chislonchow.legacylauncher"))) {
                 lastAppId = tasks.get(looper).id;
             }
             looper++;
