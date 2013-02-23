@@ -62,7 +62,10 @@ public class CpuTile extends QuickSettingsTile {
     @Override
     void onPostCreate() {
         queryForCpuInformation();
-        if (enableFlip()) mHandler.postDelayed(mResetFlip, 5000); //5 second
+        if (enableFlip()) {
+            mHandler.removeCallbacks(mResetFlip);
+            mHandler.postDelayed(mResetFlip, 5000); //5 second
+        }
         super.onPostCreate();
     }
 
@@ -76,16 +79,19 @@ public class CpuTile extends QuickSettingsTile {
         iv.setImageDrawable(mContext.getResources().getDrawable(R.drawable.ic_settings_performance));
     }
 
-    Runnable mResetCpu = new Runnable() {
+    private Runnable mResetCpu = new Runnable() {
         public void run() {
             queryForCpuInformation();
         }
     };
 
-    Runnable mResetFlip = new Runnable() {
+    private Runnable mResetFlip = new Runnable() {
         public void run() {
             flipTile();
-            if (enableFlip()) mHandler.postDelayed(mResetFlip, 5000); //5 second
+            if (enableFlip()) {
+                mHandler.removeCallbacks(mResetFlip);
+                mHandler.postDelayed(mResetFlip, 5000); //5 second
+            }
         }
     };
 
@@ -96,6 +102,7 @@ public class CpuTile extends QuickSettingsTile {
         curCpu = toMHz(readOneLine(FREQ_CUR_FILE));
         mLabel = readOneLine(GOVERNOR);
         updateQuickSettings();
+        mHandler.removeCallbacks(mResetCpu);
         mHandler.postDelayed(mResetCpu, 1000); //1 second
     }
 

@@ -96,6 +96,7 @@ public class DataTraffics extends TextView {
                         | PhoneStateListener.LISTEN_DATA_ACTIVITY);
 
         updateSettings();
+        mHandler.removeCallbacks(mResetData);
         mHandler.postDelayed(mResetData, 1000); //1 second
     }
 
@@ -133,10 +134,11 @@ public class DataTraffics extends TextView {
         }
     }
 
-    Runnable mResetData = new Runnable() {
+    private Runnable mResetData = new Runnable() {
         @Override
         public void run() {
             updateDatas();
+            mHandler.removeCallbacks(mResetData);
             mHandler.postDelayed(mResetData, 1000); //1 second
         }
     };

@@ -177,24 +177,17 @@ public class CmStatusBarView extends StatusBarView {
                       if (mShowHome == 1) {
                         if (DEBUG) Slog.i(TAG, "Home clicked");
                         simulateKeypress(KeyEvent.KEYCODE_HOME);
-                        updateSoftButtons();
-                        mHandler.postDelayed(mResetHome, 70);
                       } else if (mShowHome == 4) {
                         if (DEBUG) Slog.i(TAG, "Menu clicked");
                         simulateKeypress(KeyEvent.KEYCODE_MENU);
-                        updateSoftButtons();
-                        mHandler.postDelayed(mResetHome, 70);
                       } else if (mShowHome == 2) {
                         if (DEBUG) Slog.i(TAG, "Back clicked");
                         simulateKeypress(KeyEvent.KEYCODE_BACK);
-                        updateSoftButtons();
-                        mHandler.postDelayed(mResetHome, 70);
                       } else if (mShowHome == 3) {
                         if (DEBUG) Slog.i(TAG, "Search clicked");
                         simulateKeypress(KeyEvent.KEYCODE_SEARCH);
-                        updateSoftButtons();
-                        mHandler.postDelayed(mResetHome, 70);
                       }
+                      updateSoftButtons();
                     }
                 }
             );
@@ -202,10 +195,7 @@ public class CmStatusBarView extends StatusBarView {
                     new ImageButton.OnLongClickListener() {
                         public boolean onLongClick(View v) {
                           if (mShowHome == 1) {
-                             Intent intent = new Intent(Intent.ACTION_MAIN);
-                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
-                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             mContext.startActivity(intent);
+                             runTaskManager(mContext);
                              return true;
                           } else if (mShowHome == 4) {
                              return false;
@@ -228,24 +218,17 @@ public class CmStatusBarView extends StatusBarView {
                       if (mShowMenu == 1) {
                         if (DEBUG) Slog.i(TAG, "Home clicked");
                         simulateKeypress(KeyEvent.KEYCODE_HOME);
-                        updateSoftButtons();
-                        mHandler.postDelayed(mResetMenu, 70);
                       } else if (mShowMenu == 4) {
                         if (DEBUG) Slog.i(TAG, "Menu clicked");
                         simulateKeypress(KeyEvent.KEYCODE_MENU);
-                        updateSoftButtons();
-                        mHandler.postDelayed(mResetMenu, 70);
                       } else if (mShowMenu == 2) {
                         if (DEBUG) Slog.i(TAG, "Back clicked");
                         simulateKeypress(KeyEvent.KEYCODE_BACK);
-                        updateSoftButtons();
-                        mHandler.postDelayed(mResetMenu, 70);
                       } else if (mShowMenu == 3) {
                         if (DEBUG) Slog.i(TAG, "Search clicked");
                         simulateKeypress(KeyEvent.KEYCODE_SEARCH);
-                        updateSoftButtons();
-                        mHandler.postDelayed(mResetMenu, 70);
                       }
+                      updateSoftButtons();
                     }
                 }
             );
@@ -253,10 +236,7 @@ public class CmStatusBarView extends StatusBarView {
                     new ImageButton.OnLongClickListener() {
                         public boolean onLongClick(View v) {
                           if (mShowMenu == 1) {
-                             Intent intent = new Intent(Intent.ACTION_MAIN);
-                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
-                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             mContext.startActivity(intent);
+                             runTaskManager(mContext);
                              return true;
                           } else if (mShowMenu == 4) {
                              return false;
@@ -279,24 +259,17 @@ public class CmStatusBarView extends StatusBarView {
                       if (mShowBack == 1) {
                         if (DEBUG) Slog.i(TAG, "Home clicked");
                         simulateKeypress(KeyEvent.KEYCODE_HOME);
-                        updateSoftButtons();
-                        mHandler.postDelayed(mResetBack, 70);
                       } else if (mShowBack == 4) {
                         if (DEBUG) Slog.i(TAG, "Menu clicked");
                         simulateKeypress(KeyEvent.KEYCODE_MENU);
-                        updateSoftButtons();
-                        mHandler.postDelayed(mResetBack, 70);
                       } else if (mShowBack == 2) {
                         if (DEBUG) Slog.i(TAG, "Back clicked");
                         simulateKeypress(KeyEvent.KEYCODE_BACK);
-                        updateSoftButtons();
-                        mHandler.postDelayed(mResetBack, 70);
                       } else if (mShowBack == 3) {
                         if (DEBUG) Slog.i(TAG, "Search clicked");
                         simulateKeypress(KeyEvent.KEYCODE_SEARCH);
-                        updateSoftButtons();
-                        mHandler.postDelayed(mResetBack, 70);
                       }
+                      updateSoftButtons();
                     }
                 }
             );
@@ -304,10 +277,7 @@ public class CmStatusBarView extends StatusBarView {
                     new ImageButton.OnLongClickListener() {
                         public boolean onLongClick(View v) {
                           if (mShowBack == 1) {
-                             Intent intent = new Intent(Intent.ACTION_MAIN);
-                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
-                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             mContext.startActivity(intent);
+                             runTaskManager(mContext);
                              return true;
                           } else if (mShowBack == 4) {
                              return false;
@@ -330,24 +300,17 @@ public class CmStatusBarView extends StatusBarView {
                       if (mShowSearch == 1) {
                         if (DEBUG) Slog.i(TAG, "Home clicked");
                         simulateKeypress(KeyEvent.KEYCODE_HOME);
-                        updateSoftButtons();
-                        mHandler.postDelayed(mResetSearch, 70);
                       } else if (mShowSearch == 4) {
                         if (DEBUG) Slog.i(TAG, "Menu clicked");
                         simulateKeypress(KeyEvent.KEYCODE_MENU);
-                        updateSoftButtons();
-                        mHandler.postDelayed(mResetSearch, 70);
                       } else if (mShowSearch == 2) {
                         if (DEBUG) Slog.i(TAG, "Back clicked");
                         simulateKeypress(KeyEvent.KEYCODE_BACK);
-                        updateSoftButtons();
-                        mHandler.postDelayed(mResetSearch, 70);
                       } else if (mShowSearch == 3) {
                         if (DEBUG) Slog.i(TAG, "Search clicked");
                         simulateKeypress(KeyEvent.KEYCODE_SEARCH);
-                        updateSoftButtons();
-                        mHandler.postDelayed(mResetSearch, 70);
                       }
+                      updateSoftButtons();
                     }
                 }
             );
@@ -355,10 +318,7 @@ public class CmStatusBarView extends StatusBarView {
                     new ImageButton.OnLongClickListener() {
                         public boolean onLongClick(View v) {
                           if (mShowSearch == 1) {
-                             Intent intent = new Intent(Intent.ACTION_MAIN);
-                             intent.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
-                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                             mContext.startActivity(intent);
+                             runTaskManager(mContext);
                              return true;
                           } else if (mShowSearch == 4) {
                              return false;
@@ -634,8 +594,7 @@ public class CmStatusBarView extends StatusBarView {
         }
     };
 
-    private boolean isStillActive(RunningAppProcessInfo process, ComponentName activity)
-    {
+    private boolean isStillActive(RunningAppProcessInfo process, ComponentName activity) {
         // activity can be null in cases, where one app starts another. for example, astro
         // starting rock player when a movie file was clicked. we dont have an activity then,
         // but the package exits as soon as back is hit. so we can ignore the activity
@@ -662,7 +621,7 @@ public class CmStatusBarView extends StatusBarView {
         return false;
     }
 
-    private ComponentName getActivityForApp(RunningAppProcessInfo target){
+    private ComponentName getActivityForApp(RunningAppProcessInfo target) {
         ComponentName result = null;
         ActivityManager.RunningTaskInfo info;
 
@@ -704,8 +663,7 @@ public class CmStatusBarView extends StatusBarView {
         return result;
     }
 
-    private void onFullscreenAttempt()
-    {
+    private void onFullscreenAttempt() {
         if (mShowQuickNa || (mShowSearch != 0) || (mShowBack != 0) || (mShowMenu != 0) || (mShowHome != 0)) {
             mSeperator5.setVisibility(View.VISIBLE);
         }
@@ -799,9 +757,16 @@ public class CmStatusBarView extends StatusBarView {
             mHideButton.setBackgroundResource(R.drawable.ic_statusbar_hide_top);
             mEdgeRight.setBackgroundResource(R.drawable.ic_statusbar_edge_left_top);
         }
+        mHandler.removeCallbacks(mResetHome);
         mHandler.postDelayed(mResetHome, 10);
+
+        mHandler.removeCallbacks(mResetMenu);
         mHandler.postDelayed(mResetMenu, 10);
+
+        mHandler.removeCallbacks(mResetBack);
         mHandler.postDelayed(mResetBack, 10);
+
+        mHandler.removeCallbacks(mResetSearch);
         mHandler.postDelayed(mResetSearch, 10);
     }
 
@@ -826,30 +791,96 @@ public class CmStatusBarView extends StatusBarView {
         return ret;
     }
 
-    private void runCustomAppSearch() {
-        // start custom app
-        boolean mCustomLongSearchAppToggle = (Settings.System.getInt(mContext.getContentResolver(),
-               Settings.System.USE_CUSTOM_LONG_SEARCH_APP_TOGGLE, 0) == 1);
+    public static void runTaskManager(Context context) {
+        Intent intentx = new Intent(Intent.ACTION_MAIN);
+        intentx.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
+        intentx.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        context.startActivity(intentx);
+    }
 
-        if (mCustomLongSearchAppToggle) {
-              runCustomApp(Settings.System.getString(mContext.getContentResolver(),
-                      Settings.System.USE_CUSTOM_LONG_SEARCH_APP_ACTIVITY));
+    private void runCustomAppSearch() {
+        if (Settings.System.getInt(mContext.getContentResolver(),
+               Settings.System.USE_CUSTOM_LONG_SEARCH_APP_TOGGLE, 0) == 1) {
+              runCustomApp((Settings.System.getString(mContext.getContentResolver(),
+                      Settings.System.USE_CUSTOM_LONG_SEARCH_APP_ACTIVITY)), mContext);
         }
     }
 
-    private void runCustomApp(String uri) {
+    public static void runCustomApp(String uri, Context context) {
         if (uri != null) {
             try {
                 Intent i = Intent.parseUri(uri, 0);
                 i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                         | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-                mContext.startActivity(i);
+                context.startActivity(i);
             } catch (URISyntaxException e) {
 
             } catch (ActivityNotFoundException e) {
 
             }
         }
+    }
+
+    public static void toggleRecentApps(Context context) {
+        Intent intentx = new Intent(Intent.ACTION_MAIN);
+        intentx.setClassName("com.cyanmobile.TaskSwitcher", "com.cyanmobile.TaskSwitcher.TaskSwitcherMainActivity");
+        intentx.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        context.startActivity(intentx);
+    }
+
+    public static void toggleSettingsApps(Context context) {
+        Intent intenty = new Intent(android.provider.Settings.ACTION_SETTINGS);
+        intenty.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        context.startActivity(intenty);
+    }
+
+    public static void togglePowerMenu(Context context) {
+        Intent intentw = new Intent(Intent.ACTION_POWERMENU);
+        context.sendBroadcast(intentw);
+    }
+
+    public static void toggleScreenshot(Context context) {
+        Intent intentz = new Intent("android.intent.action.SCREENSHOT");
+        context.sendBroadcast(intentz);
+    }
+
+    public static void runCMSettings(String what, Context context) {
+         Intent intent = new Intent(Intent.ACTION_MAIN);
+         intent.setClassName("com.cyanogenmod.cmparts", what);
+         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+         context.startActivity(intent);
+    }
+
+    public static void runSettings(String what, Context context) {
+         Intent intent = new Intent(Intent.ACTION_MAIN);
+         intent.setClassName("com.android.settings", what);
+         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+         context.startActivity(intent);
+    }
+
+    public static void runPhoneSettings(String what, Context context) {
+         Intent intent = new Intent(Intent.ACTION_MAIN);
+         intent.setClassName("com.android.phone", what);
+         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+         context.startActivity(intent);
+    }
+
+    public static void runLauncherSettings(Context context) {
+       try {
+         Intent intenta = new Intent(Intent.ACTION_MAIN);
+         intenta.setClassName("com.wordpress.chislonchow.legacylauncher", "com.wordpress.chislonchow.legacylauncher.MyLauncherSettings");
+         intenta.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+         context.startActivity(intenta);
+       } catch (ActivityNotFoundException ae) {
+          try {
+             Intent intentb = new Intent(Intent.ACTION_MAIN);
+             intentb.setClassName("com.android.launcher", "com.android.launcher.MyLauncherSettings");
+             intentb.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+             context.startActivity(intentb);
+          } catch (ActivityNotFoundException ea) {
+
+          }
+       }
     }
 
     private Runnable mResetHome = new Runnable() {

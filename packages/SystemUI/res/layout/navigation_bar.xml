@@ -46,13 +46,12 @@
         />
     </RelativeLayout>
 
+    <!-- navigation controls -->
     <LinearLayout android:id="@+id/navbuttons"
 	  android:layout_width="match_parent"
 	  android:layout_height="match_parent"
           android:layout_centerInParent="true"
 	  android:orientation="horizontal">
-
-        <!-- navigation controls -->
         <com.android.systemui.statusbar.navbar.KeyButtonView android:id="@+id/menu"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -109,6 +108,49 @@
             android:background="@drawable/ic_sysbar_nihil"
             systemui:glowBackground="@drawable/ic_sysbar_highlight"
             />
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/lights_out"
+	  android:layout_width="match_parent"
+	  android:layout_height="match_parent"
+          android:layout_centerInParent="true"
+	  android:orientation="horizontal"
+          android:visibility="gone" >
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="center"
+            android:layout_weight="1"
+            android:background="@drawable/ic_sysbar_nihil"
+            android:src="@drawable/ic_sysbar_lights_out_dot_small" />
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="center"
+            android:layout_weight="1"
+            android:background="@drawable/ic_sysbar_nihil"
+            android:src="@drawable/ic_sysbar_lights_out_dot_large" />
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="center"
+            android:layout_weight="1"
+            android:background="@drawable/ic_sysbar_nihil"
+            android:src="@drawable/ic_sysbar_lights_out_dot_large" />
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="center"
+            android:layout_weight="1"
+            android:background="@drawable/ic_sysbar_nihil"
+            android:src="@drawable/ic_sysbar_lights_out_dot_large" />
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="center"
+            android:layout_weight="1"
+            android:background="@drawable/ic_sysbar_nihil"
+            android:src="@drawable/ic_sysbar_lights_out_dot_small" />
     </LinearLayout>
 
     <RelativeLayout

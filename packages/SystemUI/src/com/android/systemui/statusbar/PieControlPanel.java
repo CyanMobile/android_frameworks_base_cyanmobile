@@ -238,59 +238,24 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
         } else if (buttonName.equals(PieControl.MENU_BUTTON)) {
             CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_MENU);
         } else if (buttonName.equals(PieControl.RECENT_BUTTON)) {
-            toggleRecentApps();
+            CmStatusBarView.toggleRecentApps(mContext);
         } else if (buttonName.equals(PieControl.SEARCH_BUTTON)) {
             CmStatusBarView.simulateKeypress(KeyEvent.KEYCODE_SEARCH);
         } else if (buttonName.equals(PieControl.SCREEN_BUTTON)) {
-            toggleScreenshot();
+            CmStatusBarView.toggleScreenshot(mContext);
         } else if (buttonName.equals(PieControl.POWER_BUTTON)) {
-            togglePowerMenu();
+            CmStatusBarView.togglePowerMenu(mContext);
         } else if (buttonName.equals(PieControl.LASTAPP_BUTTON)) {
             toggleLastApp();
         } else if (buttonName.equals(PieControl.SETTING_BUTTON)) {
-            toggleSettingsApps();
+            CmStatusBarView.toggleSettingsApps(mContext);
         } else if (buttonName.equals(PieControl.CLEARALL_BUTTON)) {
             mService.toggleClearNotif();
         } else if (buttonName.equals(PieControl.FAKE_BUTTON)) {
             // do nothing
         } else {
-            runCustomApp(buttonName);
+            CmStatusBarView.runCustomApp(buttonName, mContext);
         }
-    }
-
-    private void runCustomApp(String uri) {
-        if (uri != null) {
-            try {
-                Intent i = Intent.parseUri(uri, 0);
-                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-                mContext.startActivity(i);
-            } catch (URISyntaxException e) {
-            } catch (ActivityNotFoundException e) {
-            }
-        }
-    }
-
-    private void toggleRecentApps() {
-        Intent intentx = new Intent(Intent.ACTION_MAIN);
-        intentx.setClassName("com.cyanmobile.TaskSwitcher", "com.cyanmobile.TaskSwitcher.TaskSwitcherMainActivity");
-        intentx.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-        mContext.startActivity(intentx);
-    }
-
-    private void toggleSettingsApps() {
-        Intent intenty = new Intent(android.provider.Settings.ACTION_SETTINGS);
-        intenty.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-        mContext.startActivity(intenty);
-    }
-
-    private void togglePowerMenu() {
-        Intent intentw = new Intent(Intent.ACTION_POWERMENU);
-        mContext.sendBroadcast(intentw);
-    }
-
-    private void toggleScreenshot() {
-        Intent intentz = new Intent("android.intent.action.SCREENSHOT");
-        mContext.sendBroadcast(intentz);
     }
 
     private void toggleLastApp() {

@@ -254,6 +254,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     // Pie controls
     public PieControlPanel mPieControlPanel;
+    private PieStatusPanel mPieStatusPanel;
     public View mPieControlsTrigger;
     public View mContainer;
     private int mIndex;
@@ -2214,6 +2215,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     public void animateCollapse() {
         toggleHideQwikWidgets();
         toggleHideRingPanel();
+        if (mPieControlPanel != null) {
+            mPieStatusPanel.hidePanels(true);
+        }
         if (SPEW) {
             Slog.d(TAG, "animateCollapse(): mExpanded=" + mExpanded
                     + " mExpandedVisible=" + mExpandedVisible
@@ -3231,10 +3235,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     toggleNotif();
                 }
               } else {
-                Intent intent = new Intent(Intent.ACTION_MAIN);
-                intent.setClassName("com.android.settings", "com.android.settings.MainSettings");
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                v.getContext().startActivity(intent);
+                CmStatusBarView.toggleSettingsApps(mContext);
                 animateCollapse();
               }
               mHandler.postDelayed(new Runnable() {
@@ -3257,10 +3258,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private View.OnLongClickListener mAvalMemLayoutTaskListener = new View.OnLongClickListener() {
         @Override
         public boolean onLongClick(View v) {
-             Intent intentx = new Intent(Intent.ACTION_MAIN);
-             intentx.setClassName("com.android.tmanager", "com.android.tmanager.TaskManagerActivity");
-             intentx.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-             mContext.startActivity(intentx);
+             CmStatusBarView.runTaskManager(mContext);
              animateCollapse();
              return true;
         }
@@ -3533,8 +3531,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     public void updatePieControls() {
-        if (mPieControlsTrigger != null) WindowManagerImpl.getDefault().removeView(mPieControlsTrigger);
-        if (mPieControlPanel != null)  WindowManagerImpl.getDefault().removeView(mPieControlPanel);
+        if (mPieControlsTrigger != null) {
+            WindowManagerImpl.getDefault().removeView(mPieControlsTrigger);
+        }
+        if (mPieControlPanel != null) {
+            WindowManagerImpl.getDefault().removeView(mPieControlPanel);
+        }
         attachPies();
     }
 

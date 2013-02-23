@@ -130,6 +130,7 @@ public class BrightnessTile extends QuickSettingsTile implements BrightnessState
 
     private void dismissBrightnessDialog(int timeout) {
         if (mBrightnessDialog != null) {
+            mHandler.removeCallbacks(mDismissBrightnessDialogRunnable);
             mHandler.postDelayed(mDismissBrightnessDialogRunnable, timeout);
         }
     }

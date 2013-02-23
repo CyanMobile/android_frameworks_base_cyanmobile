@@ -57,10 +57,13 @@ public class KeyButtonView extends ImageView {
 
     private int mOverColor;
     private int mGlowingColor;
+    private int mShowAnimate;
+    private boolean mDoAnimate;
     private boolean mOverColorEnable;
     private boolean mPressed;
     private boolean mAttached;
     private SettingsObserver mSettingsObserver;
+    NavigationBarView mNavigationBarView;
 
     private Runnable mCheckLongPress = new Runnable() {
         @Override
@@ -69,6 +72,13 @@ public class KeyButtonView extends ImageView {
                 mPressed = false;
                 performLongClick();
             }
+        }
+    };
+
+    private Runnable mLightsOutMode = new Runnable() {
+        @Override
+        public void run() {
+            mNavigationBarView.setLowProfile(true);
         }
     };
 
@@ -85,6 +95,8 @@ public class KeyButtonView extends ImageView {
                     Settings.System.getUriFor(Settings.System.OVERICON_COLOR), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.NAVBAR_GLOWING_COLOR), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.NAVI_BUTTONS_ANIMATE), false, this);
             onChange(true);
         }
 
@@ -92,9 +104,15 @@ public class KeyButtonView extends ImageView {
         public void onChange(boolean selfChange) {
             ContentResolver resolver = mContext.getContentResolver();
             int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
-            mOverColorEnable = (Settings.System.getInt(resolver, Settings.System.ENABLE_OVERICON_COLOR, 1) == 1);
+            mOverColorEnable = Settings.System.getInt(resolver, Settings.System.ENABLE_OVERICON_COLOR, 1) == 1;
             mOverColor = Settings.System.getInt(resolver, Settings.System.OVERICON_COLOR, defValuesColor);
             mGlowingColor = Settings.System.getInt(resolver, Settings.System.NAVBAR_GLOWING_COLOR, defValuesColor);
+            int valAnimate = Settings.System.getInt(resolver, Settings.System.NAVI_BUTTONS_ANIMATE, 20000);
+            if (valAnimate > 3) {
+                mShowAnimate = (valAnimate * 12);
+            } else {
+                mShowAnimate = (1000 * 12);
+            }
             updateButtonColor();
             updateGlowColor();
         }
@@ -339,6 +357,8 @@ public class KeyButtonView extends ImageView {
                 if (mPressed) {
                     performClick();
                     mPressed = false;
+                    removeCallbacks(mLightsOutMode);
+                    postDelayed(mLightsOutMode, mShowAnimate);
                 }
                 break;
         }

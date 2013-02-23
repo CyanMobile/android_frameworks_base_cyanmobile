@@ -38,6 +38,7 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 import com.android.internal.telephony.Phone;
+import com.android.systemui.statusbar.CmStatusBarView;
 import com.android.systemui.R;
 
 public class QuickSettingsPopupWindow extends QuickSettings implements OnClickListener, CompoundButton.OnCheckedChangeListener {
@@ -130,45 +131,30 @@ public class QuickSettingsPopupWindow extends QuickSettings implements OnClickLi
 
         switch(tv.getId()) {
             case R.id.tv_wifi:
-                //Log.d(TAG, "Wifi Settings intent launched");
-                intentSetting.setClassName("com.android.settings", "com.android.settings.wifi.WifiSettings");
-                intentSetting.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                v.getContext().startActivity(intentSetting);
+                CmStatusBarView.runSettings("com.android.settings.wifi.WifiSettings", v.getContext());
             break;
             case R.id.tv_bluetooth:
-                //Log.d(TAG, "Bluetooth Settings intent launched");
-                intentSetting.setClassName("com.android.settings", "com.android.settings.bluetooth.BluetoothSettings");
-                intentSetting.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                v.getContext().startActivity(intentSetting);
+                CmStatusBarView.runSettings("com.android.settings.bluetooth.BluetoothSettings", v.getContext());
             break;
             case R.id.tv_gps:
-                //Log.d(TAG, "GPS Settings intent launched");
-                intentSetting.setClassName("com.android.settings", "com.android.settings.SecuritySettings");
-                intentSetting.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                v.getContext().startActivity(intentSetting);
+                CmStatusBarView.runSettings("com.android.settings.SecuritySettings", v.getContext());
             break;
             case R.id.tv_sync:
-                //Log.d(TAG, "Sync Settings intent launched");
                 Intent intenta = new Intent("android.settings.SYNC_SETTINGS");
                 intenta.addCategory(Intent.CATEGORY_DEFAULT);
                 intenta.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 v.getContext().startActivity(intenta);
             break;
             case R.id.tv_airpl:
-                //Log.d(TAG, "AIRPLANE Settings intent launched");
                 Intent intentu = new Intent("android.settings.AIRPLANE_MODE_SETTINGS");
                 intentu.addCategory(Intent.CATEGORY_DEFAULT);
                 intentu.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 v.getContext().startActivity(intentu);
             break;
             case R.id.tv_mbldata:
-                //Log.d(TAG, "mobiledata Settings intent launched");
-                intentSetting.setClassName("com.android.phone", "com.android.phone.Settings");
-                intentSetting.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                v.getContext().startActivity(intentSetting);
+                CmStatusBarView.runPhoneSettings("com.android.phone.Settings", v.getContext());
             break;
             case R.id.tv_autorot:
-                //Log.d(TAG, "AUTOROTATE Settings intent launched");
                 Intent intentur = new Intent("android.settings.DISPLAY_SETTINGS");
                 intentur.addCategory(Intent.CATEGORY_DEFAULT);
                 intentur.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
