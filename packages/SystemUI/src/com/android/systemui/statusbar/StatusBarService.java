@@ -490,8 +490,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QUICK_SETTINGS_TILES), false, this);
             resolver.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.PIE_GRAVITY), false, this);
-            resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.PIE_TRIGGER), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.PIE_CONTROL_ENABLE), false, this);
@@ -662,6 +660,15 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mPiePolicy = new PiePolicy(this);
 
         mContext = getApplicationContext();
+
+        mContext.getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.PIE_GRAVITY), false, new ContentObserver(new Handler()) {
+                    @Override
+                    public void onChange(boolean selfChange) {
+                        if (Settings.System.getInt(mContext.getContentResolver(),
+                                Settings.System.PIE_STICK, 0) == 0) {
+                            updatePieControls();
+                        }}});
 
         // set up settings observer
         SettingsObserver settingsObserver = new SettingsObserver(mHandler);
@@ -3575,6 +3582,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
 
         if ((mStatusBarTab) && (mQS != null)) mQS.updateResources();
+        if (mPieControlPanel != null) mPieControlPanel.configurationChanges();
 
         if (false) Slog.v(TAG, "updateResources");
     }

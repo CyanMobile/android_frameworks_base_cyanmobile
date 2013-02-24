@@ -32,6 +32,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Surface;
 import android.view.WindowManager;
 import android.view.WindowManagerImpl;
 import android.widget.FrameLayout;
@@ -68,6 +69,7 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
     public PieControlPanel(Context context, AttributeSet attrs) {
         super(context, attrs);
         mContext = context;
+        mDisplay = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         mPieControl = new PieControl(context, this);
         mPieControl.setOnNavButtonPressedListener(this);
         mOrientation = Gravity.BOTTOM;
@@ -102,9 +104,40 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
         super.onAttachedToWindow();
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
+    private static int[] gravityArray = {Gravity.BOTTOM, Gravity.LEFT, Gravity.TOP, Gravity.RIGHT, Gravity.BOTTOM, Gravity.LEFT};
+    public static int findGravityOffset(int gravity) {    
+        for (int gravityIndex = 1; gravityIndex < gravityArray.length - 2; gravityIndex++) {	
+            if (gravity == gravityArray[gravityIndex])
+                return gravityIndex;
+        }	
+        return 4;
+    }
+
+    public void configurationChanges() {
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.PIE_STICK, 0) == 1) {
+
+            // Get original offset
+            int gravityIndex = findGravityOffset(convertPieGravitytoGravity(
+                    Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.PIE_GRAVITY, 3)));
+
+            // Orient Pie to that place
+            reorient(gravityArray[gravityIndex], false);
+
+            // Now re-orient it for landscape orientation
+            switch(mDisplay.getRotation()) {
+                case Surface.ROTATION_270:
+                    reorient(gravityArray[gravityIndex + 1], false);
+                    break;
+                case Surface.ROTATION_90:
+                    reorient(gravityArray[gravityIndex - 1], false);
+                    break;
+            }
+        }
+
         show(false);
+        if (mPieControl != null) mPieControl.configurationChanges();
     }
 
     public void init(Handler h, StatusBarService mServices, View trigger, int orientation) {
@@ -132,27 +165,51 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
         }
     }
 
-    public void reorient(int orientation) {
+    public static int convertGravitytoPieGravity(int gravity) {
+        switch(gravity) {
+            case Gravity.LEFT:  return 0;
+            case Gravity.TOP:   return 1;
+            case Gravity.RIGHT: return 2;
+            default:            return 3;
+        }
+    }
+
+    public static int convertPieGravitytoGravity(int gravity) {
+        switch(gravity) {
+            case 0:  return Gravity.LEFT;
+            case 1:  return Gravity.TOP;
+            case 2:  return Gravity.RIGHT;	
+            default: return Gravity.BOTTOM;
+        }
+    }
+
+    public void reorient(int orientation, boolean storeSetting) {
         mOrientation = orientation;
         WindowManagerImpl.getDefault().removeView(mTrigger);
         WindowManagerImpl.getDefault().addView(mTrigger, StatusBarService.getPieTriggerLayoutParams(mContext, mOrientation));
         show(mShowing);
 
-        int pieGravity = 3;
-        switch(mOrientation) {
-            case Gravity.LEFT:
-                pieGravity = 0;
-                break;
-            case Gravity.TOP:
-                pieGravity = 1;
-                break;
-            case Gravity.RIGHT:
-                pieGravity = 2;
-                break;
-        }
+        if (storeSetting) {
+            int gravityOffset = mOrientation;
+            if (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.PIE_STICK, 0) == 1) {
 
-        Settings.System.putInt(mContext.getContentResolver(),
-            Settings.System.PIE_GRAVITY, pieGravity);
+                gravityOffset = findGravityOffset(mOrientation);
+                switch(mDisplay.getRotation()) {
+                    case Surface.ROTATION_270:
+                        gravityOffset = gravityArray[gravityOffset - 1];
+                        break;
+                    case Surface.ROTATION_90:
+                        gravityOffset = gravityArray[gravityOffset + 1];
+                        break;
+                    default:
+                        gravityOffset = mOrientation;
+                        break;
+                }
+            }
+            Settings.System.putInt(mContext.getContentResolver(),
+                    Settings.System.PIE_GRAVITY, convertGravitytoPieGravity(gravityOffset));
+        }
     }
 
     @Override
@@ -184,7 +241,6 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
         mShowing = true;
         setVisibility(View.VISIBLE);
         Point outSize = new Point(0,0);
-        mDisplay = ((WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         mDisplay.getMetrics(mDisplayMetrics);
         mWidth = mDisplayMetrics.widthPixels;
         mHeight = mDisplayMetrics.heightPixels;

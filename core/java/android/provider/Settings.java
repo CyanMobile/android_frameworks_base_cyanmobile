@@ -2358,6 +2358,12 @@ public final class Settings {
         public static final String PIE_GAP = "pie_gap";
 
         /**
+         * Pie will not rotate. Should default to 0 (no, rotate)
+         * @hide	
+         */
+        public static final String PIE_STICK = "pie_stick";
+
+        /**
          * @hide
          */
         public static final String PIE_BUTTON_MENU = "pie_button_menu";
@@ -4753,6 +4759,7 @@ public final class Settings {
             PIE_OUTLINE_COLOR,
             PIE_TRIGGER,
             PIE_GAP,
+            PIE_STICK,
             NAVBAR_GLOWING_COLOR,
             USE_CUSTOM_QUICK_APP_TOGGLE,
             USE_CUSTOM_HOME_APP_TOGGLE,

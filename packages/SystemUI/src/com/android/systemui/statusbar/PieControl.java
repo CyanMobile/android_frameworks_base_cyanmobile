@@ -842,6 +842,10 @@ public class PieControl implements OnClickListener {
         return new PieItem(view, mContext, l, name, lesser);
     }
 
+    public void configurationChanges() {
+        if (mPie != null) mPie.configurationChanges();
+    }
+
     public void show(boolean show) {
         mPie.show(show);
     }
