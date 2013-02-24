@@ -10,6 +10,8 @@ import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.android.systemui.statusbar.CmStatusBarView;
+
 public class WifiApButton extends PowerButton {
 
     private static final StateTracker sWifiApState = new WifiApStateTracker();
@@ -130,12 +132,7 @@ public class WifiApButton extends PowerButton {
 
     @Override
     protected boolean handleLongClick(Context context) {
-        // it may be better to make an Intent action for the WifiAp settings
-        // we may want to look at that option later
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.setClassName("com.android.settings", "com.android.settings.TetherSettings");
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
+        CmStatusBarView.runSettings("com.android.settings.TetherSettings", context);
         return true;
     }
 

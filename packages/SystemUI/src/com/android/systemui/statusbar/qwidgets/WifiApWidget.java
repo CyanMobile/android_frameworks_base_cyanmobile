@@ -9,6 +9,8 @@ import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.android.systemui.statusbar.CmStatusBarView;
+
 public class WifiApWidget extends ToggleOnly {
 
     private static final StateTracker sWifiApState = new WifiApStateTracker();
@@ -26,10 +28,7 @@ public class WifiApWidget extends ToggleOnly {
 
     @Override
     protected boolean handleLongClick() {
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.setClassName("com.android.settings", "com.android.settings.TetherSettings");
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mWidgetView.getContext().startActivity(intent);
+        CmStatusBarView.runSettings("com.android.settings.TetherSettings", mWidgetView.getContext());
         return true;
     }
 

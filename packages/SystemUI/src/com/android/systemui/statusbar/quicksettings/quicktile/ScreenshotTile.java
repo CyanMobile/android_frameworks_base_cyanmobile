@@ -11,6 +11,7 @@ import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 
 import com.android.systemui.R;
+import com.android.systemui.statusbar.CmStatusBarView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 
@@ -28,16 +29,14 @@ public class ScreenshotTile extends QuickSettingsTile {
         mOnClick = new OnClickListener() {
             @Override
             public void onClick(View v) {
-                 Intent intent = new Intent("android.intent.action.SCREENSHOT");
-                 mContext.sendBroadcast(intent);
+                 CmStatusBarView.toggleScreenshot(mContext);
             }
         };
 
         mOnLongClick = new OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Intent intent = new Intent("android.intent.action.SCREENSHOT");
-                mContext.sendBroadcast(intent);
+                CmStatusBarView.toggleScreenshot(mContext);
                 startCollapseActivity();
                 return true;
             }

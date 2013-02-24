@@ -92,15 +92,15 @@ public class QuickSettingsTile implements OnClickListener {
     }
 
     void startSettingsActivity(Intent intent) {
-        updateHapticFeedbackSetting();
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         mContext.startActivity(intent);
-        provideHapticFeedback(mLongClickPattern);
         startCollapseActivity();
     }
 
     void startCollapseActivity() {
         mService.animateCollapse();
+        updateHapticFeedbackSetting();
+        provideHapticFeedback(mLongClickPattern);
     }
 
     private void updateHapticFeedbackSetting() {
@@ -157,14 +157,13 @@ public class QuickSettingsTile implements OnClickListener {
 
     @Override
     public final void onClick(View v) {
-        updateHapticFeedbackSetting();
         mOnClick.onClick(v);
         flipTile();
-        provideHapticFeedback(mClickPattern);
-        ContentResolver resolver = mContext.getContentResolver();
-        boolean shouldCollapse = Settings.System.getInt(resolver, Settings.System.EXPANDED_HIDE_ONCHANGE, 0) == 1;
-        if (shouldCollapse) {
+        if (Settings.System.getInt(mContext.getContentResolver(), Settings.System.EXPANDED_HIDE_ONCHANGE, 0) == 1) {
             startCollapseActivity();
+        } else {
+            updateHapticFeedbackSetting();
+            provideHapticFeedback(mClickPattern);
         }
     }
 

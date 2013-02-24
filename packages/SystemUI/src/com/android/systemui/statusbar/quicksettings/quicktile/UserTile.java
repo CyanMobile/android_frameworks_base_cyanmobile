@@ -17,6 +17,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.android.systemui.R;
+import com.android.systemui.statusbar.CmStatusBarView;
 import com.android.systemui.statusbar.cmcustom.SmsHelper;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
@@ -42,9 +43,8 @@ public class UserTile extends QuickSettingsTile {
         mOnLongClick = new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_MAIN);
-                intent.setClassName("com.cyanogenmod.cmparts", "com.cyanogenmod.cmparts.activities.TileViewActivity");
-                startSettingsActivity(intent);
+                CmStatusBarView.runCMSettings("com.cyanogenmod.cmparts.activities.TileViewActivity", mContext);
+                startCollapseActivity();
                 return true;
             }
         };

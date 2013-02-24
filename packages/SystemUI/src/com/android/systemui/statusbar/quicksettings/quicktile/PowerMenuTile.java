@@ -22,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 
 import com.android.systemui.R;
+import com.android.systemui.statusbar.CmStatusBarView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 
@@ -37,9 +38,8 @@ public class PowerMenuTile extends QuickSettingsTile {
         mOnClick = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                CmStatusBarView.togglePowerMenu(mContext);
                 startCollapseActivity();
-                Intent intent=new Intent(Intent.ACTION_POWERMENU);
-                mContext.sendBroadcast(intent);
             }
         };
         mOnLongClick = new View.OnLongClickListener() {

@@ -29,6 +29,7 @@ import android.view.WindowManager;
 
 import com.android.server.ProfileManagerService;
 import com.android.systemui.R;
+import com.android.systemui.statusbar.CmStatusBarView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 
@@ -61,9 +62,8 @@ public class ProfileTile extends QuickSettingsTile {
         mOnLongClick = new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_MAIN);
-                intent.setClassName("com.android.settings", "com.android.settings.ProfileList");
-                startSettingsActivity(intent);
+                CmStatusBarView.runSettings("com.android.settings.ProfileList", mContext);
+                startCollapseActivity();
                 return true;
             }
         };

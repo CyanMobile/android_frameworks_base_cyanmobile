@@ -11,6 +11,7 @@ import android.provider.Settings;
 import android.util.Log;
 
 import com.android.internal.telephony.Phone;
+import com.android.systemui.statusbar.CmStatusBarView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -119,12 +120,7 @@ public class NetworkModeButton extends PowerButton{
 
     @Override
     protected boolean handleLongClick(Context context) {
-        // it may be better to make an Intent action for this or find the appropriate one
-        // we may want to look at that option later
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.setClassName("com.android.phone", "com.android.phone.Settings");
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
+        CmStatusBarView.runPhoneSettings("com.android.phone.Settings", context);
         return true;
     }
 

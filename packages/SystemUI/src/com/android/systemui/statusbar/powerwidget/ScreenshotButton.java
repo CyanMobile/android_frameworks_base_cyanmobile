@@ -9,6 +9,8 @@ import android.provider.Settings;
 import android.os.PowerManager;
 import android.os.SystemClock;
 
+import com.android.systemui.statusbar.CmStatusBarView;
+
 public class ScreenshotButton extends PowerButton {
     public ScreenshotButton() { mType = BUTTON_SCREENSHOT; }
 
@@ -20,14 +22,12 @@ public class ScreenshotButton extends PowerButton {
 
     @Override
     protected void toggleState(Context context) {
-        Intent intent = new Intent("android.intent.action.SCREENSHOT");
-        context.sendBroadcast(intent);
+        CmStatusBarView.toggleScreenshot(context);
     }
 
     @Override
     protected boolean handleLongClick(Context context) {
-        Intent intent = new Intent("android.intent.action.SCREENSHOT");
-        context.sendBroadcast(intent);
+        CmStatusBarView.toggleScreenshot(context);
 	return true;
     }
 }

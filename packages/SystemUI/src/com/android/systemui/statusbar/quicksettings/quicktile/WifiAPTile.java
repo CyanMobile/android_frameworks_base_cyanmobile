@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 
 import com.android.systemui.R;
+import com.android.systemui.statusbar.CmStatusBarView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
 
@@ -44,9 +45,8 @@ public class WifiAPTile extends QuickSettingsTile {
         mOnLongClick = new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_MAIN);
-                intent.setClassName("com.android.settings", "com.android.settings.TetherSettings");
-                startSettingsActivity(intent);
+                CmStatusBarView.runSettings("com.android.settings.TetherSettings", mContext);
+                startCollapseActivity();
                 return true;
             }
         };

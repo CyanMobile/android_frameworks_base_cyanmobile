@@ -254,7 +254,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     // Pie controls
     public PieControlPanel mPieControlPanel;
-    private PieStatusPanel mPieStatusPanel;
     public View mPieControlsTrigger;
     public View mContainer;
     private int mIndex;
@@ -2215,9 +2214,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     public void animateCollapse() {
         toggleHideQwikWidgets();
         toggleHideRingPanel();
-        if (mPieControlPanel != null) {
-            mPieStatusPanel.hidePanels(true);
-        }
         if (SPEW) {
             Slog.d(TAG, "animateCollapse(): mExpanded=" + mExpanded
                     + " mExpandedVisible=" + mExpandedVisible
@@ -3588,6 +3584,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     //
 
     public void postStartTracing() {
+        mHandler.removeCallbacks(mStartTracing);
         mHandler.postDelayed(mStartTracing, 3000);
     }
 
@@ -3606,6 +3603,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             SystemClock.sleep(250);
             Slog.d(TAG, "startTracing");
             android.os.Debug.startMethodTracing("/data/statusbar-traces/trace");
+            mHandler.removeCallbacks(mStopTracing);
             mHandler.postDelayed(mStopTracing, 10000);
         }
     };

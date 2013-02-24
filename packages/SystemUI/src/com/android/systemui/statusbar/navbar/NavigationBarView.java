@@ -99,6 +99,7 @@ public class NavigationBarView extends LinearLayout {
     private static final int ID_BACKILL = 28;
     private static final int ID_SCREENSHOT = 29;
     private static final int ID_POWERMENU = 30;
+    private static final int ID_SWITCHAPP = 31;
 
     private QuickAction quickAction;
     private QuickAction quickActionss;
@@ -135,6 +136,7 @@ public class NavigationBarView extends LinearLayout {
     private ActionItem bckItem;
     private ActionItem sscItem;
     private ActionItem pwrItem;
+    private ActionItem swtchItem;
 
     private static final int SWIPE_MIN_DISTANCE = 150;
     private static final int SWIPE_MAX_OFF_PATH = 100;
@@ -748,6 +750,7 @@ public class NavigationBarView extends LinearLayout {
         bckItem = new ActionItem(ID_BACKILL, "KillAll app");
         sscItem = new ActionItem(ID_SCREENSHOT, "Screenshots");
         pwrItem = new ActionItem(ID_POWERMENU, "Power menu");
+        swtchItem = new ActionItem(ID_SWITCHAPP, "Switch app");
         quickAction.addActionItem(appItem);
         quickAction.addActionItem(dispItem);
         quickAction.addActionItem(inpItem);
@@ -778,6 +781,7 @@ public class NavigationBarView extends LinearLayout {
         quickActionmm.addActionItem(bckItem);
         quickActionmm.addActionItem(sscItem);
         quickActionmm.addActionItem(pwrItem);
+        quickActionmm.addActionItem(swtchItem);
 
             quickAction.setOnActionItemClickListener(new QuickAction.OnActionItemClickListener() {			
                   @Override
@@ -884,6 +888,8 @@ public class NavigationBarView extends LinearLayout {
                            CmStatusBarView.toggleScreenshot(mContext);
                        } else if (actionId == ID_POWERMENU) {
                            CmStatusBarView.simulateKeypress(CmStatusBarView.KEYCODE_VIRTUAL_POWER_LONG);
+                       } else if (actionId == ID_SWITCHAPP) {
+                           CmStatusBarView.toggleLastApp(mContext);
                        }
                    }
               });

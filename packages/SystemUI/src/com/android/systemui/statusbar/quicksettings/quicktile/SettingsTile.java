@@ -18,7 +18,6 @@ public class SettingsTile extends QuickSettingsTile {
         mLabel = context.getString(R.string.quick_settings_settings_label);
 
         mOnClick = new View.OnClickListener() {
-
             @Override
             public void onClick(View v) {
                 startSettingsActivity(android.provider.Settings.ACTION_SETTINGS);

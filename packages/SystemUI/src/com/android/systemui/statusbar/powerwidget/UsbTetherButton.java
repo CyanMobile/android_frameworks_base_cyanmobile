@@ -12,25 +12,21 @@ import android.net.wifi.WifiManager;
 import android.os.Environment;
 import android.util.Log;
 
+import com.android.systemui.statusbar.CmStatusBarView;
+
 public class UsbTetherButton extends PowerButton {
 
     public UsbTetherButton() { mType = BUTTON_USBAP;}
 
     @Override
     protected boolean handleLongClick(Context context) {
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.setClassName("com.android.settings", "com.android.settings.TetherSettings");
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
+        CmStatusBarView.runSettings("com.android.settings.TetherSettings", context);
         return true;
     }
 
     @Override
     protected void toggleState(Context context) {
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.setClassName("com.android.settings", "com.android.settings.TetherSettings");
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
+        CmStatusBarView.runSettings("com.android.settings.TetherSettings", context);
     }
 
     @Override

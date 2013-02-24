@@ -16,45 +16,29 @@
 
 package com.android.systemui.statusbar;
 
-import android.app.Activity;
-import android.app.ActivityManager;
-import android.content.ActivityNotFoundException;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.PixelFormat;
 import android.os.Handler;
-import android.os.Message;
-import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
-import android.util.Slog;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.KeyEvent;
-import android.view.IWindowManager;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.WindowManagerImpl;
 import android.widget.FrameLayout;
-import android.os.Handler;
-import android.os.RemoteException;
-import android.os.ServiceManager;
 
 import com.android.systemui.R;
 import com.android.systemui.statusbar.NotificationData;
 import com.android.systemui.statusbar.PieControl.OnNavButtonPressedListener;
-
-import java.util.List;
-import java.net.URISyntaxException;
 
 public class PieControlPanel extends FrameLayout implements OnNavButtonPressedListener{
 
@@ -246,7 +230,7 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
         } else if (buttonName.equals(PieControl.POWER_BUTTON)) {
             CmStatusBarView.togglePowerMenu(mContext);
         } else if (buttonName.equals(PieControl.LASTAPP_BUTTON)) {
-            toggleLastApp();
+            CmStatusBarView.toggleLastApp(mContext);
         } else if (buttonName.equals(PieControl.SETTING_BUTTON)) {
             CmStatusBarView.toggleSettingsApps(mContext);
         } else if (buttonName.equals(PieControl.CLEARALL_BUTTON)) {
@@ -258,33 +242,4 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
         }
     }
 
-    private void toggleLastApp() {
-        int lastAppId = 0;
-        int looper = 1;
-        String packageName;
-        final Intent intent = new Intent(Intent.ACTION_MAIN);
-        final ActivityManager am = (ActivityManager) mContext
-                .getSystemService(Activity.ACTIVITY_SERVICE);
-        String defaultHomePackage = "com.android.launcher";
-        intent.addCategory(Intent.CATEGORY_HOME);
-        final ResolveInfo res = mContext.getPackageManager().resolveActivity(intent, 0);
-        if (res.activityInfo != null && !res.activityInfo.packageName.equals("android")) {
-            defaultHomePackage = res.activityInfo.packageName;
-        }
-        List <ActivityManager.RunningTaskInfo> tasks = am.getRunningTasks(5);
-        // lets get enough tasks to find something to switch to
-        // Note, we'll only get as many as the system currently has - up to 5
-        while ((lastAppId == 0) && (looper < tasks.size())) {
-            packageName = tasks.get(looper).topActivity.getPackageName();
-            if (!packageName.equals("com.android.systemui")
-                       && (!packageName.equals(defaultHomePackage) 
-                         || !packageName.equals("com.wordpress.chislonchow.legacylauncher"))) {
-                lastAppId = tasks.get(looper).id;
-            }
-            looper++;
-        }
-        if (lastAppId != 0) {
-            am.moveTaskToFront(lastAppId, am.MOVE_TASK_NO_USER_ACTION);
-        }
-    }
 }

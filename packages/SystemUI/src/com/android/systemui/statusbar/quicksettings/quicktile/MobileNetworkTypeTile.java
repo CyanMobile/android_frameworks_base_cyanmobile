@@ -11,6 +11,7 @@ import android.view.View.OnClickListener;
 
 import com.android.internal.telephony.Phone;
 import com.android.systemui.R;
+import com.android.systemui.statusbar.CmStatusBarView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
 
@@ -93,10 +94,8 @@ public class MobileNetworkTypeTile extends QuickSettingsTile {
         mOnLongClick = new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_MAIN);
-                intent.setClassName("com.android.phone", "com.android.phone.Settings");
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startSettingsActivity(intent);
+                CmStatusBarView.runPhoneSettings("com.android.phone.Settings", mContext);
+                startCollapseActivity();
                 return true;
             }
         };

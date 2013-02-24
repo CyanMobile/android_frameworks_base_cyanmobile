@@ -34,10 +34,7 @@ public class SyncTile extends QuickSettingsTile {
         mOnLongClick = new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Intent intent = new Intent("android.settings.SYNC_SETTINGS");
-                intent.addCategory(Intent.CATEGORY_DEFAULT);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startSettingsActivity(intent);
+                startSettingsActivity("android.settings.SYNC_SETTINGS");
                 return true;
             }
         };
