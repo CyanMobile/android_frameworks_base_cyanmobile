@@ -1975,6 +1975,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         if (mPieControlPanel != null) {
             mPieControlPanel.setNotifNew(notifnew);
         }
+        if (mNavigationBarView != null) {
+            mNavigationBarView.setNotifNew(notifnew);
+        }
     }
 
     private void setAreThereNotifications() {

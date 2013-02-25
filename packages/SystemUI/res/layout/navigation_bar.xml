@@ -116,35 +116,35 @@
           android:layout_centerInParent="true"
 	  android:orientation="horizontal"
           android:visibility="gone" >
-        <ImageView
+        <ImageView android:id="@+id/menu_out"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="center"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
             android:src="@drawable/ic_sysbar_lights_out_dot_small" />
-        <ImageView
+        <ImageView android:id="@+id/home_out"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="center"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
             android:src="@drawable/ic_sysbar_lights_out_dot_large" />
-        <ImageView
+        <ImageView android:id="@+id/quicker_out"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="center"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
             android:src="@drawable/ic_sysbar_lights_out_dot_large" />
-        <ImageView
+        <ImageView android:id="@+id/search_out"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="center"
             android:layout_weight="1"
             android:background="@drawable/ic_sysbar_nihil"
             android:src="@drawable/ic_sysbar_lights_out_dot_large" />
-        <ImageView
+        <ImageView android:id="@+id/back_out"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="center"

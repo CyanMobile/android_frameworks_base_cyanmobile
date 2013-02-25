@@ -45,6 +45,7 @@ import android.view.Surface;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+import android.widget.ImageView;
 import android.content.ContentResolver;
 import android.content.res.Configuration;
 import android.provider.Settings;
@@ -155,6 +156,12 @@ public class NavigationBarView extends LinearLayout {
     private KeyButtonView mVolDownButton;
     private KeyButtonView mQuickButton;
 
+    private ImageView mHomeOutButton;
+    private ImageView mMenuOutButton;
+    private ImageView mBackOutButton;
+    private ImageView mSearchOutButton;
+    private ImageView mQuickOutButton;
+
     private int mNVColor;
     private int mNext;
     private int mPrevious;
@@ -195,8 +202,11 @@ public class NavigationBarView extends LinearLayout {
     private Handler mHandler;
     private boolean mAttached;
     private boolean mLowProfile;
+    private boolean mNotifnew = false;
     private SettingsObserver mSettingsObserver;
     private Context mContext;
+    private int mOverColor;
+    private int isLightFirst = 1;
 
     private class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
@@ -227,6 +237,8 @@ public class NavigationBarView extends LinearLayout {
                     Settings.System.getUriFor(Settings.System.WATCH_IS_NEXT), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.WATCH_IS_PREVIOUS), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.OVERICON_COLOR), false, this);
             onChange(true);
         }
 
@@ -245,6 +257,7 @@ public class NavigationBarView extends LinearLayout {
             mShowAnimate = Settings.System.getInt(resolver, Settings.System.NAVI_BUTTONS_ANIMATE, 20000);
             mNext = Settings.System.getInt(resolver, Settings.System.WATCH_IS_NEXT, 0);
             mPrevious = Settings.System.getInt(resolver, Settings.System.WATCH_IS_PREVIOUS, 1);
+            mOverColor = Settings.System.getInt(resolver, Settings.System.OVERICON_COLOR, defValuesColor);
             updateNaviButtons();
         }
     }
@@ -320,6 +333,12 @@ public class NavigationBarView extends LinearLayout {
             mVolDownButton.mNavigationBarView = this;
             mQuickButton = (KeyButtonView) mNaviBackground.findViewById(R.id.quicker);
             mQuickButton.mNavigationBarView = this;
+
+            mHomeOutButton = (ImageView) mNaviBackground.findViewById(R.id.home_out);
+            mMenuOutButton = (ImageView) mNaviBackground.findViewById(R.id.menu_out);
+            mBackOutButton = (ImageView) mNaviBackground.findViewById(R.id.back_out);
+            mSearchOutButton = (ImageView) mNaviBackground.findViewById(R.id.search_out);
+            mQuickOutButton = (ImageView) mNaviBackground.findViewById(R.id.quicker_out);
 
             mHomeButton.setOnClickListener(new KeyButtonView.OnClickListener() {
 	            @Override
@@ -698,8 +717,6 @@ public class NavigationBarView extends LinearLayout {
 
             // set up settings observer
             mSettingsObserver = new SettingsObserver(mHandler);
-            mHandler.removeCallbacks(mResetNormal);
-            mHandler.postDelayed(mResetNormal, 1000);
         }
     }
 
@@ -931,7 +948,6 @@ public class NavigationBarView extends LinearLayout {
 
         if (mNVShow) {
             mNaviAdd.setVisibility(View.VISIBLE);
-            setLowProfile(mLowProfile, false, true /* force */);
         } else {
             mNaviAdd.setVisibility(View.GONE);
         }
@@ -1318,6 +1334,12 @@ public class NavigationBarView extends LinearLayout {
         mVolDownButton.setVisibility(View.VISIBLE);
         mQuickButton.setVisibility(View.VISIBLE);
 
+        mHomeOutButton.setVisibility(View.VISIBLE);
+        mMenuOutButton.setVisibility(View.VISIBLE);
+        mBackOutButton.setVisibility(View.VISIBLE);
+        mSearchOutButton.setVisibility(View.VISIBLE);
+        mQuickOutButton.setVisibility(View.VISIBLE);
+
         if (mVisible && mShowNV) {
            mNaviBackground.setVisibility(View.VISIBLE);
         }
@@ -1329,26 +1351,34 @@ public class NavigationBarView extends LinearLayout {
         // now toggle off unneeded stuff
         if (mShowHome == 0) {
             mHomeButton.setVisibility(View.GONE);
+            mHomeOutButton.setVisibility(View.GONE);
         } else if (mShowHome == 9) {
             mHomeButton.setVisibility(View.INVISIBLE);
+            mHomeOutButton.setVisibility(View.INVISIBLE);
         }
 
         if (mShowMenu == 0) {
             mMenuButton.setVisibility(View.GONE);
+            mMenuOutButton.setVisibility(View.GONE);
         } else if (mShowMenu == 9) {
             mMenuButton.setVisibility(View.INVISIBLE);
+            mMenuOutButton.setVisibility(View.INVISIBLE);
         }
 
         if (mShowBack == 0) {
             mBackButton.setVisibility(View.GONE);
+            mBackOutButton.setVisibility(View.GONE);
         } else if (mShowBack == 9) {
             mBackButton.setVisibility(View.INVISIBLE);
+            mBackOutButton.setVisibility(View.INVISIBLE);
         }
 
         if (mShowSearch == 0) {
             mSearchButton.setVisibility(View.GONE);
+            mSearchOutButton.setVisibility(View.GONE);
         } else if (mShowSearch == 9) {
             mSearchButton.setVisibility(View.INVISIBLE);
+            mSearchOutButton.setVisibility(View.INVISIBLE);
         }
 
         if (!mShowVol) {
@@ -1443,6 +1473,73 @@ public class NavigationBarView extends LinearLayout {
                mHomeButton.setImageBitmap(mRecentIcon);
             } else {
                mHomeButton.setImageBitmap(null);
+            }
+        }
+    };
+
+    public void setNotifNew(boolean notifnew) {
+        if (notifnew == mNotifnew) return;
+
+        mNotifnew = notifnew;
+        if (!mDoAnimate && notifnew) {
+            mHandler.removeCallbacks(mResetLightsOut);
+            mHandler.postDelayed(mResetLightsOut, 500);
+        } else if (!mDoAnimate && !notifnew) {
+            isLightFirst = 0;
+            mHandler.removeCallbacks(mResetLightsOut);
+            mHandler.postDelayed(mResetLightsOut, 500);
+        }
+    }
+
+    private Runnable mResetLightsOut = new Runnable() {
+        @Override
+        public void run() {
+            if (isLightFirst == 1) {
+                isLightFirst = 2;
+                mMenuOutButton.setColorFilter(mOverColor, Mode.SRC_ATOP);
+                mHomeOutButton.setColorFilter(null);
+                mQuickOutButton.setColorFilter(null);
+                mSearchOutButton.setColorFilter(null);
+                mBackOutButton.setColorFilter(null);
+            } else if (isLightFirst == 2) {
+                isLightFirst = 3;
+                mMenuOutButton.setColorFilter(null);
+                mHomeOutButton.setColorFilter(mOverColor, Mode.SRC_ATOP);
+                mQuickOutButton.setColorFilter(null);
+                mSearchOutButton.setColorFilter(null);
+                mBackOutButton.setColorFilter(null);
+            } else if (isLightFirst == 3) {
+                isLightFirst = 4;
+                mMenuOutButton.setColorFilter(null);
+                mHomeOutButton.setColorFilter(null);
+                mQuickOutButton.setColorFilter(mOverColor, Mode.SRC_ATOP);
+                mSearchOutButton.setColorFilter(null);
+                mBackOutButton.setColorFilter(null);
+            } else if (isLightFirst == 4) {
+                isLightFirst = 5;
+                mMenuOutButton.setColorFilter(null);
+                mHomeOutButton.setColorFilter(null);
+                mQuickOutButton.setColorFilter(null);
+                mSearchOutButton.setColorFilter(mOverColor, Mode.SRC_ATOP);
+                mBackOutButton.setColorFilter(null);
+            } else if (isLightFirst == 5) {
+                isLightFirst = 0;
+                mMenuOutButton.setColorFilter(null);
+                mHomeOutButton.setColorFilter(null);
+                mQuickOutButton.setColorFilter(null);
+                mSearchOutButton.setColorFilter(null);
+                mBackOutButton.setColorFilter(mOverColor, Mode.SRC_ATOP);
+            } else if (isLightFirst == 0) {
+                isLightFirst = 1;
+                mMenuOutButton.setColorFilter(null);
+                mHomeOutButton.setColorFilter(null);
+                mQuickOutButton.setColorFilter(null);
+                mSearchOutButton.setColorFilter(null);
+                mBackOutButton.setColorFilter(null);
+            }
+            if (!mDoAnimate && mNotifnew) {
+                mHandler.removeCallbacks(mResetLightsOut);
+                mHandler.postDelayed(mResetLightsOut, 500);
             }
         }
     };
@@ -1622,6 +1719,7 @@ public class NavigationBarView extends LinearLayout {
         public boolean onTouch(View v, MotionEvent ev) {
             if (ev.getAction() == MotionEvent.ACTION_DOWN) {
                 setLowProfile(false, true, false);
+                isLightFirst = 0;
             }
             return false;
         }
@@ -1639,12 +1737,15 @@ public class NavigationBarView extends LinearLayout {
         if (!animate) {
             navButtons.setVisibility(lightsOut ? View.GONE : View.VISIBLE);
             lowLights.setVisibility(lightsOut ? View.VISIBLE : View.GONE);
+            if (lightsOut) lowLights.setOnTouchListener(mLightsOutListener);
             mDoAnimate = lightsOut ? false : true;
         } else {
             animHideNaviBar(lightsOut);
         }
         mHandler.removeCallbacks(mResetNormal);
         mHandler.postDelayed(mResetNormal, 1000);
+        mHandler.removeCallbacks(mResetLightsOut);
+        mHandler.postDelayed(mResetLightsOut, 500);
     }
 
     private void animHideNaviBar(final boolean lightsOut) {
