@@ -25,9 +25,11 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.text.format.Time;
 import android.util.AttributeSet;
 import android.view.View;
+import android.util.Log;
 import android.widget.RemoteViews.RemoteView;
 
 import java.util.TimeZone;
@@ -47,7 +49,7 @@ public class AnalogClockSecond extends View {
 
     private int mDialWidth;
     private int mDialHeight;
-
+    private Context mContext;
     private boolean mAttached;
 
     private final Handler mHandler = new Handler();
@@ -67,7 +69,8 @@ public class AnalogClockSecond extends View {
     public AnalogClockSecond(Context context, AttributeSet attrs,
                        int defStyle) {
         super(context, attrs, defStyle);
-        Resources r = mContext.getResources();
+        mContext = context;
+        Resources r = context.getResources();
         TypedArray a =
                 context.obtainStyledAttributes(
                         attrs, com.android.internal.R.styleable.AnalogClockSecond, defStyle, 0);
@@ -105,29 +108,21 @@ public class AnalogClockSecond extends View {
         if (!mAttached) {
             mAttached = true;
             IntentFilter filter = new IntentFilter();
-
             filter.addAction(Intent.ACTION_TIME_TICK);
             filter.addAction(Intent.ACTION_TIME_CHANGED);
             filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
-
-            getContext().registerReceiver(mIntentReceiver, filter, null, mHandler);
+            mContext.registerReceiver(mIntentReceiver, filter, null, mHandler);
+            mTicker.run();
         }
-
-        // NOTE: It's safe to do these after registering the receiver since the receiver always runs
-        // in the main thread, therefore the receiver can't run before this method returns.
-
-        // The time zone may have changed while the receiver wasn't registered, so update the Time
         mCalendar = new Time();
-
-        // Make sure we update to the current time
-        onTimeChanged();
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (mAttached) {
-            getContext().unregisterReceiver(mIntentReceiver);
+            mContext.unregisterReceiver(mIntentReceiver);
+            mHandler.removeCallbacks(mTicker);
             mAttached = false;
         }
     }
@@ -221,7 +216,7 @@ public class AnalogClockSecond extends View {
         canvas.restore();
 
         canvas.save();
-        canvas.rotate(mSeconds / 1.0f * 360.0f, x, y);
+        canvas.rotate(mSeconds, x, y);
 
         final Drawable secondHand = mSecondHand;
         if (changed) {
@@ -244,11 +239,22 @@ public class AnalogClockSecond extends View {
         int minute = mCalendar.minute;
         int second = mCalendar.second;
 
-        mSeconds = second / 1.0f;
+        mSeconds = second * 6.0f;
         mMinutes = minute + second / 60.0f;
         mHour = hour + mMinutes / 60.0f;
         mChanged = true;
     }
+
+    private final Runnable mTicker = new Runnable() {
+        public void run() {
+            onTimeChanged();
+            invalidate();
+
+            long now = SystemClock.uptimeMillis();
+            long next = now + (1000 - now % 1000);
+            mHandler.postAtTime(mTicker, next);
+        }
+    };
 
     private final BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
         @Override
@@ -257,9 +263,7 @@ public class AnalogClockSecond extends View {
                 String tz = intent.getStringExtra("time-zone");
                 mCalendar = new Time(TimeZone.getTimeZone(tz).getID());
             }
-
             onTimeChanged();
-            
             invalidate();
         }
     };
