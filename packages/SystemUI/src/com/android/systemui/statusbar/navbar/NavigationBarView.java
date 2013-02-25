@@ -311,10 +311,6 @@ public class NavigationBarView extends LinearLayout {
         lowLights = mNaviBackground.findViewById(R.id.lights_out);
         mNVShow = (Settings.System.getInt(mContext.getContentResolver(), Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
 
-        if (Settings.System.getInt(mContext.getContentResolver(), Settings.System.TRANSPARENT_NAVI_BAR, 1) == 4) {
-             mNaviBackground.setBackgroundColor(Settings.System.getInt(mContext.getContentResolver(), Settings.System.NAVI_BAR_COLOR, 0));
-        }
-
         if (mNVShow) {
             runIconFirst();
             runQuickActions();

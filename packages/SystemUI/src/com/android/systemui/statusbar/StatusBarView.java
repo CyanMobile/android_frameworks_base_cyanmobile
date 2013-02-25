@@ -18,28 +18,15 @@
 package com.android.systemui.statusbar;
 
 import android.content.Context;
-import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.res.Configuration;
-import android.content.Intent;
-import android.graphics.Canvas;
-import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.widget.FrameLayout;
-import android.provider.Settings;
 import android.database.ContentObserver;
 
-import android.os.RemoteException;
-import android.os.ServiceManager;
-import android.view.IWindowManager;
-import android.view.KeyEvent;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
-import android.util.Slog;
 import com.android.systemui.R;
 
 public class StatusBarView extends FrameLayout {
@@ -52,18 +39,9 @@ public class StatusBarView extends FrameLayout {
     private int mStartX, mStartY;
     private ViewGroup mNotificationIcons;
     private ViewGroup mStatusIcons;
-    private ViewGroup mSBBackground;
-    private ViewGroup mTickerBackground;
-    private View mVNotificationIcons;
-    private View mVStatusIcons;
-    private View mVSBBackground;
-    private View mVTickerBackground;
     public View mDate;
     private FixedSizeDrawable mBackground;
-    private FixedSizeDrawable mStatusBackground;
     private Context mContext;
-    private int mSBColor;
-    private int mSBTrans;
 
     public StatusBarView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -75,27 +53,8 @@ public class StatusBarView extends FrameLayout {
         super.onFinishInflate();
 
         mDate = findViewById(R.id.date);
-        mVSBBackground = findViewById(R.id.statusbarBackground);
-        mVTickerBackground = findViewById(R.id.ticker);
-
         mNotificationIcons = (ViewGroup)findViewById(R.id.notificationIcons);
         mStatusIcons = (ViewGroup)findViewById(R.id.statusIcons);
-        mVStatusIcons = findViewById(R.id.statusIcons);
-        mVNotificationIcons = findViewById(R.id.notificationIcons);
-
-        ContentResolver resolver = mContext.getContentResolver();
-        mSBTrans = (Settings.System.getInt(resolver,
-                Settings.System.TRANSPARENT_STATUS_BAR, 1));
-        if ( mSBTrans == 4) {
-           mSBColor = (Settings.System.getInt(resolver,
-                   Settings.System.STATUS_BAR_COLOR, 1));
-
-           mVSBBackground.setBackgroundColor(mSBColor);
-        }
-        mVNotificationIcons.setBackgroundColor(0x00000000);
-        mVStatusIcons.setBackgroundColor(0x00000000);
-        mVTickerBackground.setBackgroundColor(0x00000000);
-
         mBackground = new FixedSizeDrawable(mDate.getBackground());
         mBackground.setFixedBounds(0, 0, 0, 0);
         mDate.setBackgroundColor(0x00000000);
@@ -128,7 +87,6 @@ public class StatusBarView extends FrameLayout {
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
-        ContentResolver resolver = mContext.getContentResolver();
 
         // put the date date view quantized to the icons
         int oldDateRight = mDate.getRight();

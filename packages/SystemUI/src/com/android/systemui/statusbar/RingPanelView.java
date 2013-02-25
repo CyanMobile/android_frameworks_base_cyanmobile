@@ -26,7 +26,6 @@ import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.RemoteException;
-import android.os.Vibrator;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -82,12 +81,12 @@ public class RingPanelView extends FrameLayout {
             switch (resId) {
                 case com.android.internal.R.drawable.ic_lockscreen_sms:
                     launchSms();
-                    vibrate();
+                    mHandler.removeCallbacks(mResetRing);
                     mHandler.postDelayed(mResetRing, 100);
                     break;
                 case com.android.internal.R.drawable.ic_lockscreen_phone:
                     launchPhone();
-                    vibrate();
+                    mHandler.removeCallbacks(mResetRing);
                     mHandler.postDelayed(mResetRing, 100);
                     break;
            }
@@ -145,7 +144,7 @@ public class RingPanelView extends FrameLayout {
     protected void onFinishInflate() {
         super.onFinishInflate();
         mHandler = new Handler();
-
+        mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mSearchTargetsContainer = findViewById(R.id.search_panel_container);
         mGlowPadView = (GlowPadView) findViewById(R.id.ringswidget);
         mGlowPadViewMethods = new GlowPadViewMethods();
@@ -157,11 +156,6 @@ public class RingPanelView extends FrameLayout {
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
         // setPanelHeight(mSearchTargetsContainer.getHeight());
-    }
-
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
     }
 
     private boolean pointInside(int x, int y, View v) {
@@ -202,7 +196,6 @@ public class RingPanelView extends FrameLayout {
                 mGlowPadView.suspendAnimations();
                 mGlowPadView.ping();
                 getViewTreeObserver().addOnPreDrawListener(mPreDrawListener);
-                vibrate();
             }
             setFocusable(true);
             setFocusableInTouchMode(true);
@@ -222,13 +215,5 @@ public class RingPanelView extends FrameLayout {
      */
     public boolean isShowing() {
         return mShowing;
-    }
-
-    private void vibrate() {
-        if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.HAPTIC_FEEDBACK_ENABLED, 1) != 0) {
-            Vibrator vibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
-            vibrator.vibrate(100);
-        }
     }
 }

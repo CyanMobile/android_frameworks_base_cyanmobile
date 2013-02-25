@@ -196,7 +196,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private int mIconSize;
     private Display mDisplay;
     private CmStatusBarView mStatusBarView;
-    private int mPixelFormat;
     private H mHandler = new H();
     private Object mQueueLock = new Object();
 
@@ -503,7 +502,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             ContentResolver resolver = mContext.getContentResolver();
             int defValue;
             int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
-
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_BOTTOM_STATUS_BAR) ? 1 : 0);
             mBottomBar = (Settings.System.getInt(resolver, Settings.System.STATUS_BAR_BOTTOM, defValue) == 1);
             defValue=(CmSystem.getDefaultBool(mContext, CmSystem.CM_DEFAULT_SOFT_BUTTONS_LEFT) ? 1 : 0);
@@ -543,6 +541,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             updateCarrierLabel();
             updateSettings();
             updatePieControls();
+            updateStateBackground();
         }
     }
 
@@ -698,6 +697,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     // Constructing the view
     // ================================================================================
     private void makeStatusBarView(Context context) {
+        mContext = context;
         Resources res = context.getResources();
 
         mDisplay.getMetrics(mDisplayMetrics);
@@ -705,41 +705,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mTouchDispatcher = new ItemTouchDispatcher(this);
 
         //Check for compact carrier layout and apply if enabled
-        int defValuesColor = context.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
-        int defValuesIconSize = context.getResources().getInteger(com.android.internal.R.integer.config_iconsize_default_cyanmobile);
-        float mIconSizeval = (float) Settings.System.getInt(getContentResolver(),
-                Settings.System.STATUSBAR_ICONS_SIZE, defValuesIconSize);
-        int IconSizepx = (int) (mDisplayMetrics.density * mIconSizeval);
-        mIconSize = IconSizepx;
-
-        mStatusBarCarrier = Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_CARRIER, 6);
-        mStatusBarClock = Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_CLOCK, 1);
-        mStatusBarCarrierLogo = Settings.System.getInt(getContentResolver(), Settings.System.CARRIER_LOGO, 0);
-        mStatusBarReverse = (Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_REVERSE, 0) == 1);
-        mShowCmBatteryStatusBar = (Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_BATTERY, 0) == 5);
-        mShowDate = (Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_DATE, 0) == 1);
-        mShowNotif = (Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_NOTIF, 1) == 1);
-        mShowRam = (Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_SHOWRAM, 1) == 1);
-        mShowIconex = (Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_SHOWICONEX, 1) == 1);
-        mShowCmBatterySideBar = (Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_BATTERY, 0) == 4);
-        mHasSoftButtons = (Settings.System.getInt(getContentResolver(), Settings.System.USE_SOFT_BUTTONS, 0) == 1);
-        LogoStatusBar = (Settings.System.getInt(getContentResolver(), Settings.System.CARRIER_LOGO_STATUS_BAR, 0) == 1);
-        shouldTick = (Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_INTRUDER_ALERT, 1) == 1);
-        mClockColor = (Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor));
-        mSettingsColor = (Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_SETTINGSCOLOR, defValuesColor));
-        mStatusBarTab = ((Settings.System.getInt(getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 5) == 4)
-                     || (Settings.System.getInt(getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 5) == 5));
-        mStatusBarGrid = (Settings.System.getInt(getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 5) == 3);
-        mNaviShow = (Settings.System.getInt(getContentResolver(), Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
-        mTinyExpanded = (Settings.System.getInt(getContentResolver(), Settings.System.STATUSBAR_TINY_EXPANDED, 1) == 1);
-        mMoreExpanded = (Settings.System.getInt(getContentResolver(), Settings.System.STATUSBAR_TINY_EXPANDED, 1) == 1);
-        autoBrightness = Settings.System.getInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS_MODE, 0) ==
-                    Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
-        mBrightnessControl = !autoBrightness && Settings.System.getInt(getContentResolver(),
-                            Settings.System.STATUS_BAR_BRIGHTNESS_TOGGLE, 0) == 1;
-        IntruderTime = Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_INTRUDER_TIME, INTRUDER_ALERT_DECAY_MS);
-        mPieEnable = (Settings.System.getInt(getContentResolver(), Settings.System.PIE_CONTROL_ENABLE, 1) == 1);
-        mStatusBarHidden = (Settings.System.getInt(getContentResolver(), Settings.System.STATUSBAR_ICONS_VISIBILITY, 0) == 1);
+        InitializeSettings(context);
 
         if (!mStatusBarTab) {
             mExpandedView = (ExpandedView)View.inflate(context, R.layout.status_bar_expanded, null);
@@ -773,77 +739,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mRingPanel.setVisibility(View.GONE);
 
         mBackLogoLayout = (BackLogo) mStatusBarView.findViewById(R.id.backlogo);
-
-	// apply transparent status bar drawables
-        int transStatusBar = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_STATUS_BAR, 0);
-        int statusBarColor = Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_COLOR, defValuesColor);
-        switch (transStatusBar) {
-          case 0 : // theme, leave alone
-            mStatusBarView.setBackgroundDrawable(getResources().getDrawable(R.drawable.statusbar_background));
-            break;
-          case 1 : // based on ROM
-            mStatusBarView.setBackgroundDrawable(getResources().getDrawable(R.drawable.statusbar_background_black));
-            break;
-          case 2 : // semi transparent
-            mStatusBarView.setBackgroundDrawable(getResources().getDrawable(R.drawable.statusbar_background_semi));
-            break;
-          case 3 : // gradient
-            mStatusBarView.setBackgroundDrawable(getResources().getDrawable(R.drawable.statusbar_background_gradient));
-            break;
-          case 4 : // user defined argb hex color
-            mStatusBarView.setBackgroundColor(statusBarColor);
-            break;
-          case 5 : // transparent
-            break;
-          case 6 : // transparent and BackLogo
-               mStatusBarView.setBackgroundDrawable(getResources().getDrawable(R.drawable.status_bar_transparent_background));
-               Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/bc_background"));
-               if (savedImage != null) {
-                   Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
-                   Drawable bgrImage = new BitmapDrawable(bitmapImage);
-                   mBackLogoLayout.setBackgroundDrawable(bgrImage);
-               } else {
-                   mBackLogoLayout.setBackgroundDrawable(getResources().getDrawable(R.drawable.statusbar_background_semi));
-               }
-            break;
-        }
-
-        // apply transparent navi bar drawables
-        int transNaviBar = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_NAVI_BAR, 0);
-        int naviBarColor = Settings.System.getInt(getContentResolver(), Settings.System.NAVI_BAR_COLOR, defValuesColor);
-        switch (transNaviBar) {
-          case 0 : // theme, leave alone
-            mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background));
-            break;
-          case 1 : // based on ROM
-            mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background_black));
-            break;
-          case 2 : // semi transparent
-            mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background_semi));
-            break;
-          case 3 : // gradient
-            mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background_gradient));
-            break;
-          case 4 : // user defined argb hex color
-            mNaviBarContainer.setBackgroundColor(naviBarColor);
-            break;
-          case 5 : // transparent
-            break;
-          case 6 : // BackLogo
-               Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/navb_background"));
-               if (savedImage != null) {
-                   Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
-                   Drawable bgrImage = new BitmapDrawable(bitmapImage);
-                   mNaviBarContainer.setBackgroundDrawable(bgrImage);
-               } else {
-                   mNaviBarContainer.setBackgroundDrawable(getResources().getDrawable(R.drawable.navibar_background_black));
-               }
-            break;
-        }
-
-        // figure out which pixel-format to use for the status bar.
-        mPixelFormat = PixelFormat.TRANSLUCENT;
-
         mStatusIcons = (LinearLayout) mStatusBarView.findViewById(R.id.statusIcons);
         mStatusIcons.setOnClickListener(mIconButtonListener);
         mNotificationIcons = (IconMerger) mStatusBarView.findViewById(R.id.notificationIcons);
@@ -911,18 +806,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mCompactClearButton.setOnClickListener(mClearButtonListener);
         mCarrierLabelExpLayout = (CarrierLabelExp) mExpandedView.findViewById(R.id.carrierExp);
         mPowerAndCarrier = (LinearLayout) mExpandedView.findViewById(R.id.power_and_carrier);
-        int transPowerAndCarrier = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_PWR_CRR, 0);
-        int PowerAndCarrierColor = Settings.System.getInt(getContentResolver(), Settings.System.PWR_CRR_COLOR, defValuesColor);
-        switch (transPowerAndCarrier) {
-          case 0 : // theme, leave alone
-            mPowerAndCarrier.setBackgroundDrawable(getResources().getDrawable(R.drawable.title_bar_portrait));
-            break;
-          case 1 : // user defined argb hex color
-            mPowerAndCarrier.setBackgroundColor(PowerAndCarrierColor);
-            break;
-          case 2 : // transparent
-            break;
-        }
         mScrollView = (ScrollView) mExpandedView.findViewById(R.id.scroll);
         mBottomScrollView = (ScrollView) mExpandedView.findViewById(R.id.bottomScroll);
         mNotificationLinearLayout = (LinearLayout) mExpandedView.findViewById(R.id.notificationLinearLayout);
@@ -999,39 +882,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mCloseView.mService = this;
         mNotificationBackgroundView = (View) mTrackingView.findViewById(R.id.notificationBackground);
 
-        // apply transparent notification background drawables
-        int transNotificationBackground = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_NOTIFICATION_BACKGROUND, 0);
-        int notificationBackgroundColor = Settings.System.getInt(getContentResolver(), Settings.System.NOTIFICATION_BACKGROUND_COLOR, defValuesColor);
-        switch (transNotificationBackground) {
-              case 0 : // theme, leave alone
-                  mNotificationBackgroundView.setBackgroundDrawable(getResources().getDrawable(R.drawable.shade_bg));
-                  break;
-              case 1 : // default based on ROM
-                  mNotificationBackgroundView.setBackgroundDrawable(getResources().getDrawable(R.drawable.shade_bg2));
-                  break;
-              case 2 : // user defined argb hex color
-                  mNotificationBackgroundView.setBackgroundColor(notificationBackgroundColor);
-                  break;
-              case 3 : // semi transparent
-                  mNotificationBackgroundView.setBackgroundDrawable(getResources().getDrawable(R.drawable.shade_trans_bg));
-                  break;
-              case 4 : // peeping android background image
-                  mNotificationBackgroundView.setBackgroundDrawable(getResources().getDrawable(R.drawable.status_bar_special));
-                  break;
-              case 5 : // user selected background image
-                  Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/nb_background"));
-                  if (savedImage != null) {
-                      Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
-                      Drawable bgrImage = new BitmapDrawable(bitmapImage);
-                      mNotificationBackgroundView.setBackgroundDrawable(bgrImage);
-                  } else {
-                      mNotificationBackgroundView.setBackgroundDrawable(getResources().getDrawable(R.drawable.status_bar_special));
-                  }
-                  break;
-        }
-
-        mContext=context;
-
         if (mStatusBarTab) {
             mPowerCarrier = (LinearLayout) mExpandedView.findViewById(R.id.power_and_carrier_layout);
             mNotifications = (LinearLayout) mExpandedView.findViewById(R.id.notifications_layout);
@@ -1043,20 +893,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
 
         mSettingsButton = (ImageView) mTrackingView.findViewById(R.id.settingUp);
-        int transSettingsButton = Settings.System.getInt(getContentResolver(), Settings.System.TRANSPARENT_STS_BTT, 0);
-        int SettingsButtonColor = Settings.System.getInt(getContentResolver(), Settings.System.STS_BTT_COLOR, defValuesColor);
-        switch (transSettingsButton) {
-          case 0 : // theme, leave alone
-            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_close_on, getExpandedWidth(), getStatBarSize(), context));
-            break;
-          case 1 : // user defined argb hex color
-            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_transparent_background, getExpandedWidth(), getCloseDragSize(), context));
-            mSettingsButton.setBackgroundColor(SettingsButtonColor);
-            break;
-          case 2 : // transparent
-            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_transparent_background, getExpandedWidth(), getCloseDragSize(), context));
-            break;
-        }
         mSettingsButton.setOnLongClickListener(mSettingsButtonListener);
 
         mPowerWidgetBottom = (PowerWidgetBottom) mTrackingView.findViewById(R.id.exp_power_stat);
@@ -1070,38 +906,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mButtonsToggle.setOnClickListener(mToggleNotifListener);
         }
 
+        updateStateBackground();
+        initializeItemExpand();
         updateColors();
         updateLayout();
         updateCarrierLabel();
-
-        if (mStatusBarCarrierLogo == 1) {
-            if (LogoStatusBar) {
-               Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/lg_background"));
-               Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
-               Drawable bgrImage = new BitmapDrawable(bitmapImage);
-               mCarrierLogoLayout.setBackgroundDrawable(bgrImage);
-            } else {
-               mCarrierLogoLayout.setBackgroundDrawable(getResources().getDrawable(R.drawable.ic_statusbar_carrier_logos));
-            }
-        } else if (mStatusBarCarrierLogo == 2) {
-            if (LogoStatusBar) {
-               Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/lg_background"));
-               Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
-               Drawable bgrImage = new BitmapDrawable(bitmapImage);
-               mCarrierLogoCenterLayout.setBackgroundDrawable(bgrImage);
-            } else {
-               mCarrierLogoCenterLayout.setBackgroundDrawable(getResources().getDrawable(R.drawable.ic_statusbar_carrier_logos));
-            }
-        } else if (mStatusBarCarrierLogo == 3) {
-            if (LogoStatusBar) {
-               Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/lg_background"));
-               Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
-               Drawable bgrImage = new BitmapDrawable(bitmapImage);
-               mCarrierLogoLeftLayout.setBackgroundDrawable(bgrImage);
-            } else {
-               mCarrierLogoLeftLayout.setBackgroundDrawable(getResources().getDrawable(R.drawable.ic_statusbar_carrier_logos));
-            }
-        }
 
         mEdgeBorder = res.getDimensionPixelSize(R.dimen.status_bar_edge_ignore);
 
@@ -1110,20 +919,225 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mDateView.setVisibility(View.INVISIBLE);
         showClock(Settings.System.getInt(getContentResolver(), Settings.System.STATUS_BAR_CLOCK, 1) != 0);
         mVelocityTracker = VelocityTracker.obtain();
-        mDoNotDisturb = new DoNotDisturb(mContext);
+        mDoNotDisturb = new DoNotDisturb(context);
         totalMemory = 0;
         availableMemory = 0;
         getMemInfo();
     }
 
+    private void InitializeSettings(Context context) {
+        int defValuesIconSize = context.getResources().getInteger(com.android.internal.R.integer.config_iconsize_default_cyanmobile);
+        float mIconSizeval = (float) Settings.System.getInt(context.getContentResolver(),
+                Settings.System.STATUSBAR_ICONS_SIZE, defValuesIconSize);
+        int IconSizepx = (int) (mDisplayMetrics.density * mIconSizeval);
+        mIconSize = IconSizepx;
+        mStatusBarCarrier = Settings.System.getInt(context.getContentResolver(), Settings.System.STATUS_BAR_CARRIER, 6);
+        mStatusBarClock = Settings.System.getInt(context.getContentResolver(), Settings.System.STATUS_BAR_CLOCK, 1);
+        mStatusBarCarrierLogo = Settings.System.getInt(context.getContentResolver(), Settings.System.CARRIER_LOGO, 0);
+        mStatusBarReverse = (Settings.System.getInt(context.getContentResolver(), Settings.System.STATUS_BAR_REVERSE, 0) == 1);
+        mShowCmBatteryStatusBar = (Settings.System.getInt(context.getContentResolver(), Settings.System.STATUS_BAR_BATTERY, 0) == 5);
+        mShowDate = (Settings.System.getInt(context.getContentResolver(), Settings.System.STATUS_BAR_DATE, 0) == 1);
+        mShowNotif = (Settings.System.getInt(context.getContentResolver(), Settings.System.STATUS_BAR_NOTIF, 1) == 1);
+        mShowRam = (Settings.System.getInt(context.getContentResolver(), Settings.System.STATUS_BAR_SHOWRAM, 1) == 1);
+        mShowIconex = (Settings.System.getInt(context.getContentResolver(), Settings.System.STATUS_BAR_SHOWICONEX, 1) == 1);
+        mShowCmBatterySideBar = (Settings.System.getInt(context.getContentResolver(), Settings.System.STATUS_BAR_BATTERY, 0) == 4);
+        mHasSoftButtons = (Settings.System.getInt(context.getContentResolver(), Settings.System.USE_SOFT_BUTTONS, 0) == 1);
+        LogoStatusBar = (Settings.System.getInt(context.getContentResolver(), Settings.System.CARRIER_LOGO_STATUS_BAR, 0) == 1);
+        shouldTick = (Settings.System.getInt(context.getContentResolver(), Settings.System.STATUS_BAR_INTRUDER_ALERT, 1) == 1);
+        mClockColor = (Settings.System.getInt(context.getContentResolver(), Settings.System.STATUS_BAR_CLOCKCOLOR, defValuesColor()));
+        mSettingsColor = (Settings.System.getInt(context.getContentResolver(), Settings.System.STATUS_BAR_SETTINGSCOLOR, defValuesColor()));
+        mStatusBarTab = ((Settings.System.getInt(context.getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 5) == 4)
+                     || (Settings.System.getInt(context.getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 5) == 5));
+        mStatusBarGrid = (Settings.System.getInt(context.getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 5) == 3);
+        mNaviShow = (Settings.System.getInt(context.getContentResolver(), Settings.System.SHOW_NAVI_BUTTONS, 1) == 1);
+        mTinyExpanded = (Settings.System.getInt(context.getContentResolver(), Settings.System.STATUSBAR_TINY_EXPANDED, 1) == 1);
+        mMoreExpanded = (Settings.System.getInt(context.getContentResolver(), Settings.System.STATUSBAR_TINY_EXPANDED, 1) == 1);
+        autoBrightness = Settings.System.getInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS_MODE, 0) ==
+                    Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
+        mBrightnessControl = !autoBrightness && Settings.System.getInt(context.getContentResolver(),
+                            Settings.System.STATUS_BAR_BRIGHTNESS_TOGGLE, 0) == 1;
+        IntruderTime = Settings.System.getInt(context.getContentResolver(), Settings.System.STATUS_BAR_INTRUDER_TIME, INTRUDER_ALERT_DECAY_MS);
+        mPieEnable = (Settings.System.getInt(context.getContentResolver(), Settings.System.PIE_CONTROL_ENABLE, 1) == 1);
+        mStatusBarHidden = (Settings.System.getInt(context.getContentResolver(), Settings.System.STATUSBAR_ICONS_VISIBILITY, 0) == 1);
+    }
+
+    private void updateStateBackground() {
+        ContentResolver resolver = mContext.getContentResolver();
+        Resources res = mContext.getResources();
+	// apply transparent status bar drawables
+        int transStatusBar = Settings.System.getInt(resolver, Settings.System.TRANSPARENT_STATUS_BAR, 0);
+        int statusBarColor = Settings.System.getInt(resolver, Settings.System.STATUS_BAR_COLOR, defValuesColor());
+        switch (transStatusBar) {
+          case 0 : // theme, leave alone
+            mStatusBarView.setBackgroundDrawable(res.getDrawable(R.drawable.statusbar_background));
+            break;
+          case 1 : // based on ROM
+            mStatusBarView.setBackgroundDrawable(res.getDrawable(R.drawable.statusbar_background_black));
+            break;
+          case 2 : // semi transparent
+            mStatusBarView.setBackgroundDrawable(res.getDrawable(R.drawable.statusbar_background_semi));
+            break;
+          case 3 : // gradient
+            mStatusBarView.setBackgroundDrawable(res.getDrawable(R.drawable.statusbar_background_gradient));
+            break;
+          case 4 : // user defined argb hex color
+            mStatusBarView.setBackgroundColor(statusBarColor);
+            break;
+          case 5 : // transparent
+            break;
+          case 6 : // transparent and BackLogo
+               mStatusBarView.setBackgroundDrawable(res.getDrawable(R.drawable.status_bar_transparent_background));
+               Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/bc_background"));
+               if (savedImage != null) {
+                   Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
+                   Drawable bgrImage = new BitmapDrawable(bitmapImage);
+                   mBackLogoLayout.setBackgroundDrawable(bgrImage);
+               } else {
+                   mBackLogoLayout.setBackgroundDrawable(res.getDrawable(R.drawable.statusbar_background_semi));
+               }
+            break;
+        }
+
+        // apply transparent navi bar drawables
+        int transNaviBar = Settings.System.getInt(resolver, Settings.System.TRANSPARENT_NAVI_BAR, 0);
+        int naviBarColor = Settings.System.getInt(resolver, Settings.System.NAVI_BAR_COLOR, defValuesColor());
+        switch (transNaviBar) {
+          case 0 : // theme, leave alone
+            mNaviBarContainer.setBackgroundDrawable(res.getDrawable(R.drawable.navibar_background));
+            break;
+          case 1 : // based on ROM
+            mNaviBarContainer.setBackgroundDrawable(res.getDrawable(R.drawable.navibar_background_black));
+            break;
+          case 2 : // semi transparent
+            mNaviBarContainer.setBackgroundDrawable(res.getDrawable(R.drawable.navibar_background_semi));
+            break;
+          case 3 : // gradient
+            mNaviBarContainer.setBackgroundDrawable(res.getDrawable(R.drawable.navibar_background_gradient));
+            break;
+          case 4 : // user defined argb hex color
+            mNaviBarContainer.setBackgroundColor(naviBarColor);
+            break;
+          case 5 : // transparent
+            break;
+          case 6 : // BackLogo
+               Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/navb_background"));
+               if (savedImage != null) {
+                   Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
+                   Drawable bgrImage = new BitmapDrawable(bitmapImage);
+                   mNaviBarContainer.setBackgroundDrawable(bgrImage);
+               } else {
+                   mNaviBarContainer.setBackgroundDrawable(res.getDrawable(R.drawable.navibar_background_black));
+               }
+            break;
+        }
+
+        // apply logo drawables
+        if (mStatusBarCarrierLogo == 1) {
+            if (LogoStatusBar) {
+               Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/lg_background"));
+               Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
+               Drawable bgrImage = new BitmapDrawable(bitmapImage);
+               mCarrierLogoLayout.setBackgroundDrawable(bgrImage);
+            } else {
+               mCarrierLogoLayout.setBackgroundDrawable(res.getDrawable(R.drawable.ic_statusbar_carrier_logos));
+            }
+        } else if (mStatusBarCarrierLogo == 2) {
+            if (LogoStatusBar) {
+               Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/lg_background"));
+               Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
+               Drawable bgrImage = new BitmapDrawable(bitmapImage);
+               mCarrierLogoCenterLayout.setBackgroundDrawable(bgrImage);
+            } else {
+               mCarrierLogoCenterLayout.setBackgroundDrawable(res.getDrawable(R.drawable.ic_statusbar_carrier_logos));
+            }
+        } else if (mStatusBarCarrierLogo == 3) {
+            if (LogoStatusBar) {
+               Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/lg_background"));
+               Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
+               Drawable bgrImage = new BitmapDrawable(bitmapImage);
+               mCarrierLogoLeftLayout.setBackgroundDrawable(bgrImage);
+            } else {
+               mCarrierLogoLeftLayout.setBackgroundDrawable(res.getDrawable(R.drawable.ic_statusbar_carrier_logos));
+            }
+        }
+    }
+
+    private void initializeItemExpand() {
+        ContentResolver resolver = mContext.getContentResolver();
+        Resources res = mContext.getResources();
+        // apply transparent power widget drawables
+        int transPowerAndCarrier = Settings.System.getInt(resolver, Settings.System.TRANSPARENT_PWR_CRR, 0);
+        int PowerAndCarrierColor = Settings.System.getInt(resolver, Settings.System.PWR_CRR_COLOR, defValuesColor());
+        switch (transPowerAndCarrier) {
+          case 0 : // theme, leave alone
+            mPowerAndCarrier.setBackgroundDrawable(res.getDrawable(R.drawable.title_bar_portrait));
+            break;
+          case 1 : // user defined argb hex color
+            mPowerAndCarrier.setBackgroundColor(PowerAndCarrierColor);
+            break;
+          case 2 : // transparent
+            break;
+        }
+
+        // apply transparent notification background drawables
+        int transNotificationBackground = Settings.System.getInt(resolver, Settings.System.TRANSPARENT_NOTIFICATION_BACKGROUND, 0);
+        int notificationBackgroundColor = Settings.System.getInt(resolver, Settings.System.NOTIFICATION_BACKGROUND_COLOR, defValuesColor());
+        switch (transNotificationBackground) {
+              case 0 : // theme, leave alone
+                  mNotificationBackgroundView.setBackgroundDrawable(res.getDrawable(R.drawable.shade_bg));
+                  break;
+              case 1 : // default based on ROM
+                  mNotificationBackgroundView.setBackgroundDrawable(res.getDrawable(R.drawable.shade_bg2));
+                  break;
+              case 2 : // user defined argb hex color
+                  mNotificationBackgroundView.setBackgroundColor(notificationBackgroundColor);
+                  break;
+              case 3 : // semi transparent
+                  mNotificationBackgroundView.setBackgroundDrawable(res.getDrawable(R.drawable.shade_trans_bg));
+                  break;
+              case 4 : // peeping android background image
+                  mNotificationBackgroundView.setBackgroundDrawable(res.getDrawable(R.drawable.status_bar_special));
+                  break;
+              case 5 : // user selected background image
+                  Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/nb_background"));
+                  if (savedImage != null) {
+                      Bitmap bitmapImage = BitmapFactory.decodeFile(savedImage.getPath());
+                      Drawable bgrImage = new BitmapDrawable(bitmapImage);
+                      mNotificationBackgroundView.setBackgroundDrawable(bgrImage);
+                  } else {
+                      mNotificationBackgroundView.setBackgroundDrawable(res.getDrawable(R.drawable.status_bar_special));
+                  }
+                  break;
+        }
+
+        // apply transparent tracking view drawables
+        int transSettingsButton = Settings.System.getInt(resolver, Settings.System.TRANSPARENT_STS_BTT, 0);
+        int SettingsButtonColor = Settings.System.getInt(resolver, Settings.System.STS_BTT_COLOR, defValuesColor());
+        switch (transSettingsButton) {
+          case 0 : // theme, leave alone
+            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_close_on, getExpandedWidth(), getStatBarSize(), mContext));
+            break;
+          case 1 : // user defined argb hex color
+            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_transparent_background, getExpandedWidth(), getCloseDragSize(), mContext));
+            mSettingsButton.setBackgroundColor(SettingsButtonColor);
+            break;
+          case 2 : // transparent
+            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_transparent_background, getExpandedWidth(), getCloseDragSize(), mContext));
+            break;
+        }
+    }
+
+    private int defValuesColor() {
+        return mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
+    }
+
     private void updateColors() {
         ContentResolver resolver = mContext.getContentResolver();
-        int defValuesColor = mContext.getResources().getInteger(com.android.internal.R.color.color_default_cyanmobile);
         mItemText = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_ITEM_TEXT, mBlackColor);
-        mItemTime = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_ITEM_TIME, defValuesColor);
-        mItemTitle = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_ITEM_TITLE, defValuesColor);
+        mItemTime = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_ITEM_TIME, defValuesColor());
+        mItemTitle = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_ITEM_TITLE, defValuesColor());
 
-        mDateColor = Settings.System.getInt(resolver, Settings.System.COLOR_DATE, defValuesColor);
+        mDateColor = Settings.System.getInt(resolver, Settings.System.COLOR_DATE, defValuesColor());
         mDateView.setTextColor(mDateColor);
         mClearButton.setColorFilter(mDateColor, Mode.MULTIPLY);
         mSettingsIconButton.setColorFilter(mDateColor, Mode.MULTIPLY);
@@ -1138,21 +1152,21 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             }
         }
 
-        mNotifyNone = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_NONE, defValuesColor);
+        mNotifyNone = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_NONE, defValuesColor());
         mNoNotificationsTitle.setTextColor(mNotifyNone);
         if (mStatusBarTab && (mNoNotificationsTitles != null)) {
             mNoNotificationsTitles.setTextColor(mNotifyNone);
         }
-        mNotifyTicker = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_TICKER_TEXT, defValuesColor);
+        mNotifyTicker = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_TICKER_TEXT, defValuesColor());
         mTickerText.updateColor(mNotifyTicker);
 
-        mNotifyLatest = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_LATEST, defValuesColor);
+        mNotifyLatest = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_LATEST, defValuesColor());
         mLatestTitle.setTextColor(mNotifyLatest);
         if (mStatusBarTab) {
             mLatestTitles.setTextColor(mNotifyLatest);
         }
 
-        mNotifyOngoing = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_ONGOING, defValuesColor);
+        mNotifyOngoing = Settings.System.getInt(resolver, Settings.System.COLOR_NOTIFICATION_ONGOING, defValuesColor());
         mOngoingTitle.setTextColor(mNotifyOngoing);    
     }
 
