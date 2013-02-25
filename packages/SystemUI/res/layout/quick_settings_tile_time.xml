@@ -19,7 +19,7 @@
     android:layout_height="wrap_content"
     android:layout_gravity="center"
     android:orientation="vertical">
-    <AnalogClock
+    <AnalogClockSecond
         android:id="@+id/analog_clock"
         android:layout_width="40dp"
         android:layout_height="40dp"
@@ -28,6 +28,7 @@
         android:dial="@drawable/ic_qs_clock_circle"
         android:hand_hour="@drawable/ic_qs_clock_hour"
         android:hand_minute="@drawable/ic_qs_clock_minute"
+        android:hand_seconds="@drawable/ic_qs_clock_minute"
         />
     <com.android.systemui.statusbar.dates.PowerDateView
         android:textAppearance="@style/TextAppearance.QuickSettings.TileView.Date"
