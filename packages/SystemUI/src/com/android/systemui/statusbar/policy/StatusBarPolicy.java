@@ -851,7 +851,7 @@ public class StatusBarPolicy {
             mContactPicture.setImageBitmap(contactImage);
         }
         mContactName.setText(callerName);
-        mSmsBody.setText(inboxMessage);
+        mSmsBody.setText(SmsHelper.replaceWithEmotes(inboxMessage, mContext));
         mTimeStamp.setText(inboxDate);
 
             AlertDialog.Builder b = new AlertDialog.Builder(mContext);

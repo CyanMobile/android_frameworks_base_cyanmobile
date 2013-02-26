@@ -12,6 +12,10 @@ import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.PhoneLookup;
 import android.util.Log;
+import android.text.SpannableStringBuilder;
+import android.text.TextUtils;
+import com.android.internal.util.EmojiParser;
+import com.android.internal.util.SmileyParser;
 
 import java.io.InputStream;
 
@@ -104,5 +108,23 @@ public class SmsHelper {
             cursor.close();
         }
         return scaledBitmap;
+    }
+
+    public static CharSequence replaceWithEmotes(String body, Context context) {
+        SmileyParser.init(context);
+        EmojiParser.init(context);
+
+        SpannableStringBuilder buf = new SpannableStringBuilder();
+
+        if (!TextUtils.isEmpty(body)) {
+            SmileyParser parser = SmileyParser.getInstance();
+            CharSequence smileyBody = parser.addSmileySpans(body);
+            if (true) {
+                EmojiParser emojiParser = EmojiParser.getInstance();
+                smileyBody = emojiParser.addEmojiSpans(smileyBody);
+            }
+            buf.append(smileyBody);
+        }
+        return buf;
     }
 }
