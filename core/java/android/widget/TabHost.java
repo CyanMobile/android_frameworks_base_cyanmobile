@@ -23,6 +23,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -605,10 +606,18 @@ mTabHost.addTab(TAB_TAG_1, "Hello, world!", "Tab 1");
                     false); // no inflate params
 
             final TextView tv = (TextView) tabIndicator.findViewById(R.id.title);
+            final ImageView iconView = (ImageView) tabIndicator.findViewById(R.id.icon);
+
             tv.setText(mLabel);
 
-            final ImageView iconView = (ImageView) tabIndicator.findViewById(R.id.icon);
-            iconView.setImageDrawable(mIcon);
+            // when icon is gone by default, we're in exclusive mode
+            final boolean exclusive = iconView.getVisibility() == View.GONE;
+            final boolean bindIcon = !exclusive || TextUtils.isEmpty(mLabel);
+
+            if (bindIcon && mIcon != null) {
+                iconView.setImageDrawable(mIcon);
+                iconView.setVisibility(VISIBLE);
+            }
 
             if (context.getApplicationInfo().targetSdkVersion <= Build.VERSION_CODES.DONUT) {
                 // Donut apps get old color scheme

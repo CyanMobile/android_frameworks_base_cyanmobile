@@ -172,6 +172,34 @@ public class LinearLayout extends ViewGroup {
         mBaselineAligned = baselineAligned;
     }
 
+    /**
+     * When true, all children with a weight will be considered having
+     * the minimum size of the largest child. If false, all children are
+     * measured normally.
+     * 
+     * @return True to measure children with a weight using the minimum
+     *         size of the largest child, false otherwise.
+     */
+    public boolean isMeasureWithLargestChildEnabled() {
+        return mUseLargestChild;
+    }
+
+    /**
+     * When set to true, all children with a weight will be considered having
+     * the minimum size of the largest child. If false, all children are
+     * measured normally.
+     * 
+     * Disabled by default.
+     * 
+     * @param enabled True to measure children with a weight using the
+     *        minimum size of the largest child, false otherwise.
+     */
+    @android.view.RemotableViewMethod
+    public void setMeasureWithLargestChildEnabled(boolean enabled) {
+        mUseLargestChild = enabled;
+
+    }
+
     @Override
     public int getBaseline() {
         if (mBaselineAlignedChildIndex < 0) {
@@ -454,7 +482,8 @@ public class LinearLayout extends ViewGroup {
             i += getChildrenSkipCount(child, i);
         }
 
-        if (useLargestChild && heightMode == MeasureSpec.AT_MOST) {
+        if (useLargestChild &&
+                (heightMode == MeasureSpec.AT_MOST || heightMode == MeasureSpec.UNSPECIFIED)) {
             mTotalLength = 0;
 
             for (int i = 0; i < count; ++i) {
@@ -562,6 +591,30 @@ public class LinearLayout extends ViewGroup {
         } else {
             alternativeMaxWidth = Math.max(alternativeMaxWidth,
                                            weightedMaxWidth);
+
+            // We have no limit, so make all weighted views as tall as the largest child.
+            // Children will have already been measured once.
+            if (useLargestChild && heightMode != MeasureSpec.EXACTLY) {
+                for (int i = 0; i < count; i++) {
+                    final View child = getVirtualChildAt(i);
+
+                    if (child == null || child.getVisibility() == View.GONE) {
+                        continue;
+                    }
+
+                    final LinearLayout.LayoutParams lp =
+                            (LinearLayout.LayoutParams) child.getLayoutParams();
+
+                    float childExtra = lp.weight;
+                    if (childExtra > 0) {
+                        child.measure(
+                                MeasureSpec.makeMeasureSpec(child.getMeasuredWidth(),
+                                        MeasureSpec.EXACTLY),
+                                MeasureSpec.makeMeasureSpec(largestChildHeight,
+                                        MeasureSpec.EXACTLY));
+                    }
+                }	
+            }
         }
 
         if (!allFillParent && widthMode != MeasureSpec.EXACTLY) {
@@ -786,7 +839,8 @@ public class LinearLayout extends ViewGroup {
             maxHeight = Math.max(maxHeight, ascent + descent);
         }
 
-        if (useLargestChild && widthMode == MeasureSpec.AT_MOST) {
+        if (useLargestChild &&
+                (widthMode == MeasureSpec.AT_MOST || widthMode == MeasureSpec.UNSPECIFIED)) {
             mTotalLength = 0;
 
             for (int i = 0; i < count; ++i) {
@@ -937,6 +991,29 @@ public class LinearLayout extends ViewGroup {
             }
         } else {
             alternativeMaxHeight = Math.max(alternativeMaxHeight, weightedMaxHeight);
+
+            // We have no limit, so make all weighted views as wide as the largest child.
+            // Children will have already been measured once.
+            if (useLargestChild && widthMode != MeasureSpec.EXACTLY) {
+                for (int i = 0; i < count; i++) {
+                    final View child = getVirtualChildAt(i);
+
+                    if (child == null || child.getVisibility() == View.GONE) {
+                        continue;
+                    }
+
+                    final LinearLayout.LayoutParams lp =
+                            (LinearLayout.LayoutParams) child.getLayoutParams();
+
+                    float childExtra = lp.weight;
+                    if (childExtra > 0) {
+                        child.measure(
+                                MeasureSpec.makeMeasureSpec(largestChildWidth, MeasureSpec.EXACTLY),
+                                MeasureSpec.makeMeasureSpec(child.getMeasuredHeight(),
+                                        MeasureSpec.EXACTLY));
+                    }
+                }
+            }
         }
 
         if (!allFillParent && heightMode != MeasureSpec.EXACTLY) {
@@ -958,7 +1035,7 @@ public class LinearLayout extends ViewGroup {
     private void forceUniformHeight(int count, int widthMeasureSpec) {
         // Pretend that the linear layout has an exact size. This is the measured height of
         // ourselves. The measured height should be the max height of the children, changed
-        // to accomodate the heightMesureSpec from the parent
+        // to accommodate the heightMeasureSpec from the parent
         int uniformMeasureSpec = MeasureSpec.makeMeasureSpec(getMeasuredHeight(),
                 MeasureSpec.EXACTLY);
         for (int i = 0; i < count; ++i) {

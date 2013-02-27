@@ -52,7 +52,7 @@ import android.view.View.OnFocusChangeListener;
 public class TabWidget extends LinearLayout implements OnFocusChangeListener {
     private OnTabSelectionChanged mSelectionChangedListener;
 
-    private int mSelectedTab = 0;
+    private int mSelectedTab = -1;
 
     private Drawable mLeftStrip;
     private Drawable mRightStrip;
@@ -63,6 +63,10 @@ public class TabWidget extends LinearLayout implements OnFocusChangeListener {
     private Drawable mDividerDrawable;
 
     private final Rect mBounds = new Rect();
+
+    // When positive, the widths and heights of tabs will be imposed so that they fit in parent
+    private int mImposedTabsHeight = -1;
+    private int[] mImposedTabWidths;
 
     public TabWidget(Context context) {
         this(context, null);
@@ -79,10 +83,10 @@ public class TabWidget extends LinearLayout implements OnFocusChangeListener {
             context.obtainStyledAttributes(attrs, com.android.internal.R.styleable.TabWidget,
                     defStyle, 0);
 
-        mDrawBottomStrips = a.getBoolean(R.styleable.TabWidget_tabStripEnabled, true);
-        mDividerDrawable = a.getDrawable(R.styleable.TabWidget_divider);
-        mLeftStrip = a.getDrawable(R.styleable.TabWidget_tabStripLeft);
-        mRightStrip = a.getDrawable(R.styleable.TabWidget_tabStripRight);
+        setStripEnabled(a.getBoolean(R.styleable.TabWidget_tabStripEnabled, true));
+        setDividerDrawable(a.getDrawable(R.styleable.TabWidget_divider));
+        setLeftStripDrawable(a.getDrawable(R.styleable.TabWidget_tabStripLeft));
+        setRightStripDrawable(a.getDrawable(R.styleable.TabWidget_tabStripRight));
 
         a.recycle();
 
@@ -97,19 +101,23 @@ public class TabWidget extends LinearLayout implements OnFocusChangeListener {
 
     @Override
     protected int getChildDrawingOrder(int childCount, int i) {
-        // Always draw the selected tab last, so that drop shadows are drawn
-        // in the correct z-order.
-        if (i == childCount - 1) {
-            return mSelectedTab;
-        } else if (i >= mSelectedTab) {
-            return i + 1;
-        } else {
+        if (mSelectedTab == -1) {	
             return i;
+        } else {
+            // Always draw the selected tab last, so that drop shadows are drawn
+            // in the correct z-order.
+            if (i == childCount - 1) {
+                return mSelectedTab;
+            } else if (i >= mSelectedTab) {
+                return i + 1;
+            } else {
+                return i;
+            }
         }
     }
 
     private void initTabWidget() {
-        mGroupFlags |= FLAG_USE_CHILD_DRAWING_ORDER;
+        setChildrenDrawingOrderEnabled(true);
 
         final Context context = mContext;
         final Resources resources = context.getResources();
@@ -140,6 +148,67 @@ public class TabWidget extends LinearLayout implements OnFocusChangeListener {
         // to a tab other than the current tab
         setFocusable(true);
         setOnFocusChangeListener(this);
+    }
+
+    @Override
+    void measureChildBeforeLayout(View child, int childIndex,
+            int widthMeasureSpec, int totalWidth,
+            int heightMeasureSpec, int totalHeight) {
+
+        if (!isMeasureWithLargestChildEnabled() && mImposedTabsHeight >= 0) {
+            widthMeasureSpec = MeasureSpec.makeMeasureSpec(
+                    totalWidth + mImposedTabWidths[childIndex], MeasureSpec.EXACTLY);
+            heightMeasureSpec = MeasureSpec.makeMeasureSpec(mImposedTabsHeight,
+                    MeasureSpec.EXACTLY);
+        }
+
+        super.measureChildBeforeLayout(child, childIndex,
+                widthMeasureSpec, totalWidth, heightMeasureSpec, totalHeight);
+    }
+
+    @Override	
+    void measureHorizontal(int widthMeasureSpec, int heightMeasureSpec) {
+        if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED) {
+            super.measureHorizontal(widthMeasureSpec, heightMeasureSpec);
+            return;
+        }
+
+        // First, measure with no constraint
+        final int unspecifiedWidth = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+        mImposedTabsHeight = -1;
+        super.measureHorizontal(unspecifiedWidth, heightMeasureSpec);
+
+        int extraWidth = getMeasuredWidth() - MeasureSpec.getSize(widthMeasureSpec);
+        if (extraWidth > 0) {
+            final int count = getChildCount();
+
+            int childCount = 0;
+            for (int i = 0; i < count; i++) {
+                final View child = getChildAt(i);
+                if (child.getVisibility() == GONE) continue;
+                childCount++;
+            }
+
+            if (childCount > 0) {
+                if (mImposedTabWidths == null || mImposedTabWidths.length != count) {
+                    mImposedTabWidths = new int[count];
+                }
+                for (int i = 0; i < count; i++) {
+                    final View child = getChildAt(i);
+                    if (child.getVisibility() == GONE) continue;
+                    final int childWidth = child.getMeasuredWidth();
+                    final int delta = extraWidth / childCount;
+                    final int newWidth = Math.max(0, childWidth - delta);
+                    mImposedTabWidths[i] = newWidth;
+                    // Make sure the extra width is evenly distributed, no int division remainder
+                    extraWidth -= childWidth - newWidth; // delta may have been clamped
+                    childCount--;
+                    mImposedTabsHeight = Math.max(mImposedTabsHeight, child.getMeasuredHeight());
+                }
+            }
+        }
+
+        super.measureHorizontal(widthMeasureSpec, heightMeasureSpec);
     }
 
     /**
@@ -189,9 +258,7 @@ public class TabWidget extends LinearLayout implements OnFocusChangeListener {
      * divider.
      */
     public void setDividerDrawable(int resId) {
-        mDividerDrawable = mContext.getResources().getDrawable(resId);
-        requestLayout();
-        invalidate();
+        setDividerDrawable(getResources().getDrawable(resId));
     }
     
     /**
@@ -212,9 +279,7 @@ public class TabWidget extends LinearLayout implements OnFocusChangeListener {
      * left strip drawable
      */
     public void setLeftStripDrawable(int resId) {
-        mLeftStrip = mContext.getResources().getDrawable(resId);
-        requestLayout();
-        invalidate();
+        setLeftStripDrawable(getResources().getDrawable(resId));
     }
 
     /**
@@ -225,7 +290,8 @@ public class TabWidget extends LinearLayout implements OnFocusChangeListener {
     public void setRightStripDrawable(Drawable drawable) {
         mRightStrip = drawable;
         requestLayout();
-        invalidate();    }
+        invalidate();
+    }
 
     /**
      * Sets the drawable to use as the right part of the strip below the
@@ -234,9 +300,7 @@ public class TabWidget extends LinearLayout implements OnFocusChangeListener {
      * right strip drawable
      */
     public void setRightStripDrawable(int resId) {
-        mRightStrip = mContext.getResources().getDrawable(resId);
-        requestLayout();
-        invalidate();
+        setRightStripDrawable(getResources().getDrawable(resId));
     }
     
     /**
@@ -281,29 +345,30 @@ public class TabWidget extends LinearLayout implements OnFocusChangeListener {
             // Skip drawing the bottom strips.
             return;
         }
+        if (mSelectedTab != -1) {
+            final View selectedChild = getChildTabViewAt(mSelectedTab);
 
-        final View selectedChild = getChildTabViewAt(mSelectedTab);
+            final Drawable leftStrip = mLeftStrip;
+            final Drawable rightStrip = mRightStrip;
 
-        final Drawable leftStrip = mLeftStrip;
-        final Drawable rightStrip = mRightStrip;
+            leftStrip.setState(selectedChild.getDrawableState());
+            rightStrip.setState(selectedChild.getDrawableState());
 
-        leftStrip.setState(selectedChild.getDrawableState());
-        rightStrip.setState(selectedChild.getDrawableState());
-
-        if (mStripMoved) {
-            final Rect bounds = mBounds;
-            bounds.left = selectedChild.getLeft();
-            bounds.right = selectedChild.getRight();
-            final int myHeight = getHeight();
-            leftStrip.setBounds(Math.min(0, bounds.left - leftStrip.getIntrinsicWidth()),
+            if (mStripMoved) {
+                final Rect bounds = mBounds;
+                bounds.left = selectedChild.getLeft();
+                bounds.right = selectedChild.getRight();
+                final int myHeight = getHeight();
+                leftStrip.setBounds(Math.min(0, bounds.left - leftStrip.getIntrinsicWidth()),
                     myHeight - leftStrip.getIntrinsicHeight(), bounds.left, myHeight);
-            rightStrip.setBounds(bounds.right, myHeight - rightStrip.getIntrinsicHeight(),
+                rightStrip.setBounds(bounds.right, myHeight - rightStrip.getIntrinsicHeight(),
                     Math.max(getWidth(), bounds.right + rightStrip.getIntrinsicWidth()), myHeight);
-            mStripMoved = false;
-        }
+                mStripMoved = false;
+            }
 
-        leftStrip.draw(canvas);
-        rightStrip.draw(canvas);
+            leftStrip.draw(canvas);
+            rightStrip.draw(canvas);
+        }
     }
 
     /**
@@ -338,7 +403,9 @@ public class TabWidget extends LinearLayout implements OnFocusChangeListener {
             return;
         }
 
-        getChildTabViewAt(mSelectedTab).setSelected(false);
+        if (mSelectedTab != -1) {
+            getChildTabViewAt(mSelectedTab).setSelected(false);
+        }
         mSelectedTab = index;
         getChildTabViewAt(mSelectedTab).setSelected(true);
         mStripMoved = true;
@@ -373,8 +440,8 @@ public class TabWidget extends LinearLayout implements OnFocusChangeListener {
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
-        int count = getTabCount();
 
+        final int count = getTabCount();
         for (int i = 0; i < count; i++) {
             View child = getChildTabViewAt(i);
             child.setEnabled(enabled);
@@ -415,6 +482,12 @@ public class TabWidget extends LinearLayout implements OnFocusChangeListener {
         child.setOnFocusChangeListener(this);
     }
 
+    @Override
+    public void removeAllViews() {
+        super.removeAllViews();
+        mSelectedTab = -1;
+    }
+
     /**
      * Provides a way for {@link TabHost} to be notified that the user clicked on a tab indicator.
      */
@@ -422,6 +495,7 @@ public class TabWidget extends LinearLayout implements OnFocusChangeListener {
         mSelectionChangedListener = listener;
     }
 
+    /** {@inheritDoc} */
     public void onFocusChange(View v, boolean hasFocus) {
         if (v == this && hasFocus && getTabCount() > 0) {
             getChildTabViewAt(mSelectedTab).requestFocus();
