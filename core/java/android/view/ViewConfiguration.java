@@ -18,6 +18,7 @@ package android.view;
 
 import android.app.AppGlobals;
 import android.content.Context;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
@@ -165,6 +166,7 @@ public class ViewConfiguration {
     private final int mMaximumDrawingCacheSize;
     private final int mOverscrollDistance;
     private final int mOverflingDistance;
+    private final boolean mFadingMarqueeEnabled;
 
     private static final SparseArray<ViewConfiguration> sConfigurations =
             new SparseArray<ViewConfiguration>(2);
@@ -187,6 +189,7 @@ public class ViewConfiguration {
         mMaximumDrawingCacheSize = MAXIMUM_DRAWING_CACHE_SIZE;
         mOverscrollDistance = OVERSCROLL_DISTANCE;
         mOverflingDistance = OVERFLING_DISTANCE;
+        mFadingMarqueeEnabled = true;
     }
 
     /**
@@ -200,7 +203,8 @@ public class ViewConfiguration {
      * @see android.util.DisplayMetrics
      */
     private ViewConfiguration(Context context) {
-        final DisplayMetrics metrics = context.getResources().getDisplayMetrics();
+        final Resources res = context.getResources();
+        final DisplayMetrics metrics = res.getDisplayMetrics();
         final float density = metrics.density;
 
         mEdgeSlop = (int) (density * EDGE_SLOP + 0.5f);
@@ -218,6 +222,8 @@ public class ViewConfiguration {
 
         mOverscrollDistance = (int) (density * OVERSCROLL_DISTANCE + 0.5f);
         mOverflingDistance = (int) (density * OVERFLING_DISTANCE + 0.5f);
+        mFadingMarqueeEnabled = res.getBoolean(
+                com.android.internal.R.bool.config_ui_enableFadingMarquee);
     }
 
     /**
@@ -519,5 +525,13 @@ public class ViewConfiguration {
      */
     public static float getScrollFriction() {
         return SCROLL_FRICTION;
+    }
+
+    /**
+     * @hide
+     * @return Whether or not marquee should use fading edges.
+     */
+    public boolean isFadingMarqueeEnabled() {
+        return mFadingMarqueeEnabled;
     }
 }

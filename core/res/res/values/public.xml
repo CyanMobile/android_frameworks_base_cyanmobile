@@ -1262,26 +1262,29 @@
   <public type="attr" name="popupAnimationStyle" id="0x010102c9" />
   <public type="attr" name="screenSize" id="0x010102ca" />
   <public type="attr" name="screenDensity" id="0x010102cb" />
-  <public type="attr" name="windowCloseOnTouchOutside" />
-  <public type="attr" name="textAppearanceListItem" />
-  <public type="attr" name="textAppearanceListItemSmall" />
-  <public type="attr" name="valueFrom" />
-  <public type="attr" name="valueTo" />
-  <public type="attr" name="valueType" />
-  <public type="attr" name="propertyName" />
-  <public type="attr" name="ordering" />
-  <public type="attr" name="targetDrawables" />
-  <public type="attr" name="handleDrawable" />
-  <public type="attr" name="waveDrawable" />
-  <public type="attr" name="outerRadius" />
-  <public type="attr" name="vibrationDuration" />
-  <public type="attr" name="snapMargin" />
-  <public type="attr" name="feedbackCount" />
-  <public type="attr" name="dials" />
-  <public type="attr" name="hand_hours" />
-  <public type="attr" name="hand_minutes" />
-  <public type="attr" name="hand_seconds" />
-  <public type="attr" name="stopWithTask" />
+  <public type="attr" name="windowCloseOnTouchOutside" id="0x010102cc" />
+  <public type="attr" name="textAppearanceListItem"  id="0x010102cd"/>
+  <public type="attr" name="textAppearanceListItemSmall"  id="0x010102ce"/>
+  <public type="attr" name="valueFrom" id="0x010102cf"/>
+  <public type="attr" name="valueTo" id="0x010102d0"/>
+  <public type="attr" name="valueType" id="0x010102d1"/>
+  <public type="attr" name="propertyName" id="0x010102d2"/>
+  <public type="attr" name="ordering" id="0x010102d3"/>
+  <public type="attr" name="targetDrawables" id="0x010102d4"/>
+  <public type="attr" name="handleDrawable" id="0x010102d5"/>
+  <public type="attr" name="waveDrawable" id="0x010102d6"/>
+  <public type="attr" name="outerRadius" id="0x010102d7"/>
+  <public type="attr" name="vibrationDuration" id="0x010102d8"/>
+  <public type="attr" name="snapMargin" id="0x010102d9"/>
+  <public type="attr" name="feedbackCount" id="0x010102da"/>
+  <public type="attr" name="dials" id="0x010102db"/>
+  <public type="attr" name="hand_hours" id="0x010102dc"/>
+  <public type="attr" name="hand_minutes" id="0x010102dd"/>
+  <public type="attr" name="hand_seconds" id="0x010102de"/>
+  <public type="attr" name="stopWithTask" id="0x010102df"/>
+  <public type="attr" name="textIsSelectable" id="0x010102e0"/>
+  <public type="attr" name="textAllCaps" id="0x010102e1"/>
+  <public type="attr" name="fontFamily" id="0x010102e2"/>
 
   <!-- presence drawables for videochat or audiochat capable contacts -->
   <public type="drawable" name="presence_video_away" id="0x010800ac" />
@@ -1295,5 +1298,4 @@
   <public type="style" name="TextAppearance.StatusBar.Icon" id="0x01030066" />
   <public type="style" name="TextAppearance.StatusBar.EventContent" id="0x01030067" />
   <public type="style" name="TextAppearance.StatusBar.EventContent.Title" id="0x01030068" />
-  
 </resources>

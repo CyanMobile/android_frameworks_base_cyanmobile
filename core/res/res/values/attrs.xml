@@ -500,6 +500,9 @@
         -->
     <attr name="textSize" format="dimension" />
 
+    <!-- Default font family. -->	
+    <attr name="fontFamily" format="string" />
+
     <!-- Default text typeface. -->
     <attr name="typeface">
         <enum name="normal" value="0" />
@@ -526,6 +529,10 @@
 
     <!-- Color of link text (URLs). -->
     <attr name="textColorLink" format="reference|color" />
+
+    <!-- Indicates that the content of a non-editable TextView can be selected.
+     Default value is false. EditText content is always selectable. -->
+    <attr name="textIsSelectable" format="boolean" />
 
     <!-- Where to ellipsize text. -->
     <attr name="ellipsize">
@@ -1975,12 +1982,16 @@
         <attr name="textStyle" />
         <!-- Typeface (normal, sans, serif, monospace) for the text. -->
         <attr name="typeface" />
+        <!-- Font family (named by string) for the text. -->
+        <attr name="fontFamily" />
         <!-- Color of the text selection highlight. -->
         <attr name="textColorHighlight" />
         <!-- Color of the hint text. -->
         <attr name="textColorHint" />
         <!-- Color of the links. -->
         <attr name="textColorLink" />
+        <!-- Present the text in ALL CAPS. This may use a small-caps form when available. -->
+        <attr name="textAllCaps" format="boolean" />
     </declare-styleable>
     <declare-styleable name="TextSwitcher">
     </declare-styleable>
@@ -2018,6 +2029,8 @@
         <attr name="typeface" />
         <!-- Style (bold, italic, bolditalic) for the text. -->
         <attr name="textStyle" />
+        <!-- Font family (named by string) for the text. -->
+        <attr name="fontFamily" />
         <!-- Text color for links. -->
         <attr name="textColorLink" />
         <!-- Makes the cursor visible (the default) or invisible. -->
@@ -2217,6 +2230,10 @@
         <!-- Reference to a drawable that will be used to display a text selection
              anchor for positioning the cursor within text. -->
         <attr name="textSelectHandle" />
+        <!-- Indicates that a non-editable text can be selected. -->
+        <attr name="textIsSelectable" />
+        <!-- Present the text in ALL CAPS. This may use a small-caps form when available. -->
+        <attr name="textAllCaps" />
     </declare-styleable>
     <!-- An <code>input-extras</code> is a container for extra data to supply to
          an input method.  Contains

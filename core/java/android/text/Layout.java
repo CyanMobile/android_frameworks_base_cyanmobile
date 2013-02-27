@@ -2043,8 +2043,8 @@ public abstract class Layout {
         ALIGN_NORMAL,
         ALIGN_OPPOSITE,
         ALIGN_CENTER,
-        // XXX ALIGN_LEFT,
-        // XXX ALIGN_RIGHT,
+        ALIGN_LEFT,
+        ALIGN_RIGHT,
     }
 
     private static final int TAB_INCREMENT = 20;
@@ -2054,4 +2054,14 @@ public abstract class Layout {
     /* package */ static final Directions DIRS_ALL_RIGHT_TO_LEFT =
                                        new Directions(new short[] { 0, 32767 });
 
+    /**
+     * Inform this layout that not all of its lines will be displayed, because a maximum number of
+     * lines has been set on the associated TextView.
+     *
+     * A non positive value means that all lines are displayed.
+     *
+     * @param line line number of the last visible line (line numbers start at 1 for the first line)
+     * @hide
+     */
+    public void setMaximumVisibleLineCount(int line) {}
 }
