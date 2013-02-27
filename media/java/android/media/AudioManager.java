@@ -492,6 +492,21 @@ public class AudioManager {
     }
 
     /**
+     * get stream mute state.
+     *
+     * @hide
+     */
+    public boolean isStreamMute(int streamType) {
+        IAudioService service = getService();
+        try {
+            return service.isStreamMute(streamType);
+        } catch (RemoteException e) {
+            Log.e(TAG, "Dead object in isStreamMute", e);
+            return false;
+        }
+    }
+
+    /**
      * Sets the ringer mode.
      * <p>
      * Silent mode will mute the volume and will not vibrate. Vibrate mode will

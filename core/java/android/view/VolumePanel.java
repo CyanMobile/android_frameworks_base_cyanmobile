@@ -93,7 +93,8 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
     private static final int MSG_VIBRATE = 4;
     private static final int MSG_TIMEOUT = 5;
     private static final int MSG_RINGER_MODE_CHANGED = 6;
-    private static final int MSG_SLIDER_VISIBILITY_CHANGED = 7;
+    private static final int MSG_MUTE_CHANGED = 7;
+    private static final int MSG_SLIDER_VISIBILITY_CHANGED = 8;
 
     public static final int VOLUME_OVERLAY_SINGLE = 0;
     public static final int VOLUME_OVERLAY_EXPANDABLE = 1;
@@ -314,9 +315,30 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
         }
     }
 
+    private int getStreamMaxVolume(int streamType) {
+        return mAudioManager.getStreamMaxVolume(streamType);
+    }
+
+    private int getStreamVolume(int streamType) {
+        return mAudioManager.getStreamVolume(streamType);
+    }
+
+    private void setStreamVolume(int streamType, int index, int flags) {
+        mAudioManager.setStreamVolume(streamType, index, flags);
+    }
+
     private boolean isMuted() {
-        int ringerMode = mAudioService.getRingerMode();
+        int ringerMode = mAudioManager.getRingerMode();
         return (ringerMode == AudioManager.RINGER_MODE_SILENT);
+    }
+
+    private boolean isMuted(int streamType) {
+        return mAudioManager.isStreamMute(streamType);
+    }
+
+    private boolean isVibrate() {
+        int ringerMode = mAudioManager.getRingerMode();
+        return (ringerMode == AudioManager.RINGER_MODE_VIBRATE);
     }
 
     private void createSliders() {
@@ -339,7 +361,7 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
             sc.seekbarView = (SeekBar) sc.group.findViewById(R.id.seekbar);
             int plusOne = (streamType == AudioSystem.STREAM_BLUETOOTH_SCO ||
                     streamType == AudioSystem.STREAM_VOICE_CALL) ? 1 : 0;
-            sc.seekbarView.setMax(mAudioManager.getStreamMaxVolume(streamType) + plusOne);
+            sc.seekbarView.setMax(getStreamMaxVolume(streamType) + plusOne);
             sc.seekbarView.setOnSeekBarChangeListener(this);
             sc.seekbarView.setTag(sc);
             mStreamControls.put(streamType, sc);
@@ -384,11 +406,10 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
 
     /** Update the mute and progress state of a slider */
     private void updateSlider(StreamControl sc) {
-        sc.seekbarView.setProgress(mAudioManager.getStreamVolume(sc.streamType));
-        final boolean muted = isMuted();
+        sc.seekbarView.setProgress(getStreamVolume(sc.streamType));
+        final boolean muted = isMuted(sc.streamType);
         sc.icon.setImageResource(muted ? sc.iconMuteRes : sc.iconRes);
-        if (sc.streamType == AudioManager.STREAM_RING &&
-                mAudioService.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE) {
+        if (sc.streamType == AudioManager.STREAM_RING && isVibrate()) {
             sc.icon.setImageResource(R.drawable.ic_audio_ring_notif_vibrate);
         }
         if (muted) {
@@ -449,6 +470,17 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
         obtainMessage(MSG_VOLUME_CHANGED, streamType, flags).sendToTarget();
     }
 
+    public void postMuteChanged(int streamType, int flags) {
+        if (hasMessages(MSG_VOLUME_CHANGED)) return;
+        synchronized (this) {
+            if (mStreamControls == null) {
+                createSliders();
+            }
+        }
+        removeMessages(MSG_FREE_RESOURCES);
+        obtainMessage(MSG_MUTE_CHANGED, streamType, flags).sendToTarget();
+    }
+
     /**
      * Override this if you have other work to do when the volume changes (for
      * example, vibrating, playing a sound, etc.). Make sure to call through to
@@ -487,8 +519,20 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
         resetTimeout();
     }
 
+    protected void onMuteChanged(int streamType, int flags) {
+
+        if (LOGD) Log.d(TAG, "onMuteChanged(streamType: " + streamType + ", flags: " + flags + ")");
+
+        StreamControl sc = mStreamControls.get(streamType);
+        if (sc != null) {
+            sc.icon.setImageResource(isMuted(sc.streamType) ? sc.iconMuteRes : sc.iconRes);
+        }
+
+        onVolumeChanged(streamType, flags);
+    }
+
     protected void onShowVolumeChanged(int streamType, int flags) {
-        int index = mAudioService.getStreamVolume(streamType);
+        int index = getStreamVolume(streamType);
         mRingIsSilent = false;
 
         if (LOGD) {
@@ -497,7 +541,7 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
         }
 
         // get max volume for progress bar
-        int max = mAudioService.getStreamMaxVolume(streamType);
+        int max = getStreamMaxVolume(streamType);
 
         switch (streamType) {
 
@@ -562,7 +606,11 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
                 sc.seekbarView.setMax(max);
             }
             sc.seekbarView.setProgress(index);
-            sc.seekbarView.setEnabled(true);
+            if (isMuted(streamType)) {
+                sc.seekbarView.setEnabled(false);
+            } else {
+                sc.seekbarView.setEnabled(true);
+            }
         }
 
         // Only Show if style needs it
@@ -580,9 +628,8 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
         }
 
         // Do a little vibrate if applicable (only when going into vibrate mode)
-        if ((flags & AudioManager.FLAG_VIBRATE) != 0 &&
-                mAudioService.isStreamAffectedByRingerMode(streamType) &&
-                mAudioService.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE) {
+        if (((flags & AudioManager.FLAG_VIBRATE) != 0) &&
+                mAudioService.isStreamAffectedByRingerMode(streamType) && isVibrate()) {
             sendMessageDelayed(obtainMessage(MSG_VIBRATE), VIBRATE_DELAY);
         }
     }
@@ -620,7 +667,7 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
     protected void onVibrate() {
 
         // Make sure we ended up in vibrate ringer mode
-        if (mAudioService.getRingerMode() != AudioManager.RINGER_MODE_VIBRATE) {
+        if (!isVibrate()) {
             return;
         }
 
@@ -675,9 +722,8 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
      */
     private void setRingerIcon() {
         StreamControl sc = mStreamControls.get(AudioManager.STREAM_RING);
-        int ringerMode = mAudioService.getRingerMode();
         if (sc != null) {
-           if (ringerMode == AudioManager.RINGER_MODE_SILENT) {
+           if (isMuted(sc.streamType)) {
                sc.iconRes =  R.drawable.ic_audio_vol_mute;
                sc.iconMuteRes = R.drawable.ic_volume_headset_off;
                sc.icon.setImageResource(mAudioManager.isWiredHeadsetOn() ? sc.iconMuteRes : sc.iconRes);
@@ -715,6 +761,11 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
 
             case MSG_VOLUME_CHANGED: {
                 onVolumeChanged(msg.arg1, msg.arg2);
+                break;
+            }
+
+            case MSG_MUTE_CHANGED: {
+                onMuteChanged(msg.arg1, msg.arg2);
                 break;
             }
 
@@ -771,12 +822,12 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
         sendMessage(obtainMessage(MSG_TIMEOUT));
     }
 
-    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromTouch) {
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         final Object tag = seekBar.getTag();
-        if (fromTouch && tag instanceof StreamControl) {
+        if (fromUser && tag instanceof StreamControl) {
             StreamControl sc = (StreamControl) tag;
-            if (mAudioManager.getStreamVolume(sc.streamType) != progress) {
-                mAudioManager.setStreamVolume(sc.streamType, progress, 0);
+            if (getStreamVolume(sc.streamType) != progress) {
+                setStreamVolume(sc.streamType, progress, 0);
             }
         }
         resetTimeout();
@@ -786,6 +837,11 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
     }
 
     public void onStopTrackingTouch(SeekBar seekBar) {
+        final Object tag = seekBar.getTag();
+        if (tag instanceof StreamControl) {
+            StreamControl sc = (StreamControl) tag;
+            // nothing for now
+        }
     }
 
     public void onClick(View v) {

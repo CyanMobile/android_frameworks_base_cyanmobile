@@ -35,7 +35,9 @@ interface IAudioService {
     void setStreamSolo(int streamType, boolean state, IBinder cb);
    	
     void setStreamMute(int streamType, boolean state, IBinder cb);
-    
+
+    boolean isStreamMute(int streamType);
+
     int getStreamVolume(int streamType);
     
     int getStreamMaxVolume(int streamType);

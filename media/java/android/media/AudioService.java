@@ -643,6 +643,11 @@ public class AudioService extends IAudioService.Stub {
         }
     }
 
+    /** get stream mute state. */
+    public boolean isStreamMute(int streamType) {
+        return (mStreamStates[streamType].muteCount() != 0);
+    }
+
     /** @see AudioManager#getStreamVolume(int) */
     public int getStreamVolume(int streamType) {
         ensureValidStreamType(streamType);
