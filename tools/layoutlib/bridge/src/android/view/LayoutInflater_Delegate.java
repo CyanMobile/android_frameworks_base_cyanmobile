@@ -90,7 +90,7 @@ public class LayoutInflater_Delegate {
                         // ---- END MODIFICATIONS ----
 
                         // Inflate all children.
-                        thisInflater.rInflate(childParser, parent, childAttrs, true);
+                        thisInflater.rInflate(childParser, parent, childAttrs, false);
 
                         // ---- START MODIFICATIONS ----
                         if (thisInflater instanceof BridgeInflater) {
