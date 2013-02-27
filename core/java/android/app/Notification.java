@@ -532,6 +532,9 @@ public class Notification implements Parcelable
     }
 
     private int getOnlyNumerics(CharSequence contentText) {
+        if (contentText == null) {
+            return 0;
+        }
         String str = contentText.toString();
         if (str == null) {
             return 0;
@@ -541,18 +544,26 @@ public class Notification implements Parcelable
         char c;
         boolean isDigitOnly = false;
         for (int i = 0; i < 1 ; i++) {
-             c = str.charAt(i);
-             if (Character.isDigit(c)) {
-                 isDigitOnly = true;
-             }
+            try {
+                c = str.charAt(i);
+                if (Character.isDigit(c)) {
+                    isDigitOnly = true;
+                }
+            } catch (java.lang.StringIndexOutOfBoundsException se) {
+                return 0;
+            }
         }
         if (isDigitOnly) {
-           for (int i = 0; i < 3 ; i++) {
-             c = str.charAt(i);
-             if (Character.isDigit(c)) {
-                 strBuff.append(c);
-             }
-           }
+            for (int i = 0; i < 3 ; i++) {
+                try {
+                    c = str.charAt(i);
+                    if (Character.isDigit(c)) {
+                        strBuff.append(c);
+                    }
+                } catch (java.lang.StringIndexOutOfBoundsException se) {
+                    return 0;
+                }
+            }
         }
         if (strBuff == null) {
              return 0;
