@@ -90,7 +90,7 @@ public class LayoutInflater_Delegate {
                         // ---- END MODIFICATIONS ----
 
                         // Inflate all children.
-                        thisInflater.rInflate(childParser, parent, childAttrs);
+                        thisInflater.rInflate(childParser, parent, childAttrs, true);
 
                         // ---- START MODIFICATIONS ----
                         if (thisInflater instanceof BridgeInflater) {
@@ -133,7 +133,7 @@ public class LayoutInflater_Delegate {
                         }
 
                         // Inflate all children.
-                        thisInflater.rInflate(childParser, view, childAttrs);
+                        thisInflater.rInflate(childParser, view, childAttrs, true);
 
                         // Attempt to override the included layout's android:id with the
                         // one set on the <include /> tag itself.
