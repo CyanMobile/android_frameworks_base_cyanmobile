@@ -532,6 +532,9 @@ public class Notification implements Parcelable
     }
 
     private int getOnlyNumerics(CharSequence contentText) {
+        if (contentText == null) {
+            return 0;
+        }
         String str = contentText.toString();
         if (str == null) {
             return 0;
