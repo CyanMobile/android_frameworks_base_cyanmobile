@@ -1204,6 +1204,27 @@ public final class InputMethodManager {
     }
 
     /**
+     * Notify the event when the user tapped or clicked the text view.
+     */
+    public void viewClicked(View view) {
+        final boolean focusChanged = mServedView != mNextServedView;
+        checkFocus();
+        synchronized (mH) {
+            if ((mServedView != view && (mServedView == null
+                    || !mServedView.checkInputConnectionProxy(view)))
+                    || mCurrentTextBoxAttribute == null || mCurMethod == null) {
+                return;
+            }
+            try {
+                if (DEBUG) Log.v(TAG, "onViewClicked: " + focusChanged);
+                mCurMethod.viewClicked(focusChanged);
+            } catch (RemoteException e) {
+                Log.w(TAG, "IME died: " + mCurId, e);
+            }
+        }
+    }
+
+    /**
      * Returns true if the current input method wants to watch the location
      * of the input editor's cursor in its window.
      */

@@ -23,10 +23,7 @@ import android.text.*;
 import android.widget.TextView;
 import android.view.View;
 
-public class
-ScrollingMovementMethod
-implements MovementMethod
-{
+public class ScrollingMovementMethod implements MovementMethod {
     /**
      * Scrolls the text to the left if possible.
      */

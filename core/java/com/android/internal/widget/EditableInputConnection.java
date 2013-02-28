@@ -17,6 +17,7 @@
 package com.android.internal.widget;
 
 import android.os.Bundle;
+import android.os.IBinder;
 import android.text.AndroidCharacter;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -125,13 +126,9 @@ public class EditableInputConnection extends BaseInputConnection {
         if (TextUtils.hasRTLCharacters(mTextView.getText(), 0, mTextView.getText().length()) && text.length() == 1)
             text = String.valueOf(AndroidCharacter.getMirror(text.charAt(0)));
 
-        CharSequence errorBefore = mTextView.getError();
+        mTextView.resetErrorChangedFlag();
         boolean success = super.commitText(text, newCursorPosition);
-        CharSequence errorAfter = mTextView.getError();
-
-        if (errorAfter != null && errorBefore == errorAfter) {
-            mTextView.setError(null, null);
-        }
+        mTextView.hideErrorIfUnchanged();
 
         return success;
     }

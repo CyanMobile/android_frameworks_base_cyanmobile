@@ -96,7 +96,7 @@ extends Layout
 
         generate(source, bufstart, bufend, paint, outerwidth, align,
                  spacingmult, spacingadd, includepad, includepad,
-                 ellipsizedWidth, ellipsize);
+                 ellipsize != null, ellipsizedWidth, ellipsize);
 
         mChdirs = null;
         mChs = null;
@@ -118,7 +118,8 @@ extends Layout
                         Alignment align,
                         float spacingmult, float spacingadd,
                         boolean includepad, boolean trackpad,
-                        float ellipsizedWidth, TextUtils.TruncateAt ellipsize) {
+                        boolean breakOnlyAtSpaces,
+                        float ellipsizedWidth, TextUtils.TruncateAt where) {
         mLineCount = 0;
 
         int v = 0;
@@ -456,7 +457,7 @@ extends Layout
                             if (fitbottom > okbottom)
                                 okbottom = fitbottom;
                         }
-                    } else if (ellipsize != null) {
+                    } else if (breakOnlyAtSpaces) {
                         if (ok != here) {
                             // Log.e("text", "output ok " + here + " to " +ok);
 
@@ -473,7 +474,7 @@ extends Layout
                                     needMultiply, start, chdirs, dir, easy,
                                     ok == bufend, includepad, trackpad,
                                     widths, start, end - start,
-                                    ellipsize, ellipsizedWidth, okwidth,
+                                    where, ellipsizedWidth, okwidth,
                                     paint);
 
                             here = ok;
@@ -509,7 +510,7 @@ extends Layout
                                     needMultiply, start, chdirs, dir, easy,
                                     ok == bufend, includepad, trackpad,
                                     widths, start, end - start,
-                                    ellipsize, ellipsizedWidth, okwidth,
+                                    where, ellipsizedWidth, okwidth,
                                     paint);
 
                             here = ok;
@@ -525,7 +526,7 @@ extends Layout
                                     needMultiply, start, chdirs, dir, easy,
                                     fit == bufend, includepad, trackpad,
                                     widths, start, end - start,
-                                    ellipsize, ellipsizedWidth, fitwidth,
+                                    where, ellipsizedWidth, fitwidth,
                                     paint);
 
                             here = fit;
@@ -546,7 +547,7 @@ extends Layout
                                     here + 1 == bufend, includepad,
                                     trackpad,
                                     widths, start, end - start,
-                                    ellipsize, ellipsizedWidth,
+                                    where, ellipsizedWidth,
                                     widths[here - start], paint);
 
                             here = here + 1;
@@ -591,7 +592,7 @@ extends Layout
                         needMultiply, start, chdirs, dir, easy,
                         end == bufend, includepad, trackpad,
                         widths, start, end - start,
-                        ellipsize, ellipsizedWidth, w, paint);
+                        where, ellipsizedWidth, w, paint);
             }
 
             start = end;
@@ -614,7 +615,7 @@ extends Layout
                     needMultiply, bufend, chdirs, DEFAULT_DIR, true,
                     true, includepad, trackpad,
                     widths, bufstart, 0,
-                    ellipsize, ellipsizedWidth, 0, paint);
+                    where, ellipsizedWidth, 0, paint);
         }
     }
 
@@ -1131,15 +1132,14 @@ extends Layout
             }
 
             mLineDirections[j] = linedirs;
-        }
 
-        // If ellipsize is in marquee mode, do not apply ellipsis on the first line
-        if (ellipsize != null && (ellipsize != TextUtils.TruncateAt.MARQUEE || j != 0)) {
-            calculateEllipsis(start, end, widths, widstart, widoff,
+            // If ellipsize is in marquee mode, do not apply ellipsis on the first line
+            if (ellipsize != null && (ellipsize != TextUtils.TruncateAt.MARQUEE || j != 0)) {
+                calculateEllipsis(start, end, widths, widstart, widoff,
                               ellipsiswidth, ellipsize, j,
                               textwidth, paint);
+            }
         }
-
         mLineCount++;
         return v;
     }
@@ -1255,21 +1255,11 @@ extends Layout
     }
 
     public int getLineTop(int line) {
-        int top = mLines[mColumns * line + TOP];
-        if (mMaximumVisibleLineCount > 0 && line >= mMaximumVisibleLineCount &&
-                line != mLineCount) {
-            top += getBottomPadding();
-        }
-        return top;
+        return mLines[mColumns * line + TOP];
     }
 
     public int getLineDescent(int line) {
-        int descent = mLines[mColumns * line + DESCENT];
-        if (mMaximumVisibleLineCount > 0 && line >= mMaximumVisibleLineCount - 1 &&
-                line != mLineCount) {
-            descent += getBottomPadding();
-        }
-        return descent;
+        return mLines[mColumns * line + DESCENT];
     }
 
     public int getLineStart(int line) {

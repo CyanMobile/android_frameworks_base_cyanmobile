@@ -1982,8 +1982,7 @@ public abstract class Layout {
 
     }
 
-    /* package */ static class SpannedEllipsizer
-                    extends Ellipsizer implements Spanned {
+    /* package */ static class SpannedEllipsizer extends Ellipsizer implements Spanned {
         private Spanned mSpanned;
 
         public SpannedEllipsizer(CharSequence display) {
@@ -2043,8 +2042,8 @@ public abstract class Layout {
         ALIGN_NORMAL,
         ALIGN_OPPOSITE,
         ALIGN_CENTER,
-        ALIGN_LEFT,
-        ALIGN_RIGHT,
+        // ALIGN_LEFT,
+        // ALIGN_RIGHT,
     }
 
     private static final int TAB_INCREMENT = 20;

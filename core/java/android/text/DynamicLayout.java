@@ -92,7 +92,7 @@ extends Layout
         } else {
             mInts = new PackedIntVector(COLUMNS_NORMAL);
             mEllipsizedWidth = width;
-            mEllipsizeAt = null;
+            mEllipsizeAt = ellipsize;
         }
 
         mObjects = new PackedObjectVector<Directions>(1);
@@ -259,9 +259,10 @@ extends Layout
             reflowed = new StaticLayout(true);
 
         reflowed.generate(text, where, where + after,
-                 getPaint(), getWidth(), getAlignment(),
-                 getSpacingMultiplier(), getSpacingAdd(),
-                 false, true, mEllipsizedWidth, mEllipsizeAt);
+                          getPaint(), getWidth(), getAlignment(),
+                          getSpacingMultiplier(), getSpacingAdd(),
+                          false, true, mEllipsize,
+                          mEllipsizedWidth, mEllipsizeAt);
         int n = reflowed.getLineCount();
 
         // If the new layout has a blank line at the end, but it is not

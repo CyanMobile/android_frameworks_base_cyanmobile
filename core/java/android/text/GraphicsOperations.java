@@ -24,9 +24,7 @@ import android.graphics.Paint;
  * draw/measure/widths calculations from an internal array.
  * {@hide}
  */
-public interface GraphicsOperations
-extends CharSequence
-{
+public interface GraphicsOperations extends CharSequence {
     /**
      * Just like {@link Canvas#drawText}.
      */
