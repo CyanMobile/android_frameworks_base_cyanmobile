@@ -152,8 +152,8 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
                 R.drawable.ic_audio_notification_mute,
                 true),
         FmStream(AudioManager.STREAM_FM,
-                R.drawable.ic_audio_vol,
-                R.drawable.ic_audio_vol_mute,
+                R.drawable.ic_audio_fm,
+                R.drawable.ic_audio_fm_mute,
                 false);
         int streamType;
         int descRes;
