@@ -151,6 +151,10 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
                 R.drawable.ic_audio_notification,
                 R.drawable.ic_audio_notification_mute,
                 true);
+        FmStream(AudioManager.STREAM_FM,
+                R.drawable.ic_audio_vol,
+                R.drawable.ic_audio_vol_mute,
+                false),
         int streamType;
         int descRes;
         int iconRes;
@@ -173,7 +177,8 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
         StreamResources.VoiceStream,
         StreamResources.MediaStream,
         StreamResources.NotificationStream,
-        StreamResources.AlarmStream
+        StreamResources.AlarmStream,
+        StreamResources.FmStream,
     };
 
     /** Object that contains data for each slider */
@@ -360,7 +365,8 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
             sc.icon.setOnClickListener(this);
             sc.seekbarView = (SeekBar) sc.group.findViewById(R.id.seekbar);
             int plusOne = (streamType == AudioSystem.STREAM_BLUETOOTH_SCO ||
-                    streamType == AudioSystem.STREAM_VOICE_CALL) ? 1 : 0;
+                    streamType == AudioSystem.STREAM_VOICE_CALL
+                    || streamType == AudioSystem.STREAM_FM) ? 1 : 0;
             sc.seekbarView.setMax(getStreamMaxVolume(streamType) + plusOne);
             sc.seekbarView.setOnSeekBarChangeListener(this);
             sc.seekbarView.setTag(sc);
@@ -576,6 +582,13 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
             }
 
             case AudioManager.STREAM_FM: {
+                /*
+                 * For in-call voice call volume, there is no inaudible volume.
+                 * Rescale the UI control so the progress bar doesn't go all
+                 * the way to zero and don't show the mute icon.
+                 */
+                index++;
+                max++;
                 break;
             }
 
