@@ -500,9 +500,10 @@ public class Notification implements Parcelable
             CharSequence contentTitle, CharSequence contentText, PendingIntent contentIntent) {
         RemoteViews contentView = new RemoteViews(context.getPackageName(),
                 R.layout.status_bar_latest_event_content);
+        int isNumeric = getOnlyNumerics(contentText);
         if (this.icon != 0) {
             contentView.setImageViewResource(R.id.iconBig, this.icon);
-            if (this.when != 0 || this.number > 0) {
+            if (this.when != 0 || isNumeric > 0) {
                 contentView.setViewVisibility(R.id.iconplaces, View.VISIBLE);
                 contentView.setImageViewResource(R.id.icon, this.icon);
             } else {
@@ -520,10 +521,10 @@ public class Notification implements Parcelable
         } else {
             contentView.setViewVisibility(R.id.time, View.GONE);
         }
-        if (getOnlyNumerics(contentText) > 0) {
-            this.number = getOnlyNumerics(contentText);
+        if (isNumeric > 0) {
+            this.number = isNumeric;
             NumberFormat f = NumberFormat.getIntegerInstance();
-            contentView.setTextViewText(R.id.info, f.format(getOnlyNumerics(contentText)));
+            contentView.setTextViewText(R.id.info, f.format(isNumeric));
         } else {
             contentView.setViewVisibility(R.id.info, View.GONE);
         }
