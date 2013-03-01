@@ -62,10 +62,8 @@ public class CpuTile extends QuickSettingsTile {
     @Override
     void onPostCreate() {
         queryForCpuInformation();
-        if (enableFlip()) {
-            mHandler.removeCallbacks(mResetFlip);
-            mHandler.postDelayed(mResetFlip, 5000); //5 second
-        }
+        mHandler.removeCallbacks(mResetFlip);
+        mHandler.postDelayed(mResetFlip, 5000); //5 second
         super.onPostCreate();
     }
 
@@ -88,10 +86,8 @@ public class CpuTile extends QuickSettingsTile {
     private Runnable mResetFlip = new Runnable() {
         public void run() {
             flipTile();
-            if (enableFlip()) {
-                mHandler.removeCallbacks(mResetFlip);
-                mHandler.postDelayed(mResetFlip, 5000); //5 second
-            }
+            mHandler.removeCallbacks(mResetFlip);
+            mHandler.postDelayed(mResetFlip, 5000); //5 second
         }
     };
 

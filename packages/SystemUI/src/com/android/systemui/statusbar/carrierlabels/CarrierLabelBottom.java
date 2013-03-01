@@ -178,19 +178,16 @@ public class CarrierLabelBottom extends TextView {
         mSpn = spn;
         mShowPlmn = showPlmn;
         mPlmn = plmn;
-        int CColours = mCarrierColor;
+        setTextColor(mCarrierColor);
+        setTextSize(mCarrierSize);
 
         boolean haveSignal = (showPlmn && plmn != null) || (showSpn && spn != null);
         if (!haveSignal) {
             if (mAirplaneOn) {
                 setText("Airplane Mode");
-                setTextColor(CColours);
-                setTextSize(mCarrierSize);
                 return;
             } else {
                 setText(com.android.internal.R.string.lockscreen_carrier_default);
-                setTextColor(CColours);
-                setTextSize(mCarrierSize);
                 return;
             }
         }
@@ -220,26 +217,18 @@ public class CarrierLabelBottom extends TextView {
                     str.append(spn);
                 }
                 setText(str.toString());
-                setTextColor(CColours);
-                setTextSize(mCarrierSize);
                 break;
 
             case TYPE_SPN:
                 setText(spn);
-                setTextColor(CColours);
-                setTextSize(mCarrierSize);
                 break;
 
             case TYPE_PLMN:
                 setText(plmn);
-                setTextColor(CColours);
-                setTextSize(mCarrierSize);
                 break;
 
             case TYPE_CUSTOM:
                 setText(mCarrierLabelCustom);
-                setTextColor(CColours);
-                setTextSize(mCarrierSize);
                 break;
         }
     }

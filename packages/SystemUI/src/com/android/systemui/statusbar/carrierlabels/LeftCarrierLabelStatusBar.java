@@ -52,7 +52,6 @@ public class LeftCarrierLabelStatusBar extends TextView {
     private int mCarrierColor;
     private int mCarrierSize;
 
-    private boolean mStatusBarCarrierLeft;
     private int mCarrierLabelType;
     private String mCarrierLabelCustom;
 
@@ -165,8 +164,6 @@ public class LeftCarrierLabelStatusBar extends TextView {
                     Settings.System.AIRPLANE_MODE_ON, 0) == 1);
         mCarrierColor = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_CARRIERCOLOR, defValuesColor));
-        mStatusBarCarrierLeft = (Settings.System.getInt(resolver,
-                    Settings.System.STATUS_BAR_CARRIER, 6) == 3);
         float mCarrierSizeval = (float) Settings.System.getInt(resolver,
                 Settings.System.STATUSBAR_CARRIER_FONT_SIZE, defValuesFontSize);
         DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
@@ -175,9 +172,7 @@ public class LeftCarrierLabelStatusBar extends TextView {
     }
 
     private void updateNetworkName(boolean showSpn, String spn, boolean showPlmn, String plmn) {
-        ContentResolver resolver = mContext.getContentResolver();
 
-      if(mStatusBarCarrierLeft){
         if (false) {
             Slog.d("CarrierLabel", "updateNetworkName showSpn=" + showSpn + " spn=" + spn
                     + " showPlmn=" + showPlmn + " plmn=" + plmn);
@@ -187,19 +182,16 @@ public class LeftCarrierLabelStatusBar extends TextView {
         mSpn = spn;
         mShowPlmn = showPlmn;
         mPlmn = plmn;
-        int CColours = mCarrierColor;
+        setTextColor(mCarrierColor);
+        setTextSize(mCarrierSize);
 
         boolean haveSignal = (showPlmn && plmn != null) || (showSpn && spn != null);
         if (!haveSignal) {
             if (mAirplaneOn) {
                 setText("Airplane Mode");
-                setTextColor(CColours);
-                setTextSize(mCarrierSize);
                 return;
             } else {
                 setText(com.android.internal.R.string.lockscreen_carrier_default);
-                setTextColor(CColours);
-                setTextSize(mCarrierSize);
                 return;
             }
         }
@@ -229,29 +221,20 @@ public class LeftCarrierLabelStatusBar extends TextView {
                     str.append(spn);
                 }
                 setText(str.toString());
-                setTextColor(CColours);
-                setTextSize(mCarrierSize);
                 break;
 
             case TYPE_SPN:
                 setText(spn);
-                setTextColor(CColours);
-                setTextSize(mCarrierSize);
                 break;
 
             case TYPE_PLMN:
                 setText(plmn);
-                setTextColor(CColours);
-                setTextSize(mCarrierSize);
                 break;
 
             case TYPE_CUSTOM:
                 setText(mCarrierLabelCustom);
-                setTextColor(CColours);
-                setTextSize(mCarrierSize);
                 break;
         }
-      }
     }
 
 }

@@ -152,7 +152,7 @@ public class QuickSettingsTile implements OnClickListener {
 
     boolean enableFlip() {
         return (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.ENABLE_FLIP_ANIMATE, 1) == 1);
+                Settings.System.ENABLE_FLIP_ANIMATE, 1) == 1) && mService.isFullyExpanded();
     }
 
     @Override

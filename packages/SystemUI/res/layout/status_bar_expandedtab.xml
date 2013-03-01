@@ -38,6 +38,11 @@
             android:layout_height="wrap_content"
             />
 
+        <com.android.systemui.statusbar.powerwidget.MusicControls android:id="@+id/exp_music_controls"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             />
+
         <LinearLayout android:id="@+id/carrier_label_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -200,11 +205,6 @@
             android:text="@string/status_bar_latestnews_events_title"
             />
 
-        <com.android.systemui.statusbar.powerwidget.MusicControls android:id="@+id/exp_music_controls"
-             android:layout_width="match_parent"
-             android:layout_height="wrap_content"
-             />
-
         <com.android.systemui.statusbar.powerwidget.PowerWidgetOne android:id="@+id/exp_power_stat_one"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -312,6 +312,7 @@
                 android:layout_gravity="bottom"
                 />
         </ScrollView>
+       </LinearLayout>
 
         <LinearLayout android:id="@+id/compact_carrier_layout"
             android:orientation="horizontal"
@@ -329,7 +330,6 @@
                  android:layout_alignParentRight="true"
                  />
         </LinearLayout>
-       </LinearLayout>
 
         <ImageView
             android:layout_width="match_parent"

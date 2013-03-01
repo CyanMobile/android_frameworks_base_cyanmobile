@@ -26,19 +26,15 @@ public class TimeTile extends QuickSettingsTile {
             }
         };
 
-        if (enableFlip()) {
-            mHandler.removeCallbacks(mResetFlip);
-            mHandler.postDelayed(mResetFlip, 10000); //10 second
-        }
+        mHandler.removeCallbacks(mResetFlip);
+        mHandler.postDelayed(mResetFlip, 10000); //10 second
     }
 
     private Runnable mResetFlip = new Runnable() {
         public void run() {
             flipTile();
-            if (enableFlip()) {
-                mHandler.removeCallbacks(mResetFlip);
-                mHandler.postDelayed(mResetFlip, 10000); //10 second
-            }
+            mHandler.removeCallbacks(mResetFlip);
+            mHandler.postDelayed(mResetFlip, 10000); //10 second
         }
     };
 

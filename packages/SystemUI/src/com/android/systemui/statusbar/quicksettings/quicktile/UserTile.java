@@ -66,10 +66,8 @@ public class UserTile extends QuickSettingsTile {
     @Override
     void onPostCreate() {
         queryForUserInformation();
-        if (enableFlip()) {
-            mHandler.removeCallbacks(mResetFlip);
-            mHandler.postDelayed(mResetFlip, 8000); //10 second
-        }
+        mHandler.removeCallbacks(mResetFlip);
+        mHandler.postDelayed(mResetFlip, 8000); //8 second
         super.onPostCreate();
     }
 
@@ -84,10 +82,8 @@ public class UserTile extends QuickSettingsTile {
     private Runnable mResetFlip = new Runnable() {
         public void run() {
             flipTile();
-            if (enableFlip()) {
-                mHandler.removeCallbacks(mResetFlip);
-                mHandler.postDelayed(mResetFlip, 8000); //10 second
-            }
+            mHandler.removeCallbacks(mResetFlip);
+            mHandler.postDelayed(mResetFlip, 8000); //8 second
         }
     };
 
