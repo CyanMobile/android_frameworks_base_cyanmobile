@@ -6815,6 +6815,27 @@ public final class Settings {
          */
         public static final String ENABLE_PERMISSIONS_MANAGEMENT = "enable_permissions_management";
 
+        /**	
+         * Whether the screensaver is enabled.	
+         * @hide	
+         */	
+        public static final String SCREENSAVER_ENABLED = "screensaver_enabled";
+
+        /**	
+         * how long screensaver is enabled.	
+         * @hide	
+         */	
+        public static final String SCREENSAVER_TIMEOUT = "screensaver_timeout";
+
+        /**
+         * The user's chosen screensaver component.	
+         *	
+         * This component will be launched by the PhoneWindowManager after a timeout when not on
+         * battery, or upon dock insertion (if SCREENSAVER_ACTIVATE_ON_DOCK is set to 1).
+         * @hide	
+         */	
+        public static final String SCREENSAVER_COMPONENT = "screensaver_component";
+
         /**
          * @hide
          */

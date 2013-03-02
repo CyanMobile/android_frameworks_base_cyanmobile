@@ -252,7 +252,7 @@ public final class ActivityManagerService extends ActivityManagerNative
     static final int INSTRUMENTATION_KEY_DISPATCHING_TIMEOUT = 60*1000;
     
     // GMAPS NLS HACK	
-    static boolean GMAPS_HACK;
+    static boolean GMAPS_HACK = false;
     static final String GMAPS_OLDNLS = 
             "com.google.android.apps.maps/com.google.android.location.internal.server.NetworkLocationService";
     static final String GMAPS_NLS = 
@@ -10420,8 +10420,8 @@ public final class ActivityManagerService extends ActivityManagerNative
 
         GMAPS_HACK = "1".equals(SystemProperties.get("persist.sys.gmaps_hack", "0"));
         if (GMAPS_HACK && (r.shortName.equals(GMAPS_OLDNLS) || r.shortName.equals(GMAPS_NLS))
-                && getProcessRecordLocked("com.google.android.apps.maps",
-                r.appInfo.uid) == null) {
+                && (getProcessRecordLocked("com.google.android.apps.maps",
+                r.appInfo.uid) == null)) {
             // Slog.i(TAG, "Not starting Gmaps NetworkLocationService, Gmaps are not running!");
             return true;
         }
@@ -12883,8 +12883,8 @@ public final class ActivityManagerService extends ActivityManagerNative
                     // has said it is doing work.
                     app.keeping = true;
                     if (GMAPS_HACK && (s.shortName.equals(GMAPS_OLDNLS) || s.shortName.equals(GMAPS_NLS))
-                            && getProcessRecordLocked("com.google.android.apps.maps",
-                            s.appInfo.uid) == null) {
+                            && (getProcessRecordLocked("com.google.android.apps.maps",
+                            s.appInfo.uid) == null)) {
                         // Slog.i(TAG, "Let the Gmaps NetworkLocationService die! Gmaps are not running!");
                         app.keeping = false;
                         adj = hiddenAdj;
