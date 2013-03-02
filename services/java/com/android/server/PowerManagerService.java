@@ -602,7 +602,7 @@ class PowerManagerService extends IPowerManager.Stub
                 }
                 if (mElectronBeamAnimationOn && (transitionScale > 0.5f)) {
                     // Uncomment this if you want the screen-on animation.
-                    // mAnimationSetting |= ANIM_SETTING_ON;
+                    mAnimationSetting |= ANIM_SETTING_ON;
                 }
             }
         }
@@ -2348,8 +2348,10 @@ class PowerManagerService extends IPowerManager.Stub
                         }
                         animateInternal(mask, false, delay);
                     } else if (msg.what == ANIMATE_POWER_OFF) {
-                        int mode = msg.arg1;
-                        nativeStartSurfaceFlingerAnimation(mode);
+                        synchronized (this) {
+                            int mode = msg.arg1;
+                            nativeStartSurfaceFlingerAnimation(mode);
+                        }
                     }
                 }
             };
@@ -2410,6 +2412,14 @@ class PowerManagerService extends IPowerManager.Stub
                     Message msg = mScreenBrightnessHandler
                             .obtainMessage(ANIMATE_LIGHTS, mask, newValue);
                     mScreenBrightnessHandler.sendMessageDelayed(msg, delay);
+                } else {
+                    final boolean doScreenAnimation = (mask & (SCREEN_BRIGHT_BIT | SCREEN_ON_BIT)) != 0;
+                    final boolean turnOff = currentValue == Power.BRIGHTNESS_OFF;
+                    if (turnOff && doScreenAnimation) {
+                        // Cancel all pending animations since we're turning off
+                        mScreenBrightnessHandler.removeCallbacksAndMessages(null);
+                        screenOffFinishedAnimatingLocked(mScreenOffReason);
+                    }
                 }
             }
         }
@@ -2473,9 +2483,6 @@ class PowerManagerService extends IPowerManager.Stub
                     final boolean doScreenAnim = (mask & (SCREEN_BRIGHT_BIT | SCREEN_ON_BIT)) != 0;
                     final boolean turningOff = endValue == Power.BRIGHTNESS_OFF;
                     if (turningOff && doScreenAnim) {
-                        // Cancel all pending animations since we're turning off
-                        mScreenBrightnessHandler.removeCallbacksAndMessages(null);
-                        screenOffFinishedAnimatingLocked(mScreenOffReason);
                         duration = 200; // TODO: how long should this be?
                     }
                     if (doScreenAnim) {
