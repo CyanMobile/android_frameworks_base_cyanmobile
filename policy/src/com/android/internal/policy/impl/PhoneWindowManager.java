@@ -265,7 +265,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static final boolean SEPARATE_TIMEOUT_FOR_SCREEN_SAVER = true;
     // visual screen saver support
     int mScreenSaverTimeout = 0;
-    boolean mScreenSaverEnabledByUser = false;
+    boolean mScreenSaverEnabledByUser = true;
     boolean mScreenSaverMayRun = true; // false if a wakelock is held
     boolean mPluggedIn;
 
@@ -1182,7 +1182,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
             if (SEPARATE_TIMEOUT_FOR_SCREEN_SAVER) {
                 mScreenSaverTimeout = Settings.Secure.getInt(resolver,
-                        Settings.Secure.SCREENSAVER_TIMEOUT, 15000);
+                        Settings.Secure.SCREENSAVER_TIMEOUT, 0);
+                if (mScreenSaverTimeout == 0) {
+                    mScreenSaverTimeout = 15000;
+                }
             } else {
                 mScreenSaverTimeout = Settings.System.getInt(resolver,
                         Settings.System.SCREEN_OFF_TIMEOUT, 0);
