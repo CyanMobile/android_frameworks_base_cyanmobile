@@ -66,6 +66,8 @@ public class RotateAnimation extends Animation {
         mPivotYValue = d.value;
 
         a.recycle();
+
+        initializePivotPoint();
     }
 
     /**
@@ -107,6 +109,20 @@ public class RotateAnimation extends Animation {
         mPivotYType = ABSOLUTE;
         mPivotXValue = pivotX;
         mPivotYValue = pivotY;
+        initializePivotPoint();	
+    }
+
+    /**
+     * Called at the end of constructor methods to initialize, if possible, values for
+     * the pivot point. This is only possible for ABSOLUTE pivot values.
+     */	
+    private void initializePivotPoint() {
+        if (mPivotXType == ABSOLUTE) {
+            mPivotX = mPivotXValue;
+        }
+        if (mPivotYType == ABSOLUTE) {
+           mPivotY = mPivotYValue;
+        }
     }
 
     /**
@@ -149,10 +165,12 @@ public class RotateAnimation extends Animation {
     protected void applyTransformation(float interpolatedTime, Transformation t) {
         float degrees = mFromDegrees + ((mToDegrees - mFromDegrees) * interpolatedTime);
 
+        float scale = getScaleFactor();
+
         if (mPivotX == 0.0f && mPivotY == 0.0f) {
             t.getMatrix().setRotate(degrees);
         } else {
-            t.getMatrix().setRotate(degrees, mPivotX, mPivotY);
+            t.getMatrix().setRotate(degrees, mPivotX * scale, mPivotY * scale);
         }
     }
 

@@ -64,6 +64,11 @@ import com.android.systemui.statusbar.policy.DataTraffics;
 import com.android.systemui.R;
 import android.os.IPowerManager;
 import android.provider.Settings.SettingNotFoundException;
+import android.animationing.Animator;
+import android.animationing.AnimatorListenerAdapter;
+import android.animationing.AnimatorSet;
+import android.animationing.ObjectAnimator;
+import android.animationing.TimeInterpolator;
 import android.app.ActivityManagerNative;
 import android.app.ActivityManager;
 import android.app.ActivityManager.MemoryInfo;
@@ -128,6 +133,7 @@ import android.view.WindowManagerImpl;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -3316,6 +3322,40 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     };
 
+    public Animator setVisibilityWhenDone(
+            final Animator a, final View v, final int vis) {
+        a.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                v.setVisibility(vis);
+            }	
+        });	
+        return a;
+    }
+
+    public Animator interpolator(TimeInterpolator ti, Animator a) {
+        a.setInterpolator(ti);
+        return a;
+    }
+
+    public Animator startDelay(int d, Animator a) {
+        a.setStartDelay(d);	
+        return a;
+    }
+
+    public Animator start(Animator a) {
+        a.start();	
+        return a;	
+    }
+
+    final TimeInterpolator mAccelerateInterpolator = new AccelerateInterpolator();
+    final TimeInterpolator mDecelerateInterpolator = new DecelerateInterpolator();	
+    final int FLIP_DURATION_OUT = 125;
+    final int FLIP_DURATION_IN = 225;	
+    final int FLIP_DURATION = (FLIP_DURATION_IN + FLIP_DURATION_OUT);
+	
+    Animator mNotifViewAnim, mPowerViewAnim;
+
     public void toggleNotif() {
           if (!mStatusBarTab) return;
 
@@ -3324,10 +3364,26 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
           mNotificationsToggle.setTextColor(Color.parseColor("#666666"));
           LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
           parent.setBackgroundResource(R.drawable.title_bar_portrait);
-          mPowerCarrier.setVisibility(View.VISIBLE);
-          mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.slide_in_left, null));
-          mNotifications.setVisibility(View.GONE);
-          mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.slide_out_left, null));
+          if (mPowerCarrier.getVisibility() != View.VISIBLE) {
+                if (mPowerViewAnim != null) mPowerViewAnim.cancel();
+                if (mNotifViewAnim != null) mNotifViewAnim.cancel();
+
+                mPowerCarrier.setVisibility(View.VISIBLE);
+                mPowerCarrier.setScaleX(0f);
+                mPowerViewAnim = start(
+                    startDelay(FLIP_DURATION_OUT,
+                        interpolator(mDecelerateInterpolator,
+                            ObjectAnimator.ofFloat(mPowerCarrier, View.SCALE_X, 0f, 1f)
+                                .setDuration(FLIP_DURATION_IN)
+                            )));
+                mNotifViewAnim = start(
+                    setVisibilityWhenDone(
+                        interpolator(mAccelerateInterpolator,
+                                ObjectAnimator.ofFloat(mNotifications, View.SCALE_X, 1f, 0f)
+                                )
+                            .setDuration(FLIP_DURATION_OUT),
+                        mNotifications, View.INVISIBLE));
+          }
           updateExpandedViewPos(EXPANDED_FULL_OPEN);
           NotifEnable = true;
     }
@@ -3340,10 +3396,25 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
           mButtonsToggle.setTextColor(Color.parseColor("#666666"));
           LinearLayout parent = (LinearLayout)mButtonsToggle.getParent();
           parent.setBackgroundResource(R.drawable.title_bar_portrait);
-          mNotifications.setVisibility(View.VISIBLE);
-          mNotifications.startAnimation(loadAnim(com.android.internal.R.anim.slide_in_right, null));	
-          mPowerCarrier.setVisibility(View.GONE);	
-          mPowerCarrier.startAnimation(loadAnim(com.android.internal.R.anim.slide_out_right, null));
+          if (mNotifications.getVisibility() != View.VISIBLE) {
+                if (mPowerViewAnim != null) mPowerViewAnim.cancel();
+                if (mNotifViewAnim != null) mNotifViewAnim.cancel();
+
+                mNotifications.setVisibility(View.VISIBLE);
+                mNotifViewAnim = start(
+                    startDelay(FLIP_DURATION_OUT,
+                        interpolator(mDecelerateInterpolator,
+                            ObjectAnimator.ofFloat(mNotifications, View.SCALE_X, 0f, 1f)
+                                .setDuration(FLIP_DURATION_IN)
+                            )));
+                mPowerViewAnim = start(
+                    setVisibilityWhenDone(
+                        interpolator(mAccelerateInterpolator,
+                                ObjectAnimator.ofFloat(mPowerCarrier, View.SCALE_X, 1f, 0f)
+                                )
+                            .setDuration(FLIP_DURATION_OUT),
+                        mPowerCarrier, View.INVISIBLE));
+          }
           updateExpandedViewPos(EXPANDED_FULL_OPEN);
           NotifEnable = false;
     }

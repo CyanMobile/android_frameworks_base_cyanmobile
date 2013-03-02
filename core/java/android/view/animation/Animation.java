@@ -21,6 +21,7 @@ import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.graphics.RectF;
+import android.os.Handler;
 
 /**
  * Abstraction for an Animation that can be applied to Views, Surfaces, or
@@ -174,7 +175,13 @@ public abstract class Animation implements Cloneable {
      * Desired Z order mode during animation.
      */
     private int mZAdjustment;
-    
+
+    /**
+     * scalefactor to apply to pivot points, etc. during animation. Subclasses retrieve the
+     * value via getScaleFactor().
+     */
+    private float mScaleFactor = 1f;
+
     /**
      * Don't animate the wallpaper.
      */
@@ -187,6 +194,11 @@ public abstract class Animation implements Cloneable {
     RectF mRegion = new RectF();
     Transformation mTransformation = new Transformation();
     Transformation mPreviousTransformation = new Transformation();
+
+    private Handler mListenerHandler;
+    private Runnable mOnStart;
+    private Runnable mOnRepeat;
+    private Runnable mOnEnd;
 
     /**
      * Creates a new animation with a duration of 0ms, the default interpolator, with
@@ -213,11 +225,6 @@ public abstract class Animation implements Cloneable {
         setFillBefore(a.getBoolean(com.android.internal.R.styleable.Animation_fillBefore, mFillBefore));
         setFillAfter(a.getBoolean(com.android.internal.R.styleable.Animation_fillAfter, mFillAfter));
 
-        final int resID = a.getResourceId(com.android.internal.R.styleable.Animation_interpolator, 0);
-        if (resID > 0) {
-            setInterpolator(context, resID);
-        }
-
         setRepeatCount(a.getInt(com.android.internal.R.styleable.Animation_repeatCount, mRepeatCount));
         setRepeatMode(a.getInt(com.android.internal.R.styleable.Animation_repeatMode, RESTART));
 
@@ -225,9 +232,15 @@ public abstract class Animation implements Cloneable {
         
         setDetachWallpaper(a.getBoolean(com.android.internal.R.styleable.Animation_detachWallpaper, false));
         
-        ensureInterpolator();
+        final int resID = a.getResourceId(com.android.internal.R.styleable.Animation_interpolator, 0);
 
         a.recycle();
+
+        if (resID > 0) {
+            setInterpolator(context, resID);	
+        }
+
+        ensureInterpolator();
     }
 
     @Override
@@ -253,6 +266,7 @@ public abstract class Animation implements Cloneable {
         mRepeated = 0;
         mMore = true;
         mOneMoreTime = true;
+        mListenerHandler = null;
     }
 
     /**
@@ -268,7 +282,7 @@ public abstract class Animation implements Cloneable {
      */
     public void cancel() {
         if (mStarted && !mEnded) {
-            if (mListener != null) mListener.onAnimationEnd(this);
+            fireAnimationEnd();
             mEnded = true;
         }
         // Make sure we move the animation to the end
@@ -282,7 +296,7 @@ public abstract class Animation implements Cloneable {
     public void detach() {
         if (mStarted && !mEnded) {
             mEnded = true;
-            if (mListener != null) mListener.onAnimationEnd(this);
+            fireAnimationEnd();
         }
     }
 
@@ -314,6 +328,38 @@ public abstract class Animation implements Cloneable {
     public void initialize(int width, int height, int parentWidth, int parentHeight) {
         reset();
         mInitialized = true;
+    }
+
+    /**	
+     * Sets the handler used to invoke listeners.
+     * 	
+     * @hide
+     */
+    public void setListenerHandler(Handler handler) {
+        if (mListenerHandler == null) {
+            mOnStart = new Runnable() {
+                public void run() {
+                    if (mListener != null) {
+                        mListener.onAnimationStart(Animation.this);
+                    }
+                }
+            };
+            mOnRepeat = new Runnable() {
+                public void run() {
+                    if (mListener != null) {
+                        mListener.onAnimationRepeat(Animation.this);
+                    }
+                }
+            };
+            mOnEnd = new Runnable() {
+                public void run() {
+                    if (mListener != null) {
+                        mListener.onAnimationEnd(Animation.this);
+                    }
+                }
+            };	
+        }
+        mListenerHandler = handler;
     }
 
     /**
@@ -418,6 +464,7 @@ public abstract class Animation implements Cloneable {
      */
     public void scaleCurrentDuration(float scale) {
         mDuration = (long) (mDuration * scale);
+        mStartOffset = (long) (mStartOffset * scale);
     }
 
     /**
@@ -551,7 +598,20 @@ public abstract class Animation implements Cloneable {
     public void setZAdjustment(int zAdjustment) {
         mZAdjustment = zAdjustment;
     }
-    
+
+    /**
+     * The scale factor is set by the call to <code>getTransformation</code>. Overrides of 	
+     * {@link #getTransformation(long, Transformation, float)} will get this value
+     * directly. Overrides of {@link #applyTransformation(float, Transformation)} can
+     * call this method to get the value.
+     * 
+     * @return float The scale factor that should be applied to pre-scaled values in
+     * an Animation such as the pivot points in {@link ScaleAnimation} and {@link RotateAnimation}.
+     */
+    protected float getScaleFactor() {
+        return mScaleFactor;
+    }
+
     /**
      * If detachWallpaper is true, and this is a window animation of a window
      * that has a wallpaper background, then the window will be detached from
@@ -757,9 +817,7 @@ public abstract class Animation implements Cloneable {
 
         if ((normalizedTime >= 0.0f || mFillBefore) && (normalizedTime <= 1.0f || mFillAfter)) {
             if (!mStarted) {
-                if (mListener != null) {
-                    mListener.onAnimationStart(this);
-                }
+                fireAnimationStart();
                 mStarted = true;
             }
 
@@ -777,9 +835,7 @@ public abstract class Animation implements Cloneable {
             if (mRepeatCount == mRepeated) {
                 if (!mEnded) {
                     mEnded = true;
-                    if (mListener != null) {
-                        mListener.onAnimationEnd(this);
-                    }
+                    fireAnimationEnd();
                 }
             } else {
                 if (mRepeatCount > 0) {
@@ -793,9 +849,7 @@ public abstract class Animation implements Cloneable {
                 mStartTime = -1;
                 mMore = true;
 
-                if (mListener != null) {
-                    mListener.onAnimationRepeat(this);
-                }
+                fireAnimationRepeat();
             }
         }
 
@@ -805,6 +859,45 @@ public abstract class Animation implements Cloneable {
         }
 
         return mMore;
+    }
+
+    private void fireAnimationStart() {
+        if (mListener != null) {
+            if (mListenerHandler == null) mListener.onAnimationStart(this);
+            else mListenerHandler.postAtFrontOfQueue(mOnStart);	
+        }
+    }
+
+    private void fireAnimationRepeat() {
+        if (mListener != null) {
+            if (mListenerHandler == null) mListener.onAnimationRepeat(this);
+            else mListenerHandler.postAtFrontOfQueue(mOnRepeat);
+        }
+    }
+
+    private void fireAnimationEnd() {
+        if (mListener != null) {
+            if (mListenerHandler == null) mListener.onAnimationEnd(this);
+            else mListenerHandler.postAtFrontOfQueue(mOnEnd);	
+        }
+    }
+
+    /**
+     * Gets the transformation to apply at a specified point in time. Implementations of this
+     * method should always replace the specified Transformation or document they are doing
+     * otherwise.
+     *
+     * @param currentTime Where we are in the animation. This is wall clock time.
+     * @param outTransformation A tranformation object that is provided by the
+     *        caller and will be filled in by the animation.
+     * @param scale Scaling factor to apply to any inputs to the transform operation, such
+     *        pivot points being rotated or scaled around.
+     * @return True if the animation is still running
+     */
+    public boolean getTransformation(long currentTime, Transformation outTransformation,
+            float scale) {
+        mScaleFactor = scale;
+        return getTransformation(currentTime, outTransformation);
     }
 
     /**
@@ -833,7 +926,7 @@ public abstract class Animation implements Cloneable {
      * 
      * @param interpolatedTime The value of the normalized time (0.0 to 1.0)
      *        after it has been run through the interpolation function.
-     * @param t The Transofrmation object to fill in with the current
+     * @param t The Transformation object to fill in with the current
      *        transforms.
      */
     protected void applyTransformation(float interpolatedTime, Transformation t) {

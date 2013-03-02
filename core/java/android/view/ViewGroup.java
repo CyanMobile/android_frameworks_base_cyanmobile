@@ -23,6 +23,7 @@ import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -34,6 +35,7 @@ import android.util.Config;
 import android.util.EventLog;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.ViewGroup.LayoutParams;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -86,9 +88,22 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
     // The view contained within this ViewGroup that has or contains focus.
     private View mFocused;
 
-    // The current transformation to apply on the child being drawn
-    private Transformation mChildTransformation;
+    /**
+     * A Transformation used when drawing children, to
+     * apply on the child being drawn.
+     */
+    private final Transformation mChildTransformation = new Transformation();
+
+    /**
+     * Used to track the current invalidation region.
+     */
     private RectF mInvalidateRegion;
+
+    /**
+     * A Transformation used to calculate a correct
+     * invalidation area when the application is autoscaled.
+     */
+    private Transformation mInvalidationTransformation;
 
     // Target of Motion events
     private View mMotionTarget;
@@ -831,7 +846,6 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
         final float yf = ev.getY();
         final float scrolledXFloat = xf + mScrollX;
         final float scrolledYFloat = yf + mScrollY;
-        final Rect frame = mTempRect;
 
         boolean disallowIntercept = (mGroupFlags & FLAG_DISALLOW_INTERCEPT) != 0;
 
@@ -850,30 +864,15 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
                 ev.setAction(MotionEvent.ACTION_DOWN);
                 // We know we want to dispatch the event down, find a child
                 // who can handle it, start with the front-most child.
-                final int scrolledXInt = (int) scrolledXFloat;
-                final int scrolledYInt = (int) scrolledYFloat;
                 final View[] children = mChildren;
                 final int count = mChildrenCount;
-
                 for (int i = count - 1; i >= 0; i--) {
                     final View child = children[i];
                     if ((child.mViewFlags & VISIBILITY_MASK) == VISIBLE
                             || child.getAnimation() != null) {
-                        child.getHitRect(frame);
-                        if (frame.contains(scrolledXInt, scrolledYInt)) {
-                            // offset the event to the view's coordinate system
-                            final float xc = scrolledXFloat - child.mLeft;
-                            final float yc = scrolledYFloat - child.mTop;
-                            ev.setLocation(xc, yc);
-                            child.mPrivateFlags &= ~CANCEL_NEXT_UP_EVENT;
-                            if (child.dispatchTouchEvent(ev))  {
-                                // Event handled, we have a target now.
-                                mMotionTarget = child;
-                                return true;
-                            }
-                            // The event didn't get handled, try the next view.
-                            // Don't reset the event's location, it's not
-                            // necessary here.
+                        if (child.dispatchTouchEvent(ev, scrolledXFloat, scrolledYFloat)) {
+                            mMotionTarget = child;
+                            return true;
                         }
                     }
                 }
@@ -903,11 +902,22 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
             return super.dispatchTouchEvent(ev);
         }
 
+        // Calculate the offset point into the target's local coordinates
+        float xc = scrolledXFloat - (float) target.mLeft;
+        float yc = scrolledYFloat - (float) target.mTop;
+        if (!target.hasIdentityMatrix() && mAttachInfo != null) {
+            // non-identity matrix: transform the point into the view's coordinates
+            final float[] localXY = mAttachInfo.mTmpTransformLocation;
+            localXY[0] = xc;
+            localXY[1] = yc;
+            target.getInverseMatrix().mapPoints(localXY);
+            xc = localXY[0];
+            yc = localXY[1];
+        }
+
         // if have a target, see if we're allowed to and want to intercept its
         // events
         if (!disallowIntercept && onInterceptTouchEvent(ev)) {
-            final float xc = scrolledXFloat - (float) target.mLeft;
-            final float yc = scrolledYFloat - (float) target.mTop;
             mPrivateFlags &= ~CANCEL_NEXT_UP_EVENT;
             ev.setAction(MotionEvent.ACTION_CANCEL);
             ev.setLocation(xc, yc);
@@ -929,8 +939,6 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
 
         // finally offset the event to the target's coordinate system and
         // dispatch the event.
-        final float xc = scrolledXFloat - (float) target.mLeft;
-        final float yc = scrolledYFloat - (float) target.mTop;
         ev.setLocation(xc, yc);
 
         if ((target.mPrivateFlags & CANCEL_NEXT_UP_EVENT) != 0) {
@@ -1482,33 +1490,43 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
         final int flags = mGroupFlags;
 
         if ((flags & FLAG_CLEAR_TRANSFORMATION) == FLAG_CLEAR_TRANSFORMATION) {
-            if (mChildTransformation != null) {
-                mChildTransformation.clear();
-            }
+            mChildTransformation.clear();
             mGroupFlags &= ~FLAG_CLEAR_TRANSFORMATION;
         }
 
         Transformation transformToApply = null;
+        Transformation invalidationTransform;
         final Animation a = child.getAnimation();
         boolean concatMatrix = false;
 
-        if (a != null) {
-            if (mInvalidateRegion == null) {
-                mInvalidateRegion = new RectF();
-            }
-            final RectF region = mInvalidateRegion;
+        boolean scalingRequired = false;
+        boolean caching = false;
+        if ((flags & FLAG_CHILDREN_DRAWN_WITH_CACHE) == FLAG_CHILDREN_DRAWN_WITH_CACHE ||
+                (flags & FLAG_ALWAYS_DRAWN_WITH_CACHE) == FLAG_ALWAYS_DRAWN_WITH_CACHE) {
+            caching = true;
+            if (mAttachInfo != null) scalingRequired = mAttachInfo.mScalingRequired;
+        }
 
+        if (a != null) {
             final boolean initialized = a.isInitialized();
             if (!initialized) {
                 a.initialize(cr - cl, cb - ct, getWidth(), getHeight());
                 a.initializeInvalidateRegion(0, 0, cr - cl, cb - ct);
+                if (mAttachInfo != null) a.setListenerHandler(mAttachInfo.mHandler);
                 child.onAnimationStart();
             }
 
-            if (mChildTransformation == null) {
-                mChildTransformation = new Transformation();
+            more = a.getTransformation(drawingTime, mChildTransformation,
+                    scalingRequired ? mAttachInfo.mApplicationScale : 1f);
+            if (scalingRequired && mAttachInfo.mApplicationScale != 1f) {
+                if (mInvalidationTransformation == null) {
+                    mInvalidationTransformation = new Transformation();
+                }
+                invalidationTransform = mInvalidationTransformation;
+                a.getTransformation(drawingTime, invalidationTransform, 1f);
+            } else {
+                invalidationTransform = mChildTransformation;
             }
-            more = a.getTransformation(drawingTime, mChildTransformation);
             transformToApply = mChildTransformation;
 
             concatMatrix = a.willChangeTransformationMatrix();
@@ -1525,7 +1543,11 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
                         invalidate(cl, ct, cr, cb);
                     }
                 } else {
-                    a.getInvalidateRegion(0, 0, cr - cl, cb - ct, region, transformToApply);
+                    if (mInvalidateRegion == null) {
+                        mInvalidateRegion = new RectF();
+                    }
+                    final RectF region = mInvalidateRegion;
+                    a.getInvalidateRegion(0, 0, cr - cl, cb - ct, region, invalidationTransform);
 
                     // The child need to draw an animation, potentially offscreen, so
                     // make sure we do not cancel invalidate requests
@@ -1538,9 +1560,6 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
             }
         } else if ((flags & FLAG_SUPPORT_STATIC_TRANSFORMATIONS) ==
                 FLAG_SUPPORT_STATIC_TRANSFORMATIONS) {
-            if (mChildTransformation == null) {
-                mChildTransformation = new Transformation();
-            }
             final boolean hasTransform = getChildStaticTransformation(child, mChildTransformation);
             if (hasTransform) {
                 final int transformType = mChildTransformation.getTransformationType();
@@ -1549,6 +1568,8 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
                 concatMatrix = (transformType & Transformation.TYPE_MATRIX) != 0;
             }
         }
+
+        concatMatrix |= !child.hasIdentityMatrix();
 
         // Sets the flag as early as possible to allow draw() implementations
         // to call invalidate() successfully when doing animations
@@ -1564,12 +1585,9 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
         final int sx = child.mScrollX;
         final int sy = child.mScrollY;
 
-        boolean scalingRequired = false;
         Bitmap cache = null;
-        if ((flags & FLAG_CHILDREN_DRAWN_WITH_CACHE) == FLAG_CHILDREN_DRAWN_WITH_CACHE ||
-                (flags & FLAG_ALWAYS_DRAWN_WITH_CACHE) == FLAG_ALWAYS_DRAWN_WITH_CACHE) {
+        if (caching) {
             cache = child.getDrawingCache(true);
-            if (mAttachInfo != null) scalingRequired = mAttachInfo.mScalingRequired;
         }
 
         final boolean hasNoCache = cache == null;
@@ -1586,36 +1604,51 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
             }
         }
 
-        float alpha = 1.0f;
+        float alpha = child.getAlpha();
 
-        if (transformToApply != null) {
-            if (concatMatrix) {
-                int transX = 0;
-                int transY = 0;
-                if (hasNoCache) {
-                    transX = -sx;
-                    transY = -sy;
-                }
-                // Undo the scroll translation, apply the transformation matrix,
-                // then redo the scroll translate to get the correct result.
-                canvas.translate(-transX, -transY);
-                canvas.concat(transformToApply.getMatrix());
-                canvas.translate(transX, transY);
-                mGroupFlags |= FLAG_CLEAR_TRANSFORMATION;
+        if (transformToApply != null || alpha < 1.0f || !child.hasIdentityMatrix()) {
+            int transX = 0;
+            int transY = 0;
+
+            if (hasNoCache) {
+                transX = -sx;
+                transY = -sy;
             }
 
-            alpha = transformToApply.getAlpha();
+            if (transformToApply != null) {
+                if (concatMatrix) {
+                    // Undo the scroll translation, apply the transformation matrix,
+                    // then redo the scroll translate to get the correct result.
+                    canvas.translate(-transX, -transY);
+                    canvas.concat(transformToApply.getMatrix());
+                    canvas.translate(transX, transY);
+                    mGroupFlags |= FLAG_CLEAR_TRANSFORMATION;
+                }
+
+                float transformAlpha = transformToApply.getAlpha();
+                if (transformAlpha < 1.0f) {
+                    alpha *= transformToApply.getAlpha();
+                    mGroupFlags |= FLAG_CLEAR_TRANSFORMATION;
+                }
+            }
+
+            if (!child.hasIdentityMatrix()) {
+                canvas.translate(-transX, -transY);
+                canvas.concat(child.getMatrix());
+                canvas.translate(transX, transY);
+            }
+
             if (alpha < 1.0f) {
                 mGroupFlags |= FLAG_CLEAR_TRANSFORMATION;
-            }
-
-            if (alpha < 1.0f && hasNoCache) {
-                final int multipliedAlpha = (int) (255 * alpha);
-                if (!child.onSetAlpha(multipliedAlpha)) {
-                    canvas.saveLayerAlpha(sx, sy, sx + cr - cl, sy + cb - ct, multipliedAlpha,
-                            Canvas.HAS_ALPHA_LAYER_SAVE_FLAG | Canvas.CLIP_TO_LAYER_SAVE_FLAG);
-                } else {
-                    child.mPrivateFlags |= ALPHA_SET;
+            
+                if (hasNoCache) {
+                    final int multipliedAlpha = (int) (255 * alpha);
+                    if (!child.onSetAlpha(multipliedAlpha)) {
+                        canvas.saveLayerAlpha(sx, sy, sx + cr - cl, sy + cb - ct, multipliedAlpha,
+                                Canvas.HAS_ALPHA_LAYER_SAVE_FLAG | Canvas.CLIP_TO_LAYER_SAVE_FLAG);
+                    } else {
+                        child.mPrivateFlags |= ALPHA_SET;
+                    }
                 }
             }
         } else if ((child.mPrivateFlags & ALPHA_SET) == ALPHA_SET) {
@@ -2481,6 +2514,15 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
             final int[] location = attachInfo.mInvalidateChildLocation;
             location[CHILD_LEFT_INDEX] = child.mLeft;
             location[CHILD_TOP_INDEX] = child.mTop;
+            Matrix childMatrix = child.getMatrix();
+            if (!childMatrix.isIdentity()) {
+                RectF boundingRect = attachInfo.mTmpTransformRect;
+                boundingRect.set(dirty);
+                childMatrix.mapRect(boundingRect);
+                dirty.set((int) boundingRect.left, (int) boundingRect.top,
+                        (int) (boundingRect.right + 0.5f),
+                        (int) (boundingRect.bottom + 0.5f));
+            }
 
             // If the child is drawing an animation, we want to copy this flag onto
             // ourselves and the parent to make sure the invalidate request goes
@@ -2515,6 +2557,18 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
                 }
 
                 parent = parent.invalidateChildInParent(location, dirty);
+                if (view != null) {
+                    // Account for transform on current parent
+                    Matrix m = view.getMatrix();
+                    if (!m.isIdentity()) {
+                        RectF boundingRect = attachInfo.mTmpTransformRect;
+                        boundingRect.set(dirty);
+                        m.mapRect(boundingRect);
+                        dirty.set((int) boundingRect.left, (int) boundingRect.top,
+                                (int) (boundingRect.right + 0.5f),
+                                (int) (boundingRect.bottom + 0.5f));
+                    }
+                }
             } while (parent != null);
         }
     }
@@ -3310,7 +3364,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
         boolean noneOfTheChildrenAreTransparent = true;
         for (int i = 0; i < count; i++) {
             final View child = children[i];
-            if ((child.mViewFlags & VISIBILITY_MASK) == VISIBLE || child.getAnimation() != null) {
+            if ((child.mViewFlags & VISIBILITY_MASK) != GONE || child.getAnimation() != null) {
                 if (!child.gatherTransparentRegion(region)) {
                     noneOfTheChildrenAreTransparent = false;
                 }
@@ -3786,3 +3840,4 @@ public abstract class ViewGroup extends View implements ViewParent, ViewOpacityM
         }
     }
 }
+

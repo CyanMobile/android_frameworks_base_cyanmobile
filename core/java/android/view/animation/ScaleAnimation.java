@@ -128,6 +128,8 @@ public class ScaleAnimation extends Animation {
         mPivotYValue = d.value;
 
         a.recycle();
+
+        initializePivotPoint();
     }
 
     /**
@@ -178,6 +180,20 @@ public class ScaleAnimation extends Animation {
         mPivotYType = ABSOLUTE;
         mPivotXValue = pivotX;
         mPivotYValue = pivotY;
+        initializePivotPoint();	
+    }
+
+    /**
+     * Called at the end of constructor methods to initialize, if possible, values for	
+     * the pivot point. This is only possible for ABSOLUTE pivot values.	
+     */	
+    private void initializePivotPoint() {
+        if (mPivotXType == ABSOLUTE) {
+            mPivotX = mPivotXValue;
+        }
+        if (mPivotYType == ABSOLUTE) {
+            mPivotY = mPivotYValue;
+        }
     }
 
     /**
@@ -224,6 +240,7 @@ public class ScaleAnimation extends Animation {
     protected void applyTransformation(float interpolatedTime, Transformation t) {
         float sx = 1.0f;
         float sy = 1.0f;
+        float scale = getScaleFactor();
 
         if (mFromX != 1.0f || mToX != 1.0f) {
             sx = mFromX + ((mToX - mFromX) * interpolatedTime);
@@ -235,7 +252,7 @@ public class ScaleAnimation extends Animation {
         if (mPivotX == 0 && mPivotY == 0) {
             t.getMatrix().setScale(sx, sy);
         } else {
-            t.getMatrix().setScale(sx, sy, mPivotX, mPivotY);
+            t.getMatrix().setScale(sx, sy, scale * mPivotX, scale *mPivotY);
         }
     }
 
