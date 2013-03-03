@@ -1766,6 +1766,9 @@ public class NavigationBarView extends LinearLayout {
 
         mLowProfile = lightsOut;
 
+        if (mNavViewAnim != null) mNavViewAnim.cancel();
+        if (mLightViewAnim != null) mLightViewAnim.cancel();
+
         if (!animate) {
             navButtons.setAlpha(lightsOut ? 0f : 1f);
 
@@ -1773,9 +1776,6 @@ public class NavigationBarView extends LinearLayout {
             lowLights.setVisibility(lightsOut ? View.VISIBLE : View.GONE);
             if (lightsOut) lowLights.setOnTouchListener(mLightsOutListener);
         } else {
-            if (mNavViewAnim != null) mNavViewAnim.cancel();
-            if (mLightViewAnim != null) mLightViewAnim.cancel();
-
             mNavViewAnim = start(ObjectAnimator.ofFloat(navButtons, "alpha", lightsOut ? 1f : 0f, lightsOut ? 0f : 1f)
                                                .setDuration(lightsOut ? 600 : 200));
 
