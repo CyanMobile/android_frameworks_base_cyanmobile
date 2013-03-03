@@ -34,5 +34,6 @@
     <integer name="quick_settings_num_columns">3</integer>
     <integer name="quick_settings_brightness_dialog_short_timeout">10000</integer>
     <integer name="quick_settings_brightness_dialog_long_timeout">30000</integer>
+    <integer name="status_bar_notification_info_maxnum">999</integer>
 </resources>
 

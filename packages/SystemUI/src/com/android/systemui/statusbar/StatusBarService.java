@@ -3067,6 +3067,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mTrackingParams.height = disph-h;
         WindowManagerImpl.getDefault().updateViewLayout(mTrackingView, mTrackingParams);
 
+        final float frac = 1.0f + (float)pos / mDisplayMetrics.heightPixels;
+        final int color = ((int)(0xCC * frac * frac)) << 24;
+        mExpandedView.setBackgroundColor(color);
+
         if (mExpandedParams != null) {
             mCloseView.getLocationInWindow(mPositionTmp);
             final int closePos = mPositionTmp[1];

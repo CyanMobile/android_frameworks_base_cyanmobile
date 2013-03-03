@@ -23,11 +23,13 @@ import android.graphics.drawable.Drawable;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.util.Slog;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewDebug;
-import android.widget.FrameLayout;
+
+import java.text.NumberFormat;
 
 import com.android.internal.statusbar.StatusBarIcon;
 
@@ -49,11 +51,15 @@ public class StatusBarIconView extends AnimatedImageView {
         super(context);
         mContext = context;
         final Resources res = context.getResources();
+        final float densityMultiplier = res.getDisplayMetrics().density;
+        final float scaledPx = 8 * densityMultiplier;
         mSlot = slot;
         mNumberPain = new Paint();
         mNumberPain.setTextAlign(Paint.Align.CENTER);
         mNumberPain.setColor(res.getColor(R.drawable.notification_number_text_color));
         mNumberPain.setAntiAlias(true);
+        mNumberPain.setTypeface(Typeface.DEFAULT_BOLD);
+        mNumberPain.setTextSize(scaledPx);
     }
 
     private static boolean streq(String a, String b) {
@@ -185,7 +191,15 @@ public class StatusBarIconView extends AnimatedImageView {
     }
 
     void placeNumber() {
-        final String str = mNumberText = Integer.toString(mIcon.number);
+        final String str;
+        final int tooBig = mContext.getResources().getInteger(R.integer.status_bar_notification_info_maxnum);
+        if (mIcon.number > tooBig) {
+            str = mContext.getResources().getString(R.string.status_bar_notification_info_overflow);
+        } else {
+            NumberFormat f = NumberFormat.getIntegerInstance();	
+            str = f.format(mIcon.number);	
+        }	
+        mNumberText = str;
         final int w = getWidth();
         final int h = getHeight();
         final Rect r = new Rect();
