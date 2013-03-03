@@ -4872,7 +4872,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
                  * the next invalidate() will not be skipped.
                  */
                 mPrivateFlags |= DRAWN;
-                invalidate();
 
                 needGlobalAttributesUpdate(true);
 
@@ -4890,17 +4889,11 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
         if ((changed & GONE) != 0) {
             needGlobalAttributesUpdate(false);
             requestLayout();
+            invalidate();
 
             if (((mViewFlags & VISIBILITY_MASK) == GONE)) {
                 if (hasFocus()) clearFocus();
                 destroyDrawingCache();
-                if (mParent instanceof View) {
-                    // GONE views noop invalidation, so invalidate the parent
-                    ((View) mParent).invalidate();
-                }
-                // Mark the view drawn to ensure that it gets invalidated properly the next
-                // time it is visible and gets invalidated
-                mPrivateFlags |= DRAWN;
             }
             if (mAttachInfo != null) {
                 mAttachInfo.mViewVisibilityChanged = true;
@@ -4910,11 +4903,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
         /* Check if the VISIBLE bit has changed */
         if ((changed & INVISIBLE) != 0) {
             needGlobalAttributesUpdate(false);
-            /*
-             * If this view is becoming invisible, set the DRAWN flag so that
-             * the next invalidate() will not be skipped.
-             */
-            mPrivateFlags |= DRAWN;
+            invalidate();
 
             if (((mViewFlags & VISIBILITY_MASK) == INVISIBLE) && hasFocus()) {
                 // root view becoming invisible shouldn't clear focus
@@ -6037,10 +6026,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
             ViewDebug.trace(this, ViewDebug.HierarchyTraceType.INVALIDATE);
         }
 
-        if (skipInvalidate()) {
-            return;
-        }
-
         if ((mPrivateFlags & (DRAWN | HAS_BOUNDS)) == (DRAWN | HAS_BOUNDS)) {
             mPrivateFlags &= ~DRAWING_CACHE_VALID;
             final ViewParent p = mParent;
@@ -6072,10 +6057,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
             ViewDebug.trace(this, ViewDebug.HierarchyTraceType.INVALIDATE);
         }
 
-        if (skipInvalidate()) {
-            return;
-        }
-
         if ((mPrivateFlags & (DRAWN | HAS_BOUNDS)) == (DRAWN | HAS_BOUNDS)) {
             mPrivateFlags &= ~DRAWING_CACHE_VALID;
             final ViewParent p = mParent;
@@ -6098,10 +6079,6 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
     public void invalidate() {
         if (ViewDebug.TRACE_HIERARCHY) {
             ViewDebug.trace(this, ViewDebug.HierarchyTraceType.INVALIDATE);
-        }
-
-        if (skipInvalidate()) {
-            return;
         }
 
         if ((mPrivateFlags & (DRAWN | HAS_BOUNDS)) == (DRAWN | HAS_BOUNDS)) {
