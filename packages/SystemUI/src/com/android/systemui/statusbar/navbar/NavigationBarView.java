@@ -17,6 +17,11 @@
 package com.android.systemui.statusbar.navbar;
 
 import java.net.URISyntaxException;
+import android.animationing.Animator;
+import android.animationing.AnimatorListenerAdapter;
+import android.animationing.AnimatorSet;
+import android.animationing.ObjectAnimator;
+import android.animationing.TimeInterpolator;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -31,9 +36,7 @@ import android.graphics.Matrix;
 import android.graphics.PorterDuff.Mode;
 import android.content.res.Resources;
 import android.util.AttributeSet;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
-import android.view.animation.Animation.AnimationListener;
+import android.view.animation.AccelerateInterpolator;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.IWindowManager;
@@ -944,6 +947,7 @@ public class NavigationBarView extends LinearLayout {
 
         if (mNVShow) {
             mNaviAdd.setVisibility(View.VISIBLE);
+            setLowProfile(mLowProfile, false, true /* force */);
         } else {
             mNaviAdd.setVisibility(View.GONE);
         }
@@ -1271,7 +1275,7 @@ public class NavigationBarView extends LinearLayout {
            mDoAnimate = false;
         }
         updateNaviButtons();
-        setLowProfile(false);
+        setLowProfileAfterHide(false);
       }
     }
 
@@ -1725,126 +1729,72 @@ public class NavigationBarView extends LinearLayout {
         setLowProfile(lightsOut, true, false);
     }
 
+    private void setLowProfileAfterHide(final boolean lightsOut) {
+        setLowProfile(lightsOut, false, false);
+    }
+
+    private Animator mLightViewAnim, mNavViewAnim;
+
+    private Animator setVisibilityWhenDone(
+            final Animator a, final View v, final int vis) {
+        a.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                v.setVisibility(vis);
+            }
+        });
+        return a;
+    }
+
+    private Animator interpolator(TimeInterpolator ti, Animator a) {
+        a.setInterpolator(ti);
+        return a;
+    }
+
+    private Animator startDelay(int d, Animator a) {
+        a.setStartDelay(d);
+        return a;
+    }
+
+    private Animator start(Animator a) {
+        a.start();
+        return a;
+    }
+
     private void setLowProfile(final boolean lightsOut, final boolean animate, final boolean force) {
         if (!force && lightsOut == mLowProfile) return;
 
         mLowProfile = lightsOut;
 
         if (!animate) {
-            navButtons.setVisibility(lightsOut ? View.GONE : View.VISIBLE);
+            navButtons.setAlpha(lightsOut ? 0f : 1f);
+
+            lowLights.setAlpha(lightsOut ? 1f : 0f);
             lowLights.setVisibility(lightsOut ? View.VISIBLE : View.GONE);
             if (lightsOut) lowLights.setOnTouchListener(mLightsOutListener);
-            mDoAnimate = lightsOut ? false : true;
         } else {
-            animHideNaviBar(lightsOut);
+            if (mNavViewAnim != null) mNavViewAnim.cancel();
+            if (mLightViewAnim != null) mLightViewAnim.cancel();
+
+            mNavViewAnim = start(ObjectAnimator.ofFloat(navButtons, "alpha", lightsOut ? 1f : 0f, lightsOut ? 0f : 1f)
+                                               .setDuration(lightsOut ? 600 : 200));
+
+            lowLights.setOnTouchListener(mLightsOutListener);
+            if (lowLights.getVisibility() == View.GONE) {
+                lowLights.setAlpha(0f);
+                lowLights.setVisibility(View.VISIBLE);
+            }
+
+            mLightViewAnim = start(setVisibilityWhenDone(startDelay(lightsOut ? 500 : 0, 
+                             interpolator(new AccelerateInterpolator(2.0f),
+                             ObjectAnimator.ofFloat(lowLights, "alpha", lightsOut ? 0f : 1f, lightsOut ? 1f : 0f))
+                                           .setDuration(lightsOut ? 1000 : 300)),
+                             lowLights, lightsOut ? View.VISIBLE : View.GONE));
         }
+        mDoAnimate = lightsOut ? false : true;
         mHandler.removeCallbacks(mResetNormal);
         mHandler.postDelayed(mResetNormal, 1000);
         mHandler.removeCallbacks(mResetLightsOut);
         mHandler.postDelayed(mResetLightsOut, 500);
-    }
-
-    private void animHideNaviBar(final boolean lightsOut) {
-        if (lightsOut) {
-            if (navButtons.getVisibility() != View.VISIBLE
-                || navButtons.getAnimation() != null) {
-                return;
-            }
-        } else {
-            if (lowLights.getVisibility() != View.VISIBLE
-                || lowLights.getAnimation() != null) {
-                return;
-            }
-        }
-
-        AlphaAnimation anim = new AlphaAnimation(1.0f, 0.0f);
-        anim.setDuration(250);
-        anim.setAnimationListener(new AnimationListener() {
-
-            public void onAnimationStart(Animation animation) {
-            }
-
-            public void onAnimationRepeat(Animation animation) {
-            }
-
-            public void onAnimationEnd(Animation animation) {
-                if (lightsOut) {
-                    navButtons.clearAnimation();
-                    navButtons.setVisibility(View.GONE);
-                    mDoAnimate = false;
-                } else {
-                    lowLights.clearAnimation();
-                    lowLights.setVisibility(View.GONE);
-                    mDoAnimate = true;
-                }
-                animShowNaviBar(lightsOut);
-            }
-        });
-        if (lightsOut) {
-            navButtons.startAnimation(anim);
-        } else {
-            lowLights.startAnimation(anim);
-        }
-    }
-
-    private void animShowNaviBar(final boolean lightsOut) {
-        if (lightsOut) {
-            if (lowLights.getVisibility() != View.VISIBLE) {
-                lowLights.setVisibility(View.VISIBLE);
-                lowLights.setOnTouchListener(mLightsOutListener);
-                mDoAnimate = false;
-            }
-        } else {
-            if (navButtons.getVisibility() != View.VISIBLE) {
-                navButtons.setVisibility(View.VISIBLE);
-                mDoAnimate = true;
-            }
-        }
-
-        AlphaAnimation animAlpha = new AlphaAnimation(0.0f, 1.0f);
-        animAlpha.setDuration(250);
-        animAlpha.setAnimationListener(new AnimationListener() {
-
-            public void onAnimationStart(Animation animation) {
-            }
-
-            public void onAnimationRepeat(Animation animation) {
-            }
-
-            public void onAnimationEnd(Animation animation) {
-                if (lightsOut) {
-                    lowLights.clearAnimation();
-                    lowLights.setVisibility(View.VISIBLE);
-                    lowLights.setOnTouchListener(mLightsOutListener);
-                    mDoAnimate = false;
-                } else {
-                    navButtons.clearAnimation();
-                    navButtons.setVisibility(View.VISIBLE);
-                    mDoAnimate = true;
-                }
-            }
-        });
-        Animation anim = null;
-        if (lightsOut) {
-            lowLights.startAnimation(animAlpha);
-            anim = lowLights.getAnimation();
-            if (anim != null) {
-                anim.reset();
-                lowLights.clearAnimation();
-                lowLights.setVisibility(View.VISIBLE);
-                lowLights.setOnTouchListener(mLightsOutListener);
-                mDoAnimate = false;
-            }
-        } else {
-            navButtons.startAnimation(animAlpha);
-            anim = navButtons.getAnimation();
-            if (anim != null) {
-                anim.reset();
-                navButtons.clearAnimation();
-                navButtons.setVisibility(View.VISIBLE);
-                mDoAnimate = true;
-            }
-        }
-
     }
 }

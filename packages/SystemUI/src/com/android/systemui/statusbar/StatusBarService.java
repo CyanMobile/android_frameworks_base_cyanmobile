@@ -993,6 +993,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mStatusBarView.setBackgroundColor(statusBarColor);
             break;
           case 5 : // transparent
+            mStatusBarView.setBackgroundDrawable(res.getDrawable(R.drawable.status_bar_transparent_background));
             break;
           case 6 : // transparent and BackLogo
                mStatusBarView.setBackgroundDrawable(res.getDrawable(R.drawable.status_bar_transparent_background));
@@ -1027,6 +1028,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mNaviBarContainer.setBackgroundColor(naviBarColor);
             break;
           case 5 : // transparent
+            mNaviBarContainer.setBackgroundDrawable(res.getDrawable(R.drawable.navibar_transparent_background));
             break;
           case 6 : // BackLogo
                Uri savedImage = Uri.fromFile(new File("/data/data/com.cyanogenmod.cmparts/files/navb_background"));
@@ -3326,39 +3328,39 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
     };
 
-    public Animator setVisibilityWhenDone(
+    private Animator setVisibilityWhenDone(
             final Animator a, final View v, final int vis) {
         a.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
                 v.setVisibility(vis);
-            }	
-        });	
+            }
+        });
         return a;
     }
 
-    public Animator interpolator(TimeInterpolator ti, Animator a) {
+    private Animator interpolator(TimeInterpolator ti, Animator a) {
         a.setInterpolator(ti);
         return a;
     }
 
-    public Animator startDelay(int d, Animator a) {
-        a.setStartDelay(d);	
+    private Animator startDelay(int d, Animator a) {
+        a.setStartDelay(d);
         return a;
     }
 
-    public Animator start(Animator a) {
-        a.start();	
-        return a;	
+    private Animator start(Animator a) {
+        a.start();
+        return a;
     }
 
-    final TimeInterpolator mAccelerateInterpolator = new AccelerateInterpolator();
-    final TimeInterpolator mDecelerateInterpolator = new DecelerateInterpolator();	
-    final int FLIP_DURATION_OUT = 125;
-    final int FLIP_DURATION_IN = 225;	
-    final int FLIP_DURATION = (FLIP_DURATION_IN + FLIP_DURATION_OUT);
+    private final TimeInterpolator mAccelerateInterpolator = new AccelerateInterpolator();
+    private final TimeInterpolator mDecelerateInterpolator = new DecelerateInterpolator();	
+    private final int FLIP_DURATION_OUT = 125;
+    private final int FLIP_DURATION_IN = 225;	
+    private final int FLIP_DURATION = (FLIP_DURATION_IN + FLIP_DURATION_OUT);
 	
-    Animator mNotifViewAnim, mPowerViewAnim;
+    private Animator mNotifViewAnim, mPowerViewAnim;
 
     public void toggleNotif() {
           if (!mStatusBarTab) return;

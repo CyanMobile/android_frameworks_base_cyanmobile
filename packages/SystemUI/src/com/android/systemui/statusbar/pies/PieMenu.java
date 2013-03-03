@@ -935,7 +935,7 @@ public class PieMenu extends FrameLayout {
 
             state = canvas.save();
             ImageView view = (ImageView)item.getView();
-            canvas.translate(view.getLeft(), view.getTop());
+            canvas.translate(view.getX(), view.getY());
             canvas.rotate(getDegrees(item.getStartAngle()
                     + item.getSweep() / 2) + mPanel.getDegree(),
                     view.getWidth() / 2, view.getHeight() / 2);
