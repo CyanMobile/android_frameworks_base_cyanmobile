@@ -42,7 +42,6 @@
     <dimen name="navbar_search_outerring_radius">135dp</dimen>
     <dimen name="navbar_search_panel_height">140dip</dimen>
 
-    <!-- PIE PIE PIE PIE PIE PIE PIE PIE PIE PIE PIE PIE PIE PIE -->
     <dimen name="pie_trigger_height">12dp</dimen>
 
     <dimen name="pie_radius_start">65dp</dimen>
@@ -74,6 +73,5 @@
     <dimen name="pie_touch_offset">15dp</dimen>
     <dimen name="pie_tab_title_height">24dp</dimen>
     <dimen name="pie_item_size">40dp</dimen>
-    <!-- PIE PIE PIE PIE PIE PIE PIE PIE PIE PIE PIE PIE PIE PIE -->
 </resources>
 
