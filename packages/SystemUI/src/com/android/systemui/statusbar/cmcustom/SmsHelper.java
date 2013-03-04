@@ -52,9 +52,11 @@ public class SmsHelper {
                 uri, new String[] { PhoneLookup.DISPLAY_NAME },
                 null, null, null);
         String[] contacts = new String[] { PhoneLookup.DISPLAY_NAME };
-        if (cursor.moveToFirst()) {
-            int nameIndex = cursor.getColumnIndex(contacts[0]);
-            caller = cursor.getString(nameIndex);
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                int nameIndex = cursor.getColumnIndex(contacts[0]);
+                caller = cursor.getString(nameIndex);
+            }
         }
         if (caller == null) {
             caller = callNumber;
