@@ -9786,7 +9786,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback, Accessibility
      * A Property wrapper around the <code>alpha</code> functionality handled by the
      * {@link View#setAlpha(float)} and {@link View#getAlpha()} methods.
      */
-    static Property<View, Float> ALPHA = new FloatProperty<View>("alpha") {
+    public static Property<View, Float> ALPHA = new FloatProperty<View>("alpha") {
         @Override
         public void setValue(View object, float value) {
             object.setAlpha(value);

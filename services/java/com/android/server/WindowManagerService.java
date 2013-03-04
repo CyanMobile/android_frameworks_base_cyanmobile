@@ -9041,7 +9041,7 @@ public class WindowManagerService extends IWindowManager.Stub
                         continue;
                     }
                 } else {
-                    Slog.w(TAG, "Layout repeat skipped after too many iterations");
+                    //Slog.w(TAG, "Layout repeat skipped after too many iterations");
                     changes = 0;
                 }
                 
