@@ -708,7 +708,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mContext = context;
         Resources res = context.getResources();
 
-        mDisplay.getMetrics(mDisplayMetrics);
+        updateDisplaySize();
 
         mTouchDispatcher = new ItemTouchDispatcher(this);
 
@@ -1129,11 +1129,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_close_on, getExpandedWidth(), getStatBarSize(), mContext));
             break;
           case 1 : // user defined argb hex color
-            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_transparent_background, getExpandedWidth(), getCloseDragSize(), mContext));
+            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_transparent_background, getExpandedWidth(), getStatBarSize(), mContext));
             mSettingsButton.setBackgroundColor(SettingsButtonColor);
             break;
           case 2 : // transparent
-            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_transparent_background, getExpandedWidth(), getCloseDragSize(), mContext));
+            mSettingsButton.setImageBitmap(getNinePatch(R.drawable.status_bar_transparent_background, getExpandedWidth(), getStatBarSize(), mContext));
             break;
         }
     }
@@ -1484,14 +1484,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 Settings.System.STATUSBAR_STATS_SIZE, defValuesStatsSize);
         int statSizepx = (int) (mDisplayMetrics.density * statSizeval);
         return statSizepx;
-    }
-
-    private int getCloseDragSize() {
-        int defValuesStatsSize = mContext.getResources().getInteger(com.android.internal.R.integer.config_statbarsize_default_cyanmobile);
-        float dragSizeval = (float) Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_STATS_SIZE, defValuesStatsSize);
-        int dragSizepx = (int) ((mDisplayMetrics.density * dragSizeval) - 5);
-        return dragSizepx;
     }
 
     private boolean showPie() {
@@ -2410,7 +2402,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mTracking = true;
         mVelocityTracker.clear();
         if (opening) {
-            mAnimAccel = 40000.0f;
+            mAnimAccel = 2000.0f;
             mAnimVel = 200;
             mAnimY = mBottomBar ? mDisplayMetrics.heightPixels : (mShowDate ? getStatBarSize() : mDisplayMetrics.heightPixels);
             updateExpandedViewPos((int)mAnimY);
@@ -2448,14 +2440,14 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     (!mBottomBar && (vel >  200.0f || (y > (mDisplayMetrics.heightPixels-25) && vel > -200.0f))))) {
                 // We are expanded, but they didn't move sufficiently to cause
                 // us to retract.  Animate back to the expanded position.
-                mAnimAccel = 40000.0f;
+                mAnimAccel = 2000.0f;
                 if (vel < 0) {
                     mAnimVel *= -1;
                 }
             }
             else {
                 // We are expanded and are now going to animate away.
-                mAnimAccel = -40000.0f;
+                mAnimAccel = -2000.0f;
                 if (vel > 0) {
                     mAnimVel *= -1;
                 }
@@ -2466,7 +2458,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     || (!mBottomBar && (vel >  200.0f || (y > (mDisplayMetrics.heightPixels/2) && vel > -200.0f)))) {
                 // We are collapsed, and they moved enough to allow us to
                 // expand.  Animate in the notifications.
-                mAnimAccel = 40000.0f;
+                mAnimAccel = 2000.0f;
                 if (vel < 0) {
                     mAnimVel *= -1;
                 }
@@ -2474,7 +2466,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             else {
                 // We are collapsed, but they didn't move sufficiently to cause
                 // us to retract.  Animate back to the collapsed position.
-                mAnimAccel = -40000.0f;
+                mAnimAccel = -2000.0f;
                 if (vel > 0) {
                     mAnimVel *= -1;
                 }
@@ -2571,7 +2563,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
 
         final int statusBarSize = getStatBarSize();
-        final int hitSize = statusBarSize*2;
+        final int hitSize = (statusBarSize * 2);
         final int y = (int)event.getRawY();
         final int x = (int)event.getRawX();
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
