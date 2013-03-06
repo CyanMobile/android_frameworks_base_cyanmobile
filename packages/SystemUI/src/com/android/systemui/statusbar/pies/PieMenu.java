@@ -503,6 +503,12 @@ public class PieMenu extends FrameLayout {
         mNotifNew = notifnew;
     }
 
+    public void resetStatus(int numb) {
+        if (mStatusPanel != null) {
+            mStatusPanel.setCurrentViewState(-1);
+        }
+    }
+
     private void getNotifications() {
       if (mTotalData != null) {
         NotificationData notifData = mTotalData;

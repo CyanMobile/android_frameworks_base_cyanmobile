@@ -73,7 +73,6 @@ public class PieStatusPanel {
     }
 
     public void showNotificationsPanel() {
-        mPanel.getBar().animateExpand();
-        mPanel.getBar().togglePower();
+        mPanel.getBar().IntroducerView();
     }
 }

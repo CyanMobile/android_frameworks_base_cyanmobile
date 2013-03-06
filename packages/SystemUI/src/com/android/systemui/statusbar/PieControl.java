@@ -476,6 +476,12 @@ public class PieControl implements OnClickListener {
         }
     }
 
+    public void resetStatus(int numb) {
+        if (mPie != null) {
+            mPie.resetStatus(-1);
+        }
+    }
+
     public void attachToContainer(FrameLayout container) {
         if (mPie == null) {
             mPie = new PieMenu(mContext, mPanel);

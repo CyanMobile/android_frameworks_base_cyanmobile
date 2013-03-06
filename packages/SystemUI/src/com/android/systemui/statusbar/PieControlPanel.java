@@ -159,6 +159,12 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
         return list;
     }
 
+    public void resetStatus(int numb) {
+        if (mPieControl != null) {
+            mPieControl.resetStatus(-1);
+        }
+    }
+
     public void setNotifNew(boolean notifnew) {
         if (mPieControl != null) {
             mPieControl.setNotifNew(notifnew);
