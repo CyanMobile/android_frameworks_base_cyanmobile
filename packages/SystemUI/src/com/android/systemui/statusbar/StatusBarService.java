@@ -1579,7 +1579,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                 (mTinyExpanded ? getExpandedWidth() : ViewGroup.LayoutParams.MATCH_PARENT),
-                (mBottomBar ? getExpandedHeight() : (getExpandedHeight()-getNavBarSize())),
+                ViewGroup.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL,
                     0
                     | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
