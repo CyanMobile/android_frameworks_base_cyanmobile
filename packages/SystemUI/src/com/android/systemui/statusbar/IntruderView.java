@@ -73,6 +73,7 @@ public class IntruderView extends LinearLayout {
     public void updateLayout() {
         mIntruderNotificationLinearLayout.removeAllViews();
         mIntruderNotificationLinearLayout.addView(mIntruderLatestItems);
+        mIntruderNotificationLinearLayout.addView(mClearButton);
     }
 
     /** We want to shrink down to 0, and ignore the background. */
@@ -113,13 +114,9 @@ public class IntruderView extends LinearLayout {
     public void updateNotification(IBinder key, StatusBarNotification notification) {
         NotificationData oldList;
         int oldIndex = mNotificationData.findEntry(key);
-        if (oldIndex >= 0) {
+        if (oldIndex < 0) {
             return;
         } else {
-            oldIndex = mNotificationData.findEntry(key);
-            if (oldIndex < 0) {
-                return;
-            }
             oldList = mNotificationData;
         }
         final NotificationData.Entry oldEntry = oldList.getEntryAt(oldIndex);
