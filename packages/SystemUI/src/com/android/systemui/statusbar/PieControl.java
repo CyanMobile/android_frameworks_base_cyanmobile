@@ -476,9 +476,9 @@ public class PieControl implements OnClickListener {
         }
     }
 
-    public void resetStatus(int numb) {
+    public void hidePanels(boolean wth) {
         if (mPie != null) {
-            mPie.resetStatus(-1);
+            mPie.hidePanels(wth);
         }
     }
 

@@ -503,9 +503,9 @@ public class PieMenu extends FrameLayout {
         mNotifNew = notifnew;
     }
 
-    public void resetStatus(int numb) {
+    public void hidePanels(boolean wth) {
         if (mStatusPanel != null) {
-            mStatusPanel.setCurrentViewState(-1);
+            mStatusPanel.hidePanels(wth);
         }
     }
 
@@ -966,7 +966,7 @@ public class PieMenu extends FrameLayout {
     }
 
     public void configurationChanges() {
-        // nothing
+        if (mStatusPanel != null) mStatusPanel.updatePanelConfiguration();
     }
 
     // touch handling for pie

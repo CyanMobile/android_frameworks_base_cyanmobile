@@ -159,9 +159,9 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
         return list;
     }
 
-    public void resetStatus(int numb) {
+    public void hidePanels(boolean wth) {
         if (mPieControl != null) {
-            mPieControl.resetStatus(-1);
+            mPieControl.hidePanels(wth);
         }
     }
 
