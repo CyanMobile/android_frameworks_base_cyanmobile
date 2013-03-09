@@ -89,7 +89,7 @@ public class PieStatusPanel {
         mPanel.getBar().mContainer.setVisibility(View.GONE);
     }
 
-    class ViewOnTouchListener implements OnTouchListener {
+    private class ViewOnTouchListener implements OnTouchListener {
         final int SCROLLING_DISTANCE_TRIGGER = 100;
             float scrollX;
             float scrollY;
@@ -229,9 +229,10 @@ public class PieStatusPanel {
                 WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL,
                     0
                     | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                    | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                    | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                     | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
-                    | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                    | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
                 PixelFormat.TRANSLUCENT);
     }
 }

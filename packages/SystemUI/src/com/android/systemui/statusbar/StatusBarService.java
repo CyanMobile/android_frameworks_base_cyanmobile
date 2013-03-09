@@ -260,7 +260,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     // Pie controls
     public PieControlPanel mPieControlPanel;
     public View mPieControlsTrigger;
-    public View mContainer;
+    public PieExpandedView mContainer;
     private int mIndex;
 
     // the date view
@@ -1507,10 +1507,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private void attachPies() {
         if(showPie()) {
             if (mContainer == null) {
-                // Add panel window, one to be used by all pies that is
-                LayoutInflater inflater = (LayoutInflater) mContext
-                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE); 
-                mContainer = inflater.inflate(R.layout.pie_expanded_panel, null);
+                mContainer = (PieExpandedView) View.inflate(mContext, R.layout.pie_expanded_panel, null);
+                mContainer.setItemTouchDispatcher(mTouchDispatcher);
                 WindowManagerImpl.getDefault().addView(mContainer, PieStatusPanel.getFlipPanelLayoutParams());
             }
 
@@ -1557,7 +1555,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.TYPE_NAVIGATION_BAR,
+                WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL,
                     0
                     | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                     | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
@@ -1579,7 +1577,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     ViewGroup.LayoutParams.MATCH_PARENT : (int)(res.getDimensionPixelSize(R.dimen.pie_trigger_height)*mPieSize)),
               (gravity == Gravity.LEFT || gravity == Gravity.RIGHT ?
                     ViewGroup.LayoutParams.MATCH_PARENT : (int)(res.getDimensionPixelSize(R.dimen.pie_trigger_height)*mPieSize)),
-              WindowManager.LayoutParams.TYPE_NAVIGATION_BAR,
+              WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL,
                     0
                     | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                     | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL

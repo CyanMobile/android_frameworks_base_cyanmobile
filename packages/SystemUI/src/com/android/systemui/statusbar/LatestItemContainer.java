@@ -79,7 +79,7 @@ public class LatestItemContainer extends LinearLayout {
              * otherwise we get into a loop
              */
             if (!mEventsControlledByDispatcher) {
-                //handled = mDispatcher.handleTouchEvent(event);
+                handled = mDispatcher.handleTouchEvent(event);
             }
 
             if (DBG) {
