@@ -182,12 +182,14 @@ public class PieStatusPanel {
     }
 
     private void showPanel(View panel) {
+        final boolean quickPanel = (((Integer)panel.getTag()).intValue() == QUICK_SETTINGS_PANEL);
         mContentFrame.setBackgroundColor(0);
         ValueAnimator alphAnimation  = ValueAnimator.ofInt(0, 1);
         alphAnimation.addUpdateListener(new AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                mScrollView.setX(-(int)((1-animation.getAnimatedFraction()) * mPanel.getWidth() * 1.5));
+                int setsX = ((int)((1-animation.getAnimatedFraction()) * mPanel.getWidth() * 1.5));
+                mScrollView.setX(quickPanel ? -setsX : setsX);
                 mContentFrame.setBackgroundColor((int)(animation.getAnimatedFraction() * 0xEE) << 24);
                 mPanel.invalidate();
             }
