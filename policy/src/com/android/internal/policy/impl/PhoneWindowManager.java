@@ -2362,12 +2362,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             } else if (mTopFullscreenOpaqueWindowState != null) {
                 topIsFullscreen = (lp.flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0;
 
-                if (topIsFullscreen) {
+                if (topIsFullscreen || mShowStatBar) {
                     if (mNaviShow && mNaviShowAll) {
                         mNaviShowAll2 = false;
                         shouldShowNavbar(false);
                     }
-                    if (mStatusBarCanHide || mShowStatBar) {
+                    if (mStatusBarCanHide) {
                         if (DEBUG_LAYOUT) Log.v(TAG, "** HIDING status bar");
                         if (mStatusBar.hideLw(true)) {
                             changes |= FINISH_LAYOUT_REDO_LAYOUT;
