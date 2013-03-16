@@ -2639,6 +2639,12 @@ public final class Settings {
         public static final String PIE_CUSTOM_BUTTON_BACK_APP4 = "pie_custom_button_back_app4";
 
         /**
+         * Override and forcefully disable the fullscreen keyboard
+         * @hide
+         */
+        public static final String DISABLE_FULLSCREEN_KEYBOARD = "disable_fullscreen_keyboard";
+
+        /**
          * navbar glowing color
          * @hide
          */

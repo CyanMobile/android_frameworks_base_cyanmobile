@@ -1604,7 +1604,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
                 PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.TOP | Gravity.FILL_HORIZONTAL;
-        lp.y += height * 1.2; // FIXME
+        //lp.y += height * 1.2;
         lp.setTitle("IntruderAlert");
         lp.windowAnimations = R.style.Animations_PopDownMenu_Center;
 

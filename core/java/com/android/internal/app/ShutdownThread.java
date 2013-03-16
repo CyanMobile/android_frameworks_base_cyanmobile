@@ -249,11 +249,11 @@ public final class ShutdownThread extends Thread {
           Log.i(TAG, "Enable shutdown animation...");
         }
 
-        if (Settings.System.getInt(context.getContentResolver(),
+        /*if (Settings.System.getInt(context.getContentResolver(),
                     Settings.System.TRANSPARENT_BACKGROUND_FULL, 0) == 2) {
             Settings.System.putInt(context.getContentResolver(),
                     Settings.System.TRANSPARENT_BACKGROUND_FULL, 0);
-        }
+        }*/
 
         sInstance.mContext = context;
         sInstance.mPowerManager = (PowerManager)context.getSystemService(Context.POWER_SERVICE);

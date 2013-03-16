@@ -57,6 +57,7 @@ import com.android.systemui.statusbar.quicksettings.quicktile.SleepTimeTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.SettingsTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.TimeTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.UserTile;
+import com.android.systemui.statusbar.quicksettings.quicktile.VolumeTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.PowerMenuTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.ProfileTile;
 import com.android.systemui.statusbar.quicksettings.quicktile.WeatherTile;
@@ -108,6 +109,7 @@ public class QuickSettingsController {
     public static final String TILE_PROFILE = "toggleProfile";
     public static final String TILE_POWER = "togglePower";
     public static final String TILE_ALARM = "toggleAlarm";
+    public static final String TILE_VOLUME = "toggleVolume";
 
     private static final String TILE_DELIMITER = "|";
     private static final String TILES_DEFAULT = TILE_USER
@@ -124,6 +126,7 @@ public class QuickSettingsController {
             + TILE_DELIMITER + TILE_GPS
             + TILE_DELIMITER + TILE_SYNC
             + TILE_DELIMITER + TILE_RINGER
+            + TILE_DELIMITER + TILE_VOLUME
             + TILE_DELIMITER + TILE_AIRPLANE
             + TILE_DELIMITER + TILE_AUTOROTATE
             + TILE_DELIMITER + TILE_SCREENSHOT
@@ -169,6 +172,7 @@ public class QuickSettingsController {
     public static final int PROFILE_TILE = 22;
     public static final int POWER_TILE = 23;
     public static final int ALARM_TILE = 24;
+    public static final int VOLUME_TILE = 25;
 
     public static final int USER_TILE = 99;
 
@@ -254,6 +258,8 @@ public class QuickSettingsController {
                 mQuickSettings.add(POWER_TILE);
             } else if (tile.equals(TILE_ALARM)) {
                 mQuickSettings.add(ALARM_TILE);
+            } else if (tile.equals(TILE_VOLUME)) {
+                mQuickSettings.add(VOLUME_TILE);
             } else if (tile.equals(TILE_USER)) {
                 mQuickSettings.add(USER_TILE);
             }
@@ -432,6 +438,9 @@ public class QuickSettingsController {
                 break;
             case ALARM_TILE:
                 qs = new AlarmTile(mContext, inflater, mContainerView, this);
+                break;
+            case VOLUME_TILE:
+                qs = new VolumeTile(mContext, inflater, mContainerView, this);
                 break;
             case USER_TILE:
                 qs = new UserTile(mContext, inflater, mContainerView, this);

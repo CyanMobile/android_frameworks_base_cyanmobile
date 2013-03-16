@@ -892,7 +892,7 @@ public class CmStatusBarView extends StatusBarView {
         final Intent intent = new Intent(Intent.ACTION_MAIN);
         final ActivityManager am = (ActivityManager) context
                 .getSystemService(Activity.ACTIVITY_SERVICE);
-        String defaultHomePackage = "com.android.launcher";
+        String defaultHomePackage = "com.wordpress.chislonchow.legacylauncher";
         intent.addCategory(Intent.CATEGORY_HOME);
         final ResolveInfo res = context.getPackageManager().resolveActivity(intent, 0);
         if (res.activityInfo != null && !res.activityInfo.packageName.equals("android")) {
@@ -905,7 +905,7 @@ public class CmStatusBarView extends StatusBarView {
             packageName = tasks.get(looper).topActivity.getPackageName();
             if (!packageName.equals("com.android.systemui")
                        && (!packageName.equals(defaultHomePackage) 
-                         || !packageName.equals("com.wordpress.chislonchow.legacylauncher"))) {
+                         || !packageName.equals("com.android.launcher"))) {
                 lastAppId = tasks.get(looper).id;
             }
             looper++;

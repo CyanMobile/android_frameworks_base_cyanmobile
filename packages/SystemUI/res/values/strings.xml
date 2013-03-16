@@ -211,6 +211,7 @@
     <string name="quick_settings_notif_enable_label">Notif On</string>
     <string name="quick_settings_notif_disable_label">Notif Off</string>
     <string name="quick_settings_powermenu_label">Power menu</string>
+    <string name="quick_settings_volume">Volume</string>
 
     <string name="status_bar_settings_battery_meter_format" translatable="false">
         <xliff:g id="number">%d</xliff:g><xliff:g id="percent">%%</xliff:g>

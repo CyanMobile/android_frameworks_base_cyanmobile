@@ -777,7 +777,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
             try {
                 final Intent intent = new Intent(Intent.ACTION_MAIN);
-                String defaultHomePackage = "com.android.launcher";
+                String defaultHomePackage = "com.wordpress.chislonchow.legacylauncher";
                 intent.addCategory(Intent.CATEGORY_HOME);
                 final ResolveInfo res = mContext.getPackageManager().resolveActivity(intent, 0);
                 if (res.activityInfo != null && !res.activityInfo.packageName.equals("android")) {
@@ -797,7 +797,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             for (String pkg : appInfo.pkgList) {
                                 if (!pkg.equals("com.android.systemui") 
                                        && (!pkg.equals(defaultHomePackage) 
-                                         || !pkg.equals("com.wordpress.chislonchow.legacylauncher"))) {
+                                         || !pkg.equals("com.android.launcher"))) {
                                     if (pkg != null) {
                                         mgr.forceStopPackage(pkg);
                                     }
