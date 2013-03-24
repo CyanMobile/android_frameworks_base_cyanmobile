@@ -109,7 +109,7 @@
 
     <string name="ethernet_label">Ethernet</string>
     <string name="status_bar_settings_auto_brightness_label">AUTO</string>
-    <string name="status_bar_network_name_separator" translatable="false">|</string>
+    <string name="status_bar_network_name_separator">|</string>
     <string name="status_bar_settings_signal_meter_disconnected">
         No Internet connection
     </string>
@@ -213,10 +213,10 @@
     <string name="quick_settings_powermenu_label">Power menu</string>
     <string name="quick_settings_volume">Volume</string>
 
-    <string name="status_bar_settings_battery_meter_format" translatable="false">
+    <string name="status_bar_settings_battery_meter_format">
         <xliff:g id="number">%d</xliff:g><xliff:g id="percent">%%</xliff:g>
     </string>
-    <string name="status_bar_settings_battery_meter_min_format" translatable="false">
+    <string name="status_bar_settings_battery_meter_min_format">
         <xliff:g id="number">%d</xliff:g>
     </string>
 

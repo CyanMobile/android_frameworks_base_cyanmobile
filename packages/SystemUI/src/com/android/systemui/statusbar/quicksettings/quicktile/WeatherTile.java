@@ -155,6 +155,7 @@ public class WeatherTile extends QuickSettingsTile {
     private String mLastKnownWoeid;
     private boolean mNeedsWeatherRefresh;
     private Set<String> mTrackedProviders;
+    private long mGetLastSync = 0;
 
     private void updateLocationListenerState() {
         if (mInfo == null || !mInfo.isConnected()) {
@@ -168,7 +169,7 @@ public class WeatherTile extends QuickSettingsTile {
                                     Settings.System.WEATHER_CUSTOM_LOCATION);
         final long interval = Settings.System.getLong(resolver,
                     Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
-        if ((((System.currentTimeMillis() - mWeatherInfo.getLastSync()) / 60000) >= interval)) {
+        if ((((System.currentTimeMillis() - mGetLastSync) / 60000) >= interval)) {
             if (useCustomLoc && customLoc != null) {
                 mLocManager.removeUpdates(mLocUpdateIntent);
                 mLocationInfo.customLocation = customLoc;
@@ -322,6 +323,7 @@ public class WeatherTile extends QuickSettingsTile {
             if (info != null) {
                 setWeatherData(info);
                 mWeatherInfo = info;
+                mGetLastSync = info.getLastSync();
             } else if (mWeatherInfo.getTemp() == 0) {
                 setNoWeatherData();
             } else {
@@ -342,13 +344,13 @@ public class WeatherTile extends QuickSettingsTile {
         final long interval = Settings.System.getLong(resolver,
                 Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
         boolean manualSync = (interval == 0);
-        if (mForceRefresh || !manualSync && (((System.currentTimeMillis() - mWeatherInfo.getLastSync()) / 60000) >= interval)) {
+        if (mForceRefresh || !manualSync && (((System.currentTimeMillis() - mGetLastSync) / 60000) >= interval)) {
             updating = true;
             updateQuickSettings();
             if (triggerWeatherQuery(false)) {
                 mForceRefresh = false;
             }
-        } else if (manualSync && mWeatherInfo.getLastSync() == 0) {
+        } else if (manualSync && mGetLastSync == 0) {
             setNoWeatherData();
         } else {
             setWeatherData(mWeatherInfo);
