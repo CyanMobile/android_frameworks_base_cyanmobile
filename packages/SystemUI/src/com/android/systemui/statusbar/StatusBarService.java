@@ -382,6 +382,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private boolean mFirstis = true;
     private boolean mNaviShow = true;
     private boolean mPieEnable = true;
+    private boolean mPieDisableImeShow = false;
     private boolean mStatusBarHidden = false;
     private boolean mStatusBarReverse = false;
     private boolean mStatusBarTab = false;
@@ -1501,7 +1502,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     private boolean showPie() {
-        return !mNaviShow && mPieEnable;
+        return !mNaviShow && mPieEnable && !mPieDisableImeShow;
     }
 
     private void attachPies() {
@@ -3509,6 +3510,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     public void setIMEVisible(boolean visible) {
          mNavigationBarView.setIMEVisible(visible);
+         mPieDisableImeShow = visible;
     }
 
     public void toggleQwikWidgets() {

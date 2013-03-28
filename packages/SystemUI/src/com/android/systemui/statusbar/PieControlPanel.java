@@ -242,6 +242,26 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
         mPieControl.show(show);
     }
 
+    public boolean EnableBack() {
+      return mPieControl.EnableBack();
+    }
+
+    public boolean EnableHome() {
+      return mPieControl.EnableHome();
+    }
+
+    public boolean EnableMenu() {
+      return mPieControl.EnableMenu();
+    }
+
+    public boolean EnableRecent() {
+      return mPieControl.EnableRecent();
+    }
+
+    public boolean EnableSearch() {
+      return mPieControl.EnableSearch();
+    }
+
     // verticalPos == -1 -> center PIE
     public void show(int verticalPos) {
         mShowing = true;
