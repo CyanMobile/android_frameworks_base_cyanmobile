@@ -3511,6 +3511,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     public void setIMEVisible(boolean visible) {
          mNavigationBarView.setIMEVisible(visible);
          mPieDisableImeShow = visible;
+         updatePieControls();
     }
 
     public void toggleQwikWidgets() {
@@ -3658,6 +3659,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         @Override
         public boolean onTouch(View v, MotionEvent event) {
             final int action = event.getAction();
+            if (mPieDisableImeShow) return false;
+
             if (!mPieControlPanel.isShowing()) {
                 switch(action) {
                     case MotionEvent.ACTION_DOWN:

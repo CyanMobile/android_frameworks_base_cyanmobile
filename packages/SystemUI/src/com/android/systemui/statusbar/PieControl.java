@@ -717,15 +717,25 @@ public class PieControl implements OnClickListener {
 
     public void populateMenu() {
         // base
-        mPie.addItem(mMenu);
+        if (EnableMenu()) {
+            mPie.addItem(mMenu);
+        }
         // level 1
-        mPie.addItem(mSearch);
+        if (EnableSearch()) {
+            mPie.addItem(mSearch);
+        }
         // level 2
-        mPie.addItem(mRecent);
+        if (EnableRecent()) {
+            mPie.addItem(mRecent);
+        }
         // level 3
-        mPie.addItem(mHome);
+        if (EnableHome()) {
+            mPie.addItem(mHome);
+        }
         // level 4
-        mPie.addItem(mBack);
+        if (EnableBack()) {
+            mPie.addItem(mBack);
+        }
     }
 
     public void repopulateMenu() {
