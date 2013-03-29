@@ -573,7 +573,7 @@ final class ActivityStack {
         if (idx < 0) {
             app.activities.add(r);
         }
-        mService.updateLruProcessLocked(app, true, true);
+        mService.updateLruProcessLocked(app, true);
 
         try {
             if (app.thread == null) {
@@ -1397,7 +1397,7 @@ final class ActivityStack {
             if (next.app != null && next.app.thread != null) {
                 // No reason to do full oom adj update here; we'll let that
                 // happen whenever it needs to later.
-                mService.updateLruProcessLocked(next.app, false, true);
+                mService.updateLruProcessLocked(next.app, false);
             }
             startPausingLocked(userLeaving, false);
             return true;
@@ -1518,7 +1518,7 @@ final class ActivityStack {
             if (mMainStack) {
                 mService.addRecentTaskLocked(next.task);
             }
-            mService.updateLruProcessLocked(next.app, true, true);
+            mService.updateLruProcessLocked(next.app, true);
             updateLRUListLocked(next);
 
             // Have the window manager re-evaluate the orientation of
@@ -3738,7 +3738,7 @@ final class ActivityStack {
                 if (r.app.activities.size() == 0) {
                     // No longer have activities, so update location in
                     // LRU list.
-                    mService.updateLruProcessLocked(r.app, oomAdj, false);
+                    mService.updateLruProcessLocked(r.app, oomAdj);
                 }
             }
 

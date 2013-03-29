@@ -55,6 +55,7 @@ class ProcessRecord {
     long lruWeight;             // Weight for ordering in LRU list
     int maxAdj;                 // Maximum OOM adjustment for this process
     int hiddenAdj;              // If hidden, this is the adjustment to use
+    int clientHiddenAdj;        // If empty but hidden client, this is the adjustment to use
     int emptyAdj;               // If empty, this is the adjustment to use
     int curRawAdj;              // Current OOM unlimited adjustment for this process
     int setRawAdj;              // Last set OOM unlimited adjustment for this process
@@ -68,6 +69,7 @@ class ProcessRecord {
     boolean keeping;            // Actively running code so don't kill due to that?
     boolean setIsForeground;    // Running foreground UI when last set?
     boolean hasActivities;      // Are there any activities running in this process?
+    boolean hasClientActivities;  // Are there any client services with activities?
     boolean foregroundServices; // Running any services that are foreground?
     boolean foregroundActivities; // Running any services that are foreground?
     boolean systemNoUi;         // This is a system process, but not currently showing UI.
@@ -173,7 +175,6 @@ class ProcessRecord {
             }
         }
         pw.print(prefix); pw.print("thread="); pw.print(thread);
-                pw.print(" curReceiver="); pw.println(curReceiver);
         pw.print(prefix); pw.print("pid="); pw.print(pid); pw.print(" starting=");
                 pw.print(starting); pw.print(" lastPss="); pw.println(lastPss);
         pw.print(prefix); pw.print("lastActivityTime=");
@@ -185,6 +186,7 @@ class ProcessRecord {
                 pw.print(" empty="); pw.println(empty);
         pw.print(prefix); pw.print("oom: max="); pw.print(maxAdj);
                 pw.print(" hidden="); pw.print(hiddenAdj);
+                pw.print(" client="); pw.print(clientHiddenAdj);
                 pw.print(" empty="); pw.print(emptyAdj);
                 pw.print(" curRaw="); pw.print(curRawAdj);
                 pw.print(" setRaw="); pw.print(setRawAdj);
@@ -277,7 +279,7 @@ class ProcessRecord {
         pkgList.add(_info.packageName);
         thread = _thread;
         maxAdj = ProcessList.HIDDEN_APP_MAX_ADJ;
-        hiddenAdj = emptyAdj = ProcessList.HIDDEN_APP_MIN_ADJ;
+        hiddenAdj = clientHiddenAdj = emptyAdj = ProcessList.HIDDEN_APP_MIN_ADJ;
         curRawAdj = setRawAdj = -100;
         curAdj = setAdj = -100;
         persistent = false;

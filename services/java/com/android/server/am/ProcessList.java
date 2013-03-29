@@ -104,6 +104,23 @@ class ProcessList {
     // keeping around processes on devices with large amounts of RAM.
     static final int MAX_HIDDEN_APPS = 15;
 
+    // We allow empty processes to stick around for at most 30 minutes.
+    static final long MAX_EMPTY_TIME = 30*60*1000;
+
+    // The number of hidden at which we don't consider it necessary to do
+    // memory trimming.
+    static final int TRIM_HIDDEN_APPS = 3;
+
+    // The number of empty apps at which we don't consider it necessary to do
+    // memory trimming.
+    static final int TRIM_EMPTY_APPS = 3;
+
+    // Threshold of number of hidden+empty where we consider memory critical.
+    static final int TRIM_CRITICAL_THRESHOLD = 3;
+
+    // Threshold of number of hidden+empty where we consider memory critical.
+    static final int TRIM_LOW_THRESHOLD = 5;
+
     // We put empty content processes after any hidden processes that have
     // been idle for less than 15 seconds.
     static final long CONTENT_APP_IDLE_OFFSET = 15*1000;

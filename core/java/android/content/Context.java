@@ -162,6 +162,19 @@ public abstract class Context {
     public static final int BIND_ADJUST_WITH_ACTIVITY = 0x0080;
 
     /**
+     * @hide An idea that is not yet implemented.
+     * Flag for {@link #bindService}: If binding from an activity, consider
+     * this service to be visible like the binding activity is.  That is,
+     * it will be treated as something more important to keep around than
+     * invisible background activities.  This will impact the number of
+     * recent activities the user can switch between without having them
+     * restart.  There is no guarantee this will be respected, as the system
+     * tries to balance such requests from one app vs. the importantance of
+     * keeping other apps around.
+     */
+    public static final int BIND_VISIBLE = 0x0100;
+
+    /**
      * Flag for {@link #bindService}: Don't consider the bound service to be
      * visible, even if the caller is visible.
      * @hide
