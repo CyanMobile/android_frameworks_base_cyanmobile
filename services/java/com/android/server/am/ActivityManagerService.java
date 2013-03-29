@@ -10116,7 +10116,8 @@ public final class ActivityManagerService extends ActivityManagerNative
                     int N = mPendingServices.size();
                     for (int i=0; i<N; i++) {
                         ServiceRecord pr = mPendingServices.get(i);
-                        if (pr.name.equals(name)) {
+                        if (pr.serviceInfo.applicationInfo.uid == sInfo.applicationInfo.uid
+                                && pr.name.equals(name)) {
                             mPendingServices.remove(i);
                             i--;
                             N--;
@@ -13693,8 +13694,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                                     app.processName, app.setAdj, "old background process");
                             app.killedBackground = true;
                             Process.killProcessQuiet(app.pid);
-                        }
-                    } else {
+                        } else {
                             numEmpty++;
                             if (numEmpty > emptyProcessLimit) {
                                 Slog.i(TAG, "No longer want " + app.processName
@@ -13704,6 +13704,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                                 app.killedBackground = true;
                                 Process.killProcessQuiet(app.pid);
                             }
+                        }
                     }
                 }
                 if (app.nonStoppingAdj >= ProcessList.HOME_APP_ADJ
