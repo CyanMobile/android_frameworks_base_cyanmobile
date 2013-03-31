@@ -599,6 +599,8 @@ public class StatusBarPolicy {
     }
 
     private void onSmsDialog(Intent intent) {
+        if (mPhoneState != TelephonyManager.CALL_STATE_IDLE) return;
+
         Handler hsms = new Handler();
         final ContentResolver cr = mContext.getContentResolver();
         final long dateTaken = System.currentTimeMillis();

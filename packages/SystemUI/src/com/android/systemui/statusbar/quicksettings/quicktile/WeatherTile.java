@@ -323,7 +323,6 @@ public class WeatherTile extends QuickSettingsTile {
             if (info != null) {
                 setWeatherData(info);
                 mWeatherInfo = info;
-                mGetLastSync = info.getLastSync();
             } else if (mWeatherInfo.getTemp() == 0) {
                 setNoWeatherData();
             } else {
@@ -344,7 +343,10 @@ public class WeatherTile extends QuickSettingsTile {
         final long interval = Settings.System.getLong(resolver,
                 Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
         boolean manualSync = (interval == 0);
-        if (mForceRefresh || !manualSync && (((System.currentTimeMillis() - mGetLastSync) / 60000) >= interval)) {
+        if (!manualSync && (((System.currentTimeMillis() - mGetLastSync) / 60000) >= interval)) {
+            mForceRefresh = true;
+        }
+        if (mForceRefresh) {
             updating = true;
             updateQuickSettings();
             if (triggerWeatherQuery(false)) {
@@ -362,6 +364,7 @@ public class WeatherTile extends QuickSettingsTile {
      * @param w
      */
     private void setWeatherData(WeatherInfo w) {
+        mGetLastSync = System.currentTimeMillis();
         final Resources res = mContext.getResources();
         if (w.getConditionResource() != 0) {
             addDrwb = true;
