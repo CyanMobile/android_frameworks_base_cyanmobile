@@ -88,6 +88,7 @@ public class HibernateActivity extends Activity {
             switch( msg.what ) {
                 case START_BOOT_SPLASH:
                     Log.d(TAG, "handleMessage() Event : START_BOOT_SPLASH");
+                    SystemProperties.set( "service.bootanim.exit",  "0");
                     SystemProperties.set( "ctl.start",  "bootanim");
                     if (Settings.System.getInt(getContentResolver(),
                     Settings.System.ENABLE_BOOTSOUND, 0) == 1) {
