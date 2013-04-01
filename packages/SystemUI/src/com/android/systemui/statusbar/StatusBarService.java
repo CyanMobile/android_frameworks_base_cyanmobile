@@ -1438,9 +1438,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         if (mStatusBarTile && (mQuickContainer != null)) {
              if (mQS != null) {
-                 mQuickContainer.removeAllViews();
-                 mQS.setupQuickSettings();
-                 mQuickContainer.requestLayout();
+                 mQS.updateResources();
              }
         }
     }
@@ -3162,6 +3160,10 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     public boolean isFullyExpanded() {
         return isFullExpanded;
+    }
+
+    public void setIsFullExpanded(boolean whats) {
+        isFullExpanded = whats;
     }
 
     private int getExpandedWidth() {

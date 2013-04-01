@@ -189,11 +189,11 @@ public class QuickSettingsController {
         ContentResolver resolver = mContext.getContentResolver();
         String tiles = Settings.System.getString(resolver, Settings.System.QUICK_SETTINGS_TILES);
         if (tiles == null) {
-            Log.i(TAG, "Default tiles being loaded");
+            //Log.i(TAG, "Default tiles being loaded");
             tiles = TILES_DEFAULT;
         }
 
-        Log.i(TAG, "Tiles list: " + tiles);
+        //Log.i(TAG, "Tiles list: " + tiles);
 
         // Clear the list
         mQuickSettings.clear();

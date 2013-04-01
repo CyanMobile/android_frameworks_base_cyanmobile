@@ -166,7 +166,10 @@ public class PieStatusPanel {
     }
 
     public void showTilesPanel() {
-        if (mQS != null) showPanel(mQS);
+        if (mQS != null) {
+            mPanel.getBar().setIsFullExpanded(true);
+            showPanel(mQS);
+        }
     }
 
     public void showNotificationsPanel() {
@@ -174,7 +177,10 @@ public class PieStatusPanel {
     }
 
     public void hideTilesPanel() {
-        if (mQS != null) hidePanel(mQS);
+        if (mQS != null) {
+            mPanel.getBar().setIsFullExpanded(false);
+            hidePanel(mQS);
+        }
     }
 
     public void hideNotificationsPanel() {
@@ -190,7 +196,7 @@ public class PieStatusPanel {
             public void onAnimationUpdate(ValueAnimator animation) {
                 int setsX = ((int)((1-animation.getAnimatedFraction()) * mPanel.getWidth() * 1.5));
                 mScrollView.setX(quickPanel ? -setsX : setsX);
-                mContentFrame.setBackgroundColor((int)(animation.getAnimatedFraction() * 0xEE) << 24);
+                mContentFrame.setBackgroundColor((int)(animation.getAnimatedFraction() * 0xB0) << 24);
                 mPanel.invalidate();
             }
         });

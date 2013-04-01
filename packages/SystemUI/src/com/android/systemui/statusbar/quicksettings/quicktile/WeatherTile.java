@@ -169,7 +169,8 @@ public class WeatherTile extends QuickSettingsTile {
                                     Settings.System.WEATHER_CUSTOM_LOCATION);
         final long interval = Settings.System.getLong(resolver,
                     Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
-        if ((((System.currentTimeMillis() - mGetLastSync) / 60000) >= interval)) {
+        boolean manualSync = (interval == 0);
+        if (mForceRefresh || (!manualSync && (((System.currentTimeMillis() - mGetLastSync) / 60000) >= interval))) {
             if (useCustomLoc && customLoc != null) {
                 mLocManager.removeUpdates(mLocUpdateIntent);
                 mLocationInfo.customLocation = customLoc;
