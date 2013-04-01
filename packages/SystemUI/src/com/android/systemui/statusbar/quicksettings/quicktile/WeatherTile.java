@@ -343,10 +343,7 @@ public class WeatherTile extends QuickSettingsTile {
         final long interval = Settings.System.getLong(resolver,
                 Settings.System.WEATHER_UPDATE_INTERVAL, 0); // Default to manual
         boolean manualSync = (interval == 0);
-        if (!manualSync && (((System.currentTimeMillis() - mGetLastSync) / 60000) >= interval)) {
-            mForceRefresh = true;
-        }
-        if (mForceRefresh) {
+        if (mForceRefresh || (!manualSync && (((System.currentTimeMillis() - mGetLastSync) / 60000) >= interval))) {
             updating = true;
             updateQuickSettings();
             if (triggerWeatherQuery(false)) {
