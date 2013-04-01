@@ -43,7 +43,6 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.telephony.SmsMessage;
-import android.os.Bundle;
 import android.os.BatteryManager;
 import android.os.Binder;
 import android.os.Handler;
@@ -52,6 +51,8 @@ import android.os.RemoteException;
 import android.os.storage.StorageManager;
 import android.os.SystemProperties;
 import android.provider.Settings;
+import android.provider.Telephony.Sms;
+import android.provider.Telephony.Sms.Intents;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
@@ -601,32 +602,24 @@ public class StatusBarPolicy {
     private void onSmsDialog(Intent intent) {
         if (mPhoneState != TelephonyManager.CALL_STATE_IDLE) return;
 
-        Handler hsms = new Handler();
-        final ContentResolver cr = mContext.getContentResolver();
-        final long dateTaken = System.currentTimeMillis();
-	StringBuilder body = new StringBuilder();// sms content
-	StringBuilder number = new StringBuilder();// sms sender number
-	Bundle bundle = intent.getExtras();
-	if (bundle != null) {
-            Object[] _pdus = (Object[]) bundle.get("pdus");
-            SmsMessage[] message = new SmsMessage[_pdus.length];
-            for (int i = 0; i < _pdus.length; i++) {
-               message[i] = SmsMessage.createFromPdu((byte[]) _pdus[i]);
+	if (intent != null) {
+            String smsBody;
+            SmsMessage[] message = Intents.getMessagesFromIntent(intent);
+            SmsMessage sms = message[0];
+            int pduCount = message.length;
+            if (pduCount == 1) {
+               smsBody = sms.getDisplayMessageBody();
+            } else {
+	       StringBuilder body = new StringBuilder(); // sms content
+               for (int i = 0; i < pduCount; i++) {
+                   sms = message[i];
+                   body.append(sms.getDisplayMessageBody());
+               }
+               smsBody = body.toString();
             }
-            for (SmsMessage currentMessage : message) {
-               body.append(currentMessage.getDisplayMessageBody());
-               number.append(currentMessage.getDisplayOriginatingAddress());
-            }
-            final String smsBody = body.toString();
-            final String smsNumber = number.toString();
-            if ((Settings.System.getInt(cr, Settings.System.USE_POPUP_SMS, 1) == 1)
+            if ((Settings.System.getInt(mContext.getContentResolver(), Settings.System.USE_POPUP_SMS, 1) == 1)
                        && mPhoneState == TelephonyManager.CALL_STATE_IDLE) {
-               hsms.postDelayed(new Runnable() {
-                  @Override
-                  public void run() {
-                    setSmsInfo(mContext, smsNumber, smsBody, dateTaken);
-                  }
-               },100);
+               setSmsInfo(mContext, sms.getDisplayOriginatingAddress(), smsBody, System.currentTimeMillis());
             }
         }
     }
