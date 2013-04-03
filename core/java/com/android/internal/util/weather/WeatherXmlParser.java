@@ -72,7 +72,7 @@ public class WeatherXmlParser {
     private float getFloatForAttribute(Element root, String tagName, String attributeName)
             throws NumberFormatException {
         String value = getValueForAttribute(root, tagName, attributeName);
-        if (value == null) {
+        if (value == null || value.equals("")) {
             return Float.NaN;
         }
         return Float.parseFloat(value);
@@ -81,7 +81,7 @@ public class WeatherXmlParser {
     private int getIntForAttribute(Element root, String tagName, String attributeName)
             throws NumberFormatException {
         String value = getValueForAttribute(root, tagName, attributeName);
-        if (value == null) {
+        if (value == null || value.equals("")) {
             return -1;
         }
         return Integer.parseInt(value);
@@ -140,6 +140,25 @@ public class WeatherXmlParser {
             }
         } catch (Exception e) {
             Log.e(TAG, "Couldn't parse Yahoo place finder XML", e);
+        }
+        return null;
+    }
+
+    public String parsePlaceFinderResponseNew(String response) {
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document doc = db.parse(new InputSource(new StringReader(response)));
+
+            NodeList nodeListDescription = doc.getElementsByTagName("woeid");
+            if (nodeListDescription.getLength() > 0) {
+                Node node = nodeListDescription.item(0);
+                return node.getTextContent();
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Couldn't parse New Yahoo place finder XML", e);
         }
         return null;
     }

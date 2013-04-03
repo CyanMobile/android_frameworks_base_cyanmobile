@@ -23,6 +23,9 @@ public class YahooPlaceFinder {
     private static final String YAHOO_API_BASE_REV_URL = "http://where.yahooapis.com/geocode?appid=EKvCnl4k&q=%1$s,+%2$s&gflags=R";
     private static final String YAHOO_API_BASE_URL = "http://where.yahooapis.com/geocode?appid=EKvCnl4k&q=%1$s";
 
+    private static final String yahooapisBase = "http://query.yahooapis.com/v1/public/yql?q=select*from%20geo.places%20where%20text=";
+    private static final String yahooapisFormat = "&format=xml";
+
     public static String reverseGeoCode(Context c, double latitude, double longitude) {
         String url = String.format(YAHOO_API_BASE_REV_URL, String.valueOf(latitude),
                 String.valueOf(longitude));
@@ -37,13 +40,17 @@ public class YahooPlaceFinder {
     }
 
     public static String GeoCode(Context c, String location) {
-        String url = String.format(YAHOO_API_BASE_URL, location).replace(' ', '+');
-        String response = new HttpRetriever().retrieve(url);
+        String yahooAPIsQuery = yahooapisBase + "%22" + location + "%22"
+				+ yahooapisFormat;
+
+        yahooAPIsQuery = yahooAPIsQuery.replace(" ", "%20");
+
+        String response = new HttpRetriever().retrieve(yahooAPIsQuery);
         if (response == null) {
             return null;
         }
 
-        String woeid = new WeatherXmlParser(c).parsePlaceFinderResponse(response);
+        String woeid = new WeatherXmlParser(c).parsePlaceFinderResponseNew(response);
         return woeid;
     }
 

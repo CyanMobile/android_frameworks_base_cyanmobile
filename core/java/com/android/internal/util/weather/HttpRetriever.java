@@ -117,7 +117,6 @@ public class HttpRetriever {
             return null;
         }
 
-        String strValue = null;
         InputStream inputStream = httpConnection.getInputStream();
         if (inputStream == null) {
             Log.e(TAG, "Input stream error");
@@ -130,7 +129,6 @@ public class HttpRetriever {
 
         while ((strLine = buffReader.readLine()) != null) {
             strBuf.append(strLine + "\n");
-            strValue += strLine + "\n";
         }
 
         // Release resource to system

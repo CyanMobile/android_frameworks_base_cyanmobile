@@ -25,7 +25,6 @@ import java.text.DecimalFormat;
 import java.util.Date;
 
 public class WeatherInfo {
-    private static final long serialVersionUID = 1L;
 
     private static final DecimalFormat sNoDigitsFormat = new DecimalFormat("0");
 

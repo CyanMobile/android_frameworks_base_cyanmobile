@@ -306,7 +306,7 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
                     synchronized (this) {
                         // synchronize to ensure incrementPendingBroadcastsLocked()
                         // is called before decrementPendingBroadcasts()
-                        mListener.onLocationChanged(location);
+                        mListener.onLocationChanged(new Location(location));
                         if (mListener != mProximityListener) {
                             // call this after broadcasting so we do not increment
                             // if we throw an exeption.
