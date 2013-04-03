@@ -97,7 +97,7 @@
             android:id="@+id/centerClo"
             android:layout_gravity="center"
             android:layout_centerInParent="true"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="fill_parent"
             android:singleLine="true"
             android:layout_weight="1.0" />
@@ -353,7 +353,7 @@
         android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
         android:gravity="center_vertical|right"
         android:id="@+id/clockLe"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="fill_parent"
         android:singleLine="true"
         android:layout_alignParentRight="true"

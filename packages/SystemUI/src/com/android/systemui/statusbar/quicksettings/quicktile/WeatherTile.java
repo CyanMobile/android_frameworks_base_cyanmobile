@@ -109,7 +109,6 @@ public class WeatherTile extends QuickSettingsTile {
         };
         qsc.registerAction(Intent.ACTION_TIME_CHANGED, this);
         qsc.registerAction(Intent.ACTION_TIMEZONE_CHANGED, this);
-        qsc.registerAction(Intent.ACTION_CONFIGURATION_CHANGED, this);
         qsc.registerObservedContent(Settings.System.getUriFor(Settings.System.WEATHER_CUSTOM_LOCATION)
                 , this);
         qsc.registerObservedContent(Settings.System.getUriFor(Settings.System.WEATHER_USE_CUSTOM_LOCATION)
@@ -136,9 +135,10 @@ public class WeatherTile extends QuickSettingsTile {
         if (action.equals(ACTION_LOC_UPDATE)) {
             Location location = (Location) intent.getParcelableExtra(LocationManager.KEY_LOCATION_CHANGED);
             triggerLocationQueryWithLocation(location);
-        } else if (action.equals(Intent.ACTION_TIME_CHANGED) || 
-                    action.equals(Intent.ACTION_TIMEZONE_CHANGED) ||
-                    action.equals(Intent.ACTION_CONFIGURATION_CHANGED)) {
+        } else if (action.equals(Intent.ACTION_TIMEZONE_CHANGED)) {
+            String tz = intent.getStringExtra("time-zone"); // yucks
+            updateLocationListenerState();
+        } else {
             updateLocationListenerState();
         }
         refreshWeather();

@@ -29,7 +29,6 @@
             android:layout_width="75dip"
             android:layout_height="75dip"
             android:src="@drawable/default_artwork"
-            android:layout_alignParentLeft="true"
             android:background="@android:color/transparent"
             android:scaleType="fitCenter"
             android:padding = "3px"

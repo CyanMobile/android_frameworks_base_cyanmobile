@@ -56,7 +56,6 @@ import com.android.systemui.statusbar.powerwidget.MusicControls;
 import com.android.systemui.statusbar.qwidgets.QwikWidgetsPanelView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView;
 import com.android.systemui.statusbar.quicksettings.QuickSettingsController;
-import com.android.systemui.statusbar.quicksettings.Tile3dFlipAnimation;
 import com.android.systemui.statusbar.policy.NetworkController;
 import com.android.systemui.statusbar.policy.PiePolicy;
 import com.android.systemui.statusbar.policy.StatusBarPolicy;
@@ -252,6 +251,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private QuickSettingsController mQS;
     private QuickSettingsContainerView mQuickContainer;
     private ItemTouchDispatcher mTouchDispatcher;
+    private LayoutInflater mInflater;
     // position
     private int[] mPositionTmp = new int[2];
     public boolean mExpanded;
@@ -592,6 +592,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     public void onCreate() {
         // First set up our views and stuff.
         mDisplay = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        mInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE); 
         CustomTheme currentTheme = getResources().getConfiguration().customTheme;
         if (currentTheme != null) {
             mCurrentTheme = (CustomTheme) currentTheme.clone();
@@ -795,6 +796,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         if (mPowerWidgetFour != null) {
             mPowerWidgetFour.destroyWidget();
+        }
+
+        if (mStatusBarTile) {
+            if (mQuickContainer != null && mQS != null) {
+                mQS.destroyQuickSettings();
+            }
         }
 
         mExpandedDialog = new ExpandedDialog(context);
@@ -1435,12 +1442,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mNotificationLinearLayout.addView(mCompactClearButton);
             mScrollView.setVisibility(View.VISIBLE);
         }
-
-        if (mStatusBarTile && (mQuickContainer != null)) {
-             if (mQS != null) {
-                 mQS.updateResources();
-             }
-        }
     }
 
     private int getNavBarSize() {
@@ -1506,9 +1507,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private void attachPies() {
         if(showPie()) {
             if (mContainer == null) {
-                mContainer = (PieExpandedView) View.inflate(mContext, R.layout.pie_expanded_panel, null);
+                mContainer = (PieExpandedView) mInflater.inflate(R.layout.pie_expanded_panel, null);
                 mContainer.setItemTouchDispatcher(mTouchDispatcher);
-                WindowManagerImpl.getDefault().addView(mContainer, PieStatusPanel.getFlipPanelLayoutParams());
+                WindowManagerImpl.getDefault().addView(mContainer, getFlipPanelLayoutParams());
             }
 
             // Add pie (s), want some slice?
@@ -1560,6 +1561,21 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         lp.windowAnimations = android.R.style.Animation;
 
         WindowManagerImpl.getDefault().addView(mPieControlPanel, lp);
+    }
+
+    public static WindowManager.LayoutParams getFlipPanelLayoutParams() {
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL,
+                    0
+                    | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                    | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                    | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
+                    | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                    | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
+                PixelFormat.TRANSLUCENT);
+        return lp;
     }
 
     public static WindowManager.LayoutParams getPieTriggerLayoutParams(Context context, int gravity) {
@@ -1662,7 +1678,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mPowerWidgetThree.setupWidget();
         mPowerWidgetFour.setupWidget();
         mMusicControls.setupControls();
-        if (mStatusBarTile && (mQS != null)) mQS.setupQuickSettings();
+        if (mStatusBarTile) {
+            if (mQuickContainer != null && mQS != null) {
+                mQS.setupQuickSettings();
+            }
+        }
     }
 
     public void addIcon(String slot, int index, int viewIndex, StatusBarIcon icon) {
@@ -1876,8 +1896,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
 
         // create the row view
-        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        LatestItemContainer row = (LatestItemContainer) inflater.inflate(R.layout.status_bar_latest_event, parent, false);
+        LatestItemContainer row = (LatestItemContainer) mInflater.inflate(R.layout.status_bar_latest_event, parent, false);
         if ((n.flags & Notification.FLAG_ONGOING_EVENT) == 0 && (n.flags & Notification.FLAG_NO_CLEAR) == 0) {
             row.setOnSwipeCallback(mTouchDispatcher, new Runnable() {
                 @Override
@@ -3743,8 +3762,15 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             mEdgeBorder = res.getDimensionPixelSize(R.dimen.status_bar_edge_ignore);
         }
 
-        if (mStatusBarTile && (mQS != null)) mQS.updateResources();
-        if (mPieControlPanel != null) mPieControlPanel.configurationChanges();
+        if (mStatusBarTile) {
+            if (mQuickContainer != null && mQS != null) {
+                mQS.updateResources();
+            }
+        }
+
+        if (mPieControlPanel != null) {
+            mPieControlPanel.configurationChanges();
+        }
 
         if (false) Slog.v(TAG, "updateResources");
     }

@@ -18,29 +18,13 @@ package com.android.systemui.statusbar;
 
 import android.animationing.ValueAnimator;
 import android.animationing.ValueAnimator.AnimatorUpdateListener;
-import android.database.ContentObserver;
-import android.content.ContentResolver;
 import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.PixelFormat;
-import android.graphics.Rect;
-import android.os.Handler;
 import android.provider.Settings;
 import android.view.animation.DecelerateInterpolator;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
 import android.view.View.OnTouchListener;
 import android.view.MotionEvent;
-import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ImageView;
@@ -228,19 +212,5 @@ public class PieStatusPanel {
         if ((mQS == null) || (mNotificationPanel == null)) return;
         int padding = mContext.getResources().getDimensionPixelSize(R.dimen.pie_panel_padding);
         mScrollView.setPadding(padding,0,padding,0);
-    }
-
-    public static WindowManager.LayoutParams getFlipPanelLayoutParams() {
-        return new WindowManager.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL,
-                    0
-                    | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                    | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
-                    | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
-                    | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                    | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
-                PixelFormat.TRANSLUCENT);
     }
 }

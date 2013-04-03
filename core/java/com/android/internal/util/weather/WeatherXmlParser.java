@@ -143,23 +143,4 @@ public class WeatherXmlParser {
         }
         return null;
     }
-
-    public String parsePlaceFinderResponseNew(String response) {
-        try {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            Document doc = db.parse(new InputSource(new StringReader(response)));
-
-            NodeList nodeListDescription = doc.getElementsByTagName("woeid");
-            if (nodeListDescription.getLength() > 0) {
-                Node node = nodeListDescription.item(0);
-                return node.getTextContent();
-            } else {
-                return null;
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Couldn't parse New Yahoo place finder XML", e);
-        }
-        return null;
-    }
 }

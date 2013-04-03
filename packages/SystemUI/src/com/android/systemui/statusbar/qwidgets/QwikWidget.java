@@ -76,13 +76,15 @@ public abstract class QwikWidget {
         }
     }
 
-    private Handler mViewUpdateHandler = new Handler() {
-        public void handleMessage(Message msg) {
+    private final class HandlerExtension extends Handler {
+		public void handleMessage(Message msg) {
             if(mWidgetView != null) {
                 updateWidgetView();
             }
         }
-    };
+	}
+
+    private Handler mViewUpdateHandler = new HandlerExtension();
 
     protected void update() {
         updateState();

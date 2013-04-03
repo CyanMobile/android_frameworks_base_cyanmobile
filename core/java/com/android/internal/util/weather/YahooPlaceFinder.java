@@ -17,18 +17,15 @@
 package com.android.internal.util.weather;
 
 import android.content.Context;
+import android.net.Uri;
 
 public class YahooPlaceFinder {
 
-    private static final String YAHOO_API_BASE_REV_URL = "http://where.yahooapis.com/geocode?appid=EKvCnl4k&q=%1$s,+%2$s&gflags=R";
-    private static final String YAHOO_API_BASE_URL = "http://where.yahooapis.com/geocode?appid=EKvCnl4k&q=%1$s";
-
-    private static final String yahooapisBase = "http://query.yahooapis.com/v1/public/yql?q=select*from%20geo.places%20where%20text=";
-    private static final String yahooapisFormat = "&format=xml";
+    private static final String YAHOO_API_BASE_URL = "http://query.yahooapis.com/v1/public/yql?q=select%20woeid%20from%20geo.placefinder%20where%20text%3D";
 
     public static String reverseGeoCode(Context c, double latitude, double longitude) {
-        String url = String.format(YAHOO_API_BASE_REV_URL, String.valueOf(latitude),
-                String.valueOf(longitude));
+        String url = YAHOO_API_BASE_URL + Uri.encode(String.format("\"%s %s\" and gflags=\"R\"", String.valueOf(latitude),
+                String.valueOf(longitude)));
         String response = new HttpRetriever().retrieve(url);
         if (response == null) {
             return null;
@@ -40,17 +37,14 @@ public class YahooPlaceFinder {
     }
 
     public static String GeoCode(Context c, String location) {
-        String yahooAPIsQuery = yahooapisBase + "%22" + location + "%22"
-				+ yahooapisFormat;
+        String url = YAHOO_API_BASE_URL + Uri.encode(String.format("\"%s\"",location));
 
-        yahooAPIsQuery = yahooAPIsQuery.replace(" ", "%20");
-
-        String response = new HttpRetriever().retrieve(yahooAPIsQuery);
+        String response = new HttpRetriever().retrieve(url);
         if (response == null) {
             return null;
         }
 
-        String woeid = new WeatherXmlParser(c).parsePlaceFinderResponseNew(response);
+        String woeid = new WeatherXmlParser(c).parsePlaceFinderResponse(response);
         return woeid;
     }
 

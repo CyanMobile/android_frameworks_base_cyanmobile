@@ -266,6 +266,19 @@ public class QuickSettingsController {
         }
     }
 
+    public void destroyQuickSettings() {
+        // Clear out old receiver
+        if (mReceiver != null) {
+            mContext.unregisterReceiver(mReceiver);
+        }
+        ContentResolver resolver = mContext.getContentResolver();
+        // Clear out old observer
+        if (mObserver != null) {
+            resolver.unregisterContentObserver(mObserver);
+        }
+        mQuickSettings.clear();
+    }
+
     public void setupQuickSettings() {
         LayoutInflater inflater = LayoutInflater.from(mContext);
         // Clear out old receiver

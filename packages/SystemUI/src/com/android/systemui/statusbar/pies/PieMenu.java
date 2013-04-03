@@ -538,7 +538,7 @@ public class PieMenu extends FrameLayout {
                     if (text.length() > 100) text = text.substring(0, 100) + "..";
                     mNotificationText[mNotificationCount] = text;
 
-                    Path notifictionPath = new Path();
+                    Path notifictionPath = extracted();
                     notifictionPath.addCircle(mCenter.x, mCenter.y, mNotificationsRadius +
                             (mNotificationsRowSize * mNotificationCount) + (mNotificationsRowSize-mNotificationTextSize),
                             Path.Direction.CW);
@@ -813,7 +813,7 @@ public class PieMenu extends FrameLayout {
                     mSnapBackground.setAlpha((int)(snapTouch));
                     int len = (int)(snap.radius * 1.3f + (snap.active ? mAnimators[ANIMATOR_SNAP_GROW].fraction * 500 : 0));
                     int thick = (int)(len * 0.2f);
-                    Path plus = new Path();
+                    Path plus = extracted();
                     plus.addRect(snap.x - len / 2, snap.y - thick / 2, snap.x + len / 2, snap.y + thick / 2, Path.Direction.CW);
                     plus.addRect(snap.x - thick / 2, snap.y - len / 2, snap.x + thick / 2, snap.y + len / 2, Path.Direction.CW);
                     canvas.drawPath(plus, mSnapBackground);
@@ -930,6 +930,10 @@ public class PieMenu extends FrameLayout {
         }
     }
 
+	private Path extracted() {
+		return new Path();
+	}
+
     private void drawItem(Canvas canvas, PieItem item) {
         if (item.getView() != null) {
             int state = canvas.save();
@@ -958,7 +962,7 @@ public class PieMenu extends FrameLayout {
     private Path makeSlice(float start, float end, int outer, int inner, Point center, float narrow, boolean bothEnds) {
         RectF bb = new RectF(center.x - outer, center.y - outer, center.x + outer, center.y + outer);
         RectF bbi = new RectF(center.x - inner, center.y - inner, center.x + inner, center.y + inner);
-        Path path = new Path();
+        Path path = extracted();
         path.arcTo(bb, start, end - start, true);
         path.arcTo(bbi, end + narrow, start - end - (bothEnds ? narrow : narrow*2));
         path.close();
