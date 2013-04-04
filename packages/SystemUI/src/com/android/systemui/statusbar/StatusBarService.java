@@ -397,6 +397,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private boolean mShowIconex = true;
     private boolean NotifEnable = true;
     private boolean isFullExpanded = false;
+    private boolean isSystemUIready = false;
 
     private DisplayMetrics mDisplayMetrics = new DisplayMetrics();
 
@@ -686,6 +687,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         makeBatterySideBarViewLeft();
         makeBatterySideBarViewRight();
+        isSystemUIready = true;
     }
 
     public IStatusBarService getServicesBar() {
@@ -3532,7 +3534,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     public void setIMEVisible(boolean visible) {
          mNavigationBarView.setIMEVisible(visible);
          mPieDisableImeShow = visible;
-         updatePieControls();
+         if (isSystemUIready) {
+             updatePieControls();
+         }
     }
 
     public void toggleQwikWidgets() {
