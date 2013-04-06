@@ -1248,7 +1248,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             return;
         }
 
-        CmBatterySideBar batterySideBarLeft = (CmBatterySideBar) View.inflate(this, R.layout.battery_sidebars, null);
+        CmBatterySideBar batterySideBarLeft = (CmBatterySideBar) View.inflate(mContext, R.layout.battery_sidebars, null);
 
         int width = getResources().getDimensionPixelSize(R.dimen.battery_sidebar_width);
 
@@ -1269,7 +1269,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             return;
         }
 
-        CmBatterySideBar batterySideBarRight = (CmBatterySideBar) View.inflate(this, R.layout.battery_sidebars, null);
+        CmBatterySideBar batterySideBarRight = (CmBatterySideBar) View.inflate(mContext, R.layout.battery_sidebars, null);
 
         int width = getResources().getDimensionPixelSize(R.dimen.battery_sidebar_width);
 
