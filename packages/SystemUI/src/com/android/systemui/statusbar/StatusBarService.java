@@ -382,7 +382,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private boolean mFirstis = true;
     private boolean mNaviShow = true;
     private boolean mPieEnable = true;
-    private boolean mPieDisableImeShow = false;
     private boolean mStatusBarHidden = false;
     private boolean mStatusBarReverse = false;
     private boolean mStatusBarTab = false;
@@ -397,7 +396,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private boolean mShowIconex = true;
     private boolean NotifEnable = true;
     private boolean isFullExpanded = false;
-    private boolean isSystemUIready = false;
 
     private DisplayMetrics mDisplayMetrics = new DisplayMetrics();
 
@@ -687,7 +685,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
         makeBatterySideBarViewLeft();
         makeBatterySideBarViewRight();
-        isSystemUIready = true;
     }
 
     public IStatusBarService getServicesBar() {
@@ -1503,7 +1500,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     private boolean showPie() {
-        return !mNaviShow && mPieEnable && !mPieDisableImeShow;
+        return !mNaviShow && mPieEnable;
     }
 
     private void attachPies() {
@@ -3535,10 +3532,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     public void setIMEVisible(boolean visible) {
          mNavigationBarView.setIMEVisible(visible);
-         mPieDisableImeShow = visible;
-         if (isSystemUIready) {
-             updatePieControls();
-         }
     }
 
     public void toggleQwikWidgets() {
@@ -3686,7 +3679,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         @Override
         public boolean onTouch(View v, MotionEvent event) {
             final int action = event.getAction();
-            if (mPieDisableImeShow) return false;
 
             if (!mPieControlPanel.isShowing()) {
                 switch(action) {
