@@ -95,6 +95,7 @@ import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.NinePatchDrawable;
+import android.graphics.NinePatch;
 import android.graphics.PorterDuff.Mode;
 import android.net.ConnectivityManager;
 import android.net.Uri;
@@ -314,7 +315,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private TextView mButtonsToggle;
     private LinearLayout mNotifications;
     private LinearLayout mPowerCarrier;
-    private LinearLayout mButtons;
     public static ImageView mMusicToggleButton;
 
     private BrightnessPanel mBrightnessPanel = null;
@@ -3484,18 +3484,20 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
           NotifEnable = false;
     }
 
-    private static Bitmap getNinePatch(int id,int x, int y, Context context){
+    private Bitmap getNinePatch(int id, int x, int y, Context context){
         Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), id);
-
         byte[] chunk = bitmap.getNinePatchChunk();
-        NinePatchDrawable np_drawable = new NinePatchDrawable(bitmap, chunk, new Rect(), null);
-        np_drawable.setBounds(0, 0,x, y);
+        final boolean isNinePatch = chunk != null && NinePatch.isNinePatchChunk(chunk);
+        if (isNinePatch) {
+            NinePatchDrawable np_drawable = new NinePatchDrawable(bitmap, chunk, new Rect(), null);
+            np_drawable.setBounds(0, 0,x, y);
 
-        Bitmap output_bitmap = Bitmap.createBitmap(x, y, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(output_bitmap);
-        np_drawable.draw(canvas);
-
-        return output_bitmap;
+            Bitmap output_bitmap = Bitmap.createBitmap(x, y, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(output_bitmap);
+            np_drawable.draw(canvas);
+            return output_bitmap;
+        }
+        return bitmap;
     }
 
     private View.OnLongClickListener mSettingsButtonListener = new View.OnLongClickListener() {
