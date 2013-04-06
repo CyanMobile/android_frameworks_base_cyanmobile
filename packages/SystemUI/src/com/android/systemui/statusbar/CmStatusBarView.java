@@ -24,6 +24,7 @@ import java.util.List;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
+import android.app.ActivityManagerNative;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -1004,6 +1005,15 @@ public class CmStatusBarView extends StatusBarView {
             }
         }
     };
+
+    public static void dismissKeyguards() {
+        try {
+             // Also, notifications can be launched from the lock screen,
+             // so dismiss the lock screen when the activity starts.
+             ActivityManagerNative.getDefault().dismissKeyguardOnNextActivity();
+        } catch (RemoteException e) {
+        }
+    }
 
     /**
      * Runnable to hold simulate a keypress.

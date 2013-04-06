@@ -2067,6 +2067,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 }
             }
             setNotifNew(true);
+            togglePower();
         } else {
             mCompactClearButton.setVisibility(View.GONE);
             mClearButton.setVisibility(View.INVISIBLE);
@@ -2342,6 +2343,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mExpanded = true;
         mStatusBarView.updateQuickNaImage();
         makeExpandedVisible();
+        setAreThereNotifications();
         updateExpandedViewPos(EXPANDED_FULL_OPEN);
         if (false) postStartTracing();
     }
@@ -3680,7 +3682,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         public boolean onTouch(View v, MotionEvent event) {
             final int action = event.getAction();
 
-            if (!mPieControlPanel.isShowing()) {
+            if (!mPieControlPanel.isShowing() && !mPieControlPanel.getKeyguardStatus()) {
                 switch(action) {
                     case MotionEvent.ACTION_DOWN:
                         centerPie = Settings.System.getInt(mContext.getContentResolver(), Settings.System.PIE_CENTER, 1) == 1;

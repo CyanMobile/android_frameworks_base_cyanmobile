@@ -185,10 +185,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // responsible for power management when displayed.
     static final int KEYGUARD_LAYER = 18;
     static final int KEYGUARD_DIALOG_LAYER = 19;
+    static final int STATUS_BAR_KEYGUARD_LAYER = 20;
+    static final int STATUS_BAR_PANEL_KEYGUARD_LAYER = 21;
+    static final int NAVIGATION_BAR_PANEL_KEYGUARD_LAYER = 22;
+
     // things in here CAN NOT take focus, but are shown on top of everything else.
-    static final int SYSTEM_OVERLAY_LAYER = 20;
-    static final int SECURE_SYSTEM_OVERLAY_LAYER = 21;
-    static final int BOOT_PROGRESS_LAYER = 22;
+    static final int SYSTEM_OVERLAY_LAYER = 23;
+    static final int SECURE_SYSTEM_OVERLAY_LAYER = 24;
+    static final int BOOT_PROGRESS_LAYER = 25;
 
     static final int APPLICATION_MEDIA_SUBLAYER = -2;
     static final int APPLICATION_MEDIA_OVERLAY_SUBLAYER = -1;
@@ -1335,9 +1339,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
         switch (type) {
         case TYPE_STATUS_BAR:
-            return STATUS_BAR_LAYER;
+            return STATUS_BAR_KEYGUARD_LAYER; //getStatusbarAboveKeyGuard();
         case TYPE_STATUS_BAR_PANEL:
-            return ((mBottomBar && mShowDate) ? STATUS_BAR_PANEL_LAYER : STATUS_BAR_SUB_PANEL_LAYER);
+            return getStatusbarPanelAboveKeyGuard();
         case TYPE_STATUS_BAR_SUB_PANEL:
             return STATUS_BAR_SUB_PANEL_LAYER;
         case TYPE_SYSTEM_DIALOG:
@@ -1373,12 +1377,25 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         case TYPE_NAVIGATION_BAR:
             return NAVIGATION_BAR_LAYER;
         case TYPE_NAVIGATION_BAR_PANEL:
-            return NAVIGATION_BAR_PANEL_LAYER;
+            return getNavigationbarPanelAboveKeyGuard();
         case TYPE_BOOT_PROGRESS:
             return BOOT_PROGRESS_LAYER;
         }
         Log.e(TAG, "Unknown window type: " + type);
         return APPLICATION_LAYER;
+    }
+
+    private int getStatusbarAboveKeyGuard() {
+        return (isKeyguardLocked() && !isKeyguardSecure()) ? STATUS_BAR_KEYGUARD_LAYER : STATUS_BAR_LAYER;
+    }
+
+    private int getStatusbarPanelAboveKeyGuard() {
+        int whats = ((mBottomBar && mShowDate) ? STATUS_BAR_PANEL_LAYER : STATUS_BAR_SUB_PANEL_LAYER);
+        return (isKeyguardLocked() && !isKeyguardSecure()) ? STATUS_BAR_PANEL_KEYGUARD_LAYER : whats;
+    }
+
+    private int getNavigationbarPanelAboveKeyGuard() {
+        return (isKeyguardLocked() && !isKeyguardSecure()) ? NAVIGATION_BAR_PANEL_KEYGUARD_LAYER : NAVIGATION_BAR_PANEL_LAYER;
     }
 
     /** {@inheritDoc} */
@@ -3152,6 +3169,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     public void dismissKeyguardLw() {
         if (!mKeyguardMediator.isSecure()) {
             if (mKeyguardMediator.isShowing()) {
+                mHandler.removeCallbacks(mScreenLockTimeout);
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {

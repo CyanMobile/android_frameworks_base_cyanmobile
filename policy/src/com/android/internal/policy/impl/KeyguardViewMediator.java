@@ -127,7 +127,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
     /**
      * The default amount of time we stay awake (used for all key input)
      */
-    protected static final int AWAKE_INTERVAL_DEFAULT_MS = 5000;
+    protected static final int AWAKE_INTERVAL_DEFAULT_MS = 10000;
 
     /**
      * The default amount of time we stay awake (used for all key input) when
@@ -704,7 +704,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
         mKeyboardOpen = isLidOpen;
 
         if (mUpdateMonitor.isKeyguardBypassEnabled() && mKeyboardOpen
-                && !mKeyguardViewProperties.isSecure() && mKeyguardViewManager.isShowing()) {
+                && !isSecure() && isShowing()) {
             if (DEBUG) Log.d(TAG, "bypassing keyguard on sliding open of keyboard with non-secure keyguard");
             mHandler.sendEmptyMessage(KEYGUARD_DONE_AUTHENTICATING);
             return true;
@@ -718,7 +718,7 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
     private void doKeyguard(int handlerMessage) {
 
         // if the keyguard is already showing, don't bother
-        if (mKeyguardViewManager.isShowing()) {
+        if (isShowing()) {
             if (DEBUG) Log.d(TAG, "doKeyguard: not showing because it is already showing");
             return;
         }
@@ -1040,7 +1040,13 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
 
     /** {@inheritDoc} */
     public void pokeWakelock() {
-        pokeWakelock(mKeyboardOpen ? AWAKE_INTERVAL_DEFAULT_KEYBOARD_OPEN_MS : AWAKE_INTERVAL_DEFAULT_MS);
+        int displayTimeout = Settings.System.getInt(mContext.getContentResolver(), SCREEN_OFF_TIMEOUT,
+                        AWAKE_INTERVAL_DEFAULT_MS);
+        if (mShowing && isSecure()) {
+            pokeWakelock(mKeyboardOpen ? AWAKE_INTERVAL_DEFAULT_KEYBOARD_OPEN_MS : AWAKE_INTERVAL_DEFAULT_MS);
+        } else {
+            pokeWakelock(mKeyboardOpen ? AWAKE_INTERVAL_DEFAULT_KEYBOARD_OPEN_MS : displayTimeout);
+        }
     }
 
     /** {@inheritDoc} */
