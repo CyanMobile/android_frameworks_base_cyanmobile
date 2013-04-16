@@ -1386,16 +1386,20 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     private int getStatusbarAboveKeyGuard() {
-        return (isKeyguardLocked() && !isKeyguardSecure()) ? STATUS_BAR_KEYGUARD_LAYER : STATUS_BAR_LAYER;
+        return !getKeyguardStatus() ? STATUS_BAR_KEYGUARD_LAYER : STATUS_BAR_LAYER;
     }
 
     private int getStatusbarPanelAboveKeyGuard() {
         int whats = ((mBottomBar && mShowDate) ? STATUS_BAR_PANEL_LAYER : STATUS_BAR_SUB_PANEL_LAYER);
-        return (isKeyguardLocked() && !isKeyguardSecure()) ? STATUS_BAR_PANEL_KEYGUARD_LAYER : whats;
+        return !getKeyguardStatus() ? STATUS_BAR_PANEL_KEYGUARD_LAYER : whats;
     }
 
     private int getNavigationbarPanelAboveKeyGuard() {
-        return (isKeyguardLocked() && !isKeyguardSecure()) ? NAVIGATION_BAR_PANEL_KEYGUARD_LAYER : NAVIGATION_BAR_PANEL_LAYER;
+        return !getKeyguardStatus() ? NAVIGATION_BAR_PANEL_KEYGUARD_LAYER : NAVIGATION_BAR_PANEL_LAYER;
+    }
+
+    private boolean getKeyguardStatus() {
+        return (isKeyguardLocked() && isKeyguardSecure());
     }
 
     /** {@inheritDoc} */

@@ -16,7 +16,6 @@
 
 package com.android.systemui.statusbar;
 
-import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Point;
@@ -56,7 +55,6 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
     private int mHeight;
     private View mTrigger;
     private Display mDisplay;
-    private KeyguardManager mKeyguardManger;
     private DisplayMetrics mDisplayMetrics = new DisplayMetrics();
 
     private StatusBarService mService;
@@ -72,14 +70,9 @@ public class PieControlPanel extends FrameLayout implements OnNavButtonPressedLi
         super(context, attrs);
         mContext = context;
         mDisplay = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        mKeyguardManger = (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
         mPieControl = new PieControl(context, this);
         mPieControl.setOnNavButtonPressedListener(this);
         mOrientation = Gravity.BOTTOM;
-    }
-
-    public boolean getKeyguardStatus() {
-        return mKeyguardManger.isKeyguardLocked() && mKeyguardManger.isKeyguardSecure();
     }
 
     public int getOrientation() {

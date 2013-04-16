@@ -315,6 +315,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private TextView mButtonsToggle;
     private LinearLayout mNotifications;
     private LinearLayout mPowerCarrier;
+    private LinearLayout mExpandedBottomToggle;
     public static ImageView mMusicToggleButton;
 
     private BrightnessPanel mBrightnessPanel = null;
@@ -906,6 +907,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         if (mStatusBarTab || mStatusBarTile) {
             mPowerCarrier = (LinearLayout) mExpandedView.findViewById(R.id.power_and_carrier_layout);
             mNotifications = (LinearLayout) mExpandedView.findViewById(R.id.notifications_layout);
+            mExpandedBottomToggle = (LinearLayout) mTrackingView.findViewById(R.id.expanded_bottom_bar);
             mNotificationsToggle = (TextView) mTrackingView.findViewById(R.id.statusbar_notification_toggle);
             mButtonsToggle = (TextView) mTrackingView.findViewById(R.id.statusbar_buttons_toggle);
             mButtonsToggle.setTextColor(mClockColor);
@@ -1231,6 +1233,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     private void updateSettings() {
+        if (mStatusBarTile) {
+            if (mQuickContainer != null && mQS != null) {
+                mQS.updateResources();
+            }
+        }
+
         int changedVal = Settings.System.getInt(getContentResolver(), Settings.System.EXPANDED_VIEW_WIDGET, 5);
         // check that it's not 0 to not reset the variable
         // this should be the only place mLastPowerToggle is set
@@ -2268,6 +2276,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mExpandedView.setVisibility(View.VISIBLE);
 
         mCenterClockex.setVisibility(mMoreExpanded ? View.VISIBLE : View.GONE);
+
+        if (mStatusBarTab || mStatusBarTile) {
+            mExpandedBottomToggle.setVisibility(mMoreExpanded ? View.GONE : View.VISIBLE);
+        }
+
         mCenterIconex.setVisibility(mShowIconex ? View.VISIBLE : View.GONE);
         mAvalMemLayout.setVisibility(mShowRam ? View.VISIBLE : View.GONE);
 
@@ -2343,7 +2356,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mExpanded = true;
         mStatusBarView.updateQuickNaImage();
         makeExpandedVisible();
-        setAreThereNotifications();
         updateExpandedViewPos(EXPANDED_FULL_OPEN);
         if (false) postStartTracing();
     }
@@ -2431,8 +2443,15 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         //        + " mAnimAccel=" + mAnimAccel);
     }
 
+    private int getCloseDragHeight() {
+        if (mStatusBarTab || mStatusBarTile) {
+           return (mCloseView.getHeight() - (mMoreExpanded ? (mExpandedBottomToggle.getHeight() - 12) : 0));
+        }
+        return mCloseView.getHeight();
+    }
+
     private void doRevealAnimation() {
-        int h = mCloseView.getHeight() + (mShowDate ? getStatBarSize() : 0);
+        int h = getCloseDragHeight();
 
         if(mBottomBar)
             h = mDisplayMetrics.heightPixels - (mShowDate ? getStatBarSize() : 0);
@@ -2581,8 +2600,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 mHandler.removeCallbacks(mLongPressBrightnessChange);
                 mHandler.postDelayed(mLongPressBrightnessChange, BRIGHTNESS_CONTROL_LONG_PRESS_TIMEOUT);
             } else if (action == MotionEvent.ACTION_MOVE) {
-                int minY = statusBarSize + mCloseView.getHeight();
-                if (mBottomBar) minY = mDisplayMetrics.heightPixels - statusBarSize - mCloseView.getHeight();
+                int minY = statusBarSize + getCloseDragHeight();
+                if (mBottomBar) minY = mDisplayMetrics.heightPixels - statusBarSize - getCloseDragHeight();
                 if ((!mBottomBar && y < minY) ||
                         (mBottomBar && y > minY)) {
                     mVelocityTracker.computeCurrentVelocity(1000);
@@ -2667,9 +2686,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             }
         } else if (mTracking) {
             trackMovement(event);
-            int minY = statusBarSize + mCloseView.getHeight();
+            int minY = statusBarSize + getCloseDragHeight();
             if (mBottomBar)
-                minY = mDisplayMetrics.heightPixels - statusBarSize - mCloseView.getHeight();
+                minY = mDisplayMetrics.heightPixels - statusBarSize - getCloseDragHeight();
             if (event.getAction() == MotionEvent.ACTION_MOVE) {
                 if ((!mBottomBar && mAnimatingReveal && y < minY) || (mBottomBar && mAnimatingReveal && y > minY)) {
                      // nothing
@@ -3110,7 +3129,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             } else {
                 pos = disph;
             }
-            pos -= mBottomBar ? mCloseView.getHeight() : disph-h;
+            pos -= mBottomBar ? getCloseDragHeight() : disph-h;
             isFullExpanded = false;
         }
         if(mBottomBar && pos < 0)
@@ -3144,14 +3163,14 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
             if (expandedPosition != EXPANDED_LEAVE_ALONE) {
                 if(mBottomBar)
-                    mExpandedParams.y = pos + mCloseView.getHeight();
+                    mExpandedParams.y = pos + getCloseDragHeight();
                 else
                     mExpandedParams.y = pos + mTrackingView.getHeight() - (mTrackingParams.height-closePos) - contentsBottom;
                 int max = mBottomBar ? (mDisplayMetrics.heightPixels-getNavBarSize()) : h;
                 if (mExpandedParams.y > max) {
                     mExpandedParams.y = max;
                 }
-                int min = mBottomBar ? mCloseView.getHeight() : mTrackingPosition;
+                int min = mBottomBar ? getCloseDragHeight() : mTrackingPosition;
                 if (mExpandedParams.y < min) {
                     mExpandedParams.y = min;
                     if(mBottomBar)
@@ -3195,7 +3214,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     private int getExpandedHeight() {
-        return (mDisplayMetrics.heightPixels-(mShowDate ? getStatBarSize() : 0)-mCloseView.getHeight());
+        return (mDisplayMetrics.heightPixels - (mShowDate ? getStatBarSize() : 0) - getCloseDragHeight());
     }
 
     void updateDisplaySize() {
@@ -3682,7 +3701,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         public boolean onTouch(View v, MotionEvent event) {
             final int action = event.getAction();
 
-            if (!mPieControlPanel.isShowing() && !mPieControlPanel.getKeyguardStatus()) {
+            if (!mPieControlPanel.isShowing()) {
                 switch(action) {
                     case MotionEvent.ACTION_DOWN:
                         centerPie = Settings.System.getInt(mContext.getContentResolver(), Settings.System.PIE_CENTER, 1) == 1;
@@ -3760,12 +3779,6 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             }
 
             mEdgeBorder = res.getDimensionPixelSize(R.dimen.status_bar_edge_ignore);
-        }
-
-        if (mStatusBarTile) {
-            if (mQuickContainer != null && mQS != null) {
-                mQS.updateResources();
-            }
         }
 
         if (mPieControlPanel != null) {
