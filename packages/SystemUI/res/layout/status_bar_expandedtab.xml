@@ -33,12 +33,12 @@
         android:paddingBottom="5dp"
         >
 
-        <com.android.systemui.statusbar.powerwidget.PowerWidget android:id="@+id/exp_power_stat"
+        <com.android.systemui.powerwidget.PowerWidget android:id="@+id/exp_power_stat"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
 
-        <com.android.systemui.statusbar.powerwidget.MusicControls android:id="@+id/exp_music_controls"
+        <com.android.systemui.powerwidget.MusicControls android:id="@+id/exp_music_controls"
              android:layout_width="match_parent"
              android:layout_height="wrap_content"
              />
@@ -49,7 +49,7 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
         >
-            <com.android.systemui.statusbar.carrierlabels.CarrierLabel
+            <com.android.systemui.carrierlabels.CarrierLabel
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -92,7 +92,7 @@
             android:orientation="horizontal"
             >
 
-        <com.android.systemui.statusbar.clocks.ClockExpand
+        <com.android.systemui.clocks.ClockExpand
             android:id="@+id/expclock_power"
             android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
             android:layout_width="wrap_content"
@@ -104,7 +104,7 @@
             android:layout_alignParentLeft="true"
             android:orientation="horizontal"/>
 
-        <com.android.systemui.statusbar.cmcustom.CmSignalTextExp
+        <com.android.systemui.cmcustom.CmSignalTextExp
             android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
@@ -115,7 +115,7 @@
             android:layout_alignParentLeft="true"
             android:orientation="horizontal"/>
 
-        <com.android.systemui.statusbar.cmcustom.CmWifiText
+        <com.android.systemui.cmcustom.CmWifiText
             android:id="@+id/expwifi_signal_text"
             android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
             android:layout_width="wrap_content"
@@ -126,7 +126,7 @@
             android:layout_alignParentLeft="true"
             android:orientation="horizontal"/>
 
-        <com.android.systemui.statusbar.batteries.CmBatteryTextExp
+        <com.android.systemui.batteries.CmBatteryTextExp
             android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
@@ -147,7 +147,7 @@
             android:orientation="horizontal"
             />
 
-        <com.android.systemui.statusbar.carrierlabels.CarrierLabelExp
+        <com.android.systemui.carrierlabels.CarrierLabelExp
              android:id="@+id/carrierExp"
              android:textAppearance="@android:style/TextAppearance.StatusBar.Icon" 
              android:layout_gravity="right|center_vertical"
@@ -160,7 +160,7 @@
              android:layout_alignParentRight="true"
              />
 
-        <com.android.systemui.statusbar.policy.DataTraffics
+        <com.android.systemui.policy.DataTraffics
              android:textAppearance="@style/TextAppearance.StatusBar.Expanded.MemInfo"
              android:id="@+id/dataTrafficsExp"
              android:layout_gravity="right|center_vertical"
@@ -205,22 +205,22 @@
             android:text="@string/status_bar_latestnews_events_title"
             />
 
-        <com.android.systemui.statusbar.powerwidget.PowerWidgetOne android:id="@+id/exp_power_stat_one"
+        <com.android.systemui.powerwidget.PowerWidgetOne android:id="@+id/exp_power_stat_one"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
 
-        <com.android.systemui.statusbar.powerwidget.PowerWidgetTwo android:id="@+id/exp_power_stat_two"
+        <com.android.systemui.powerwidget.PowerWidgetTwo android:id="@+id/exp_power_stat_two"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
 
-        <com.android.systemui.statusbar.powerwidget.PowerWidgetThree android:id="@+id/exp_power_stat_three"
+        <com.android.systemui.powerwidget.PowerWidgetThree android:id="@+id/exp_power_stat_three"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
 
-        <com.android.systemui.statusbar.powerwidget.PowerWidgetFour android:id="@+id/exp_power_stat_four"
+        <com.android.systemui.powerwidget.PowerWidgetFour android:id="@+id/exp_power_stat_four"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
@@ -319,7 +319,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             >
-            <com.android.systemui.statusbar.carrierlabels.CarrierLabel
+            <com.android.systemui.carrierlabels.CarrierLabel
                  android:gravity="bottom|right|center"
                  android:textAppearance="@style/TextAppearance.StatusBar.Title"
                  android:singleLine="true"

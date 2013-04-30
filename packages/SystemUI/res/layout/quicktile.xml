@@ -14,15 +14,15 @@
      limitations under the License.
 -->
 
-<com.android.systemui.statusbar.quicksettings.QuickSettingsScrollView
+<com.android.systemui.quicksettings.QuickSettingsScrollView
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:overScrollMode="ifContentScrolls"
         >
-        <com.android.systemui.statusbar.quicksettings.QuickSettingsContainerView
+        <com.android.systemui.quicksettings.QuickSettingsContainerView
             android:id="@+id/quick_settings_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
-</com.android.systemui.statusbar.quicksettings.QuickSettingsScrollView>
+</com.android.systemui.quicksettings.QuickSettingsScrollView>

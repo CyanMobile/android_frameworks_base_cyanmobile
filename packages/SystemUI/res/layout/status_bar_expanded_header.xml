@@ -32,7 +32,7 @@
         android:paddingRight="8dp"
         android:background="@drawable/ic_notify_button_bg"
         >
-        <com.android.systemui.statusbar.clocks.PowerClock
+        <com.android.systemui.clocks.PowerClock
             android:id="@+id/centerCloex"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -41,7 +41,7 @@
             android:layout_centerVertical="true"
             />
 
-        <com.android.systemui.statusbar.dates.ExDateView android:id="@+id/datestats"
+        <com.android.systemui.dates.ExDateView android:id="@+id/datestats"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Date"

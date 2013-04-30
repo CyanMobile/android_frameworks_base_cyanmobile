@@ -25,7 +25,7 @@
         android:icon="@drawable/ic_launcher_settings">
                  
         <service
-            android:name=".statusbar.StatusBarService"
+            android:name="SystemUIService"
             android:exported="false"
             />
 

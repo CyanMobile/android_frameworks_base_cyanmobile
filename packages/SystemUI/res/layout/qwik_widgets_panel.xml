@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.android.systemui.statusbar.qwidgets.QwikWidgetsPanelView
+<com.android.systemui.qwidgets.QwikWidgetsPanelView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widgets_root"
     android:layout_height="wrap_content"
@@ -19,5 +19,5 @@
         android:src="@drawable/ic_qwik_close"
         android:layout_gravity="right|top"
         />
-</com.android.systemui.statusbar.qwidgets.QwikWidgetsPanelView>
+</com.android.systemui.qwidgets.QwikWidgetsPanelView>
 

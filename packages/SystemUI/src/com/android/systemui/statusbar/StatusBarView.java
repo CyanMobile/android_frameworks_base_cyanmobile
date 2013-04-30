@@ -34,7 +34,7 @@ public class StatusBarView extends FrameLayout {
 
     static final int DIM_ANIM_TIME = 400;
     
-    StatusBarService mService;
+    PhoneStatusBar mService;
     private boolean mTracking;
     private int mStartX, mStartY;
     private ViewGroup mNotificationIcons;
@@ -81,7 +81,7 @@ public class StatusBarView extends FrameLayout {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        mService.updateExpandedViewPos(StatusBarService.EXPANDED_LEAVE_ALONE);
+        mService.updateExpandedViewPos(PhoneStatusBar.EXPANDED_LEAVE_ALONE);
     }
 
     @Override

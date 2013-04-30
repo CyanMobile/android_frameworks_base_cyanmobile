@@ -13,7 +13,7 @@
      limitations under the License.
 -->
 
-<com.android.systemui.statusbar.PieExpandedView
+<com.android.systemui.pies.PieExpandedView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/content_frame"
     android:background="#00000000"
@@ -31,4 +31,4 @@
             android:fadingEdge="none"
             android:overScrollMode="ifContentScrolls"/>
 
-</com.android.systemui.statusbar.PieExpandedView>
+</com.android.systemui.pies.PieExpandedView>

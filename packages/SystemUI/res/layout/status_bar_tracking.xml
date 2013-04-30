@@ -39,13 +39,13 @@
         android:orientation="vertical"
         >
 
-        <com.android.systemui.statusbar.powerwidget.PowerWidgetBottom android:id="@+id/exp_power_stat"
+        <com.android.systemui.powerwidget.PowerWidgetBottom android:id="@+id/exp_power_stat"
              android:layout_width="match_parent"
              android:layout_height="wrap_content"
              android:background="@drawable/title_bar_portrait"
              />
 
-        <com.android.systemui.statusbar.carrierlabels.CarrierLabelBottom
+        <com.android.systemui.carrierlabels.CarrierLabelBottom
              android:id="@+id/carrierlabel_bottom"
              android:textAppearance="@android:style/TextAppearance.StatusBar.Icon" 
              android:background="@drawable/title_bar_portrait" 

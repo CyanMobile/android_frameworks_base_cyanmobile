@@ -55,7 +55,7 @@ public class RingPanelView extends FrameLayout {
     private Context mContext;
     private boolean mShowing;
     private Handler mHandler;
-    StatusBarService mService;
+    PhoneStatusBar mService;
     private View mSearchTargetsContainer;
     private GlowPadView mGlowPadView;
 

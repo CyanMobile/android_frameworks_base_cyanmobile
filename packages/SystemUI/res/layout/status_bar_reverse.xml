@@ -30,14 +30,14 @@
     android:descendantFocusability="afterDescendants"
     >
 
-    <com.android.systemui.statusbar.batteries.CmBatteryStatusBar
+    <com.android.systemui.batteries.CmBatteryStatusBar
         android:id="@+id/batteryStatusBar"
         style="@style/StatusBar.BatteryBar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         />
 
-        <com.android.systemui.statusbar.cmcustom.BackLogo
+        <com.android.systemui.cmcustom.BackLogo
              android:id="@+id/backlogo"
              android:textAppearance="@android:style/TextAppearance.StatusBar.Icon" 
              android:background="@android:color/transparent" 
@@ -48,7 +48,7 @@
              android:singleLine="true"
              />
 
-    <com.android.systemui.statusbar.dates.DateView android:id="@+id/date"
+    <com.android.systemui.dates.DateView android:id="@+id/date"
         android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
@@ -59,7 +59,7 @@
         android:background="@android:color/transparent"
         />
 
-        <com.android.systemui.statusbar.carrierlabels.CenterCarrierLabelStatusBar
+        <com.android.systemui.carrierlabels.CenterCarrierLabelStatusBar
             android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
             android:gravity="center"
             android:id="@+id/carrier_label_status_bar_center_layout"
@@ -70,7 +70,7 @@
             android:singleLine="true"
             android:layout_weight="1.0" />
 
-        <com.android.systemui.statusbar.carrierlabels.CenterCarrierLogo
+        <com.android.systemui.carrierlabels.CenterCarrierLogo
             android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
             android:gravity="center"
             android:id="@+id/carrier_logo_center"
@@ -91,7 +91,7 @@
         android:layout_height="fill_parent"
         android:layout_weight="1.0">
 
-        <com.android.systemui.statusbar.clocks.CenterClock
+        <com.android.systemui.clocks.CenterClock
             android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
             android:gravity="center"
             android:id="@+id/centerClo"
@@ -150,7 +150,7 @@
         android:layout_height="fill_parent"
         android:orientation="horizontal">
 
-        <com.android.systemui.statusbar.carrierlabels.CarrierLabelStatusBar
+        <com.android.systemui.carrierlabels.CarrierLabelStatusBar
              android:id="@+id/carrier_label_status_bar_layout" 
              android:textAppearance="@android:style/TextAppearance.StatusBar.Icon" 
              android:background="@android:color/transparent" 
@@ -161,7 +161,7 @@
              android:layout_alignParentLeft="true"
              />
 
-        <com.android.systemui.statusbar.carrierlabels.LeftCarrierLogo
+        <com.android.systemui.carrierlabels.LeftCarrierLogo
              android:id="@+id/carrier_logo_left"
              android:textAppearance="@android:style/TextAppearance.StatusBar.Icon" 
              android:background="@android:color/transparent" 
@@ -181,7 +181,7 @@
             android:gravity="center_vertical|left"
             android:orientation="horizontal"/>    
 
-        <com.android.systemui.statusbar.batteries.CircleBattery
+        <com.android.systemui.batteries.CircleBattery
             android:id="@+id/circle_battery"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -194,7 +194,7 @@
             android:gravity="center_vertical|left"
             android:orientation="horizontal"/>
 
-        <com.android.systemui.statusbar.cmcustom.CmSignalText
+        <com.android.systemui.cmcustom.CmSignalText
             android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
@@ -202,7 +202,7 @@
             android:gravity="center_vertical|left"
             android:orientation="horizontal"/>
 
-        <com.android.systemui.statusbar.cmcustom.CmWifiText
+        <com.android.systemui.cmcustom.CmWifiText
             android:id="@+id/wifi_signal_text"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
@@ -210,7 +210,7 @@
             android:gravity="center_vertical|left"
             android:orientation="horizontal"/>
 
-        <com.android.systemui.statusbar.batteries.CmBatteryText
+        <com.android.systemui.batteries.CmBatteryText
             android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
@@ -218,7 +218,7 @@
             android:gravity="center_vertical|left"
             android:orientation="horizontal"/>
 
-        <com.android.systemui.statusbar.cmcustom.CmProfileIndicator
+        <com.android.systemui.cmcustom.CmProfileIndicator
             android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
@@ -226,7 +226,7 @@
             android:gravity="center_vertical|left"
             android:orientation="horizontal"/>
 
-        <com.android.systemui.statusbar.clocks.Clock
+        <com.android.systemui.clocks.Clock
             android:id="@+id/clock"
             android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
             android:layout_width="wrap_content"
@@ -247,7 +247,7 @@
             android:gravity="center_vertical|right"
             android:orientation="horizontal"/>
 
-        <com.android.systemui.statusbar.batteries.CmBatteryMiniIcon
+        <com.android.systemui.batteries.CmBatteryMiniIcon
             android:id="@+id/CmBatteryMiniIcon"
             android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
             android:layout_width="wrap_content"
@@ -330,7 +330,7 @@
 	            android:background="@drawable/ic_statusbar_edge_left_bottom" />
         </LinearLayout>
 
-        <com.android.systemui.statusbar.carrierlabels.CarrierLogo
+        <com.android.systemui.carrierlabels.CarrierLogo
              android:id="@+id/carrier_logo"
              android:textAppearance="@android:style/TextAppearance.StatusBar.Icon" 
              android:background="@android:color/transparent" 
@@ -349,7 +349,7 @@
     android:layout_alignParentRight="true"
     android:layout_width="wrap_content"
     android:layout_height="fill_parent">
-      <com.android.systemui.statusbar.clocks.LeftClock
+      <com.android.systemui.clocks.LeftClock
         android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
         android:gravity="center_vertical|right"
         android:id="@+id/clockLe"
@@ -360,7 +360,7 @@
         android:layout_weight="1.0" />
   </LinearLayout>  
 
-        <com.android.systemui.statusbar.carrierlabels.LeftCarrierLabelStatusBar
+        <com.android.systemui.carrierlabels.LeftCarrierLabelStatusBar
              android:id="@+id/carrier_label_status_bar_left_layout" 
              android:textAppearance="@android:style/TextAppearance.StatusBar.Icon" 
              android:background="@android:color/transparent" 
@@ -372,7 +372,7 @@
              />
     </LinearLayout>
 
-    <com.android.systemui.statusbar.batteries.CmBatteryBar
+    <com.android.systemui.batteries.CmBatteryBar
         style="@style/StatusBar.BatteryBar"
         android:layout_width="match_parent"
         android:layout_height="1dip"

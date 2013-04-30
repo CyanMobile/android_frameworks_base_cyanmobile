@@ -27,7 +27,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 
 public class TrackingView extends LinearLayout {
-    StatusBarService mService;
+    PhoneStatusBar mService;
     private boolean mTracking;
     private int mStartX, mStartY;
     boolean mIsAttachedToWindow;
@@ -119,7 +119,7 @@ public class TrackingView extends LinearLayout {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    mService.updateExpandedViewPos(StatusBarService.EXPANDED_LEAVE_ALONE);
+                    mService.updateExpandedViewPos(PhoneStatusBar.EXPANDED_LEAVE_ALONE);
                 }
             });
         }

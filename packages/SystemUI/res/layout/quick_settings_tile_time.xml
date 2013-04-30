@@ -30,7 +30,7 @@
         android:hand_minutes="@drawable/ic_qs_clock_minute"
         android:hand_seconds="@drawable/ic_qs_clock_minute"
         />
-    <com.android.systemui.statusbar.dates.PowerDateView
+    <com.android.systemui.dates.PowerDateView
         android:textAppearance="@style/TextAppearance.QuickSettings.TileView.Date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

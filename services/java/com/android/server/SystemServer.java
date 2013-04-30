@@ -37,6 +37,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.IPackageManager;
+import android.content.ComponentName;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.media.AudioService;
@@ -664,10 +665,6 @@ class ServerThread extends Thread {
             }
         }
 
-        if (statusBar != null) {
-            statusBar.systemReady();
-        }
-
         try {
             wm.systemReady();
         } catch (Throwable e) {
@@ -695,7 +692,7 @@ class ServerThread extends Thread {
         context.registerReceiver(new AppsLaunchFailureReceiver(), filter);
 
         // These are needed to propagate to the runnable below.
-        final StatusBarManagerService statusBarF = statusBar;
+        final Context contextF = context;
         final BatteryService batteryF = battery;
         final ConnectivityService connectivityF = connectivity;
         final DockObserver dockF = dock;
@@ -708,6 +705,7 @@ class ServerThread extends Thread {
         final RecognitionManagerService recognitionF = recognition;
         final LocationManagerService locationF = location;
         final PowerSaverService powerSaverF = powerSaver;
+        final StatusBarManagerService statusBarF = statusBar;
 
         // We now tell the activity manager it is okay to run third party
         // code.  It will call back into us once it has gotten to the state
@@ -718,11 +716,7 @@ class ServerThread extends Thread {
             public void run() {
                 Slog.i(TAG, "Making services ready");
 
-              try {
-                if (statusBarF != null) statusBarF.systemReady2();
-              } catch (Throwable e) {
-                reportWtf("making Statusbar Service ready", e);
-              }
+                startSystemUi(contextF);
 
               try {
                 if (batteryF != null) batteryF.systemReady();
@@ -810,6 +804,14 @@ class ServerThread extends Thread {
 
         Looper.loop();
         Slog.d(TAG, "System ServerThread is exiting!");
+    }
+
+    static final void startSystemUi(Context context) {
+        Intent intent = new Intent();
+        intent.setComponent(new ComponentName("com.android.systemui",
+                    "com.android.systemui.SystemUIService"));
+        Slog.d(TAG, "Starting service: " + intent);
+        context.startService(intent);
     }
 }
 

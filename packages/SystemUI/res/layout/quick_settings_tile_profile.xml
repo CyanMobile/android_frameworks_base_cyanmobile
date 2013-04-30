@@ -19,7 +19,7 @@
     android:layout_height="wrap_content"
     android:layout_gravity="center"
     android:orientation="vertical">
-    <com.android.systemui.statusbar.cmcustom.CmTileProfileIndicator
+    <com.android.systemui.cmcustom.CmTileProfileIndicator
         android:textAppearance="@*android:style/TextAppearance.StatusBar.Icon"
         android:layout_width="40dp"
         android:layout_height="40dp"
